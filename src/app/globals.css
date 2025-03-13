@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* On définit notre thème custom en "CSS-first configuration" via @theme. */
+@theme {
+  /* Maintenant, on redéfinit NOS couleurs custom sous forme --color-xxx-YYY :
+     ex. --color-neutral-50, --color-primary-500, etc. */
+
+  /* Couleurs "neutral" */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-300: #cbd6e1;
+  --color-neutral-400: #94a6b8;
+  --color-neutral-500: #64788b;
+  --color-neutral-600: #475869;
+  --color-neutral-700: #334455;
+  --color-neutral-750: #445566;
+  --color-neutral-800: #1e2d3b;
+  --color-neutral-900: #0f1d2a;
+
+  /* Couleurs "primary" */
+  --color-primary-500: #40e4e4;
+  --color-primary-900: #104040;
+
+  /* Couleurs success/error */
+  --color-success-500: #379a57;
+  --color-error-500: #e9393f;
+
+  /* Couleurs gold/silver/bronze/close-button */
+  --color-gold-500: #ebaa1e;
+  --color-silver-500: #ebf2fa;
+  --color-bronze-500: #c68c3e;
+  --color-close-button-500: #7c7c8e;
+
+  /* Polices (fonts) */
+  --font-tt-smalls: "TT Smalls", sans-serif;
+  --font-inter: "Inter", sans-serif;
+
+  /* Tailles (en rem = px / 16) */
+  --text-title: 2rem; /* 32px */
+  --text-heading: 1.25rem; /* 20px */
+  --text-bold: 0.9375rem; /* 15px */
+  --text-regular: 0.9375rem; /* 15px */
+  --text-sub: 0.75rem; /* 12px */
+  --text-statistic: 1.25rem; /* 20px */
+
+  /* Font weights */
+  --font-weight-400: 400; /* normal */
+  --font-weight-500: 500; /* medium */
+  --font-weight-700: 700; /* bold */
+  --font-weight-800: 800; /* extra-bold */
+  --font-weight-900: 900; /* black */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer utilities {
+  .text-title {
+    font-family: var(--font-tt-smalls);
+    font-size: var(--text-title);
+    font-style: italic;
+    font-weight: var(--font-weight-800);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .text-heading {
+    font-family: var(--font-tt-smalls);
+    font-size: var(--text-heading);
+    font-style: italic;
+    font-weight: var(--font-weight-800);
+  }
+
+  .text-bold {
+    font-family: var(--font-tt-smalls);
+    font-size: var(--text-bold);
+    font-weight: var(--font-weight-700);
+  }
+
+  .text-regular {
+    font-family: var(--font-inter);
+    font-size: var(--text-regular);
+    font-weight: var(--font-weight-400);
+  }
+
+  .text-sub {
+    font-family: var(--font-inter);
+    font-size: var(--text-sub);
+    line-height: 1.2;
+    font-weight: var(--font-weight-400);
+  }
+
+  .text-statistic {
+    font-family: var(--font-inter);
+    font-size: var(--text-statistic);
+    font-weight: var(--font-weight-700);
+    font-style: normal; /* ou pas */
+  }
 }

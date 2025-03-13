@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  front:
+    build: .
+    container_name: activscanio-front
+    # On met le port 3001:3000 pour accéder au Next depuis l'hôte sur 3001
+    ports:
+      - "3001:3000"
+    environment:
+      # On pointe vers "http://api:3000",
+      # car le nom de service "api" sera résolu sur le même réseau
+      NEXT_PUBLIC_API_BASE_URL: "http://activscanio-api:3000"
+    networks:
+      - activscanio-net
+
+networks:
+  activscanio-net:
+    external: true
