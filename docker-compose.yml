@@ -6,8 +6,6 @@ services:
     ports:
       - "3001:3000"
     environment:
-      # On pointe vers "http://api:3000",
-      # car le nom de service "api" sera résolu sur le même réseau
       NEXT_PUBLIC_API_BASE_URL: "http://activscanio-api:3000"
     networks:
       - activscanio-net
