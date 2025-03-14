@@ -4,7 +4,6 @@ import { FC, useContext, useEffect, useState } from "react";
 import { RaceEvent } from "../../models/RaceEvent";
 import { AppContext } from "../../context/AppContext";
 import { Competitor } from "../../models/Competitor";
-import { RaceResult } from "../../models/RaceResult";
 import RaceDetailsModal from "./RaceDetailsModal";
 
 interface Props {
