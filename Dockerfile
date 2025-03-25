@@ -4,6 +4,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Declare the build argument
+ARG NEXT_PUBLIC_API_BASE_URL
+
+# Next.js will be able to access it (via process.env)
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+
 # Copy the package files and install
 COPY package.json package-lock.json ./
 RUN npm install

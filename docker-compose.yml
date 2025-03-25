@@ -1,15 +1,11 @@
 services:
   front:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_BASE_URL: "https://sandbox.thibaud-cb.fr"
     container_name: activscanio-front
-    # On met le port 3001:3000 pour accéder au Next depuis l'hôte sur 3001
     ports:
       - "3001:3000"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: "https://activscanio.thibaud-cb.fr"
-    networks:
-      - activscanio-net
-
-networks:
-  activscanio-net:
-    external: true
+      NEXT_PUBLIC_API_BASE_URL: "https://sandbox.thibaud-cb.fr"
