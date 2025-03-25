@@ -6,7 +6,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      NEXT_PUBLIC_API_BASE_URL: "http://activscanio-api:3000"
+      NEXT_PUBLIC_API_BASE_URL: "https://activscanio.thibaud-cb.fr"
     networks:
       - activscanio-net
 
