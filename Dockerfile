@@ -1,5 +1,3 @@
-# Dockerfile
-# Use the official Node.js 18 image
 FROM node:20-alpine AS builder
 
 WORKDIR /app
