@@ -2,13 +2,9 @@
 
 import { FC, useContext, useEffect, useState } from "react";
 import Image from "next/image";
-import { Competitor } from "@/app/models/Competitor";
 import { AppContext } from "@/app/context/AppContext";
+import { Competitor } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
-import {
-  MdShowChart,
-  MdPercent,
-} from "react-icons/md";
 
 interface Props {
   competitor: Competitor;
@@ -28,153 +24,124 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
     })();
   }, [competitor.id, getRecentRacesOfCompetitor]);
 
+  // Si pas encore chargé
   if (!isLoaded) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div className="bg-neutral-900 text-regular p-4 rounded w-full max-w-md">
-          <p className="text-neutral-300">Chargement...</p>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
+          <div className="bg-neutral-900 text-neutral-100 p-6 rounded-lg w-full max-w-md shadow-lg">
+            <p>Chargement...</p>
+          </div>
         </div>
-      </div>
     );
   }
 
-  const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
-
-  /**
-   * Returns the background color according to the medal (0 => gold, 1 => silver, 2 => bronze)
-   */
-  const getMedalBackground = (index: number): string => {
-    switch (index) {
-      case 0:
-        return "bg-gold-500";
+  // Format du rang en français : 1er, 2e, 3e, 4e, ...
+  const formatRankFR = (rank: number) => {
+    if (rank <= 0) return "--";
+    switch (rank) {
       case 1:
-        return "bg-silver-500";
+        return "1er";
       case 2:
-        return "bg-bronze-500";
+        return "2e";
+      case 3:
+        return "3e";
       default:
-        return "bg-neutral-100";
+        return `${rank}e`;
     }
   };
 
-  const getRankIcon = (index: number): string => {
-    switch (index) {
-      case 0:
-        return "🥇";
-      case 1:
-        return "🥈";
-      case 2:
-        return "🥉";
-      default:
-        return "⭐";
-    }
-  };
+  const shortName = `${competitor.firstName} ${competitor.lastName}`;
+  const playerRank = competitor.rank > 0 ? formatRankFR(competitor.rank) : null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-neutral-900 rounded p-4 w-full max-w-md text-neutral-100">
-        {/* --- Header modal --- */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-title">Fiche compétiteur</h2>
-          <button onClick={onClose} className="text-close-button-500">
-            X
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
+        {/* Carte sombre */}
+        <div className="relative bg-neutral-900 text-neutral-100 w-full max-w-md rounded-2xl p-6 shadow-xl">
+          {/* Bouton close (X) plus grand */}
+          <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-200 transition-colors text-3xl"
+          >
+            &times;
           </button>
-        </div>
 
-        {/* Profile: Avatar + about + rank */}
-        <div className="flex items-center space-x-4 mb-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden">
-            <Image
-              src={competitor.profilePictureUrl}
-              alt={competitor.firstName}
-              width={64}
-              height={64}
-              className="object-cover w-full h-full"
-            />
-          </div>
-
-          <div className="flex-1">
-            <h3 className="text-heading font-semibold">{shortName}</h3>
-            <p className="text-regular text-neutral-300">
-              Courses jouées :{" "}
-              <span className="text-statistic">
-                {competitor.raceCount || "N/A"}
-              </span>
-            </p>
-          </div>
-
-          {/* Rank */}
-          {competitor.rank > 0 && (
-            competitor.rank <= 3 ? (
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{
-                  backgroundColor: getMedalBackground(competitor.rank - 1),
-                }}
-              >
-                {getRankIcon(competitor.rank - 1)}
-              </div>
-            ) : (
-              <span className="text-heading text-neutral-50">
-                #{competitor.rank}
-              </span>
-            )
-          )}
-        </div>
-
-        {/* Stats row */}
-        <div className="flex space-x-4 mb-8">
-          {/* Elo */}
-          <div className="flex-1 bg-neutral-800 p-4 rounded-xl">
-            <div className="w-6 h-6 bg-primary-900 flex items-center justify-center rounded mb-2">
-              <MdShowChart className="text-primary-500" size={16} />
+          {/* Avatar + Nom + Rank */}
+          <div className="flex flex-col items-center mb-6">
+            {/* Avatar */}
+            <div className="w-24 h-24 rounded-full overflow-hidden mb-3">
+              <Image
+                  src={competitor.profilePictureUrl}
+                  alt={shortName}
+                  width={96}
+                  height={96}
+                  className="object-cover w-full h-full"
+              />
             </div>
-            <p className="text-regular text-neutral-300 mb-1">Élo</p>
-            <p className="text-statistic text-neutral-50">{competitor.elo}</p>
+
+            {/* Nom + Rank sur une seule ligne */}
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <span>{shortName}</span>
+              {playerRank && (
+                  <span className="text-2xl text-neutral-400">• {playerRank}</span>
+              )}
+            </h2>
           </div>
 
-          {/* Average position */}
-          <div className="flex-1 bg-neutral-800 p-4 rounded-xl">
-            <div className="w-6 h-6 bg-primary-900 flex items-center justify-center rounded mb-2">
-              <MdPercent className="text-primary-500" size={16} />
+          {/* Stats (3 colonnes séparées par des barres verticales) */}
+          <div className="flex items-start justify-evenly text-center mb-6">
+            {/* Parties jouées */}
+            <div className="px-4">
+              <p className="text-2xl font-bold">{competitor.raceCount ?? 0}</p>
+              <p className="text-xs text-neutral-400 mt-1">Parties jouées</p>
             </div>
-            <p className="text-regular text-neutral-300 mb-1">
-              Position moyenne
-            </p>
-            <p className="text-statistic text-neutral-50">
-              {competitor.avgRank12.toFixed(1)}
-            </p>
+            {/* Barre verticale */}
+            <div className="w-px h-8 my-auto bg-neutral-700" />
+            {/* Position moyenne */}
+            <div className="px-4">
+              <p className="text-2xl font-bold">
+                {competitor.avgRank12?.toFixed(1)}
+              </p>
+              <p className="text-xs text-neutral-400 mt-1">Position moyenne</p>
+            </div>
+            {/* Barre verticale */}
+            <div className="w-px h-8 my-auto bg-neutral-700" />
+            {/* Elo */}
+            <div className="px-4">
+              <p className="text-2xl font-bold">{Math.round(competitor.elo)}</p>
+              <p className="text-xs text-neutral-400 mt-1">Elo</p>
+            </div>
           </div>
-        </div>
 
-        {/* --- Recent Races --- */}
-        <div>
-          <h4 className="text-heading mb-2 text-neutral-50">
-            Résultats récents
-          </h4>
+          {/* Séparateur horizontal */}
+          <hr className="mb-4 border-neutral-700" />
+
+          {/* Titre "Résultats récents" */}
+          <h3 className="text-lg font-semibold mb-3">Résultats récents</h3>
+
+          {/* Liste des dernières courses */}
           {recentRaces.length === 0 ? (
-            <p className="text-neutral-500 text-regular">
-              Aucune course récente
-            </p>
+              <p className="text-neutral-500 text-sm">Aucune course récente</p>
           ) : (
-            <ul className="space-y-2">
-              {recentRaces.map((race) => {
-                const date = new Date(race.date);
-                const dateStr = date.toLocaleDateString();
-                return (
-                  <li key={race.raceId} className="bg-neutral-800 p-2 rounded">
-                    <p className="text-bold text-neutral-100">{dateStr}</p>
-                    <p className="text-xs text-neutral-400">
-                      Position: {race.rank12}, Score: {race.score}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
+              <div className="space-y-2">
+                {recentRaces.map((race) => {
+                  const dateStr = new Date(race.date).toLocaleDateString("fr-FR");
+                  const racePlace = formatRankFR(race.rank12 || 0); // Ex: "1er", "4e", ...
+                  return (
+                      <div
+                          key={race.raceId}
+                          className="flex items-center justify-between bg-neutral-800 p-3 rounded"
+                      >
+                        <span className="text-sm text-neutral-200">{dateStr}</span>
+                        <span className="text-sm text-neutral-400">
+                    {racePlace} • Score: {race.score}
+                  </span>
+                      </div>
+                  );
+                })}
+              </div>
           )}
         </div>
       </div>
-    </div>
   );
 };
-
 export default CompetitorDetailModal;
