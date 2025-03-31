@@ -92,11 +92,10 @@ const AddCompetitorPage: NextPage = () => {
           </button>
           <button
             type="submit"
-            className={`flex-1 p-3 rounded text-bold ${
-              isAllValid()
+            className={`flex-1 p-3 rounded text-bold ${isAllValid()
                 ? "bg-primary-500 text-neutral-900"
                 : "bg-neutral-500 text-neutral-600"
-            }`}
+              }`}
           >
             Ajouter
           </button>

@@ -16,13 +16,13 @@ export default function Home() {
         );
     }
 
-    // Ne prendre que les compétiteurs ayant déjà joué
+    // Take only competitors who have already played
     const withGames = allCompetitors.filter((c) => c.raceCount > 0);
     withGames.sort((a, b) => a.rank - b.rank);
 
     // Top 3 (podium)
     const topThree = withGames.slice(0, 3);
-    // Le reste du classement
+    // Others
     const others = withGames.slice(3);
 
     return (
@@ -39,7 +39,7 @@ export default function Home() {
                 </p>
             )}
 
-            {/* Liste des suivants */}
+            {/* List of others */}
             <div className="flex flex-col gap-0">
                 {others.map((competitor) => (
                     <RankedCompetitorItem key={competitor.id} competitor={competitor} />

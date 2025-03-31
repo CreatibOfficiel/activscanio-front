@@ -1,10 +1,10 @@
 "use client";
 
-import {NextPage} from "next";
-import {useContext, useState} from "react";
-import {useRouter} from "next/navigation";
-import {AppContext} from "@/app/context/AppContext";
-import {Competitor} from "@/app/models/Competitor";
+import { NextPage } from "next";
+import { useContext, useState } from "react";
+import { useRouter } from "next/navigation";
+import { AppContext } from "@/app/context/AppContext";
+import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
 import { MdPersonAdd } from "react-icons/md";
 
@@ -12,7 +12,7 @@ const MAX_PLAYERS = 4;
 
 const AddRacePage: NextPage = () => {
     const router = useRouter();
-    const {allCompetitors, isLoading} = useContext(AppContext);
+    const { allCompetitors, isLoading } = useContext(AppContext);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
@@ -43,7 +43,7 @@ const AddRacePage: NextPage = () => {
     return (
         <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6">
             <div className="max-w-lg mx-auto">
-                {/* Titre et sous-titre */}
+                {/* Title and subtitle */}
                 <h1 className="text-2xl font-bold mb-1">Ajouter des joueurs</h1>
                 <p className="text-sm text-neutral-400 mb-6">
                     Sélectionnez qui va participer…
@@ -53,9 +53,9 @@ const AddRacePage: NextPage = () => {
                     <p className="text-neutral-300">Chargement...</p>
                 ) : (
                     <>
-                        {/* Barre de recherche */}
+                        {/* Search bar */}
                         <div className="relative mb-4">
-                            {/* Icône loupe */}
+                            {/* Magnifying glass icon */}
                             <svg
                                 className="w-5 h-5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
                                 fill="none"
@@ -80,18 +80,18 @@ const AddRacePage: NextPage = () => {
                             />
                         </div>
 
-                        {/* Bouton "Ajouter un joueur" */}
+                        {/* "Add a player" button */}
                         <div
                             className="flex items-center mb-6 cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
                             onClick={() => router.push("/competitors/add")}
                         >
-                            <MdPersonAdd className="text-2xl text-primary-500 mr-2"/>
+                            <MdPersonAdd className="text-2xl text-primary-500 mr-2" />
                             <span className="text-base text-neutral-100 font-semibold">
                                 Ajouter un joueur
                             </span>
                         </div>
 
-                        {/* Liste des joueurs filtrés */}
+                        {/* List of filtered players */}
                         <div className="flex flex-col">
                             {filteredCompetitors.map((competitor) => (
                                 <CheckableCompetitorItem
@@ -116,11 +116,10 @@ const AddRacePage: NextPage = () => {
                                 disabled={selectedCompetitors.length !== MAX_PLAYERS}
                                 className={`
                   w-full h-12 rounded font-semibold
-                  ${
-                                    selectedCompetitors.length === MAX_PLAYERS
+                  ${selectedCompetitors.length === MAX_PLAYERS
                                         ? "bg-primary-500 text-neutral-900"
                                         : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-                                }
+                                    }
                 `}
                             >
                                 Lancer la partie

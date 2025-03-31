@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Competitor } from "@/app/models/Competitor";
 import CompetitorDetailModal from "../competitor/CompetitorDetailModal";
 import Confetti from "react-confetti";
-// Import de la sous-composante PodiumCard (fichier que tu viens de créer)
 import PodiumCard from "./PodiumCard";
 
 interface Props {

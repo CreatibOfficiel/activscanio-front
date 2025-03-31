@@ -11,10 +11,10 @@ interface Props {
 }
 
 const CheckableCompetitorItem: FC<Props> = ({
-                                                competitor,
-                                                isSelected,
-                                                toggleSelection,
-                                            }) => {
+    competitor,
+    isSelected,
+    toggleSelection,
+}) => {
     const shortName = `${competitor.firstName} ${competitor.lastName}`;
 
     return (
@@ -24,7 +24,7 @@ const CheckableCompetitorItem: FC<Props> = ({
         ${
                 // En survol, on peut mettre un léger fond pour repérer la ligne
                 isSelected ? "bg-neutral-800" : "hover:bg-neutral-800"
-            }
+                }
       `}
             onClick={() => toggleSelection(competitor)}
         >
@@ -41,8 +41,8 @@ const CheckableCompetitorItem: FC<Props> = ({
 
             {/* Nom du joueur */}
             <span className="text-base text-neutral-100">
-        {shortName}
-      </span>
+                {shortName}
+            </span>
 
             {/* Checkbox à droite */}
             <div className="ml-auto mr-2">
@@ -50,11 +50,10 @@ const CheckableCompetitorItem: FC<Props> = ({
                     className={`
             w-5 h-5 rounded flex items-center justify-center
             border transition-colors
-            ${
-                        isSelected
+            ${isSelected
                             ? "bg-primary-500 border-primary-500"
                             : "bg-neutral-900 border-neutral-500"
-                    }
+                        }
           `}
                 >
                     {isSelected && <MdCheck className="text-neutral-900 text-lg" />}

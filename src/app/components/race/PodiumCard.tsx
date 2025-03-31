@@ -4,7 +4,6 @@ import { FC } from "react";
 import Image from "next/image";
 import { Competitor } from "@/app/models/Competitor";
 
-// Props dédiées au composant PodiumCard
 interface PodiumCardProps {
     competitor: Competitor | null;
     index: number;              // 0=1er, 1=2e, 2=3e
@@ -14,19 +13,18 @@ interface PodiumCardProps {
 }
 
 const PodiumCard: FC<PodiumCardProps> = ({
-                                             competitor,
-                                             index,
-                                             size = "small",
-                                             onClick,
-                                             getGradient,
-                                         }) => {
+    competitor,
+    index,
+    size = "small",
+    onClick,
+    getGradient,
+}) => {
     if (!competitor) return null;
 
-    // Format ex: "John D."
     const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
     const gradientBg = getGradient(index);
 
-    // Hauteur différente pour 1er / 2e+3e
+    // Different height for 1st / 2nd+3rd
     const cardHeight = size === "large" ? "h-[320px]" : "h-[280px]";
 
     const handleClick = () => {
@@ -62,15 +60,15 @@ const PodiumCard: FC<PodiumCardProps> = ({
                     <div className="flex flex-col items-center">
                         <span className="text-sm font-semibold uppercase">ELO</span>
                         <span className="text-lg font-bold">
-              {Math.round(competitor.elo)}
-            </span>
+                            {Math.round(competitor.elo)}
+                        </span>
                     </div>
                     {/* AVG */}
                     <div className="flex flex-col items-center">
                         <span className="text-sm font-semibold uppercase">AVG</span>
                         <span className="text-lg font-bold">
-              {competitor.avgRank12.toFixed(1)}
-            </span>
+                            {competitor.avgRank12.toFixed(1)}
+                        </span>
                     </div>
                 </div>
             </div>
