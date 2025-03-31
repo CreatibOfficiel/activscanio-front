@@ -34,6 +34,7 @@
   /* Polices (fonts) */
   --font-tt-smalls: "TT Smalls", sans-serif;
   --font-inter: "Inter", sans-serif;
+  --font-sf-pro-display: "SF Pro Display", sans-serif;
 
   /* Tailles (en rem = px / 16) */
   --text-title: 2rem; /* 32px */
@@ -51,42 +52,63 @@
   --font-weight-900: 900; /* black */
 }
 
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SFPRODISPLAYREGULAR.OTF') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SFPRODISPLAYBOLD.OTF') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SFPRODISPLAYBLACKITALIC.OTF') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+}
+
 @layer utilities {
   .text-title {
-    font-family: var(--font-tt-smalls);
+    font-family: var(--font-sf-pro-display);
     font-size: var(--text-title);
     font-style: italic;
     font-weight: var(--font-weight-800);
   }
 
   .text-heading {
-    font-family: var(--font-tt-smalls);
+    font-family: var(--font-sf-pro-display);
     font-size: var(--text-heading);
     font-style: italic;
     font-weight: var(--font-weight-800);
   }
 
   .text-bold {
-    font-family: var(--font-tt-smalls);
+    font-family: var(--font-sf-pro-display);
     font-size: var(--text-bold);
     font-weight: var(--font-weight-700);
   }
 
   .text-regular {
-    font-family: var(--font-inter);
+    font-family: var(--font-sf-pro-display);
     font-size: var(--text-regular);
     font-weight: var(--font-weight-400);
   }
 
   .text-sub {
-    font-family: var(--font-inter);
+    font-family: var(--font-sf-pro-display);
     font-size: var(--text-sub);
     line-height: 1.2;
     font-weight: var(--font-weight-400);
   }
 
   .text-statistic {
-    font-family: var(--font-inter);
+    font-family: var(--font-sf-pro-display);
     font-size: var(--text-statistic);
     font-weight: var(--font-weight-700);
     font-style: normal; /* ou pas */

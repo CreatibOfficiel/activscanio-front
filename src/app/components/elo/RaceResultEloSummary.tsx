@@ -30,14 +30,7 @@ const RaceResultEloSummary: FC<Props> = ({ results, selectedCompetitors }) => {
   );
 
   return (
-    // Main container for vertical spacing
     <div className="space-y-2">
-      {/* Table with two columns:
-          - Left: Competitor info (avatar, name, score, rank)
-          - Right: ELO old -> new, difference
-         We use "border-separate" + "border-spacing-y-2" to create vertical gaps (like "space-y-2"),
-         so each row looks separated.
-      */}
       <table className="w-full border-separate border-spacing-y-2">
         <tbody>
           {results.map((r) => {
@@ -88,15 +81,16 @@ const RaceResultEloSummary: FC<Props> = ({ results, selectedCompetitors }) => {
                 </td>
 
                 {/* Right column: ELO info */}
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 align-middle">
                   {/* ELO transition from current -> projected, plus difference */}
-                  <div className="text-sub flex justify-end gap-4 text-neutral-300 whitespace-nowrap">
-                    {currentElo} &rarr; {projectedElo}{" "}
+                  <div className="flex justify-end items-center gap-4 text-neutral-300 text-base whitespace-nowrap">
+                    <span>
+                      {currentElo} &rarr; {projectedElo}
+                    </span>
                     <span
                       className={diff >= 0 ? "text-success-500" : "text-error-500"}
                     >
-                      ({diff >= 0 ? "+" : ""}
-                      {diff})
+                      {diff >= 0 ? `+${diff}` : diff}
                     </span>
                   </div>
                 </td>

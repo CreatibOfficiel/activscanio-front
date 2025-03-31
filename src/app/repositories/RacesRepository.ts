@@ -2,7 +2,7 @@ import { RaceEvent } from "../models/RaceEvent";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
 
 export class RacesRepository {
-  constructor(private baseUrl: string) {}
+  constructor(private baseUrl: string) { }
 
   // POST /races
   async createRace(race: RaceEvent): Promise<RaceEvent> {

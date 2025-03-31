@@ -13,18 +13,17 @@ interface Props {
 const RaceOverviewItem: FC<Props> = ({ race }) => {
   const { allCompetitors } = useContext(AppContext);
 
-  // Liste des Competitor associés à ce RaceEvent
+  // List of Competitors associated with this RaceEvent
   const [participants, setParticipants] = useState<Competitor[]>([]);
 
-  // La "meilleure" (plus petite) position trouvée parmi les participants (ex: 1).
-  // S'il n'y a aucun résultat, ce sera undefined.
+  // The "best" (smallest) position found among the participants (e.g., 1)
   const [bestRank, setBestRank] = useState<number | undefined>(undefined);
 
-  // Contrôle de l'ouverture/fermeture de la modal
+  // Control of the modal's open/close state
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    // Construction de la liste des participants
+    /// Construction of the list of participants
     const comps: Competitor[] = [];
     race.results.forEach((res) => {
       const found = allCompetitors.find((c) => c.id === res.competitorId);
@@ -32,7 +31,7 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
     });
     setParticipants(comps);
 
-    // On trie les résultats pour trouver la "meilleure" position = rank12 le plus petit
+    // We sort to find the "best" position = the smallest rank12
     if (race.results && race.results.length > 0) {
       const sorted = [...race.results].sort((a, b) => a.rank12 - b.rank12);
       setBestRank(sorted[0].rank12); // ex: 1
@@ -43,10 +42,13 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
 
   const openModal = () => setShowModal(true);
 
-  // Si aucun participant
+  // If no participants
   if (race.results.length === 0 || participants.length === 0) {
     return null;
   }
+
+  // We sort by rank12 for display from first to last
+  const sortedResults = [...race.results].sort((a, b) => a.rank12 - b.rank12);
 
   return (
     <>
@@ -54,12 +56,11 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
         className="bg-neutral-800 p-3 rounded cursor-pointer mb-2"
         onClick={openModal}
       >
-        {/* On parcourt chaque RaceResult pour afficher */}
-        {race.results.map((res) => {
+        {sortedResults.map((res) => {
           const competitor = participants.find((c) => c.id === res.competitorId);
           if (!competitor) return null;
 
-          // isWinner = si rank12 de ce participant == bestRank
+          // isWinner = if rank12 of this participant == bestRank
           const isWinner = bestRank !== undefined && res.rank12 === bestRank;
           const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
 

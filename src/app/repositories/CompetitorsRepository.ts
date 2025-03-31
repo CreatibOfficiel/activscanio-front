@@ -1,7 +1,7 @@
 import { Competitor } from "../models/Competitor";
 
 export class CompetitorsRepository {
-  constructor(private baseUrl: string) {}
+  constructor(private baseUrl: string) { }
 
   // GET /competitors
   async fetchCompetitors(): Promise<Competitor[]> {

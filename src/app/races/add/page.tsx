@@ -6,108 +6,130 @@ import { useRouter } from "next/navigation";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
+import { MdPersonAdd } from "react-icons/md";
+
+const MAX_PLAYERS = 4;
 
 const AddRacePage: NextPage = () => {
-  const router = useRouter();
-  const { allCompetitors, isLoading } = useContext(AppContext);
+    const router = useRouter();
+    const { allCompetitors, isLoading } = useContext(AppContext);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    []
-  );
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
 
-  const filteredCompetitors = allCompetitors.filter((c) => {
-    const fullName = (c.firstName + " " + c.lastName).toLowerCase();
-    return fullName.includes(searchTerm.toLowerCase());
-  });
-
-  const toggleSelection = (competitor: Competitor) => {
-    setSelectedCompetitors((prev) => {
-      if (prev.includes(competitor)) {
-        return prev.filter((cmp) => cmp.id !== competitor.id);
-      } else if (prev.length < 4) {
-        return [...prev, competitor];
-      }
-      return prev;
+    const filteredCompetitors = allCompetitors.filter((c) => {
+        const fullName = (c.firstName + " " + c.lastName).toLowerCase();
+        return fullName.includes(searchTerm.toLowerCase());
     });
-  };
 
-  const onNext = () => {
-    if (selectedCompetitors.length === 4) {
-      const ids = selectedCompetitors.map((c) => c.id).join(",");
-      router.push(`/races/score-setup?ids=${ids}`);
-    }
-  };
+    const toggleSelection = (competitor: Competitor) => {
+        setSelectedCompetitors((prev) => {
+            if (prev.includes(competitor)) {
+                return prev.filter((cmp) => cmp.id !== competitor.id);
+            } else if (prev.length < MAX_PLAYERS) {
+                return [...prev, competitor];
+            }
+            return prev;
+        });
+    };
 
-  return (
-    <div className="min-h-screen px-4 pt-6 bg-neutral-900 text-neutral-100">
-      <h1 className="text-title">Ajouter une course</h1>
-      <p className="text-neutral-300 text-regular mb-4">Qui participe ?</p>
+    const onNext = () => {
+        if (selectedCompetitors.length === MAX_PLAYERS) {
+            const ids = selectedCompetitors.map((c) => c.id).join(",");
+            router.push(`/races/score-setup?ids=${ids}`);
+        }
+    };
 
-      {isLoading ? (
-        <p className="text-neutral-300 text-regular">Chargement...</p>
-      ) : (
-        <>
-          {/* Search field */}
-          <div className="mb-4">
-            <label className="block text-heading text-neutral-300 mb-2">Recherche</label>
-            <input
-              type="text"
-              placeholder="Entrez un prénom ou un nom"
-              className="w-full h-12 bg-neutral-800 text-neutral-300 text-regular rounded px-4 border border-neutral-750"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+    return (
+        <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6">
+            <div className="max-w-lg mx-auto">
+                {/* Title and subtitle */}
+                <h1 className="text-2xl font-bold mb-1">Ajouter des joueurs</h1>
+                <p className="text-sm text-neutral-400 mb-6">
+                    Sélectionnez qui va participer…
+                </p>
 
-          {/* Add competitor button */}
-          <div
-            className="flex items-center mb-2 p-2 rounded cursor-pointer bg-neutral-800 hover:bg-neutral-700"
-            onClick={() => router.push("/competitors/add")}
-          >
-            <div className="w-12 h-12 flex items-center justify-center border border-neutral-500 rounded text-primary-500 text-xl">
-              +
+                {isLoading ? (
+                    <p className="text-neutral-300">Chargement...</p>
+                ) : (
+                    <>
+                        {/* Search bar */}
+                        <div className="relative mb-4">
+                            {/* Magnifying glass icon */}
+                            <svg
+                                className="w-5 h-5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 1 0-10.61-10.61 7.5 7.5 0 0 0 10.61 10.61z"
+                                />
+                            </svg>
+                            <input
+                                type="text"
+                                placeholder="Recherche..."
+                                className="w-full h-10 bg-neutral-800 text-neutral-100 rounded pl-9 pr-3
+                           border border-neutral-700
+                           focus:outline-none focus:border-primary-500 transition-colors"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        {/* "Add a player" button */}
+                        <div
+                            className="flex items-center mb-6 cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
+                            onClick={() => router.push("/competitors/add")}
+                        >
+                            <MdPersonAdd className="text-2xl text-primary-500 mr-2" />
+                            <span className="text-base text-neutral-100 font-semibold">
+                                Ajouter un joueur
+                            </span>
+                        </div>
+
+                        {/* List of filtered players */}
+                        <div className="flex flex-col">
+                            {filteredCompetitors.map((competitor) => (
+                                <CheckableCompetitorItem
+                                    key={competitor.id}
+                                    competitor={competitor}
+                                    isSelected={selectedCompetitors.includes(competitor)}
+                                    toggleSelection={toggleSelection}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="mt-8 text-center">
+                            <p className="text-sm text-neutral-400 mb-4">
+                                {selectedCompetitors.length} joueur
+                                {selectedCompetitors.length > 1 ? "s" : ""} sélectionné
+                                {selectedCompetitors.length > 1 ? "s" : ""}
+                            </p>
+
+                            <button
+                                onClick={onNext}
+                                disabled={selectedCompetitors.length !== MAX_PLAYERS}
+                                className={`
+                  w-full h-12 rounded font-semibold
+                  ${selectedCompetitors.length === MAX_PLAYERS
+                                        ? "bg-primary-500 text-neutral-900"
+                                        : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
+                                    }
+                `}
+                            >
+                                Lancer la partie
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
-            <span className="ml-4 text-neutral-300 text-regular">
-              Ajouter un·e compétiteur·trice
-            </span>
-          </div>
-
-          {/* Competitors list */}
-          <div className="mt-4 flex flex-col gap-2">
-            {filteredCompetitors.map((competitor) => (
-              <CheckableCompetitorItem
-                key={competitor.id}
-                competitor={competitor}
-                isSelected={selectedCompetitors.includes(competitor)}
-                toggleSelection={toggleSelection}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Footer */}
-      <div className="mt-6 mb-20 flex gap-3">
-        <button
-          onClick={() => router.back()}
-          className="flex-1 h-12 border-2 border-primary-500 text-primary-500 rounded text-bold"
-        >
-          Annuler
-        </button>
-        <button
-          onClick={onNext}
-          className={`flex-1 h-12 rounded text-bold ${
-            selectedCompetitors.length === 4
-              ? "bg-primary-500 text-neutral-900"
-              : "bg-neutral-500 text-neutral-600"
-          }`}
-        >
-          {selectedCompetitors.length}/4
-        </button>
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default AddRacePage;
