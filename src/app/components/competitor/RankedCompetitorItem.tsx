@@ -1,6 +1,6 @@
 import { FC, useState } from "react";
 import Image from "next/image";
-import { Competitor } from "@/app/models/Competitor";
+import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import CompetitorDetailModal from "./CompetitorDetailModal";
 
 interface Props {
@@ -33,7 +33,7 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
               {shortName}
             </span>
             <span className="text-sm text-neutral-400">
-              {competitor.elo.toFixed(0)}
+              {getDisplayScore(competitor)}
             </span>
           </div>
         </div>
@@ -42,7 +42,7 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
         <div className="flex flex-col items-end">
           <span className="text-xs uppercase text-neutral-400">Avg</span>
           <span className="text-neutral-100 font-semibold">
-            {competitor.avgRank12.toFixed(1)}
+            {competitor.avgRank12 ? competitor.avgRank12.toFixed(1) : "N/A"}
           </span>
         </div>
       </div>

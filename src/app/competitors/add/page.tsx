@@ -16,7 +16,8 @@ const AddCompetitorPage: NextPage = () => {
   const isAllValid = (): boolean => {
     if (!firstName.trim() || !lastName.trim()) return false;
     const lower = url.trim().toLowerCase();
-    if (!lower.startsWith("http://") && !lower.startsWith("https://")) return false;
+    if (!lower.startsWith("http://") && !lower.startsWith("https://"))
+      return false;
     if (
       !(
         lower.endsWith(".png") ||
@@ -39,10 +40,6 @@ const AddCompetitorPage: NextPage = () => {
       firstName,
       lastName,
       profilePictureUrl: url,
-      elo: 1500,
-      rank: 0,
-      raceCount: 0,
-      avgRank12: 0,
     });
     alert("Compétiteur ajouté avec succès !");
     router.back();
@@ -51,9 +48,7 @@ const AddCompetitorPage: NextPage = () => {
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
       <h1 className="text-title mb-4">Ajouter un·e compétiteur·trice</h1>
-      <p className="text-neutral-300 text-regular mb-4">
-        Nouveau astronaute ?
-      </p>
+      <p className="text-neutral-300 text-regular mb-4">Nouveau astronaute ?</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label className="block mb-1 text-neutral-300">Prénom</label>
@@ -74,7 +69,9 @@ const AddCompetitorPage: NextPage = () => {
           />
         </div>
         <div>
-          <label className="block mb-1 text-neutral-300">Image de profil (URL)</label>
+          <label className="block mb-1 text-neutral-300">
+            Image de profil (URL)
+          </label>
           <input
             type="text"
             className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
@@ -92,10 +89,11 @@ const AddCompetitorPage: NextPage = () => {
           </button>
           <button
             type="submit"
-            className={`flex-1 p-3 rounded text-bold ${isAllValid()
+            className={`flex-1 p-3 rounded text-bold ${
+              isAllValid()
                 ? "bg-primary-500 text-neutral-900"
                 : "bg-neutral-500 text-neutral-600"
-              }`}
+            }`}
           >
             Ajouter
           </button>

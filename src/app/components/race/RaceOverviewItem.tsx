@@ -57,7 +57,9 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
         onClick={openModal}
       >
         {sortedResults.map((res) => {
-          const competitor = participants.find((c) => c.id === res.competitorId);
+          const competitor = participants.find(
+            (c) => c.id === res.competitorId
+          );
           if (!competitor) return null;
 
           // isWinner = if rank12 of this participant == bestRank
@@ -65,7 +67,10 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
           const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
 
           return (
-            <div key={res.competitorId} className="flex justify-between items-center mb-1">
+            <div
+              key={res.competitorId}
+              className="flex justify-between items-center mb-1"
+            >
               <span
                 className={
                   isWinner

@@ -3,7 +3,11 @@
 import { FC, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { AppContext } from "@/app/context/AppContext";
-import { Competitor } from "@/app/models/Competitor";
+import {
+  Competitor,
+  getDisplayScore,
+  getFullName,
+} from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
 
 interface Props {
@@ -41,17 +45,15 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
     switch (rank) {
       case 1:
         return "1er";
-      case 2:
-        return "2e";
-      case 3:
-        return "3e";
       default:
         return `${rank}e`;
     }
   };
 
-  const shortName = `${competitor.firstName} ${competitor.lastName}`;
-  const playerRank = competitor.rank > 0 ? formatRankFR(competitor.rank) : null;
+  const playerRank =
+    competitor.rank && competitor.rank > 0
+      ? formatRankFR(competitor.rank)
+      : null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
@@ -71,7 +73,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
           <div className="w-24 h-24 rounded-full overflow-hidden mb-3">
             <Image
               src={competitor.profilePictureUrl}
-              alt={shortName}
+              alt={getFullName(competitor)}
               width={96}
               height={96}
               className="object-cover w-full h-full"
@@ -80,7 +82,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
 
           {/* Name + Rank on a single line */}
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <span>{shortName}</span>
+            <span>{getFullName(competitor)}</span>
             {playerRank && (
               <span className="text-2xl text-neutral-400">• {playerRank}</span>
             )}
@@ -107,7 +109,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
           <div className="w-px h-8 my-auto bg-neutral-700" />
           {/* Elo */}
           <div className="px-4">
-            <p className="text-2xl font-bold">{Math.round(competitor.elo)}</p>
+            <p className="text-2xl font-bold">{getDisplayScore(competitor)}</p>
             <p className="text-xs text-neutral-400 mt-1">Elo</p>
           </div>
         </div>

@@ -10,7 +10,7 @@ import { CompetitorsRepository } from "../repositories/CompetitorsRepository";
 import { RacesRepository } from "../repositories/RacesRepository";
 
 // We assume the base URL is in an environment variable
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
 
 // Create the repository instances
 const competitorsRepo = new CompetitorsRepository(baseUrl);
@@ -62,7 +62,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       const createdRace = await racesRepo.createRace(newEvent);
       // Insert it at the beginning
       setRaceEvents((prev) => [createdRace, ...prev]);
-      // Reload to update ELO, rank, etc if needed
+      // Reload to update rank, etc if needed
       await loadInitialData();
     } catch (err) {
       console.error("Error saving race event:", err);
@@ -73,7 +73,9 @@ export function AppProvider({ children }: PropsWithChildren) {
     return racesRepo.fetchRaceById(raceId);
   };
 
-  const getRecentRacesOfCompetitor = async (competitorId: string): Promise<RecentRaceInfo[]> => {
+  const getRecentRacesOfCompetitor = async (
+    competitorId: string
+  ): Promise<RecentRaceInfo[]> => {
     try {
       return await racesRepo.fetchRecentRacesOfCompetitor(competitorId);
     } catch (err) {
@@ -91,16 +93,11 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
   };
 
-  // Sort by ELO descending, just like in Flutter
-  const allCompetitors = React.useMemo(() => {
-    return [...competitors].sort((a, b) => b.elo - a.elo);
-  }, [competitors]);
-
   return (
     <AppContext.Provider
       value={{
         isLoading,
-        allCompetitors,
+        allCompetitors: competitors,
         allRaces: raceEvents,
         loadInitialData,
         addCompetitor,

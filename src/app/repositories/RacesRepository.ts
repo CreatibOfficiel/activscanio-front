@@ -2,7 +2,7 @@ import { RaceEvent } from "../models/RaceEvent";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
 
 export class RacesRepository {
-  constructor(private baseUrl: string) { }
+  constructor(private baseUrl: string) {}
 
   // POST /races
   async createRace(race: RaceEvent): Promise<RaceEvent> {
@@ -32,8 +32,12 @@ export class RacesRepository {
   }
 
   // GET /competitors/:competitorId/recent-races
-  async fetchRecentRacesOfCompetitor(competitorId: string): Promise<RecentRaceInfo[]> {
-    const res = await fetch(`${this.baseUrl}/competitors/${competitorId}/recent-races`);
+  async fetchRecentRacesOfCompetitor(
+    competitorId: string
+  ): Promise<RecentRaceInfo[]> {
+    const res = await fetch(
+      `${this.baseUrl}/competitors/${competitorId}/recent-races`
+    );
     if (res.ok) {
       return await res.json();
     } else {
