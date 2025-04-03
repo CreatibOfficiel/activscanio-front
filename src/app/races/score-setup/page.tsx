@@ -13,9 +13,15 @@ const ScoreSetupPage: NextPage = () => {
   const searchParams = useSearchParams();
   const { allCompetitors } = useContext(AppContext);
 
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
-  const [rankMap, setRankMap] = useState<Record<string, number | undefined>>({});
-  const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>({});
+  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
+    []
+  );
+  const [rankMap, setRankMap] = useState<Record<string, number | undefined>>(
+    {}
+  );
+  const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>(
+    {}
+  );
 
   // Retrieve competitors from the URL (query param "ids")
   useEffect(() => {
@@ -124,7 +130,8 @@ const ScoreSetupPage: NextPage = () => {
     }));
   };
 
-  const canContinue = isAllValid && validateLogic(selectedCompetitors, rankMap, scoreMap);
+  const canContinue =
+    isAllValid && validateLogic(selectedCompetitors, rankMap, scoreMap);
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
@@ -141,7 +148,8 @@ const ScoreSetupPage: NextPage = () => {
 
       {/* Explication */}
       <p className="text-sm text-neutral-300 mb-8">
-        Indique le rang (1 à 12) et le score (0 à 60) pour chacun des joueurs sélectionnés.
+        Indique le rang (1 à 12) et le score (0 à 60) pour chacun des joueurs
+        sélectionnés.
       </p>
 
       {/* List of competitors */}
@@ -171,7 +179,9 @@ const ScoreSetupPage: NextPage = () => {
             <div className="flex items-center gap-6">
               {/* Rank */}
               <div className="text-center">
-                <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">Rang</p>
+                <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
+                  Rang
+                </p>
                 <input
                   type="number"
                   min={1}
@@ -185,7 +195,9 @@ const ScoreSetupPage: NextPage = () => {
 
               {/* Score */}
               <div className="text-center">
-                <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">Score</p>
+                <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
+                  Score
+                </p>
                 <input
                   type="number"
                   min={0}
@@ -206,9 +218,10 @@ const ScoreSetupPage: NextPage = () => {
         <button
           className={`
             w-full h-12 rounded font-semibold transition-colors
-            ${canContinue
-              ? "bg-primary-500 text-neutral-900 hover:bg-primary-400"
-              : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
+            ${
+              canContinue
+                ? "bg-primary-500 text-neutral-900 hover:bg-primary-400"
+                : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
             }
           `}
           onClick={handleNext}

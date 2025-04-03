@@ -14,7 +14,9 @@ const RaceSummaryPage: NextPage = () => {
   const searchParams = useSearchParams();
   const { addRaceEvent, allCompetitors } = useContext(AppContext);
 
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
+  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
+    []
+  );
   const [results, setResults] = useState<RaceResult[]>([]);
 
   useEffect(() => {
@@ -48,36 +50,36 @@ const RaceSummaryPage: NextPage = () => {
   };
 
   return (
-      <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
-        {/* Flèche de retour en haut à gauche */}
-        <div className="flex items-center gap-3 mb-6">
-          <button
-              onClick={() => router.back()}
-              className="text-neutral-400 hover:text-neutral-200 transition-colors"
-          >
-            <MdArrowBack size={26} />
-          </button>
-          {/* Titre principal */}
-          <h1 className="text-xl font-bold">Ajouter une course</h1>
-        </div>
-
-        {/* Texte explicatif */}
-        <p className="text-neutral-300 text-sm mb-6">
-          L&apos;estimation de l&apos;Élo affichée peut différer du calcul final (bonus, malus...).
-        </p>
-
-        <RaceResultEloSummary results={results} selectedCompetitors={selectedCompetitors} />
-
-        {/* Un seul bouton "Valider" sur toute la largeur */}
-        <div className="mt-8">
-          <button
-              className="w-full h-12 rounded font-semibold bg-primary-500 text-neutral-900"
-              onClick={handleValidate}
-          >
-            Valider
-          </button>
-        </div>
+    <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => router.back()}
+          className="text-neutral-400 hover:text-neutral-200 transition-colors"
+        >
+          <MdArrowBack size={26} />
+        </button>
+        <h1 className="text-xl font-bold">Ajouter une course</h1>
       </div>
+
+      <p className="text-neutral-300 text-sm mb-6">
+        L&apos;estimation de l&apos;Élo affichée peut différer du calcul final
+        (bonus, malus...).
+      </p>
+
+      <RaceResultEloSummary
+        results={results}
+        selectedCompetitors={selectedCompetitors}
+      />
+
+      <div className="mt-8">
+        <button
+          className="w-full h-12 rounded font-semibold bg-primary-500 text-neutral-900"
+          onClick={handleValidate}
+        >
+          Valider
+        </button>
+      </div>
+    </div>
   );
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useContext, useEffect, useState } from "react";
-import Image from 'next/image';
+import Image from "next/image";
 import { AppContext } from "@/app/context/AppContext";
 import { RaceEvent } from "@/app/models/RaceEvent";
 import { Competitor } from "@/app/models/Competitor";
@@ -12,7 +12,8 @@ interface Props {
 }
 
 const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
-  const { getRaceById, allCompetitors, getSimilarRaces } = useContext(AppContext);
+  const { getRaceById, allCompetitors, getSimilarRaces } =
+    useContext(AppContext);
 
   const [raceEvent, setRaceEvent] = useState<RaceEvent | null>(null);
   const [similarRaces, setSimilarRaces] = useState<RaceEvent[]>([]);
@@ -69,10 +70,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
             if (!comp) return null;
             const isWinner = res.rank12 === 1;
             return (
-              <div
-                className="flex flex-col items-center m-2"
-                key={comp.id}
-              >
+              <div className="flex flex-col items-center m-2" key={comp.id}>
                 <Image
                   src={comp.profilePictureUrl}
                   alt={comp.firstName}
@@ -80,7 +78,13 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
                   height={56}
                   className="rounded-md object-cover"
                 />
-                <p className={isWinner ? "text-bold text-neutral-100" : "text-bold text-neutral-300"}>
+                <p
+                  className={
+                    isWinner
+                      ? "text-bold text-neutral-100"
+                      : "text-bold text-neutral-300"
+                  }
+                >
                   {comp.firstName} {comp.lastName[0]}.
                 </p>
                 <p className="text-regular text-neutral-400">
@@ -103,8 +107,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
           similarRaces.slice(0, 3).map((sim) => (
             <div key={sim.id} className="bg-neutral-800 p-3 rounded mb-2">
               <p className="text-sm font-semibold text-neutral-100">
-                Course #{sim.id} du{" "}
-                {new Date(sim.date).toLocaleDateString()}
+                Course #{sim.id} du {new Date(sim.date).toLocaleDateString()}
               </p>
             </div>
           ))

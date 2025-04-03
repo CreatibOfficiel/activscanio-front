@@ -6,7 +6,11 @@ export default function ScoreSetupLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Suspense fallback={<div className="text-neutral-100 text-regular">Chargement...</div>}>
+    <Suspense
+      fallback={
+        <div className="text-neutral-100 text-regular">Chargement...</div>
+      }
+    >
       {children}
     </Suspense>
   );

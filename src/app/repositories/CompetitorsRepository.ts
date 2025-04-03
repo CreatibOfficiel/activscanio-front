@@ -1,7 +1,7 @@
 import { Competitor } from "../models/Competitor";
 
 export class CompetitorsRepository {
-  constructor(private baseUrl: string) { }
+  constructor(private baseUrl: string) {}
 
   // GET /competitors
   async fetchCompetitors(): Promise<Competitor[]> {
@@ -21,7 +21,8 @@ export class CompetitorsRepository {
       body: JSON.stringify({
         firstName: competitor.firstName,
         lastName: competitor.lastName,
-        elo: competitor.elo,
+        mu: competitor.mu,
+        sigma: competitor.sigma,
         profilePictureUrl: competitor.profilePictureUrl,
         raceCount: competitor.raceCount,
         avgRank12: competitor.avgRank12,
