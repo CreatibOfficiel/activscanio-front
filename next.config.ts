@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
         hostname: "cdn.prod.website-files.com",
         port: "",
         pathname: "/**", 
-        // Le `/**` autorise n'importe quel chemin 
+        // The `/**` allows any path
+        // Exemple : https://cdn.prod.website-files.com/mon-image.png
       },
     ],
   },

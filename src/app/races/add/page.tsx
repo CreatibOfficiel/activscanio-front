@@ -46,9 +46,9 @@ const AddRacePage: NextPage = () => {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6">
       <div className="max-w-lg mx-auto">
         {/* Title and subtitle */}
-        <h1 className="text-2xl font-bold mb-1">Ajouter des joueurs</h1>
+        <h1 className="text-2xl font-bold mb-1">Sélection des joueurs</h1>
         <p className="text-sm text-neutral-400 mb-6">
-          Sélectionnez qui va participer…
+          Qui veut se la coller ?
         </p>
 
         {isLoading ? (
@@ -125,7 +125,7 @@ const AddRacePage: NextPage = () => {
                   }
                 `}
               >
-                Lancer la partie
+                Continuer
               </button>
             </div>
           </>

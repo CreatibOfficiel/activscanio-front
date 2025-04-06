@@ -61,10 +61,10 @@ const RaceSummaryPage: NextPage = () => {
         <h1 className="text-xl font-bold">Ajouter une course</h1>
       </div>
 
-      <p className="text-neutral-300 text-sm mb-6">
+      {/* <p className="text-neutral-300 text-sm mb-6">
         L&apos;estimation de l&apos;Élo affichée peut différer du calcul final
         (bonus, malus...).
-      </p>
+      </p> */}
 
       <RaceResultEloSummary
         results={results}
