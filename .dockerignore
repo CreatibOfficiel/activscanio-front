@@ -1,0 +1,26 @@
+# Exclude local dependencies
+node_modules
+
+# Exclude Next.js build output folders
+.next
+out
+dist
+
+# Exclude version control files and directories
+.git
+.gitignore
+
+# Exclude Docker configuration files (they are not needed in the image)
+Dockerfile*
+.dockerignore
+
+# Exclude log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Exclude local environment variable files
+.env
+
+# Exclude test coverage reports
+coverage

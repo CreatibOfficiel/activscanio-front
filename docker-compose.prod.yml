@@ -1,5 +1,6 @@
 services:
   front:
+    container_name: activscanio-front
     build:
       context: .
       args:

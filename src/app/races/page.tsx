@@ -45,7 +45,7 @@ const RacesPage: NextPage = () => {
 
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
-      <h1 className="text-title mb-4">Courses</h1>
+      <h1 className="text-center text-title mb-4">Courses</h1>
       {sortedRaces.length === 0 ? (
         <p className="text-neutral-300 text-regular">
           Aucune course enregistrée.

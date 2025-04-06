@@ -35,7 +35,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
-      <h1 className="text-center text-2xl font-bold mb-4">Classement</h1>
+      <h1 className="text-center text-title mb-4">Classement</h1>
 
       {topThree.length > 0 ? (
         <div className="mb-6">
