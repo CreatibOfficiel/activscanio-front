@@ -7,7 +7,9 @@ import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
 import { MdPersonAdd } from "react-icons/md";
+import { MdSearch } from "react-icons/md";
 
+const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 4;
 
 const AddRacePage: NextPage = () => {
@@ -19,7 +21,18 @@ const AddRacePage: NextPage = () => {
     []
   );
 
-  const filteredCompetitors = allCompetitors.filter((c) => {
+  const sortedCompetitors = [...allCompetitors].sort((a, b) => {
+    // Sort first by raceCount descending
+    if ((b.raceCount ?? 0) !== (a.raceCount ?? 0)) {
+      return (b.raceCount ?? 0) - (a.raceCount ?? 0);
+    }
+    // In case of a tie, sort alphabetically
+    const fullNameA = (a.firstName + " " + a.lastName).toLowerCase();
+    const fullNameB = (b.firstName + " " + b.lastName).toLowerCase();
+    return fullNameA.localeCompare(fullNameB);
+  });
+
+  const filteredCompetitors = sortedCompetitors.filter((c) => {
     const fullName = (c.firstName + " " + c.lastName).toLowerCase();
     return fullName.includes(searchTerm.toLowerCase());
   });
@@ -36,7 +49,8 @@ const AddRacePage: NextPage = () => {
   };
 
   const onNext = () => {
-    if (selectedCompetitors.length === MAX_PLAYERS) {
+    if (selectedCompetitors.length >= MIN_PLAYERS && selectedCompetitors.length <= MAX_PLAYERS) {
+      // Redirect to the score setup page with selected competitors' IDs
       const ids = selectedCompetitors.map((c) => c.id).join(",");
       router.push(`/races/score-setup?ids=${ids}`);
     }
@@ -57,20 +71,7 @@ const AddRacePage: NextPage = () => {
           <>
             {/* Search bar */}
             <div className="relative mb-4">
-              {/* Magnifying glass icon */}
-              <svg
-                className="w-5 h-5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 1 0-10.61-10.61 7.5 7.5 0 0 0 10.61 10.61z"
-                />
-              </svg>
+              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Recherche..."
@@ -115,11 +116,12 @@ const AddRacePage: NextPage = () => {
 
               <button
                 onClick={onNext}
-                disabled={selectedCompetitors.length !== MAX_PLAYERS}
+                disabled={selectedCompetitors.length < MIN_PLAYERS || selectedCompetitors.length > MAX_PLAYERS}
                 className={`
                   w-full h-12 rounded font-semibold
                   ${
-                    selectedCompetitors.length === MAX_PLAYERS
+                    selectedCompetitors.length >= MIN_PLAYERS &&
+                    selectedCompetitors.length <= MAX_PLAYERS
                       ? "bg-primary-500 text-neutral-900"
                       : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
                   }

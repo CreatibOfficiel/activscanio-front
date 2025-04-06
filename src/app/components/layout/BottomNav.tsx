@@ -28,7 +28,7 @@ const BottomNav: FC = () => {
               {/* Icône */}
               <span
                 className={`text-2xl ${
-                  isActive ? "text-white" : "text-neutral-300"
+                  isActive ? "text-primary-500" : "text-neutral-300"
                 }`}
               >
                 {item.icon}
@@ -36,7 +36,7 @@ const BottomNav: FC = () => {
               {/* Label */}
               <span
                 className={`text-xs ${
-                  isActive ? "text-white" : "text-neutral-500"
+                  isActive ? "text-primary-500" : "text-neutral-500"
                 }`}
               >
                 {item.label}
