@@ -8,6 +8,7 @@ import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
 import { CompetitorsRepository } from "../repositories/CompetitorsRepository";
 import { RacesRepository } from "../repositories/RacesRepository";
+import { RaceAnalysisRepository } from "../repositories/RaceAnalysisRepository";
 
 // We assume the base URL is in an environment variable
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
@@ -15,6 +16,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/a
 // Create the repository instances
 const competitorsRepo = new CompetitorsRepository(baseUrl);
 const racesRepo = new RacesRepository(baseUrl);
+const raceAnalysisRepo = new RaceAnalysisRepository(baseUrl);
 
 export function AppProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +71,15 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
   };
 
+  const analyzeRaceImage = async (image: File, competitorIds: string[]) => {
+    try {
+      return await raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds);
+    } catch (err) {
+      console.error("Error analyzing race image:", err);
+      throw err;
+    }
+  };
+
   const getRaceById = async (raceId: string): Promise<RaceEvent> => {
     return racesRepo.fetchRaceById(raceId);
   };
@@ -102,6 +113,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         loadInitialData,
         addCompetitor,
         addRaceEvent,
+        analyzeRaceImage,
         getRaceById,
         getRecentRacesOfCompetitor,
         getSimilarRaces,

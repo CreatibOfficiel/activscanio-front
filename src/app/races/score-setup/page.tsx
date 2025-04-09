@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import Image from "next/image";
-import { MdArrowBack } from "react-icons/md";
+import { MdArrowBack, MdOutlineCheckCircle } from "react-icons/md";
 
 const ScoreSetupPage: NextPage = () => {
   const router = useRouter();
@@ -22,28 +22,62 @@ const ScoreSetupPage: NextPage = () => {
   const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>(
     {}
   );
+  const [isFromAnalysis, setIsFromAnalysis] = useState(false);
 
-  // Retrieve competitors from the URL (query param "ids")
+  // Retrieve competitors and data from the URL
   useEffect(() => {
     const idsParam = searchParams.get("ids");
+    const rankMapParam = searchParams.get("rankMap");
+    const scoreMapParam = searchParams.get("scoreMap");
+    const fromAnalysisParam = searchParams.get("fromAnalysis");
+    
     if (idsParam) {
       const ids = idsParam.split(",");
       const comps = allCompetitors.filter((c) => ids.includes(c.id));
       setSelectedCompetitors(comps);
     }
+
+    // Set ranks and scores if present in the URL
+    if (rankMapParam) {
+      try {
+        const parsedRankMap = JSON.parse(rankMapParam);
+        setRankMap(parsedRankMap);
+      } catch (e) {
+        console.error("Error parsing rankMap:", e);
+      }
+    }
+
+    if (scoreMapParam) {
+      try {
+        const parsedScoreMap = JSON.parse(scoreMapParam);
+        setScoreMap(parsedScoreMap);
+      } catch (e) {
+        console.error("Error parsing scoreMap:", e);
+      }
+    }
+
+    // Check if coming from analysis
+    setIsFromAnalysis(fromAnalysisParam === "true");
   }, [searchParams, allCompetitors]);
 
-  // Initialize rankMap / scoreMap each time we have new competitors
+  // Initialize rankMap / scoreMap if not already set
   useEffect(() => {
-    const initRank: Record<string, number | undefined> = {};
-    const initScore: Record<string, number | undefined> = {};
-    selectedCompetitors.forEach((c) => {
-      initRank[c.id] = undefined;
-      initScore[c.id] = undefined;
-    });
-    setRankMap(initRank);
-    setScoreMap(initScore);
-  }, [selectedCompetitors]);
+    const hasRankMap = Object.keys(rankMap).length > 0;
+    const hasScoreMap = Object.keys(scoreMap).length > 0;
+    
+    if (!hasRankMap || !hasScoreMap) {
+      const initRank: Record<string, number | undefined> = { ...rankMap };
+      const initScore: Record<string, number | undefined> = { ...scoreMap };
+      
+      selectedCompetitors.forEach((c) => {
+        if (!initRank[c.id]) initRank[c.id] = undefined;
+        if (!initScore[c.id]) initScore[c.id] = undefined;
+      });
+      
+      if (!hasRankMap) setRankMap(initRank);
+      if (!hasScoreMap) setScoreMap(initScore);
+    }
+  }, [selectedCompetitors, rankMap, scoreMap]);
 
   // Basic check: each competitor has a rank (1..12) and a score (0..60)
   const isAllValid = selectedCompetitors.every((c) => {
@@ -146,6 +180,18 @@ const ScoreSetupPage: NextPage = () => {
         <h1 className="text-xl font-bold">Configuration du score</h1>
       </div>
 
+      {/* Notification for auto-detected results */}
+      {isFromAnalysis && (
+        <div className="mb-6 p-3 bg-primary-500 bg-opacity-10 border-l-4 border-primary-500 rounded-r">
+          <div className="flex items-center">
+            <MdOutlineCheckCircle className="text-primary-500 mr-2" size={20} />
+            <p className="text-sm text-neutral-200">
+              Résultats détectés automatiquement depuis l'image. Vérifiez et ajustez si nécessaire.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Explication */}
       <p className="text-sm text-neutral-300 mb-8">
         Indique le rang (1 à 12) et le score (0 à 60) pour chacun des joueurs
@@ -225,6 +271,7 @@ const ScoreSetupPage: NextPage = () => {
             }
           `}
           onClick={handleNext}
+          disabled={!canContinue}
         >
           Continuer
         </button>

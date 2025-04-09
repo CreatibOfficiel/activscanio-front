@@ -1,25 +1,26 @@
 "use client";
 
 import { NextPage } from "next";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
-import { MdPersonAdd } from "react-icons/md";
-import { MdSearch } from "react-icons/md";
+import { MdPersonAdd, MdSearch, MdCameraAlt } from "react-icons/md";
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 4;
 
 const AddRacePage: NextPage = () => {
   const router = useRouter();
-  const { allCompetitors, isLoading } = useContext(AppContext);
+  const { allCompetitors, isLoading, analyzeRaceImage } = useContext(AppContext);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
     []
   );
+  const [isUploading, setIsUploading] = useState(false);
 
   const sortedCompetitors = [...allCompetitors].sort((a, b) => {
     // Sort first by raceCount descending
@@ -56,6 +57,72 @@ const AddRacePage: NextPage = () => {
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Ensure at least one competitor is selected
+    if (selectedCompetitors.length === 0) {
+      alert("Veuillez sélectionner au moins un compétiteur avant d'analyser une photo.");
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      // Image
+      const image = files[0];
+      
+      // Include the selected competitor IDs in the request : string[]
+      const competitorIds = selectedCompetitors.map((c) => c.id);
+
+      // Send the image to the server for analysis
+      const response = await analyzeRaceImage(image, competitorIds);
+
+      const analysisResult = await response.json();
+      
+      // Extract the results from the analysis
+      // Format expected: { results: [{ competitorId, rank12, score }] }
+      const { results } = analysisResult;
+      
+      if (results && results.length > 0) {
+        // Prepare URL with rank and score data
+        const ids = results.map((r: any) => r.competitorId).join(',');
+        
+        // Create rank and score maps
+        const rankMap: Record<string, number> = {};
+        const scoreMap: Record<string, number> = {};
+        
+        results.forEach((result: any) => {
+          rankMap[result.competitorId] = result.rank12;
+          scoreMap[result.competitorId] = result.score;
+        });
+        
+        // Navigate to score setup with pre-filled data
+        router.push(
+          `/races/score-setup?ids=${ids}&rankMap=${JSON.stringify(rankMap)}&scoreMap=${JSON.stringify(scoreMap)}&fromAnalysis=true`
+        );
+      } else {
+        alert("L'analyse n'a pas pu détecter de résultats valides. Veuillez essayer avec une autre image ou saisir les scores manuellement.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'analyse de la photo:", error);
+      alert("Une erreur s'est produite lors de l'analyse de la photo. Veuillez réessayer.");
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6">
       <div className="max-w-lg mx-auto">
@@ -83,15 +150,38 @@ const AddRacePage: NextPage = () => {
               />
             </div>
 
-            {/* "Add a player" button */}
-            <div
-              className="flex items-center mb-6 cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
-              onClick={() => router.push("/competitors/add")}
-            >
-              <MdPersonAdd className="text-2xl text-primary-500 mr-2" />
-              <span className="text-base text-neutral-100 font-semibold">
-                Ajouter un joueur
-              </span>
+            {/* Buttons row */}
+            <div className="flex gap-2 mb-6">
+              {/* "Add a player" button */}
+              <div
+                className="flex-1 flex items-center cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
+                onClick={() => router.push("/competitors/add")}
+              >
+                <MdPersonAdd className="text-2xl text-primary-500 mr-2" />
+                <span className="text-base text-neutral-100 font-semibold">
+                  Ajouter un joueur
+                </span>
+              </div>
+
+              {/* "Take photo" button */}
+              <div
+                className="flex-1 flex items-center cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
+                onClick={triggerFileInput}
+              >
+                <MdCameraAlt className="text-2xl text-primary-500 mr-2" />
+                <span className="text-base text-neutral-100 font-semibold">
+                  {isUploading ? "Analyse en cours..." : "Prendre une photo"}
+                </span>
+                <input 
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handlePhotoUpload}
+                  disabled={isUploading}
+                />
+              </div>
             </div>
 
             {/* List of filtered players */}
@@ -116,12 +206,12 @@ const AddRacePage: NextPage = () => {
 
               <button
                 onClick={onNext}
-                disabled={selectedCompetitors.length < MIN_PLAYERS || selectedCompetitors.length > MAX_PLAYERS}
+                disabled={selectedCompetitors.length < MIN_PLAYERS || selectedCompetitors.length > MAX_PLAYERS || isUploading}
                 className={`
                   w-full h-12 rounded font-semibold
                   ${
                     selectedCompetitors.length >= MIN_PLAYERS &&
-                    selectedCompetitors.length <= MAX_PLAYERS
+                    selectedCompetitors.length <= MAX_PLAYERS && !isUploading
                       ? "bg-primary-500 text-neutral-900"
                       : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
                   }
