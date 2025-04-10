@@ -5,11 +5,14 @@ import { Competitor } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
+import { Character } from "../models/Character";
 
 export interface AppContextType {
   isLoading: boolean;
   allCompetitors: Competitor[];
   allRaces: RaceEvent[];
+  availableCharacters: Character[];
+  allCharacters: Character[];
   loadInitialData: () => Promise<void>;
   addCompetitor: (newCompetitor: Competitor) => Promise<void>;
   updateCompetitor: (competitor: Competitor) => Promise<void>;
@@ -26,6 +29,8 @@ export const AppContext = createContext<AppContextType>({
   isLoading: false,
   allCompetitors: [],
   allRaces: [],
+  availableCharacters: [],
+  allCharacters: [],
   loadInitialData: async () => {},
   addCompetitor: async () => {},
   updateCompetitor: async () => {},

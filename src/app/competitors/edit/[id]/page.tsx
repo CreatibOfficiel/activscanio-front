@@ -11,7 +11,7 @@ import Image from "next/image";
 const EditCompetitorPage: NextPage = () => {
   const router = useRouter();
   const params = useParams();
-  const { allCompetitors, updateCompetitor } = useContext(AppContext);
+  const { allCompetitors, updateCompetitor, availableCharacters, allCharacters } = useContext(AppContext);
   
   const [competitor, setCompetitor] = useState<Competitor | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -20,6 +20,7 @@ const EditCompetitorPage: NextPage = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [characterVariant, setCharacterVariant] = useState("Standard");
   const [isLoading, setIsLoading] = useState(true);
+  const [displayableCharacters, setDisplayableCharacters] = useState<Character[]>([]);
 
   // Récupère le compétiteur à éditer
   useEffect(() => {
@@ -39,6 +40,23 @@ const EditCompetitorPage: NextPage = () => {
       setIsLoading(false);
     }
   }, [params.id, allCompetitors]);
+
+  // Prépare la liste des personnages disponibles pour l'édition
+  useEffect(() => {
+    if (competitor && allCharacters) {
+      // Si le compétiteur a déjà un personnage, on l'ajoute à la liste des personnages disponibles
+      if (competitor.character) {
+        const alreadyAssigned = allCharacters.find(c => c.id === competitor.character?.id);
+        if (alreadyAssigned) {
+          setDisplayableCharacters([...availableCharacters, alreadyAssigned]);
+        } else {
+          setDisplayableCharacters([...availableCharacters]);
+        }
+      } else {
+        setDisplayableCharacters([...availableCharacters]);
+      }
+    }
+  }, [competitor, availableCharacters, allCharacters]);
 
   const isUrlValid = (url: string): boolean => {
     const lower = url.trim().toLowerCase();
@@ -87,7 +105,13 @@ const EditCompetitorPage: NextPage = () => {
 
   // Sélection d'un personnage
   const handleSelectCharacter = (character: Character) => {
-    setSelectedCharacter(character);
+    if (selectedCharacter?.id === character.id) {
+      // Si le personnage est déjà sélectionné, on le désélectionne
+      setSelectedCharacter(null);
+    } else {
+      setSelectedCharacter(character);
+      setCharacterVariant("Standard"); // Réinitialiser la variante par défaut
+    }
   };
 
   if (isLoading) {
@@ -162,29 +186,34 @@ const EditCompetitorPage: NextPage = () => {
         {/* Sélection du personnage */}
         <div className="mt-4">
           <label className="block mb-2 text-neutral-300">Personnage</label>
-          <div className="grid grid-cols-5 gap-2">
-            {/* Suppression de l'affichage des personnages par défaut */}
-            {selectedCharacter ? (
-              <div 
-                onClick={() => setSelectedCharacter(null)} // Permet de désélectionner le personnage
-                className={`
-                  p-2 rounded cursor-pointer flex flex-col items-center
-                  bg-primary-500 text-neutral-900
-                `}
-              >
-                <Image 
-                  src={selectedCharacter.imageUrl}
-                  alt={selectedCharacter.name}
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                />
-                <span className="text-xs mt-1">{selectedCharacter.name}</span>
-              </div>
-            ) : (
-              <p className="text-neutral-300">Aucun personnage sélectionné</p>
-            )}
-          </div>
+          {displayableCharacters.length === 0 ? (
+            <p className="text-neutral-500">Aucun personnage disponible</p>
+          ) : (
+            <div className="grid grid-cols-5 gap-2">
+              {displayableCharacters.map((character) => (
+                <div 
+                  key={character.id}
+                  onClick={() => handleSelectCharacter(character)}
+                  className={`
+                    p-2 rounded cursor-pointer flex flex-col items-center
+                    ${selectedCharacter?.id === character.id
+                      ? "bg-primary-500 text-neutral-900"
+                      : "bg-neutral-800 hover:bg-neutral-700"
+                    }
+                  `}
+                >
+                  <Image 
+                    src={character.imageUrl}
+                    alt={character.name}
+                    width={40}
+                    height={40}
+                    className="object-contain"
+                  />
+                  <span className="text-xs mt-1">{character.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         
         {/* Variant du personnage */}

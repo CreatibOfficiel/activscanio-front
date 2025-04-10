@@ -6,9 +6,11 @@ import { Competitor } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
+import { Character } from "../models/Character";
 import { CompetitorsRepository } from "../repositories/CompetitorsRepository";
 import { RacesRepository } from "../repositories/RacesRepository";
 import { RaceAnalysisRepository } from "../repositories/RaceAnalysisRepository";
+import { CharactersRepository } from "../repositories/CharactersRepository";
 
 // We assume the base URL is in an environment variable
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
@@ -17,11 +19,14 @@ const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/a
 const competitorsRepo = new CompetitorsRepository(baseUrl);
 const racesRepo = new RacesRepository(baseUrl);
 const raceAnalysisRepo = new RaceAnalysisRepository(baseUrl);
+const charactersRepo = new CharactersRepository(baseUrl);
 
 export function AppProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(false);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [raceEvents, setRaceEvents] = useState<RaceEvent[]>([]);
+  const [availableCharacters, setAvailableCharacters] = useState<Character[]>([]);
+  const [allCharacters, setAllCharacters] = useState<Character[]>([]);
 
   useEffect(() => {
     // On initial load, fetch data
@@ -31,10 +36,17 @@ export function AppProvider({ children }: PropsWithChildren) {
   const loadInitialData = async () => {
     try {
       setIsLoading(true);
-      const remoteCompetitors = await competitorsRepo.fetchCompetitors();
-      const remoteRaces = await racesRepo.fetchRecentRaces();
+      const [remoteCompetitors, remoteRaces, remoteAvailableChars, remoteAllChars] = await Promise.all([
+        competitorsRepo.fetchCompetitors(),
+        racesRepo.fetchRecentRaces(),
+        charactersRepo.fetchAvailableCharacters(),
+        charactersRepo.fetchAllCharacters()
+      ]);
+      
       setCompetitors(remoteCompetitors);
       setRaceEvents(remoteRaces);
+      setAvailableCharacters(remoteAvailableChars);
+      setAllCharacters(remoteAllChars);
     } catch (err) {
       console.error("Error loading data:", err);
     } finally {
@@ -46,6 +58,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     try {
       const created = await competitorsRepo.createCompetitor(newCompetitor);
       setCompetitors((prev) => [...prev, created]);
+      
+      // Refresh available characters after adding a competitor
+      const updatedAvailableChars = await charactersRepo.fetchAvailableCharacters();
+      setAvailableCharacters(updatedAvailableChars);
     } catch (err) {
       console.error("Error adding competitor:", err);
     }
@@ -57,6 +73,10 @@ export function AppProvider({ children }: PropsWithChildren) {
       setCompetitors((prev) => 
         prev.map(c => c.id === updated.id ? updated : c)
       );
+      
+      // Refresh available characters after updating a competitor
+      const updatedAvailableChars = await charactersRepo.fetchAvailableCharacters();
+      setAvailableCharacters(updatedAvailableChars);
     } catch (err) {
       console.error("Error updating competitor:", err);
     }
@@ -121,6 +141,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         isLoading,
         allCompetitors: competitors,
         allRaces: raceEvents,
+        availableCharacters,
+        allCharacters,
         loadInitialData,
         addCompetitor,
         updateCompetitor,
