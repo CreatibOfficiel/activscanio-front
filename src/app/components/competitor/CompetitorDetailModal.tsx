@@ -9,6 +9,7 @@ import {
   getFullName,
 } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
+import EditCompetitorButton from "./EditCompetitorButton";
 
 interface Props {
   competitor: Competitor;
@@ -59,13 +60,16 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
       {/* Dark card */}
       <div className="relative bg-neutral-900 text-neutral-100 w-full max-w-md rounded-2xl p-6 shadow-xl">
-        {/* Bouton close (X) */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-200 transition-colors text-3xl"
-        >
-          &times;
-        </button>
+        {/* Bouton close (X) et Edit */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <EditCompetitorButton competitor={competitor} />
+          <button
+            onClick={onClose}
+            className="text-neutral-400 hover:text-neutral-200 transition-colors text-3xl"
+          >
+            &times;
+          </button>
+        </div>
 
         {/* Avatar + Name + Rank */}
         <div className="flex flex-col items-center mb-6">
@@ -87,6 +91,26 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
               <span className="text-2xl text-neutral-400">• {playerRank}</span>
             )}
           </h2>
+
+          {/* Character info if available */}
+          {competitor.character && (
+            <div className="flex items-center gap-2 mt-2 bg-neutral-800 px-3 py-2 rounded-lg">
+              {competitor.character.imageUrl && (
+                <Image
+                  src={competitor.character.imageUrl}
+                  alt={competitor.character.name}
+                  width={24}
+                  height={24}
+                  className="object-contain"
+                />
+              )}
+              <span className="text-sm text-neutral-300">
+                {competitor.character.name}
+                {competitor.character.variant !== "Standard" && 
+                  ` (${competitor.character.variant})`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Stats (3 columns separated by vertical bars) */}

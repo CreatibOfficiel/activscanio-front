@@ -51,6 +51,17 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
   };
 
+  const updateCompetitor = async (competitor: Competitor) => {
+    try {
+      const updated = await competitorsRepo.updateCompetitor(competitor);
+      setCompetitors((prev) => 
+        prev.map(c => c.id === updated.id ? updated : c)
+      );
+    } catch (err) {
+      console.error("Error updating competitor:", err);
+    }
+  };
+
   const addRaceEvent = async (results: RaceResult[]) => {
     // We generate an ID client-side just as in the Flutter code (Random).
     const generatedId = Math.floor(Math.random() * 999999).toString();
@@ -112,6 +123,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         allRaces: raceEvents,
         loadInitialData,
         addCompetitor,
+        updateCompetitor,
         addRaceEvent,
         analyzeRaceImage,
         getRaceById,

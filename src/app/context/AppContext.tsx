@@ -12,6 +12,7 @@ export interface AppContextType {
   allRaces: RaceEvent[];
   loadInitialData: () => Promise<void>;
   addCompetitor: (newCompetitor: Competitor) => Promise<void>;
+  updateCompetitor: (competitor: Competitor) => Promise<void>;
   addRaceEvent: (results: RaceResult[]) => Promise<void>;
   analyzeRaceImage: (image: File, competitorIds: string[]) => Promise<any>;
   getRaceById: (raceId: string) => Promise<RaceEvent>;
@@ -27,6 +28,7 @@ export const AppContext = createContext<AppContextType>({
   allRaces: [],
   loadInitialData: async () => {},
   addCompetitor: async () => {},
+  updateCompetitor: async () => {},
   addRaceEvent: async () => {},
   analyzeRaceImage: async () => { throw new Error("Not implemented"); },
   getRaceById: async () => {

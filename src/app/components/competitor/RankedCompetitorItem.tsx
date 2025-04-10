@@ -2,6 +2,7 @@ import { FC, useState } from "react";
 import Image from "next/image";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import CompetitorDetailModal from "./CompetitorDetailModal";
+import EditCompetitorButton from "./EditCompetitorButton";
 
 interface Props {
   competitor: Competitor;
@@ -11,15 +12,18 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
   const [showModal, setShowModal] = useState(false);
   const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
 
+  const handleItemClick = () => {
+    setShowModal(true);
+  };
+
   return (
     <>
-      <div
-        onClick={() => setShowModal(true)}
-        className="p-2 pt-0 rounded cursor-pointer
-                   flex items-center justify-between"
-      >
+      <div className="p-2 pt-0 rounded cursor-pointer flex items-center justify-between">
         {/* Rank + Avatar + Name + ELO */}
-        <div className="flex items-center gap-3">
+        <div
+          className="flex items-center gap-3 flex-grow"
+          onClick={handleItemClick}
+        >
           <span className="text-neutral-500 font-bold">{competitor.rank}</span>
           <Image
             src={competitor.profilePictureUrl}
@@ -32,18 +36,28 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
             <span className="text-neutral-200 text-base font-semibold">
               {shortName}
             </span>
-            <span className="text-sm text-neutral-400">
-              {getDisplayScore(competitor)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-neutral-400">
+                {getDisplayScore(competitor)}
+              </span>
+              {competitor.character && (
+                <span className="text-xs text-neutral-500">
+                  • {competitor.character.name}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* AVG only */}
-        <div className="flex flex-col items-end">
-          <span className="text-xs uppercase text-neutral-400">Avg</span>
-          <span className="text-neutral-100 font-semibold">
-            {competitor.avgRank12 ? competitor.avgRank12.toFixed(1) : "N/A"}
-          </span>
+        {/* AVG + Edit Button */}
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end" onClick={handleItemClick}>
+            <span className="text-xs uppercase text-neutral-400">Avg</span>
+            <span className="text-neutral-100 font-semibold">
+              {competitor.avgRank12 ? competitor.avgRank12.toFixed(1) : "N/A"}
+            </span>
+          </div>
+          <EditCompetitorButton competitor={competitor} />
         </div>
       </div>
 
