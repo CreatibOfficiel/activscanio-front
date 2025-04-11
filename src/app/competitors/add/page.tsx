@@ -1,21 +1,28 @@
 "use client";
 
 import { NextPage } from "next";
-import { FormEvent, useContext, useState } from "react";
+import { FormEvent, useContext, useEffect, useState } from "react";
 import { AppContext } from "@/app/context/AppContext";
 import { useRouter } from "next/navigation";
-import { Character } from "@/app/models/Character";
+import { BaseCharacter, CharacterVariant } from "@/app/models/Character";
 import Image from "next/image";
 
 const AddCompetitorPage: NextPage = () => {
   const router = useRouter();
-  const { addCompetitor, availableCharacters } = useContext(AppContext);
+  const { addCompetitor, baseCharacters, getCharacterVariants } =
+    useContext(AppContext);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [url, setUrl] = useState("");
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [characterVariant, setCharacterVariant] = useState("Standard");
+  const [selectedBaseCharacter, setSelectedBaseCharacter] =
+    useState<BaseCharacter | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState<CharacterVariant | null>(null);
+  const [characterVariants, setCharacterVariants] = useState<
+    CharacterVariant[]
+  >([]);
+  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
 
   const isUrlValid = (urlStr: string): boolean => {
     const lower = urlStr.trim().toLowerCase();
@@ -39,25 +46,47 @@ const AddCompetitorPage: NextPage = () => {
     return isUrlValid(url);
   };
 
+  // Load variants when a base character is selected
+  useEffect(() => {
+    const loadVariants = async () => {
+      if (
+        (selectedBaseCharacter?.variants?.length ?? 0) > 1 &&
+        selectedBaseCharacter?.id
+      ) {
+        setIsLoadingVariants(true);
+        try {
+          const variants = await getCharacterVariants(selectedBaseCharacter.id);
+          setCharacterVariants(variants);
+
+          if (!selectedVariant && variants.length > 0) {
+            setSelectedVariant(variants[0]);
+          }
+        } catch (error) {
+          console.error("Error loading variants:", error);
+        } finally {
+          setIsLoadingVariants(false);
+        }
+      } else {
+        setCharacterVariants([]);
+        setSelectedVariant(null);
+      }
+    };
+
+    loadVariants();
+  }, [selectedBaseCharacter, getCharacterVariants, selectedVariant]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isAllValid()) return;
-
-    const character = selectedCharacter 
-      ? { 
-          ...selectedCharacter, 
-          variant: characterVariant 
-        }
-      : undefined;
 
     await addCompetitor({
       id: "",
       firstName,
       lastName,
       profilePictureUrl: url,
-      character
+      characterVariantId: selectedVariant?.id || undefined,
     });
-    
+
     alert("Compétiteur ajouté avec succès !");
     router.back();
   };
@@ -109,28 +138,35 @@ const AddCompetitorPage: NextPage = () => {
             </div>
           )}
         </div>
-        
-        {/* Sélection du personnage */}
+
+        {/* Selection of base character */}
         <div className="mt-4">
           <label className="block mb-2 text-neutral-300">Personnage</label>
-          {availableCharacters.length === 0 ? (
+          {baseCharacters.length === 0 ? (
             <p className="text-neutral-500">Aucun personnage disponible</p>
           ) : (
             <div className="grid grid-cols-5 gap-2">
-              {availableCharacters.map((character) => (
+              {baseCharacters.map((character) => (
                 <div
                   key={character.id}
-                  onClick={() => setSelectedCharacter(character)}
+                  onClick={() =>
+                    setSelectedBaseCharacter(
+                      selectedBaseCharacter?.id === character.id
+                        ? null
+                        : character
+                    )
+                  }
                   className={`
                     p-2 rounded cursor-pointer flex flex-col items-center
-                    ${selectedCharacter?.id === character.id
-                      ? "bg-primary-500 text-neutral-900"
-                      : "bg-neutral-800 hover:bg-neutral-700"
+                    ${
+                      selectedBaseCharacter?.id === character.id
+                        ? "bg-primary-500 text-neutral-900"
+                        : "bg-neutral-800 hover:bg-neutral-700"
                     }
                   `}
                 >
                   <Image
-                    src={character.imageUrl}
+                    src={character.imageUrl || ""}
                     alt={character.name}
                     width={40}
                     height={40}
@@ -143,22 +179,41 @@ const AddCompetitorPage: NextPage = () => {
           )}
         </div>
 
-        {/* Variant du personnage */}
-        {selectedCharacter && (
+        {/* Show variants only if the selected base character has variants */}
+        {(selectedBaseCharacter?.variants.length ?? 0) > 1 && (
           <div>
             <label className="block mb-1 text-neutral-300">Variante</label>
-            <select
-              className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-              value={characterVariant}
-              onChange={(e) => setCharacterVariant(e.target.value)}
-            >
-              <option value="Standard">Standard</option>
-              <option value="Metal">Metal</option>
-              <option value="Gold">Gold</option>
-              <option value="Baby">Baby</option>
-              <option value="Tanooki">Tanooki</option>
-              <option value="Cat">Cat</option>
-            </select>
+            {isLoadingVariants ? (
+              <p className="text-neutral-500">Chargement des variantes...</p>
+            ) : characterVariants.length === 0 ? (
+              <p className="text-neutral-500">Aucune variante disponible</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {characterVariants.map((variant) => (
+                  <div
+                    key={variant.id}
+                    onClick={() => setSelectedVariant(variant)}
+                    className={`
+                      p-2 rounded cursor-pointer flex flex-col items-center
+                      ${
+                        selectedVariant?.id === variant.id
+                          ? "bg-primary-500 text-neutral-900"
+                          : "bg-neutral-800 hover:bg-neutral-700"
+                      }
+                    `}
+                  >
+                    <Image
+                      src={variant.imageUrl}
+                      alt={variant.label || ""}
+                      width={40}
+                      height={40}
+                      className="object-contain"
+                    />
+                    <span className="text-xs mt-1">{variant.label || ""}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

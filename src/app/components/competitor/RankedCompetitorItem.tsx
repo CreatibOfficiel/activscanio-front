@@ -1,8 +1,9 @@
-import { FC, useState } from "react";
+import { FC, useContext, useState } from "react";
 import Image from "next/image";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import CompetitorDetailModal from "./CompetitorDetailModal";
 import EditCompetitorButton from "./EditCompetitorButton";
+import { AppContext } from "@/app/context/AppContext";
 
 interface Props {
   competitor: Competitor;
@@ -10,7 +11,15 @@ interface Props {
 
 const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
   const [showModal, setShowModal] = useState(false);
+  const { baseCharacters } = useContext(AppContext);
   const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
+
+  // Find the base character for this competitor
+  const foundBaseChar = competitor.characterVariantId
+    ? baseCharacters.find((bc) =>
+        bc.variants?.some((v) => v.id === competitor.characterVariantId)
+      )
+    : null;
 
   const handleItemClick = () => {
     setShowModal(true);
@@ -33,18 +42,20 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
             className="rounded-full object-cover"
           />
           <div className="flex flex-col">
-            <span className="text-neutral-200 text-base font-semibold">
-              {shortName}
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-neutral-400">
-                {getDisplayScore(competitor)}
+            <div className="flex flex-col">
+              <span className="text-neutral-200 text-base font-semibold">
+                {shortName}
               </span>
-              {competitor.character && (
-                <span className="text-xs text-neutral-500">
-                  • {competitor.character.name}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-neutral-400">
+                  {getDisplayScore(competitor)}
                 </span>
-              )}
+                {foundBaseChar && (
+                  <span className="text-xs text-neutral-500">
+                    • {foundBaseChar.name}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -6,16 +6,18 @@ import { Competitor } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
-import { Character } from "../models/Character";
+import { BaseCharacter, CharacterVariant } from "../models/Character";
 import { CompetitorsRepository } from "../repositories/CompetitorsRepository";
 import { RacesRepository } from "../repositories/RacesRepository";
-import { RaceAnalysisRepository } from "../repositories/RaceAnalysisRepository";
+import {
+  RaceAnalysisRepository,
+  RaceAnalysisResult,
+} from "../repositories/RaceAnalysisRepository";
 import { CharactersRepository } from "../repositories/CharactersRepository";
 
-// We assume the base URL is in an environment variable
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
+const baseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
 
-// Create the repository instances
 const competitorsRepo = new CompetitorsRepository(baseUrl);
 const racesRepo = new RacesRepository(baseUrl);
 const raceAnalysisRepo = new RaceAnalysisRepository(baseUrl);
@@ -25,65 +27,77 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(false);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [raceEvents, setRaceEvents] = useState<RaceEvent[]>([]);
-  const [availableCharacters, setAvailableCharacters] = useState<Character[]>([]);
-  const [allCharacters, setAllCharacters] = useState<Character[]>([]);
+  const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
 
   useEffect(() => {
-    // On initial load, fetch data
     loadInitialData().catch(console.error);
   }, []);
 
-  const loadInitialData = async () => {
+  const loadInitialData = async (): Promise<
+    [Competitor[], RaceEvent[], BaseCharacter[]]
+  > => {
     try {
       setIsLoading(true);
-      const [remoteCompetitors, remoteRaces, remoteAvailableChars, remoteAllChars] = await Promise.all([
-        competitorsRepo.fetchCompetitors(),
-        racesRepo.fetchRecentRaces(),
-        charactersRepo.fetchAvailableCharacters(),
-        charactersRepo.fetchAllCharacters()
-      ]);
-      
+      const [remoteCompetitors, remoteRaces, remoteBaseChars] =
+        await Promise.all([
+          competitorsRepo.fetchCompetitors(),
+          racesRepo.fetchRecentRaces(),
+          charactersRepo.fetchBaseCharacters(),
+        ]);
+
       setCompetitors(remoteCompetitors);
       setRaceEvents(remoteRaces);
-      setAvailableCharacters(remoteAvailableChars);
-      setAllCharacters(remoteAllChars);
+      setBaseCharacters(remoteBaseChars);
+
+      return [remoteCompetitors, remoteRaces, remoteBaseChars];
     } catch (err) {
       console.error("Error loading data:", err);
+      return [[], [], []];
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addCompetitor = async (newCompetitor: Competitor) => {
+  const getCharacterVariants = async (
+    baseCharacterId: string
+  ): Promise<CharacterVariant[]> => {
+    try {
+      return await charactersRepo.fetchCharacterVariants(baseCharacterId);
+    } catch (err) {
+      console.error("Error fetching character variants:", err);
+      return [];
+    }
+  };
+
+  const addCompetitor = async (
+    newCompetitor: Competitor
+  ): Promise<Competitor> => {
     try {
       const created = await competitorsRepo.createCompetitor(newCompetitor);
       setCompetitors((prev) => [...prev, created]);
-      
-      // Refresh available characters after adding a competitor
-      const updatedAvailableChars = await charactersRepo.fetchAvailableCharacters();
-      setAvailableCharacters(updatedAvailableChars);
+      return created;
     } catch (err) {
       console.error("Error adding competitor:", err);
+      throw err;
     }
   };
 
-  const updateCompetitor = async (competitor: Competitor) => {
+  const updateCompetitor = async (
+    competitor: Competitor
+  ): Promise<Competitor> => {
     try {
       const updated = await competitorsRepo.updateCompetitor(competitor);
-      setCompetitors((prev) => 
-        prev.map(c => c.id === updated.id ? updated : c)
+      setCompetitors((prev) =>
+        prev.map((c) => (c.id === updated.id ? updated : c))
       );
-      
-      // Refresh available characters after updating a competitor
-      const updatedAvailableChars = await charactersRepo.fetchAvailableCharacters();
-      setAvailableCharacters(updatedAvailableChars);
+      return updated;
     } catch (err) {
       console.error("Error updating competitor:", err);
+      throw err;
     }
   };
 
-  const addRaceEvent = async (results: RaceResult[]) => {
-    // We generate an ID client-side just as in the Flutter code (Random).
+  const addRaceEvent = async (results: RaceResult[]): Promise<RaceEvent> => {
     const generatedId = Math.floor(Math.random() * 999999).toString();
     const newEvent: RaceEvent = {
       id: generatedId,
@@ -93,18 +107,24 @@ export function AppProvider({ children }: PropsWithChildren) {
 
     try {
       const createdRace = await racesRepo.createRace(newEvent);
-      // Insert it at the beginning
       setRaceEvents((prev) => [createdRace, ...prev]);
-      // Reload to update rank, etc if needed
       await loadInitialData();
+      return createdRace;
     } catch (err) {
       console.error("Error saving race event:", err);
+      throw err;
     }
   };
 
-  const analyzeRaceImage = async (image: File, competitorIds: string[]) => {
+  const analyzeRaceImage = async (
+    image: File,
+    competitorIds: string[]
+  ): Promise<RaceAnalysisResult> => {
     try {
-      return await raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds);
+      return await raceAnalysisRepo.uploadImageForAnalysis(
+        image,
+        competitorIds
+      );
     } catch (err) {
       console.error("Error analyzing race image:", err);
       throw err;
@@ -141,8 +161,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         isLoading,
         allCompetitors: competitors,
         allRaces: raceEvents,
-        availableCharacters,
-        allCharacters,
+        baseCharacters,
         loadInitialData,
         addCompetitor,
         updateCompetitor,
@@ -151,6 +170,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         getRaceById,
         getRecentRacesOfCompetitor,
         getSimilarRaces,
+        getCharacterVariants,
       }}
     >
       {children}

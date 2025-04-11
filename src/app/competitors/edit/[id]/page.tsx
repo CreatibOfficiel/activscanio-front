@@ -1,67 +1,52 @@
 "use client";
 
 import { NextPage } from "next";
-import { FormEvent, useContext, useEffect, useState } from "react";
-import { AppContext } from "@/app/context/AppContext";
+import { FormEvent, useCallback, useContext, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Competitor } from "@/app/models/Competitor";
-import { Character } from "@/app/models/Character";
 import Image from "next/image";
+
+import { AppContext } from "@/app/context/AppContext";
+import { Competitor } from "@/app/models/Competitor";
+import { BaseCharacter, CharacterVariant } from "@/app/models/Character";
 
 const EditCompetitorPage: NextPage = () => {
   const router = useRouter();
   const params = useParams();
-  const { allCompetitors, updateCompetitor, availableCharacters, allCharacters } = useContext(AppContext);
-  
+
+  const {
+    allCompetitors,
+    updateCompetitor,
+    baseCharacters,
+    getCharacterVariants,
+  } = useContext(AppContext);
+
+  // État général
   const [competitor, setCompetitor] = useState<Competitor | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [characterVariant, setCharacterVariant] = useState("Standard");
+
+  // État pour la sélection du personnage
+  const [selectedBaseCharacter, setSelectedBaseCharacter] =
+    useState<BaseCharacter | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    useState<CharacterVariant | null>(null);
+  const [characterVariants, setCharacterVariants] = useState<
+    CharacterVariant[]
+  >([]);
+
+  // État de chargement
   const [isLoading, setIsLoading] = useState(true);
-  const [displayableCharacters, setDisplayableCharacters] = useState<Character[]>([]);
+  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
 
-  // Récupère le compétiteur à éditer
-  useEffect(() => {
-    if (params.id && allCompetitors.length > 0) {
-      const comp = allCompetitors.find(c => c.id === params.id);
-      if (comp) {
-        setCompetitor(comp);
-        setFirstName(comp.firstName);
-        setLastName(comp.lastName);
-        setProfileUrl(comp.profilePictureUrl);
-        
-        if (comp.character) {
-          setSelectedCharacter(comp.character);
-          setCharacterVariant(comp.character.variant);
-        }
-      }
-      setIsLoading(false);
-    }
-  }, [params.id, allCompetitors]);
-
-  // Prépare la liste des personnages disponibles pour l'édition
-  useEffect(() => {
-    if (competitor && allCharacters) {
-      // Si le compétiteur a déjà un personnage, on l'ajoute à la liste des personnages disponibles
-      if (competitor.character) {
-        const alreadyAssigned = allCharacters.find(c => c.id === competitor.character?.id);
-        if (alreadyAssigned) {
-          setDisplayableCharacters([...availableCharacters, alreadyAssigned]);
-        } else {
-          setDisplayableCharacters([...availableCharacters]);
-        }
-      } else {
-        setDisplayableCharacters([...availableCharacters]);
-      }
-    }
-  }, [competitor, availableCharacters, allCharacters]);
-
+  /**
+   * Vérifie si un URL d'image est valide
+   */
   const isUrlValid = (url: string): boolean => {
     const lower = url.trim().toLowerCase();
-    if (!lower.startsWith("http://") && !lower.startsWith("https://"))
+    if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
       return false;
+    }
     if (
       !(
         lower.endsWith(".png") ||
@@ -75,27 +60,133 @@ const EditCompetitorPage: NextPage = () => {
     return true;
   };
 
+  /**
+   * Vérifie la validité des champs du formulaire
+   */
   const isAllValid = (): boolean => {
     if (!firstName.trim() || !lastName.trim()) return false;
     return isUrlValid(profileUrl);
   };
 
+  /**
+   * Trouve le BaseCharacter associé à un Competitor
+   */
+  const findBaseCharacterForCompetitor = useCallback(
+    (comp: Competitor): BaseCharacter | null => {
+      if (!comp.characterVariantId) return null;
+
+      for (const bc of baseCharacters) {
+        if (bc.variants.length > 0) {
+          const variantIds = bc.variants.map((v) => v.id);
+          if (variantIds.includes(comp.characterVariantId)) {
+            return bc;
+          }
+        }
+      }
+
+      return null;
+    },
+    [baseCharacters]
+  );
+
+  /**
+   * Charge le compétiteur en fonction de l'ID de l'URL,
+   * puis initialise ses informations et son personnage.
+   */
+  useEffect(() => {
+    const loadCompetitor = () => {
+      if (!params.id || allCompetitors.length === 0) return;
+
+      const comp = allCompetitors.find((c) => c.id === params.id);
+      if (!comp) {
+        setIsLoading(false);
+        return;
+      }
+
+      setCompetitor(comp);
+      setFirstName(comp.firstName);
+      setLastName(comp.lastName);
+      setProfileUrl(comp.profilePictureUrl);
+
+      // On récupère le BaseCharacter correspondant
+      if (comp.characterVariantId) {
+        const baseChar = findBaseCharacterForCompetitor(comp);
+        if (baseChar) {
+          setSelectedBaseCharacter(baseChar);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    loadCompetitor();
+  }, [params.id, allCompetitors, findBaseCharacterForCompetitor]);
+
+  /**
+   * Charge les variantes du personnage sélectionné
+   * (si le personnage possède plusieurs variantes).
+   * Puis sélectionne la bonne variante si le compétiteur en a une.
+   */
+  useEffect(() => {
+    const loadVariants = async () => {
+      if (
+        !selectedBaseCharacter ||
+        selectedBaseCharacter.variants.length <= 1
+      ) {
+        // Si le perso n'a pas de variantes multiples, on reset la liste et la sélection
+        setCharacterVariants([]);
+        setSelectedVariant(null);
+        return;
+      }
+
+      setIsLoadingVariants(true);
+      try {
+        const variants = await getCharacterVariants(selectedBaseCharacter.id);
+        setCharacterVariants(variants);
+
+        // Tenter de retrouver la variante du compétiteur
+        if (competitor?.characterVariantId) {
+          const matchingVariant = variants.find(
+            (v) => v.id === competitor.characterVariantId
+          );
+          if (matchingVariant) {
+            setSelectedVariant(matchingVariant);
+          } else if (variants.length > 0) {
+            // Si la variante n'existe plus, on sélectionne la première
+            setSelectedVariant(variants[0]);
+          }
+        } else if (!selectedVariant && variants.length > 0) {
+          // Si le compétiteur n'a pas de variante ou qu'on n'en a pas défini,
+          // on sélectionne par défaut la première
+          setSelectedVariant(variants[0]);
+        }
+      } catch (error) {
+        console.error("Error loading variants:", error);
+      } finally {
+        setIsLoadingVariants(false);
+      }
+    };
+
+    loadVariants();
+  }, [
+    selectedBaseCharacter,
+    getCharacterVariants,
+    competitor,
+    selectedVariant,
+  ]);
+
+  /**
+   * Soumission du formulaire : met à jour le compétiteur
+   */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isAllValid() || !competitor) return;
 
-    // Mise à jour du compétiteur
     const updatedCompetitor: Competitor = {
       ...competitor,
       firstName,
       lastName,
       profilePictureUrl: profileUrl,
-      character: selectedCharacter 
-        ? {
-            ...selectedCharacter,
-            variant: characterVariant
-          }
-        : undefined
+      characterVariantId: selectedVariant?.id || undefined,
     };
 
     await updateCompetitor(updatedCompetitor);
@@ -103,17 +194,9 @@ const EditCompetitorPage: NextPage = () => {
     router.back();
   };
 
-  // Sélection d'un personnage
-  const handleSelectCharacter = (character: Character) => {
-    if (selectedCharacter?.id === character.id) {
-      // Si le personnage est déjà sélectionné, on le désélectionne
-      setSelectedCharacter(null);
-    } else {
-      setSelectedCharacter(character);
-      setCharacterVariant("Standard"); // Réinitialiser la variante par défaut
-    }
-  };
-
+  /**
+   * Affichage du chargement
+   */
   if (isLoading) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
@@ -122,11 +205,14 @@ const EditCompetitorPage: NextPage = () => {
     );
   }
 
+  /**
+   * Affichage si le compétiteur n'existe pas
+   */
   if (!competitor) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
         <p>Compétiteur non trouvé</p>
-        <button 
+        <button
           onClick={() => router.back()}
           className="mt-4 p-3 bg-primary-500 text-neutral-900 rounded"
         >
@@ -136,10 +222,14 @@ const EditCompetitorPage: NextPage = () => {
     );
   }
 
+  /**
+   * Rendu principal : formulaire d'édition
+   */
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
       <h1 className="text-title mb-4">Modifier le compétiteur</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* Champ Prénom */}
         <div>
           <label className="block mb-1 text-neutral-300">Prénom</label>
           <input
@@ -149,6 +239,8 @@ const EditCompetitorPage: NextPage = () => {
             onChange={(e) => setFirstName(e.target.value)}
           />
         </div>
+
+        {/* Champ Nom */}
         <div>
           <label className="block mb-1 text-neutral-300">Nom</label>
           <input
@@ -158,6 +250,8 @@ const EditCompetitorPage: NextPage = () => {
             onChange={(e) => setLastName(e.target.value)}
           />
         </div>
+
+        {/* Champ Image de profil */}
         <div>
           <label className="block mb-1 text-neutral-300">
             Image de profil (URL)
@@ -168,6 +262,8 @@ const EditCompetitorPage: NextPage = () => {
             value={profileUrl}
             onChange={(e) => setProfileUrl(e.target.value)}
           />
+
+          {/* Aperçu de l'image si on a une URL */}
           {profileUrl && (
             <div className="mt-2 flex justify-center">
               <div className="w-16 h-16 rounded-full overflow-hidden">
@@ -182,27 +278,34 @@ const EditCompetitorPage: NextPage = () => {
             </div>
           )}
         </div>
-        
-        {/* Sélection du personnage */}
+
+        {/* Sélection du personnage de base */}
         <div className="mt-4">
           <label className="block mb-2 text-neutral-300">Personnage</label>
-          {displayableCharacters.length === 0 ? (
+          {baseCharacters.length === 0 ? (
             <p className="text-neutral-500">Aucun personnage disponible</p>
           ) : (
             <div className="grid grid-cols-5 gap-2">
-              {displayableCharacters.map((character) => (
-                <div 
+              {baseCharacters.map((character) => (
+                <div
                   key={character.id}
-                  onClick={() => handleSelectCharacter(character)}
+                  onClick={() =>
+                    setSelectedBaseCharacter(
+                      selectedBaseCharacter?.id === character.id
+                        ? null
+                        : character
+                    )
+                  }
                   className={`
                     p-2 rounded cursor-pointer flex flex-col items-center
-                    ${selectedCharacter?.id === character.id
-                      ? "bg-primary-500 text-neutral-900"
-                      : "bg-neutral-800 hover:bg-neutral-700"
+                    ${
+                      selectedBaseCharacter?.id === character.id
+                        ? "bg-primary-500 text-neutral-900"
+                        : "bg-neutral-800 hover:bg-neutral-700"
                     }
                   `}
                 >
-                  <Image 
+                  <Image
                     src={character.imageUrl}
                     alt={character.name}
                     width={40}
@@ -215,26 +318,46 @@ const EditCompetitorPage: NextPage = () => {
             </div>
           )}
         </div>
-        
-        {/* Variant du personnage */}
-        {selectedCharacter && (
+
+        {/* Variantes (uniquement si le personnage a plusieurs variantes) */}
+        {(selectedBaseCharacter?.variants.length ?? 0) > 1 && (
           <div>
             <label className="block mb-1 text-neutral-300">Variante</label>
-            <select
-              className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-              value={characterVariant}
-              onChange={(e) => setCharacterVariant(e.target.value)}
-            >
-              <option value="Standard">Standard</option>
-              <option value="Metal">Metal</option>
-              <option value="Gold">Gold</option>
-              <option value="Baby">Baby</option>
-              <option value="Tanooki">Tanooki</option>
-              <option value="Cat">Cat</option>
-            </select>
+            {isLoadingVariants ? (
+              <p className="text-neutral-500">Chargement des variantes...</p>
+            ) : characterVariants.length === 0 ? (
+              <p className="text-neutral-500">Aucune variante disponible</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {characterVariants.map((variant) => (
+                  <div
+                    key={variant.id}
+                    onClick={() => setSelectedVariant(variant)}
+                    className={`
+                      p-2 rounded cursor-pointer flex flex-col items-center
+                      ${
+                        selectedVariant?.id === variant.id
+                          ? "bg-primary-500 text-neutral-900"
+                          : "bg-neutral-800 hover:bg-neutral-700"
+                      }
+                    `}
+                  >
+                    <Image
+                      src={variant.imageUrl}
+                      alt={variant.label}
+                      width={40}
+                      height={40}
+                      className="object-contain"
+                    />
+                    <span className="text-xs mt-1">{variant.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
+        {/* Boutons d'action */}
         <div className="mt-6 flex gap-2">
           <button
             type="button"

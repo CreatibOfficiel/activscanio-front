@@ -10,6 +10,7 @@ import {
 } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
 import EditCompetitorButton from "./EditCompetitorButton";
+import { BaseCharacter, CharacterVariant } from "@/app/models/Character";
 
 interface Props {
   competitor: Competitor;
@@ -18,8 +19,11 @@ interface Props {
 
 const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
   const { getRecentRacesOfCompetitor } = useContext(AppContext);
+  const { baseCharacters } = useContext(AppContext);
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [baseChar, setBaseChar] = useState<BaseCharacter | null>(null);
+  const [variantChar, setVariantChar] = useState<CharacterVariant | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -28,6 +32,25 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
       setIsLoaded(true);
     })();
   }, [competitor.id, getRecentRacesOfCompetitor]);
+
+  useEffect(() => {
+    if (!competitor.characterVariantId) {
+      return;
+    }
+    const foundBase = baseCharacters.find((bc) =>
+      bc.variants?.some((v) => v.id === competitor.characterVariantId)
+    );
+    if (foundBase) {
+      setBaseChar(foundBase);
+      // Find the variant character
+      const varObj = foundBase.variants.find(
+        (v) => v.id === competitor.characterVariantId
+      );
+      if (varObj) {
+        setVariantChar(varObj);
+      }
+    }
+  }, [competitor.characterVariantId, baseCharacters]);
 
   // If data is not loaded yet, show a loading spinner
   if (!isLoaded) {
@@ -93,21 +116,22 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
           </h2>
 
           {/* Character info if available */}
-          {competitor.character && (
-            <div className="flex items-center gap-2 mt-2 bg-neutral-800 px-3 py-2 rounded-lg">
-              {competitor.character.imageUrl && (
+          {variantChar && (
+            <div className="flex flex-col gap-2 mt-2 bg-neutral-800 px-3 py-2 rounded-lg">
+              {/* Character image */}
+              {variantChar.imageUrl && (
                 <Image
-                  src={competitor.character.imageUrl}
-                  alt={competitor.character.name}
+                  src={variantChar.imageUrl}
+                  alt={`${baseChar?.name} ${variantChar.label}`}
                   width={24}
                   height={24}
                   className="object-contain"
                 />
               )}
+              {/* Name + Variant */}
               <span className="text-sm text-neutral-300">
-                {competitor.character.name}
-                {competitor.character.variant !== "Standard" && 
-                  ` (${competitor.character.variant})`}
+                {baseChar?.name}{" "}
+                {variantChar?.label === "Default" ? "" : variantChar.label}
               </span>
             </div>
           )}

@@ -1,11 +1,9 @@
-import { Character } from "./Character";
-
 export interface Competitor {
   id: string;
   firstName: string;
   lastName: string;
   profilePictureUrl: string;
-  character?: Character;
+  characterVariantId?: string;
   mu?: number;
   sigma?: number;
   rank?: number;

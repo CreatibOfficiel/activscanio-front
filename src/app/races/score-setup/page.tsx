@@ -30,7 +30,7 @@ const ScoreSetupPage: NextPage = () => {
     const rankMapParam = searchParams.get("rankMap");
     const scoreMapParam = searchParams.get("scoreMap");
     const fromAnalysisParam = searchParams.get("fromAnalysis");
-    
+
     if (idsParam) {
       const ids = idsParam.split(",");
       const comps = allCompetitors.filter((c) => ids.includes(c.id));
@@ -64,16 +64,16 @@ const ScoreSetupPage: NextPage = () => {
   useEffect(() => {
     const hasRankMap = Object.keys(rankMap).length > 0;
     const hasScoreMap = Object.keys(scoreMap).length > 0;
-    
+
     if (!hasRankMap || !hasScoreMap) {
       const initRank: Record<string, number | undefined> = { ...rankMap };
       const initScore: Record<string, number | undefined> = { ...scoreMap };
-      
+
       selectedCompetitors.forEach((c) => {
         if (!initRank[c.id]) initRank[c.id] = undefined;
         if (!initScore[c.id]) initScore[c.id] = undefined;
       });
-      
+
       if (!hasRankMap) setRankMap(initRank);
       if (!hasScoreMap) setScoreMap(initScore);
     }
@@ -186,7 +186,8 @@ const ScoreSetupPage: NextPage = () => {
           <div className="flex items-center">
             <MdOutlineCheckCircle className="text-primary-500 mr-2" size={20} />
             <p className="text-sm text-neutral-200">
-              Résultats détectés automatiquement depuis l'image. Vérifiez et ajustez si nécessaire.
+              Résultats détectés automatiquement depuis l&apos;image. Vérifiez
+              et ajustez si nécessaire.
             </p>
           </div>
         </div>

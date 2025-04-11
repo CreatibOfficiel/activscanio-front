@@ -5,40 +5,82 @@ import { Competitor } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
-import { Character } from "../models/Character";
+import { BaseCharacter, CharacterVariant } from "../models/Character";
+import { RaceAnalysisResult } from "../repositories/RaceAnalysisRepository";
 
 export interface AppContextType {
   isLoading: boolean;
   allCompetitors: Competitor[];
   allRaces: RaceEvent[];
-  availableCharacters: Character[];
-  allCharacters: Character[];
-  loadInitialData: () => Promise<void>;
-  addCompetitor: (newCompetitor: Competitor) => Promise<void>;
-  updateCompetitor: (competitor: Competitor) => Promise<void>;
-  addRaceEvent: (results: RaceResult[]) => Promise<void>;
-  analyzeRaceImage: (image: File, competitorIds: string[]) => Promise<any>;
+  baseCharacters: BaseCharacter[];
+  loadInitialData: () => Promise<[Competitor[], RaceEvent[], BaseCharacter[]]>;
+  addCompetitor: (newCompetitor: Competitor) => Promise<Competitor>;
+  updateCompetitor: (competitor: Competitor) => Promise<Competitor>;
+  addRaceEvent: (results: RaceResult[]) => Promise<RaceEvent>;
+  analyzeRaceImage: (
+    image: File,
+    competitorIds: string[]
+  ) => Promise<RaceAnalysisResult>;
   getRaceById: (raceId: string) => Promise<RaceEvent>;
   getRecentRacesOfCompetitor: (
     competitorId: string
   ) => Promise<RecentRaceInfo[]>;
   getSimilarRaces: (raceId: string) => Promise<RaceEvent[]>;
+  getCharacterVariants: (
+    baseCharacterId: string
+  ) => Promise<CharacterVariant[]>;
 }
 
 export const AppContext = createContext<AppContextType>({
   isLoading: false,
   allCompetitors: [],
   allRaces: [],
-  availableCharacters: [],
-  allCharacters: [],
-  loadInitialData: async () => {},
-  addCompetitor: async () => {},
-  updateCompetitor: async () => {},
-  addRaceEvent: async () => {},
-  analyzeRaceImage: async () => { throw new Error("Not implemented"); },
-  getRaceById: async () => {
-    throw new Error("Not implemented");
+  baseCharacters: [],
+
+  loadInitialData: async (): Promise<
+    [Competitor[], RaceEvent[], BaseCharacter[]]
+  > => {
+    return [[], [], []];
   },
-  getRecentRacesOfCompetitor: async () => [],
-  getSimilarRaces: async () => [],
+  addCompetitor: async (newCompetitor: Competitor): Promise<Competitor> => {
+    return { ...newCompetitor, id: "default-id" };
+  },
+  updateCompetitor: async (competitor: Competitor): Promise<Competitor> => {
+    return { ...competitor };
+  },
+  addRaceEvent: async (results: RaceResult[]): Promise<RaceEvent> => {
+    return {
+      id: "default-race-id",
+      date: new Date().toISOString(),
+      results,
+    };
+  },
+  analyzeRaceImage: async (
+    image: File,
+    competitorIds: string[]
+  ): Promise<RaceAnalysisResult> => {
+    return {
+      results: competitorIds.map((id, index) => ({
+        competitorId: id,
+        rank12: index + 1,
+        score: Math.random() * 100,
+      })),
+    };
+  },
+  getRaceById: async (raceId: string): Promise<RaceEvent> => {
+    return {
+      id: raceId,
+      date: new Date().toISOString(),
+      results: [],
+    };
+  },
+  getRecentRacesOfCompetitor: async (): Promise<RecentRaceInfo[]> => {
+    return [];
+  },
+  getSimilarRaces: async (): Promise<RaceEvent[]> => {
+    return [];
+  },
+  getCharacterVariants: async (): Promise<CharacterVariant[]> => {
+    return [];
+  },
 });

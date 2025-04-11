@@ -1,22 +1,26 @@
-import { Character } from "../models/Character";
+import { BaseCharacter, CharacterVariant } from "../models/Character";
 
 export class CharactersRepository {
   constructor(private baseUrl: string) {}
 
-  // GET /characters
-  async fetchAllCharacters(): Promise<Character[]> {
-    const res = await fetch(`${this.baseUrl}/characters`);
+  // GET /base-characters
+  async fetchBaseCharacters(): Promise<BaseCharacter[]> {
+    const res = await fetch(`${this.baseUrl}/base-characters`);
     if (!res.ok) {
-      throw new Error(`Error fetching characters: ${res.statusText}`);
+      throw new Error(`Error fetching base characters: ${res.statusText}`);
     }
     return await res.json();
   }
 
-  // GET /characters/available
-  async fetchAvailableCharacters(): Promise<Character[]> {
-    const res = await fetch(`${this.baseUrl}/characters/available`);
+  // GET /base-characters/:id/variants
+  async fetchCharacterVariants(
+    baseCharacterId: string
+  ): Promise<CharacterVariant[]> {
+    const res = await fetch(
+      `${this.baseUrl}/base-characters/${baseCharacterId}/variants`
+    );
     if (!res.ok) {
-      throw new Error(`Error fetching available characters: ${res.statusText}`);
+      throw new Error(`Error fetching character variants: ${res.statusText}`);
     }
     return await res.json();
   }
