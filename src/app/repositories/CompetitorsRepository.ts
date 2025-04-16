@@ -51,4 +51,22 @@ export class CompetitorsRepository {
       throw new Error(`Error updating competitor: ${errMsg}`);
     }
   }
+
+  // POST /competitors/:id/unlink-character
+  async unlinkCharacterFromCompetitor(
+    competitorId: string
+  ): Promise<Competitor> {
+    const res = await fetch(
+      `${this.baseUrl}/competitors/${competitorId}/unlink-character`,
+      {
+        method: "POST",
+      }
+    );
+    if (res.ok) {
+      return await res.json();
+    } else {
+      const errMsg = await res.text();
+      throw new Error(`Error unlinking character from competitor: ${errMsg}`);
+    }
+  }
 }

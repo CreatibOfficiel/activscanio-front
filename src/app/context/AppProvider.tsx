@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, PropsWithChildren } from "react";
+import React, {
+  useState,
+  useEffect,
+  PropsWithChildren,
+} from "react";
 import { AppContext } from "./AppContext";
 import { Competitor } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
@@ -155,6 +159,44 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
   };
 
+  const getAvailableBaseCharacters = async (): Promise<BaseCharacter[]> => {
+    try {
+      const characters = await charactersRepo.fetchAvailableBaseCharacters();
+      return characters;
+    } catch (err) {
+      console.error("Error fetching available base characters:", err);
+      return [];
+    }
+  };
+
+  const getAvailableCharacterVariants = async (): Promise<
+    CharacterVariant[]
+  > => {
+    try {
+      const characters = await charactersRepo.fetchAvailableCharacterVariants();
+      return characters;
+    } catch (err) {
+      console.error("Error fetching available character variants:", err);
+      return [];
+    }
+  };
+
+  const unlinkCharacterFromCompetitor = async (
+    competitorId: string
+  ): Promise<Competitor> => {
+    try {
+      const updatedCompetitor =
+        await competitorsRepo.unlinkCharacterFromCompetitor(competitorId);
+      setCompetitors((prev) =>
+        prev.map((c) => (c.id === updatedCompetitor.id ? updatedCompetitor : c))
+      );
+      return updatedCompetitor;
+    } catch (err) {
+      console.error("Error unlinking character from competitor:", err);
+      throw err;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -171,6 +213,9 @@ export function AppProvider({ children }: PropsWithChildren) {
         getRecentRacesOfCompetitor,
         getSimilarRaces,
         getCharacterVariants,
+        getAvailableBaseCharacters,
+        getAvailableCharacterVariants,
+        unlinkCharacterFromCompetitor,
       }}
     >
       {children}

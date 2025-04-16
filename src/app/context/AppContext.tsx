@@ -29,6 +29,9 @@ export interface AppContextType {
   getCharacterVariants: (
     baseCharacterId: string
   ) => Promise<CharacterVariant[]>;
+  getAvailableBaseCharacters: () => Promise<BaseCharacter[]>;
+  getAvailableCharacterVariants: (baseCharacterId: string, currentCompetitorId?: string) => Promise<CharacterVariant[]>;
+  unlinkCharacterFromCompetitor: (competitorId: string) => Promise<Competitor>;
 }
 
 export const AppContext = createContext<AppContextType>({
@@ -82,5 +85,14 @@ export const AppContext = createContext<AppContextType>({
   },
   getCharacterVariants: async (): Promise<CharacterVariant[]> => {
     return [];
+  },
+  getAvailableBaseCharacters: async (): Promise<BaseCharacter[]> => {
+    return [];
+  },
+  getAvailableCharacterVariants: async (): Promise<CharacterVariant[]> => {
+    return [];
+  },
+  unlinkCharacterFromCompetitor: async (competitorId: string): Promise<Competitor> => {
+    return { id: competitorId, firstName: "Competitor", lastName: "Name", profilePictureUrl: "" };
   },
 });

@@ -24,4 +24,22 @@ export class CharactersRepository {
     }
     return await res.json();
   }
+
+  // GET /character-variants/available
+  async fetchAvailableCharacterVariants(): Promise<CharacterVariant[]> {
+    const res = await fetch(`${this.baseUrl}/character-variants/available`);
+    if (!res.ok) {
+      throw new Error(`Error fetching available character variants: ${res.statusText}`);
+    }
+    return await res.json();
+  }
+
+  // GET /base-characters/available
+  async fetchAvailableBaseCharacters(): Promise<BaseCharacter[]> {
+    const res = await fetch(`${this.baseUrl}/base-characters/available`);
+    if (!res.ok) {
+      throw new Error(`Error fetching available base characters: ${res.statusText}`);
+    }
+    return await res.json();
+  }
 }

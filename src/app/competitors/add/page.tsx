@@ -9,8 +9,11 @@ import Image from "next/image";
 
 const AddCompetitorPage: NextPage = () => {
   const router = useRouter();
-  const { addCompetitor, baseCharacters, getCharacterVariants } =
-    useContext(AppContext);
+  const { 
+    addCompetitor, 
+    getAvailableBaseCharacters, 
+    getAvailableCharacterVariants 
+  } = useContext(AppContext);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -22,7 +25,26 @@ const AddCompetitorPage: NextPage = () => {
   const [characterVariants, setCharacterVariants] = useState<
     CharacterVariant[]
   >([]);
+  const [availableBaseCharacters, setAvailableBaseCharacters] = useState<BaseCharacter[]>([]);
+  const [isLoadingBaseCharacters, setIsLoadingBaseCharacters] = useState(true);
   const [isLoadingVariants, setIsLoadingVariants] = useState(false);
+
+  // Charger les personnages de base disponibles
+  useEffect(() => {
+    const loadAvailableBaseCharacters = async () => {
+      setIsLoadingBaseCharacters(true);
+      try {
+        const characters = await getAvailableBaseCharacters();
+        setAvailableBaseCharacters(characters);
+      } catch (error) {
+        console.error("Error loading available base characters:", error);
+      } finally {
+        setIsLoadingBaseCharacters(false);
+      }
+    };
+
+    loadAvailableBaseCharacters();
+  }, [getAvailableBaseCharacters]);
 
   const isUrlValid = (urlStr: string): boolean => {
     const lower = urlStr.trim().toLowerCase();
@@ -50,16 +72,20 @@ const AddCompetitorPage: NextPage = () => {
   useEffect(() => {
     const loadVariants = async () => {
       if (
-        (selectedBaseCharacter?.variants?.length ?? 0) > 1 &&
-        selectedBaseCharacter?.id
+        selectedBaseCharacter?.id && 
+        (selectedBaseCharacter?.variants?.length ?? 0) > 0
       ) {
         setIsLoadingVariants(true);
         try {
-          const variants = await getCharacterVariants(selectedBaseCharacter.id);
+          // Use the available variants for this character
+          const variants = await getAvailableCharacterVariants(selectedBaseCharacter.id);
           setCharacterVariants(variants);
 
           if (!selectedVariant && variants.length > 0) {
             setSelectedVariant(variants[0]);
+          } else if (selectedVariant && !variants.find(v => v.id === selectedVariant.id)) {
+            // If the selected variant is no longer available, select the first available one
+            setSelectedVariant(variants.length > 0 ? variants[0] : null);
           }
         } catch (error) {
           console.error("Error loading variants:", error);
@@ -73,7 +99,7 @@ const AddCompetitorPage: NextPage = () => {
     };
 
     loadVariants();
-  }, [selectedBaseCharacter, getCharacterVariants, selectedVariant]);
+  }, [selectedBaseCharacter, selectedVariant, getAvailableCharacterVariants]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -142,11 +168,13 @@ const AddCompetitorPage: NextPage = () => {
         {/* Selection of base character */}
         <div className="mt-4">
           <label className="block mb-2 text-neutral-300">Personnage</label>
-          {baseCharacters.length === 0 ? (
+          {isLoadingBaseCharacters ? (
+            <p className="text-neutral-500">Chargement des personnages...</p>
+          ) : availableBaseCharacters.length === 0 ? (
             <p className="text-neutral-500">Aucun personnage disponible</p>
           ) : (
             <div className="grid grid-cols-5 gap-2">
-              {baseCharacters.map((character) => (
+              {availableBaseCharacters.map((character) => (
                 <div
                   key={character.id}
                   onClick={() =>
@@ -157,13 +185,13 @@ const AddCompetitorPage: NextPage = () => {
                     )
                   }
                   className={`
-          p-2 rounded cursor-pointer items-center
-          ${
-            selectedBaseCharacter?.id === character.id
-              ? "bg-primary-500 text-neutral-900"
-              : "bg-neutral-800 hover:bg-neutral-700"
-          }
-        `}
+                    p-2 rounded cursor-pointer items-center
+                    ${
+                      selectedBaseCharacter?.id === character.id
+                        ? "bg-primary-500 text-neutral-900"
+                        : "bg-neutral-800 hover:bg-neutral-700"
+                    }
+                  `}
                 >
                   <span className="text-xs mt-1">{character.name}</span>
                 </div>
@@ -173,7 +201,7 @@ const AddCompetitorPage: NextPage = () => {
         </div>
 
         {/* Show variants only if the selected base character has variants */}
-        {(selectedBaseCharacter?.variants.length ?? 0) > 1 && (
+        {selectedBaseCharacter && characterVariants.length > 0 && (
           <div>
             <label className="block mb-1 text-neutral-300">Variante</label>
             {isLoadingVariants ? (
@@ -187,13 +215,13 @@ const AddCompetitorPage: NextPage = () => {
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}
                     className={`
-        p-2 rounded cursor-pointer items-center
-        ${
-          selectedVariant?.id === variant.id
-            ? "bg-primary-500 text-neutral-900"
-            : "bg-neutral-800 hover:bg-neutral-700"
-        }
-      `}
+                      p-2 rounded cursor-pointer items-center
+                      ${
+                        selectedVariant?.id === variant.id
+                          ? "bg-primary-500 text-neutral-900"
+                          : "bg-neutral-800 hover:bg-neutral-700"
+                      }
+                    `}
                   >
                     <span className="text-xs mt-1">{variant.label || ""}</span>
                   </div>
