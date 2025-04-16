@@ -106,7 +106,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
               className="object-cover w-full h-full"
             />
           </div>
-
           {/* Name + Rank on a single line */}
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <span>{getFullName(competitor)}</span>
@@ -114,20 +113,9 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
               <span className="text-2xl text-neutral-400">• {playerRank}</span>
             )}
           </h2>
-
           {/* Character info if available */}
           {variantChar && (
-            <div className="flex flex-col gap-2 mt-2 bg-neutral-800 px-3 py-2 rounded-lg">
-              {/* Character image */}
-              {variantChar.imageUrl && (
-                <Image
-                  src={variantChar.imageUrl}
-                  alt={`${baseChar?.name} ${variantChar.label}`}
-                  width={24}
-                  height={24}
-                  className="object-contain"
-                />
-              )}
+            <div className="gap-2 mt-2 bg-neutral-800 px-3 py-2 rounded-lg">
               {/* Name + Variant */}
               <span className="text-sm text-neutral-300">
                 {baseChar?.name}{" "}

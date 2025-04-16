@@ -157,21 +157,14 @@ const AddCompetitorPage: NextPage = () => {
                     )
                   }
                   className={`
-                    p-2 rounded cursor-pointer flex flex-col items-center
-                    ${
-                      selectedBaseCharacter?.id === character.id
-                        ? "bg-primary-500 text-neutral-900"
-                        : "bg-neutral-800 hover:bg-neutral-700"
-                    }
-                  `}
+          p-2 rounded cursor-pointer items-center
+          ${
+            selectedBaseCharacter?.id === character.id
+              ? "bg-primary-500 text-neutral-900"
+              : "bg-neutral-800 hover:bg-neutral-700"
+          }
+        `}
                 >
-                  <Image
-                    src={character.imageUrl || ""}
-                    alt={character.name}
-                    width={40}
-                    height={40}
-                    className="object-contain"
-                  />
                   <span className="text-xs mt-1">{character.name}</span>
                 </div>
               ))}
@@ -194,21 +187,14 @@ const AddCompetitorPage: NextPage = () => {
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}
                     className={`
-                      p-2 rounded cursor-pointer flex flex-col items-center
-                      ${
-                        selectedVariant?.id === variant.id
-                          ? "bg-primary-500 text-neutral-900"
-                          : "bg-neutral-800 hover:bg-neutral-700"
-                      }
-                    `}
+        p-2 rounded cursor-pointer items-center
+        ${
+          selectedVariant?.id === variant.id
+            ? "bg-primary-500 text-neutral-900"
+            : "bg-neutral-800 hover:bg-neutral-700"
+        }
+      `}
                   >
-                    <Image
-                      src={variant.imageUrl}
-                      alt={variant.label || ""}
-                      width={40}
-                      height={40}
-                      className="object-contain"
-                    />
                     <span className="text-xs mt-1">{variant.label || ""}</span>
                   </div>
                 ))}
