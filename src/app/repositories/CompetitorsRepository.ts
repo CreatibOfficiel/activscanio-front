@@ -10,7 +10,10 @@ export class CompetitorsRepository {
       throw new Error(`Error fetching competitors: ${res.statusText}`);
     }
     const data = await res.json();
-    return data.map((jsonObj: Competitor) => jsonObj as Competitor);
+    return data.map((jsonObj: any) => ({
+      ...jsonObj,
+      characterVariantId: jsonObj.characterVariant?.id,
+    }));
   }
 
   // POST /competitors

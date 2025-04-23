@@ -4,52 +4,22 @@ import { NextPage } from "next";
 import { FormEvent, useContext, useEffect, useState } from "react";
 import { AppContext } from "@/app/context/AppContext";
 import { useRouter } from "next/navigation";
-import { BaseCharacter, CharacterVariant } from "@/app/models/Character";
 import Image from "next/image";
 
 const AddCompetitorPage: NextPage = () => {
   const router = useRouter();
-  const { 
-    addCompetitor, 
-    getAvailableBaseCharacters, 
-    getAvailableCharacterVariants 
-  } = useContext(AppContext);
+  const { addCompetitor } = useContext(AppContext);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [url, setUrl] = useState("");
-  const [selectedBaseCharacter, setSelectedBaseCharacter] =
-    useState<BaseCharacter | null>(null);
-  const [selectedVariant, setSelectedVariant] =
-    useState<CharacterVariant | null>(null);
-  const [characterVariants, setCharacterVariants] = useState<
-    CharacterVariant[]
-  >([]);
-  const [availableBaseCharacters, setAvailableBaseCharacters] = useState<BaseCharacter[]>([]);
-  const [isLoadingBaseCharacters, setIsLoadingBaseCharacters] = useState(true);
-  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
 
-  // Charger les personnages de base disponibles
-  useEffect(() => {
-    const loadAvailableBaseCharacters = async () => {
-      setIsLoadingBaseCharacters(true);
-      try {
-        const characters = await getAvailableBaseCharacters();
-        setAvailableBaseCharacters(characters);
-      } catch (error) {
-        console.error("Error loading available base characters:", error);
-      } finally {
-        setIsLoadingBaseCharacters(false);
-      }
-    };
-
-    loadAvailableBaseCharacters();
-  }, [getAvailableBaseCharacters]);
-
+  /**
+   * Check if a URL is valid (starts with http(s) and ends with an image format).
+   */
   const isUrlValid = (urlStr: string): boolean => {
     const lower = urlStr.trim().toLowerCase();
-    if (!lower.startsWith("http://") && !lower.startsWith("https://"))
-      return false;
+    if (!lower.startsWith("http://") && !lower.startsWith("https://")) return false;
     if (
       !(
         lower.endsWith(".png") ||
@@ -63,44 +33,17 @@ const AddCompetitorPage: NextPage = () => {
     return true;
   };
 
+  /**
+   * Check if all required fields are filled and the URL is valid.
+   */
   const isAllValid = (): boolean => {
     if (!firstName.trim() || !lastName.trim()) return false;
     return isUrlValid(url);
   };
 
-  // Load variants when a base character is selected
-  useEffect(() => {
-    const loadVariants = async () => {
-      if (
-        selectedBaseCharacter?.id && 
-        (selectedBaseCharacter?.variants?.length ?? 0) > 0
-      ) {
-        setIsLoadingVariants(true);
-        try {
-          // Use the available variants for this character
-          const variants = await getAvailableCharacterVariants(selectedBaseCharacter.id);
-          setCharacterVariants(variants);
-
-          if (!selectedVariant && variants.length > 0) {
-            setSelectedVariant(variants[0]);
-          } else if (selectedVariant && !variants.find(v => v.id === selectedVariant.id)) {
-            // If the selected variant is no longer available, select the first available one
-            setSelectedVariant(variants.length > 0 ? variants[0] : null);
-          }
-        } catch (error) {
-          console.error("Error loading variants:", error);
-        } finally {
-          setIsLoadingVariants(false);
-        }
-      } else {
-        setCharacterVariants([]);
-        setSelectedVariant(null);
-      }
-    };
-
-    loadVariants();
-  }, [selectedBaseCharacter, selectedVariant, getAvailableCharacterVariants]);
-
+  /**
+   * Validation of the form and saving a new competitor.
+   */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isAllValid()) return;
@@ -110,7 +53,6 @@ const AddCompetitorPage: NextPage = () => {
       firstName,
       lastName,
       profilePictureUrl: url,
-      characterVariantId: selectedVariant?.id || undefined,
     });
 
     alert("Compétiteur ajouté avec succès !");
@@ -122,6 +64,7 @@ const AddCompetitorPage: NextPage = () => {
       <h1 className="text-title mb-4">Ajouter un·e compétiteur·trice</h1>
       <p className="text-neutral-300 text-regular mb-4">Nouveau astronaute ?</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* First Name */}
         <div>
           <label className="block mb-1 text-neutral-300">Prénom</label>
           <input
@@ -131,6 +74,8 @@ const AddCompetitorPage: NextPage = () => {
             onChange={(e) => setFirstName(e.target.value)}
           />
         </div>
+
+        {/* Last Name */}
         <div>
           <label className="block mb-1 text-neutral-300">Nom</label>
           <input
@@ -140,6 +85,8 @@ const AddCompetitorPage: NextPage = () => {
             onChange={(e) => setLastName(e.target.value)}
           />
         </div>
+
+        {/* Profile Picture URL */}
         <div>
           <label className="block mb-1 text-neutral-300">
             Image de profil (URL)
@@ -165,72 +112,7 @@ const AddCompetitorPage: NextPage = () => {
           )}
         </div>
 
-        {/* Selection of base character */}
-        <div className="mt-4">
-          <label className="block mb-2 text-neutral-300">Personnage</label>
-          {isLoadingBaseCharacters ? (
-            <p className="text-neutral-500">Chargement des personnages...</p>
-          ) : availableBaseCharacters.length === 0 ? (
-            <p className="text-neutral-500">Aucun personnage disponible</p>
-          ) : (
-            <div className="grid grid-cols-5 gap-2">
-              {availableBaseCharacters.map((character) => (
-                <div
-                  key={character.id}
-                  onClick={() =>
-                    setSelectedBaseCharacter(
-                      selectedBaseCharacter?.id === character.id
-                        ? null
-                        : character
-                    )
-                  }
-                  className={`
-                    p-2 rounded cursor-pointer items-center
-                    ${
-                      selectedBaseCharacter?.id === character.id
-                        ? "bg-primary-500 text-neutral-900"
-                        : "bg-neutral-800 hover:bg-neutral-700"
-                    }
-                  `}
-                >
-                  <span className="text-xs mt-1">{character.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Show variants only if the selected base character has variants */}
-        {selectedBaseCharacter && characterVariants.length > 0 && (
-          <div>
-            <label className="block mb-1 text-neutral-300">Variante</label>
-            {isLoadingVariants ? (
-              <p className="text-neutral-500">Chargement des variantes...</p>
-            ) : characterVariants.length === 0 ? (
-              <p className="text-neutral-500">Aucune variante disponible</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {characterVariants.map((variant) => (
-                  <div
-                    key={variant.id}
-                    onClick={() => setSelectedVariant(variant)}
-                    className={`
-                      p-2 rounded cursor-pointer items-center
-                      ${
-                        selectedVariant?.id === variant.id
-                          ? "bg-primary-500 text-neutral-900"
-                          : "bg-neutral-800 hover:bg-neutral-700"
-                      }
-                    `}
-                  >
-                    <span className="text-xs mt-1">{variant.label || ""}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
+        {/* Buttons */}
         <div className="mt-6 flex gap-2">
           <button
             type="button"

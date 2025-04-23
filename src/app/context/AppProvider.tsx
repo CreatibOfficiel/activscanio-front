@@ -169,18 +169,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
   };
 
-  const getAvailableCharacterVariants = async (): Promise<
-    CharacterVariant[]
-  > => {
-    try {
-      const characters = await charactersRepo.fetchAvailableCharacterVariants();
-      return characters;
-    } catch (err) {
-      console.error("Error fetching available character variants:", err);
-      return [];
-    }
-  };
-
   const unlinkCharacterFromCompetitor = async (
     competitorId: string
   ): Promise<Competitor> => {
@@ -194,6 +182,16 @@ export function AppProvider({ children }: PropsWithChildren) {
     } catch (err) {
       console.error("Error unlinking character from competitor:", err);
       throw err;
+    }
+  };
+
+  const getAvailableVariantsForBaseCharacter = async (baseCharacterId: string): Promise<CharacterVariant[]> => {
+    console.log("Fetching available variants for base character:", baseCharacterId);
+    try {
+      return await charactersRepo.fetchAvailableVariantsForBaseCharacter(baseCharacterId);
+    } catch (err) {
+      console.error("Error fetching available variants for base character:", err);
+      return [];
     }
   };
 
@@ -214,8 +212,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         getSimilarRaces,
         getCharacterVariants,
         getAvailableBaseCharacters,
-        getAvailableCharacterVariants,
         unlinkCharacterFromCompetitor,
+        getAvailableVariantsForBaseCharacter,
       }}
     >
       {children}

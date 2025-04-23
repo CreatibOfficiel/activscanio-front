@@ -20,6 +20,11 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
         bc.variants?.some((v) => v.id === competitor.characterVariantId)
       )
     : null;
+  const foundVariantChar = competitor.characterVariantId
+    ? baseCharacters
+        .flatMap((bc) => bc.variants)
+        .find((v) => v.id === competitor.characterVariantId)
+    : null;
 
   const handleItemClick = () => {
     setShowModal(true);
@@ -53,6 +58,7 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
                 {foundBaseChar && (
                   <span className="text-xs text-neutral-500">
                     • {foundBaseChar.name}
+                    {foundVariantChar && ` (${foundVariantChar.label})`}
                   </span>
                 )}
               </div>

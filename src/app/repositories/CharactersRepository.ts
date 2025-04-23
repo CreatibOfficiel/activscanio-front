@@ -42,4 +42,11 @@ export class CharactersRepository {
     }
     return await res.json();
   }
+
+  // GET /base-characters/:id/available-variants
+  async fetchAvailableVariantsForBaseCharacter(baseCharacterId: string): Promise<CharacterVariant[]> {
+    const res = await fetch(`${this.baseUrl}/base-characters/${baseCharacterId}/available-variants`);
+    if (!res.ok) throw new Error("Failed to fetch available variants");
+    return res.json();
+  }
 }
