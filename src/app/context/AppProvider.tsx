@@ -1,12 +1,11 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  PropsWithChildren,
-} from "react";
+import React, { PropsWithChildren, useEffect, useState } from "react";
 import { AppContext } from "./AppContext";
-import { Competitor } from "../models/Competitor";
+import {
+  Competitor,
+  UpdateCompetitorPayload,
+} from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
@@ -28,11 +27,13 @@ const raceAnalysisRepo = new RaceAnalysisRepository(baseUrl);
 const charactersRepo = new CharactersRepository(baseUrl);
 
 export function AppProvider({ children }: PropsWithChildren) {
+  /* ───────── state ───────── */
   const [isLoading, setIsLoading] = useState(false);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [raceEvents, setRaceEvents] = useState<RaceEvent[]>([]);
   const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
 
+  /* ───────── bootstrap ───────── */
   useEffect(() => {
     loadInitialData().catch(console.error);
   }, []);
@@ -52,149 +53,94 @@ export function AppProvider({ children }: PropsWithChildren) {
       setCompetitors(remoteCompetitors);
       setRaceEvents(remoteRaces);
       setBaseCharacters(remoteBaseChars);
-
       return [remoteCompetitors, remoteRaces, remoteBaseChars];
-    } catch (err) {
-      console.error("Error loading data:", err);
-      return [[], [], []];
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getCharacterVariants = async (
-    baseCharacterId: string
-  ): Promise<CharacterVariant[]> => {
-    try {
-      return await charactersRepo.fetchCharacterVariants(baseCharacterId);
-    } catch (err) {
-      console.error("Error fetching character variants:", err);
-      return [];
-    }
-  };
+  /* ───────── characters helpers ───────── */
+  const getCharacterVariants = (baseCharacterId: string) =>
+    charactersRepo.fetchCharacterVariants(baseCharacterId);
 
-  const addCompetitor = async (
-    newCompetitor: Competitor
-  ): Promise<Competitor> => {
-    try {
-      const created = await competitorsRepo.createCompetitor(newCompetitor);
-      setCompetitors((prev) => [...prev, created]);
-      return created;
-    } catch (err) {
-      console.error("Error adding competitor:", err);
-      throw err;
-    }
+  const getAvailableBaseCharacters = () =>
+    charactersRepo.fetchAvailableBaseCharacters();
+
+  const getAvailableVariantsForBaseCharacter = (
+    bcId: string,
+  ) => charactersRepo.fetchAvailableVariantsForBaseCharacter(bcId);
+
+  /* ───────── competitor CRUD ───────── */
+  const addCompetitor = async (newCompetitor: Competitor) => {
+    const created = await competitorsRepo.createCompetitor(newCompetitor);
+    setCompetitors((prev) => [...prev, created]);
+    return created;
   };
 
   const updateCompetitor = async (
-    competitor: Competitor
-  ): Promise<Competitor> => {
-    try {
-      const updated = await competitorsRepo.updateCompetitor(competitor);
-      setCompetitors((prev) =>
-        prev.map((c) => (c.id === updated.id ? updated : c))
-      );
-      return updated;
-    } catch (err) {
-      console.error("Error updating competitor:", err);
-      throw err;
-    }
+    id: string,
+    payload: UpdateCompetitorPayload,
+  ) => {
+    const updated = await competitorsRepo.updateCompetitor(id, payload);
+    setCompetitors((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c)),
+    );
+    return updated;
   };
 
-  const addRaceEvent = async (results: RaceResult[]): Promise<RaceEvent> => {
-    const generatedId = Math.floor(Math.random() * 999999).toString();
+  const linkCharacterToCompetitor = async (
+    competitorId: string,
+    variantId: string,
+  ) => {
+    const updated = await competitorsRepo.linkCharacterToCompetitor(
+      competitorId,
+      variantId,
+    );
+    setCompetitors((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c)),
+    );
+    return updated;
+  };
+
+  const unlinkCharacterFromCompetitor = async (competitorId: string) => {
+    const updated =
+      await competitorsRepo.unlinkCharacterFromCompetitor(competitorId);
+    setCompetitors((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c)),
+    );
+    return updated;
+  };
+
+  /* ───────── races ───────── */
+  const addRaceEvent = async (results: RaceResult[]) => {
+    const generatedId = Math.floor(Math.random() * 999_999).toString();
     const newEvent: RaceEvent = {
       id: generatedId,
       date: new Date().toISOString(),
       results,
     };
-
-    try {
-      const createdRace = await racesRepo.createRace(newEvent);
-      setRaceEvents((prev) => [createdRace, ...prev]);
-      await loadInitialData();
-      return createdRace;
-    } catch (err) {
-      console.error("Error saving race event:", err);
-      throw err;
-    }
+    const created = await racesRepo.createRace(newEvent);
+    setRaceEvents((prev) => [created, ...prev]);
+    await loadInitialData();
+    return created;
   };
 
-  const analyzeRaceImage = async (
+  const getRaceById = (raceId: string) => racesRepo.fetchRaceById(raceId);
+
+  const getRecentRacesOfCompetitor = (competitorId: string) =>
+    racesRepo.fetchRecentRacesOfCompetitor(competitorId);
+
+  const getSimilarRaces = (raceId: string) =>
+    racesRepo.fetchSimilarRaces(raceId);
+
+  /* ───────── image analyse ───────── */
+  const analyzeRaceImage = (
     image: File,
-    competitorIds: string[]
-  ): Promise<RaceAnalysisResult> => {
-    try {
-      return await raceAnalysisRepo.uploadImageForAnalysis(
-        image,
-        competitorIds
-      );
-    } catch (err) {
-      console.error("Error analyzing race image:", err);
-      throw err;
-    }
-  };
+    competitorIds: string[],
+  ): Promise<RaceAnalysisResult> =>
+    raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds);
 
-  const getRaceById = async (raceId: string): Promise<RaceEvent> => {
-    return racesRepo.fetchRaceById(raceId);
-  };
-
-  const getRecentRacesOfCompetitor = async (
-    competitorId: string
-  ): Promise<RecentRaceInfo[]> => {
-    try {
-      return await racesRepo.fetchRecentRacesOfCompetitor(competitorId);
-    } catch (err) {
-      console.error("Error fetching recent races of competitor:", err);
-      return [];
-    }
-  };
-
-  const getSimilarRaces = async (raceId: string): Promise<RaceEvent[]> => {
-    try {
-      return await racesRepo.fetchSimilarRaces(raceId);
-    } catch (err) {
-      console.error("Error fetching similar races:", err);
-      return [];
-    }
-  };
-
-  const getAvailableBaseCharacters = async (): Promise<BaseCharacter[]> => {
-    try {
-      const characters = await charactersRepo.fetchAvailableBaseCharacters();
-      return characters;
-    } catch (err) {
-      console.error("Error fetching available base characters:", err);
-      return [];
-    }
-  };
-
-  const unlinkCharacterFromCompetitor = async (
-    competitorId: string
-  ): Promise<Competitor> => {
-    try {
-      const updatedCompetitor =
-        await competitorsRepo.unlinkCharacterFromCompetitor(competitorId);
-      setCompetitors((prev) =>
-        prev.map((c) => (c.id === updatedCompetitor.id ? updatedCompetitor : c))
-      );
-      return updatedCompetitor;
-    } catch (err) {
-      console.error("Error unlinking character from competitor:", err);
-      throw err;
-    }
-  };
-
-  const getAvailableVariantsForBaseCharacter = async (baseCharacterId: string): Promise<CharacterVariant[]> => {
-    console.log("Fetching available variants for base character:", baseCharacterId);
-    try {
-      return await charactersRepo.fetchAvailableVariantsForBaseCharacter(baseCharacterId);
-    } catch (err) {
-      console.error("Error fetching available variants for base character:", err);
-      return [];
-    }
-  };
-
+  /* ───────── context value ───────── */
   return (
     <AppContext.Provider
       value={{
@@ -202,17 +148,23 @@ export function AppProvider({ children }: PropsWithChildren) {
         allCompetitors: competitors,
         allRaces: raceEvents,
         baseCharacters,
+
         loadInitialData,
+
         addCompetitor,
         updateCompetitor,
+        linkCharacterToCompetitor,
+        unlinkCharacterFromCompetitor,
+
         addRaceEvent,
-        analyzeRaceImage,
         getRaceById,
         getRecentRacesOfCompetitor,
         getSimilarRaces,
+
+        analyzeRaceImage,
+
         getCharacterVariants,
         getAvailableBaseCharacters,
-        unlinkCharacterFromCompetitor,
         getAvailableVariantsForBaseCharacter,
       }}
     >

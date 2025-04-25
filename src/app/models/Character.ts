@@ -7,5 +7,5 @@ export interface BaseCharacter {
 export interface CharacterVariant {
   id: string;
   label: string; // "Red", "Green", "Pink", etc. or "Default" if BaseCharacter has only one variant
-  baseCharacterId: string;
+  baseCharacter: { id: string; name: string };
 }

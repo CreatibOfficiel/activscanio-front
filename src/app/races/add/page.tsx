@@ -16,23 +16,37 @@ const AddRacePage: NextPage = () => {
   const router = useRouter();
   const { allCompetitors, isLoading, analyzeRaceImage } =
     useContext(AppContext);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    []
+    [],
   );
   const [isUploading, setIsUploading] = useState(false);
 
+  /* ---------- Helpers ---------- */
+
+  const canTakePhoto =
+    selectedCompetitors.length >= MIN_PLAYERS && !isUploading;
+
+  const triggerFileInput = () => {
+    if (!canTakePhoto) return;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }
+  };
+
+  /* ---------- Tri + filtre ---------- */
+
   const sortedCompetitors = [...allCompetitors].sort((a, b) => {
-    // Sort first by raceCount descending
     if ((b.raceCount ?? 0) !== (a.raceCount ?? 0)) {
       return (b.raceCount ?? 0) - (a.raceCount ?? 0);
     }
-    // In case of a tie, sort alphabetically
-    const fullNameA = (a.firstName + " " + a.lastName).toLowerCase();
-    const fullNameB = (b.firstName + " " + b.lastName).toLowerCase();
-    return fullNameA.localeCompare(fullNameB);
+    const nA = (a.firstName + " " + a.lastName).toLowerCase();
+    const nB = (b.firstName + " " + b.lastName).toLowerCase();
+    return nA.localeCompare(nB);
   });
 
   const filteredCompetitors = sortedCompetitors.filter((c) => {
@@ -40,163 +54,163 @@ const AddRacePage: NextPage = () => {
     return fullName.includes(searchTerm.toLowerCase());
   });
 
+  /* ---------- Sélection ---------- */
+
   const toggleSelection = (competitor: Competitor) => {
     setSelectedCompetitors((prev) => {
       if (prev.includes(competitor)) {
-        return prev.filter((cmp) => cmp.id !== competitor.id);
-      } else if (prev.length < MAX_PLAYERS) {
+        return prev.filter((c) => c.id !== competitor.id);
+      }
+      if (prev.length < MAX_PLAYERS) {
         return [...prev, competitor];
       }
       return prev;
     });
   };
 
+  /* ---------- Navigation ---------- */
+
   const onNext = () => {
     if (
       selectedCompetitors.length >= MIN_PLAYERS &&
       selectedCompetitors.length <= MAX_PLAYERS
     ) {
-      // Redirect to the score setup page with selected competitors' IDs
       const ids = selectedCompetitors.map((c) => c.id).join(",");
       router.push(`/races/score-setup?ids=${ids}`);
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  /* ---------- Upload & analyse ---------- */
 
-    // Ensure at least one competitor is selected
-    if (selectedCompetitors.length === 0) {
-      alert(
-        "Veuillez sélectionner au moins un compétiteur avant d'analyser une photo."
-      );
+  const handlePhotoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+
+    if (selectedCompetitors.length < MIN_PLAYERS) {
+      alert("Sélectionnez au moins 2 compétiteurs avant l’analyse.");
       return;
     }
 
     setIsUploading(true);
 
     try {
-      // Image
       const image = files[0];
-
-      // Include the selected competitor IDs in the request : string[]
       const competitorIds = selectedCompetitors.map((c) => c.id);
 
-      // Send and extract the results from the analysis
-      // Format expected: { results: [{ competitorId, rank12, score }] }
+      /** { results: [...] } */
       const { results } = await analyzeRaceImage(image, competitorIds);
 
-      if (results && results.length > 0) {
-        // Prepare URL with rank and score data
-        const ids = results.map((r: RaceResult) => r.competitorId).join(",");
-
-        // Create rank and score maps
-        const rankMap: Record<string, number> = {};
-        const scoreMap: Record<string, number> = {};
-
-        results.forEach((result: RaceResult) => {
-          rankMap[result.competitorId] = result.rank12;
-          scoreMap[result.competitorId] = result.score;
-        });
-
-        // Navigate to score setup with pre-filled data
-        router.push(
-          `/races/score-setup?ids=${ids}&rankMap=${JSON.stringify(
-            rankMap
-          )}&scoreMap=${JSON.stringify(scoreMap)}&fromAnalysis=true`
-        );
-      } else {
-        alert(
-          "L'analyse n'a pas pu détecter de résultats valides. Veuillez essayer avec une autre image ou saisir les scores manuellement."
-        );
+      if (results.length === 0) {
+        alert("Aucun résultat trouvé sur la photo, réessayez avec une meilleure image.");
+        return;
       }
-    } catch (error) {
-      console.error("Erreur lors de l'analyse de la photo:", error);
-      alert(
-        "Une erreur s'est produite lors de l'analyse de la photo. Veuillez réessayer."
-      );
+
+      /* ----- maps init ----- */
+      const rankMap: Record<string, number | undefined> = {};
+      const scoreMap: Record<string, number | undefined> = {};
+
+      results.forEach((r) => {
+        rankMap[r.competitorId] = r.rank12;
+        scoreMap[r.competitorId] = r.score;
+      });
+
+      /* ----- URL params ----- */
+      const ids = selectedCompetitors.map((c) => c.id).join(",");
+      const params = new URLSearchParams({
+        ids,
+        rankMap: JSON.stringify(rankMap),
+        scoreMap: JSON.stringify(scoreMap),
+        fromAnalysis: "true",
+      });
+
+      router.push(`/races/score-setup?${params.toString()}`);
+    } catch (err) {
+      console.error(err);
+      alert("Une erreur est survenue pendant l'analyse. Merci de réessayer.");
     } finally {
       setIsUploading(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const triggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
+  /* ---------- Render ---------- */
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6">
       <div className="max-w-lg mx-auto">
-        {/* Title and subtitle */}
         <h1 className="text-2xl font-bold mb-1">Sélection des joueurs</h1>
-        <p className="text-sm text-neutral-400 mb-6">Qui veut se la coller ?</p>
+        <p className="text-sm text-neutral-400 mb-6">
+          Qui veut se la coller&nbsp;?
+        </p>
 
         {isLoading ? (
-          <p className="text-neutral-300">Chargement...</p>
+          <p className="text-neutral-300">Chargement…</p>
         ) : (
           <>
-            {/* Search bar */}
+            {/* Search */}
             <div className="relative mb-4">
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Recherche..."
-                className="w-full h-10 bg-neutral-800 text-neutral-100 rounded pl-9 pr-3
-                           border border-neutral-700
-                           focus:outline-none focus:border-primary-500 transition-colors"
+                className="w-full h-10 bg-neutral-800 text-neutral-100 rounded pl-9 pr-3 border border-neutral-700 focus:outline-none focus:border-primary-500 transition-colors"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            {/* Buttons row */}
+            {/* Buttons */}
             <div className="flex gap-2 mb-6">
-              {/* "Add a player" button */}
+              {/* Add player */}
               <div
                 className="flex-1 flex items-center cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
                 onClick={() => router.push("/competitors/add")}
               >
                 <MdPersonAdd className="text-2xl text-primary-500 mr-2" />
-                <span className="text-base text-neutral-100 font-semibold">
+                <span className="text-base font-semibold">
                   Ajouter un joueur
                 </span>
               </div>
 
-              {/* "Take photo" button */}
+              {/* Take photo */}
               <div
-                className="flex-1 flex items-center cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
+                className={`flex-1 flex items-center p-3 rounded transition-colors ${
+                  canTakePhoto
+                    ? "cursor-pointer bg-neutral-800 hover:bg-neutral-700"
+                    : "cursor-not-allowed bg-neutral-700 text-neutral-500"
+                }`}
                 onClick={triggerFileInput}
               >
-                <MdCameraAlt className="text-2xl text-primary-500 mr-2" />
-                <span className="text-base text-neutral-100 font-semibold">
-                  {isUploading ? "Analyse en cours..." : "Prendre une photo"}
+                <MdCameraAlt
+                  className={`text-2xl mr-2 ${
+                    canTakePhoto ? "text-primary-500" : "text-neutral-500"
+                  }`}
+                />
+                <span className="text-base font-semibold">
+                  {isUploading ? "Analyse en cours…" : "Prendre une photo"}
                 </span>
+
+                {/* hidden input */}
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   capture="environment"
                   className="hidden"
-                  ref={fileInputRef}
                   onChange={handlePhotoUpload}
-                  disabled={isUploading}
                 />
               </div>
             </div>
 
-            {/* List of filtered players */}
+            {/* Liste joueurs */}
             <div className="flex flex-col">
-              {filteredCompetitors.map((competitor) => (
+              {filteredCompetitors.map((c) => (
                 <CheckableCompetitorItem
-                  key={competitor.id}
-                  competitor={competitor}
-                  isSelected={selectedCompetitors.includes(competitor)}
+                  key={c.id}
+                  competitor={c}
+                  isSelected={selectedCompetitors.includes(c)}
                   toggleSelection={toggleSelection}
                 />
               ))}
@@ -217,16 +231,13 @@ const AddRacePage: NextPage = () => {
                   selectedCompetitors.length > MAX_PLAYERS ||
                   isUploading
                 }
-                className={`
-                  w-full h-12 rounded font-semibold
-                  ${
-                    selectedCompetitors.length >= MIN_PLAYERS &&
-                    selectedCompetitors.length <= MAX_PLAYERS &&
-                    !isUploading
-                      ? "bg-primary-500 text-neutral-900"
-                      : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-                  }
-                `}
+                className={`w-full h-12 rounded font-semibold ${
+                  selectedCompetitors.length >= MIN_PLAYERS &&
+                  selectedCompetitors.length <= MAX_PLAYERS &&
+                  !isUploading
+                    ? "bg-primary-500 text-neutral-900"
+                    : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
+                }`}
               >
                 Continuer
               </button>

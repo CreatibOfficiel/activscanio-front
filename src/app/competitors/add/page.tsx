@@ -1,7 +1,7 @@
 "use client";
 
 import { NextPage } from "next";
-import { FormEvent, useContext, useEffect, useState } from "react";
+import { FormEvent, useContext, useState } from "react";
 import { AppContext } from "@/app/context/AppContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";

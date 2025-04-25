@@ -62,22 +62,25 @@ const ScoreSetupPage: NextPage = () => {
 
   // Initialize rankMap / scoreMap if not already set
   useEffect(() => {
-    const hasRankMap = Object.keys(rankMap).length > 0;
-    const hasScoreMap = Object.keys(scoreMap).length > 0;
-
-    if (!hasRankMap || !hasScoreMap) {
-      const initRank: Record<string, number | undefined> = { ...rankMap };
-      const initScore: Record<string, number | undefined> = { ...scoreMap };
-
-      selectedCompetitors.forEach((c) => {
-        if (!initRank[c.id]) initRank[c.id] = undefined;
-        if (!initScore[c.id]) initScore[c.id] = undefined;
+    const ids = selectedCompetitors.map((c) => c.id);
+  
+    // s’assurer que chaque id existe au moins comme clef
+    setRankMap((prev) => {
+      const copy = { ...prev };
+      ids.forEach((id) => {
+        if (!(id in copy)) copy[id] = undefined;
       });
-
-      if (!hasRankMap) setRankMap(initRank);
-      if (!hasScoreMap) setScoreMap(initScore);
-    }
-  }, [selectedCompetitors, rankMap, scoreMap]);
+      return copy;
+    });
+  
+    setScoreMap((prev) => {
+      const copy = { ...prev };
+      ids.forEach((id) => {
+        if (!(id in copy)) copy[id] = undefined;
+      });
+      return copy;
+    });
+  }, [selectedCompetitors]);
 
   // Basic check: each competitor has a rank (1..12) and a score (0..60)
   const isAllValid = selectedCompetitors.every((c) => {
@@ -182,14 +185,12 @@ const ScoreSetupPage: NextPage = () => {
 
       {/* Notification for auto-detected results */}
       {isFromAnalysis && (
-        <div className="mb-6 p-3 bg-primary-500 bg-opacity-10 border-l-4 border-primary-500 rounded-r">
-          <div className="flex items-center">
-            <MdOutlineCheckCircle className="text-primary-500 mr-2" size={20} />
-            <p className="text-sm text-neutral-200">
-              Résultats détectés automatiquement depuis l&apos;image. Vérifiez
-              et ajustez si nécessaire.
-            </p>
-          </div>
+        <div className="mb-6 rounded-lg bg-gradient-to-r from-primary-500/15 to-primary-400/10 p-4 flex items-start gap-3 ring-1 ring-primary-500/30">
+          <MdOutlineCheckCircle size={24} className="shrink-0 text-primary-400 mt-0.5" />
+          <p className="text-sm text-neutral-100 leading-relaxed">
+            Les résultats des joueurs ont été&nbsp;pré-remplis grâce à
+            l’analyse&nbsp;d’image. Vérifie-les et ajuste si nécessaire !
+          </p>
         </div>
       )}
 
@@ -235,7 +236,7 @@ const ScoreSetupPage: NextPage = () => {
                   max={12}
                   className="w-14 h-10 bg-neutral-900 border border-neutral-700 rounded text-center
                              text-neutral-100 focus:outline-none focus:border-primary-500"
-                  value={rankMap[c.id] ?? ""}
+                  value={rankMap[c.id] !== undefined ? String(rankMap[c.id]) : ""}
                   onChange={(e) => handleChangeRank(c.id, e.target.value)}
                 />
               </div>
@@ -251,7 +252,7 @@ const ScoreSetupPage: NextPage = () => {
                   max={60}
                   className="w-14 h-10 bg-neutral-900 border border-neutral-700 rounded text-center
                              text-neutral-100 focus:outline-none focus:border-primary-500"
-                  value={scoreMap[c.id] ?? ""}
+                  value={scoreMap[c.id] !== undefined ? String(scoreMap[c.id]) : ""}
                   onChange={(e) => handleChangeScore(c.id, e.target.value)}
                 />
               </div>

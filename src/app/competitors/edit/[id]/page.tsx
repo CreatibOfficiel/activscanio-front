@@ -1,368 +1,223 @@
-"use client";
+'use client';
 
-import { NextPage } from "next";
-import { FormEvent, useContext, useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import Image from "next/image";
+import { NextPage } from 'next';
+import { useRouter, useParams } from 'next/navigation';
+import { FormEvent, useEffect, useState } from 'react';
+import Image from 'next/image';
+import { MdLinkOff } from 'react-icons/md';
 
-import { AppContext } from "@/app/context/AppContext";
-import { Competitor } from "@/app/models/Competitor";
-import { BaseCharacter, CharacterVariant } from "@/app/models/Character";
-import { MdLinkOff } from "react-icons/md";
+import { useApp } from '@/app/context/AppContext';
+import {
+  Competitor,
+  UpdateCompetitorPayload,
+} from '@/app/models/Competitor';
+import { BaseCharacter, CharacterVariant } from '@/app/models/Character';
+
+/* ---------------------------------------------------- */
 
 const EditCompetitorPage: NextPage = () => {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams<{ id: string }>();
 
   const {
-    // From context
-    baseCharacters,                // Used to detect the competitor's character if they have one
     updateCompetitor,
+    linkCharacterToCompetitor,
     unlinkCharacterFromCompetitor,
-    getAvailableBaseCharacters,    // Loads the list of characters if the user doesn't have one linked
-    getAvailableVariantsForBaseCharacter, // Loads the variants of a character
-  } = useContext(AppContext);
+    getAvailableBaseCharacters,
+    getAvailableVariantsForBaseCharacter,
+  } = useApp();
 
-  // General state of the competitor
+  /* -------------- State -------------- */
+
+  const [loading, setLoading] = useState(true);
   const [competitor, setCompetitor] = useState<Competitor | null>(null);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [profileUrl, setProfileUrl] = useState("");
 
-  // Local state for the list of baseCharacters to display (if the user doesn't have a linked character)
-  const [availableBaseCharacters, setAvailableBaseCharacters] = useState<
-    BaseCharacter[]
-  >([]);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [profileUrl, setProfileUrl] = useState('');
 
-  // Selected base character and variant in the UI
-  const [selectedBaseCharacter, setSelectedBaseCharacter] =
-    useState<BaseCharacter | null>(null);
-  const [selectedVariant, setSelectedVariant] =
-    useState<CharacterVariant | null>(null);
-  const [characterVariants, setCharacterVariants] = useState<
-    CharacterVariant[]
-  >([]);
-  const [currentVariant, setCurrentVariant] = useState<CharacterVariant | null>(
-    null
-  );
+  const currentVariant = competitor?.characterVariant ?? null;
 
-  // Loading states
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingBaseCharacters, setIsLoadingBaseCharacters] = useState(false);
-  const [isLoadingVariants, setIsLoadingVariants] = useState(false);
-  const [isUnlinking, setIsUnlinking] = useState(false);
+  /* Sélection personnage */
+  const [availableBC, setAvailableBC] = useState<BaseCharacter[]>([]);
+  const [selectedBC, setSelectedBC] = useState<BaseCharacter | null>(null);
+  const [variantsOfSelected, setVariantsOfSelected] = useState<CharacterVariant[]>([]);
+  const [selectedVariant, setSelectedVariant] = useState<CharacterVariant | null>(null);
 
-  /**
-   * Checks if the image URL is valid
-   */
-  const isUrlValid = (url: string): boolean => {
-    const lower = url.trim().toLowerCase();
-    if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
-      return false;
-    }
-    if (
-      !(
-        lower.endsWith(".png") ||
-        lower.endsWith(".jpg") ||
-        lower.endsWith(".jpeg") ||
-        lower.endsWith(".webp")
-      )
-    ) {
-      return false;
-    }
-    return true;
-  };
+  const [loadingBC, setLoadingBC] = useState(false);
+  const [loadingVariants, setLoadingVariants] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
 
-  /**
-   * Checks if all required fields are valid
-   * and disables the button if a character has multiple variants but none is selected.
-   */
-  const isAllValid = (): boolean => {
-    // Checks first name, last name, and URL
-    if (!firstName.trim() || !lastName.trim() || !isUrlValid(profileUrl)) {
-      return false;
-    }
+  /* -------------- Helpers -------------- */
 
-    // Ensures a variant is selected if multiple variants are available
-    if (
-      selectedBaseCharacter &&
-      selectedBaseCharacter.variants &&
-      selectedBaseCharacter.variants.length > 1 &&
-      !selectedVariant
-    ) {
-      return false;
-    }
+  const isUrlValid = (url: string) =>
+    /^(https?:\/\/).+\.(png|jpe?g|webp)$/.test(url.trim().toLowerCase());
 
-    return true;
-  };
+  const isAllValid = () =>
+    firstName.trim() &&
+    lastName.trim() &&
+    isUrlValid(profileUrl) &&
+    (currentVariant || selectedVariant);
 
-  /**
-   * Fetches the competitor by id
-   */
+  /* -------------- Initial charge -------------- */
+
   useEffect(() => {
-    if (!competitor && params.id) {
-      setIsLoading(true);
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/competitors/${params.id}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Not found");
-          return res.json();
-        })
-        .then((data) => {
-          setCompetitor({
-            ...data,
-            characterVariantId: data.characterVariant?.id,
-          });
-          setFirstName(data.firstName);
-          setLastName(data.lastName);
-          setProfileUrl(data.profilePictureUrl);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          setIsLoading(false);
-          alert("Error loading competitor: " + err.message);
-        });
-    }
-  }, [competitor, params.id]);
+    if (!params.id) return;
 
-  /**
-   * If the competitor already has a characterVariant,
-   * we use the "baseCharacters" array from context to find that character and its variant.
-   * Otherwise, we load the list of available characters via getAvailableBaseCharacters.
-   */
-  useEffect(() => {
-    if (!competitor) return;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/competitors/${params.id}`,
+        );
+        if (!res.ok) throw new Error('Not found');
+        const data: Competitor = await res.json();
+        setCompetitor(data);
+        setFirstName(data.firstName);
+        setLastName(data.lastName);
+        setProfileUrl(data.profilePictureUrl);
 
-    if (competitor.characterVariantId) {
-      // => The competitor has a linked character, find it in baseCharacters
-      if (baseCharacters.length === 0) return;
-
-      const foundBaseChar = baseCharacters.find((bc) =>
-        bc.variants?.some((v) => v.id === competitor.characterVariantId)
-      );
-      const foundVariantChar = baseCharacters
-        .flatMap((bc) => bc.variants)
-        .find((v) => v.id === competitor.characterVariantId);
-
-      // Update the UI
-      setSelectedBaseCharacter(foundBaseChar ?? null);
-      setSelectedVariant(foundVariantChar ?? null);
-      setCurrentVariant(foundVariantChar ?? null);
-      setCharacterVariants(foundBaseChar?.variants ?? []);
-    } else {
-      // => The competitor does not have a base character/variant
-      // Load the list of characters from the API
-      const loadAvailableBC = async () => {
-        setIsLoadingBaseCharacters(true);
-        try {
-          const characters = await getAvailableBaseCharacters();
-          setAvailableBaseCharacters(characters);
-        } catch (error) {
-          console.error("Error loading base characters:", error);
-        } finally {
-          setIsLoadingBaseCharacters(false);
+        if (!data.characterVariant) {
+          setLoadingBC(true);
+          setAvailableBC(await getAvailableBaseCharacters());
+          setLoadingBC(false);
         }
-      };
-      loadAvailableBC();
-    }
-  }, [competitor, baseCharacters, getAvailableBaseCharacters]);
+      } catch (err) {
+        alert('Erreur de chargement du compétiteur');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [params.id, getAvailableBaseCharacters]);
 
-  /**
-   * Handles selecting a base character from the loaded list
-   * (case where the competitor has no character yet).
-   * Calls getAvailableVariantsForBaseCharacter to fetch up-to-date variants.
-   */
-  const handleSelectBaseCharacter = async (character: BaseCharacter) => {
-    if (selectedBaseCharacter?.id === character.id) {
-      // Deselect if clicking the same one
-      setSelectedBaseCharacter(null);
+  /* -------------- Sélection BC -------------- */
+
+  const handleSelectBC = async (bc: BaseCharacter) => {
+    if (selectedBC?.id === bc.id) {
+      setSelectedBC(null);
+      setVariantsOfSelected([]);
       setSelectedVariant(null);
-      setCharacterVariants([]);
       return;
     }
-    setSelectedBaseCharacter(character);
 
-    // Load variants from the API to ensure we have the latest list
-    setIsLoadingVariants(true);
+    setSelectedBC(bc);
+    setLoadingVariants(true);
     try {
-      const variants = await getAvailableVariantsForBaseCharacter(character.id);
-      setCharacterVariants(variants);
-      if (variants.length === 1) {
-        // If there is only one variant, select it automatically
-        setSelectedVariant(variants[0]);
-      } else {
-        // Otherwise, wait for the user to choose one
-        setSelectedVariant(null);
-      }
-    } catch (error) {
-      console.error("Error loading variants from server:", error);
-      alert("Unable to load variants for this character");
+      const vars = await getAvailableVariantsForBaseCharacter(bc.id);
+      setVariantsOfSelected(vars);
+      setSelectedVariant(vars.length === 1 ? vars[0] : null);
+    } catch {
+      alert('Impossible de récupérer les variantes');
     } finally {
-      setIsLoadingVariants(false);
+      setLoadingVariants(false);
     }
   };
 
-  /**
-   * Unlink the character from the competitor
-   */
-  const handleUnlinkCharacter = async () => {
-    if (!competitor || !competitor.characterVariantId) return;
+  /* -------------- Unlink -------------- */
 
-    setIsUnlinking(true);
+  const handleUnlink = async () => {
+    if (!competitor) return;
+    setUnlinking(true);
     try {
-      const updatedCompetitor = await unlinkCharacterFromCompetitor(
-        competitor.id
-      );
-      // Clean up local state
-      setCompetitor(updatedCompetitor);
-      setCurrentVariant(null);
+      const updated = await unlinkCharacterFromCompetitor(competitor.id);
+      setCompetitor(updated);
+      setSelectedBC(null);
       setSelectedVariant(null);
-      setSelectedBaseCharacter(null);
-
-      // In this case, reload the list of available characters
-      setIsLoadingBaseCharacters(true);
-      try {
-        const characters = await getAvailableBaseCharacters();
-        setAvailableBaseCharacters(characters);
-      } catch (error) {
-        console.error("Error re-loading base characters:", error);
-      } finally {
-        setIsLoadingBaseCharacters(false);
-      }
-
-      alert("Character unlinked successfully!");
-    } catch (error) {
-      console.error("Error unlinking character:", error);
-      alert("Error unlinking character");
+      setVariantsOfSelected([]);
+      setLoadingBC(true);
+      setAvailableBC(await getAvailableBaseCharacters());
+      setLoadingBC(false);
+    } catch {
+      alert('Erreur lors du déliage');
     } finally {
-      setIsUnlinking(false);
+      setUnlinking(false);
     }
   };
 
-  /**
-   * Form submission: update the competitor
-   */
+  /* -------------- Submit -------------- */
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!competitor) return;
-    if (!isAllValid()) return;
+    if (!competitor || !isAllValid()) return;
 
-    const updatedCompetitor: Competitor = {
-      ...competitor,
+    // 1. Mise à jour des champs simples
+    const payload: UpdateCompetitorPayload = {
       firstName,
       lastName,
       profilePictureUrl: profileUrl,
-      characterVariantId: selectedVariant?.id || undefined,
     };
+    await updateCompetitor(competitor.id, payload);
 
-    await updateCompetitor(updatedCompetitor);
-    alert("Competitor updated successfully!");
+    // 2. Lien du personnage si nécessaire
+    if (!currentVariant && selectedVariant) {
+      await linkCharacterToCompetitor(competitor.id, selectedVariant.id);
+    }
+
+    alert('Mis à jour !');
     router.back();
   };
 
-  /**
-   * Loading screen for the competitor
-   */
-  if (isLoading) {
+  /* -------------- Render -------------- */
+
+  if (loading) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
-        <p>Loading competitor...</p>
+        <p>Chargement…</p>
       </div>
     );
   }
-
-  /**
-   * Competitor not found
-   */
   if (!competitor) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
-        <p>Competitor not found.</p>
+        <p>Compétiteur introuvable.</p>
         <button
           onClick={() => router.back()}
           className="mt-4 p-3 bg-primary-500 text-neutral-900 rounded"
         >
-          Go Back
+          Retour
         </button>
       </div>
     );
   }
 
-  /**
-   * Main render: the edit form
-   */
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
       <h1 className="text-title mb-4">Modifier le compétiteur</h1>
-
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* First Name Field */}
+        {/* Prénom */}
         <div>
           <label className="block mb-1 text-neutral-300">Prénom</label>
-          <input
-            type="text"
-            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
+          <input type="text" className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
         </div>
-
-        {/* Last Name Field */}
+        {/* Nom */}
         <div>
           <label className="block mb-1 text-neutral-300">Nom</label>
-          <input
-            type="text"
-            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
+          <input type="text" className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750" value={lastName} onChange={(e) => setLastName(e.target.value)} />
         </div>
-
-        {/* Profile Image Field */}
+        {/* Image URL */}
         <div>
-          <label className="block mb-1 text-neutral-300">
-            Image de profil (URL)
-          </label>
-          <input
-            type="text"
-            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-            value={profileUrl}
-            onChange={(e) => setProfileUrl(e.target.value)}
-          />
-
-          {/* Preview of the image if URL is provided */}
+          <label className="block mb-1 text-neutral-300">Image de profil (URL)</label>
+          <input type="text" className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750" value={profileUrl} onChange={(e) => setProfileUrl(e.target.value)} />
           {profileUrl && (
             <div className="mt-2 flex justify-center">
               <div className="w-16 h-16 rounded-full overflow-hidden">
-                <Image
-                  src={isUrlValid(profileUrl) ? profileUrl : "/placeholder.png"}
-                  alt="Preview"
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
+                <Image src={isUrlValid(profileUrl) ? profileUrl : "/placeholder.png"} alt="Preview" width={64} height={64} className="object-cover w-full h-full" />
               </div>
             </div>
           )}
         </div>
 
-        {/* Current character, with unlink button */}
+        {/* Personnage lié */}
         {currentVariant && (
           <div className="mt-4 p-3 bg-neutral-800 rounded">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-neutral-300 font-semibold">
-                  Personnage lié
-                </h3>
+                <h3 className="text-neutral-300 font-semibold">Personnage lié</h3>
                 <p className="text-neutral-200">
-                  {selectedBaseCharacter?.name} - {currentVariant.label}
+                  {currentVariant.baseCharacter.name}
+                  {currentVariant.label && currentVariant.label !== "Default" && ` – ${currentVariant.label}`}
                 </p>
               </div>
-              <button
-                type="button"
-                className="p-2 bg-red-700 hover:bg-red-600 rounded flex items-center gap-1"
-                onClick={handleUnlinkCharacter}
-                disabled={isUnlinking}
-              >
+              <button type="button" className="p-2 bg-red-700 hover:bg-red-600 rounded flex items-center gap-1" onClick={handleUnlink} disabled={unlinking}>
                 <MdLinkOff className="text-lg" />
                 <span>Délier</span>
               </button>
@@ -370,103 +225,44 @@ const EditCompetitorPage: NextPage = () => {
           </div>
         )}
 
-        {/* If the competitor doesn’t have a linked character yet, show the selection */}
+        {/* Sélection */}
         {!currentVariant && (
           <>
             <div className="mt-4">
               <label className="block mb-2 text-neutral-300">Personnage</label>
-              {isLoadingBaseCharacters ? (
-                <p className="text-neutral-500">Loading characters...</p>
+              {loadingBC ? (
+                <p className="text-neutral-500">Chargement…</p>
+              ) : availableBC.length === 0 ? (
+                <p className="text-neutral-500">Aucun disponible</p>
               ) : (
-                <>
-                  {availableBaseCharacters.length === 0 ? (
-                    <p className="text-neutral-500">
-                      No characters available
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-5 gap-2">
-                      {availableBaseCharacters.map((character) => (
-                        <div
-                          key={character.id}
-                          onClick={() => handleSelectBaseCharacter(character)}
-                          className={`
-                            p-2 rounded cursor-pointer items-center
-                            ${
-                              selectedBaseCharacter?.id === character.id
-                                ? "bg-primary-500 text-neutral-900"
-                                : "bg-neutral-800 hover:bg-neutral-700"
-                            }
-                          `}
-                        >
-                          <span className="text-xs mt-1">{character.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Variants */}
-            {selectedBaseCharacter &&
-              characterVariants.length > 1 && (
-                <div>
-                  <label className="block mb-1 text-neutral-300">
-                    Variantes
-                  </label>
-                  {isLoadingVariants ? (
-                    <p className="text-neutral-500">
-                      Loading variants...
-                    </p>
-                  ) : characterVariants.length === 0 ? (
-                    <p className="text-neutral-500">
-                      No variants available
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      {characterVariants.map((variant) => (
-                        <div
-                          key={variant.id}
-                          onClick={() => setSelectedVariant(variant)}
-                          className={`
-                            p-2 rounded cursor-pointer items-center
-                            ${
-                              selectedVariant?.id === variant.id
-                                ? "bg-primary-500 text-neutral-900"
-                                : "bg-neutral-800 hover:bg-neutral-700"
-                            }
-                          `}
-                        >
-                          <span className="text-xs mt-1">{variant.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div className="grid grid-cols-5 gap-2">
+                  {availableBC.map((bc) => (
+                    <div key={bc.id} onClick={() => handleSelectBC(bc)} className={`p-2 rounded cursor-pointer ${selectedBC?.id === bc.id ? "bg-primary-500 text-neutral-900" : "bg-neutral-800 hover:bg-neutral-700"}`}> {bc.name} </div>
+                  ))}
                 </div>
               )}
+            </div>
+            {selectedBC && variantsOfSelected.length > 1 && (
+              <div>
+                <label className="block mb-1 text-neutral-300">Variantes</label>
+                {loadingVariants ? (
+                  <p className="text-neutral-500">Chargement…</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {variantsOfSelected.map((v) => (
+                      <div key={v.id} onClick={() => setSelectedVariant(v)} className={`p-2 rounded cursor-pointer ${selectedVariant?.id === v.id ? "bg-primary-500 text-neutral-900" : "bg-neutral-800 hover:bg-neutral-700"}`}>{v.label}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
-        {/* Action buttons */}
+        {/* Actions */}
         <div className="mt-6 flex gap-2">
-          <button
-            type="button"
-            className="flex-1 p-3 bg-transparent border-2 border-primary-500 rounded text-primary-500"
-            onClick={() => router.back()}
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            disabled={!isAllValid()}
-            className={`flex-1 p-3 rounded text-bold ${
-              isAllValid()
-                ? "bg-primary-500 text-neutral-900"
-                : "bg-neutral-500 text-neutral-600"
-            }`}
-          >
-            Enregistrer
-          </button>
+          <button type="button" className="flex-1 p-3 bg-transparent border-2 border-primary-500 rounded text-primary-500" onClick={() => router.back()}>Annuler</button>
+          <button type="submit" disabled={!isAllValid()} className={`flex-1 p-3 rounded font-bold ${isAllValid() ? "bg-primary-500 text-neutral-900" : "bg-neutral-500 text-neutral-600"}`}>Enregistrer</button>
         </div>
       </form>
     </div>

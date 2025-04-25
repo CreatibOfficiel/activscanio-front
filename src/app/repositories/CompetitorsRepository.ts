@@ -1,7 +1,12 @@
-import { Competitor } from "../models/Competitor";
+import {
+  Competitor,
+  UpdateCompetitorPayload,
+} from "@/app/models/Competitor";
 
 export class CompetitorsRepository {
-  constructor(private baseUrl: string) {}
+  constructor(private readonly baseUrl: string) {}
+
+  /* ───────── READ ───────── */
 
   // GET /competitors
   async fetchCompetitors(): Promise<Competitor[]> {
@@ -9,12 +14,10 @@ export class CompetitorsRepository {
     if (!res.ok) {
       throw new Error(`Error fetching competitors: ${res.statusText}`);
     }
-    const data = await res.json();
-    return data.map((jsonObj: any) => ({
-      ...jsonObj,
-      characterVariantId: jsonObj.characterVariant?.id,
-    }));
+    return (await res.json()) as Competitor[];
   }
+
+  /* ───────── CREATE ───────── */
 
   // POST /competitors
   async createCompetitor(competitor: Competitor): Promise<Competitor> {
@@ -32,44 +35,74 @@ export class CompetitorsRepository {
         rank: competitor.rank,
       }),
     });
-    if (res.ok) {
-      return await res.json();
-    } else {
-      const errMsg = await res.text();
-      throw new Error(`Error creating competitor: ${errMsg}`);
+
+    if (!res.ok) {
+      throw new Error(
+        `Error creating competitor: ${await res.text()}`,
+      );
     }
+    return (await res.json()) as Competitor;
   }
 
-  // PUT /competitors/{id}
-  async updateCompetitor(competitor: Competitor): Promise<Competitor> {
-    const res = await fetch(`${this.baseUrl}/competitors/${competitor.id}`, {
+  /* ───────── UPDATE ───────── */
+
+  // PUT /competitors/:id
+  async updateCompetitor(
+    id: string,
+    payload: UpdateCompetitorPayload,
+  ): Promise<Competitor> {
+    const res = await fetch(`${this.baseUrl}/competitors/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(competitor),
+      body: JSON.stringify(payload),
     });
-    if (res.ok) {
-      return await res.json();
-    } else {
-      const errMsg = await res.text();
-      throw new Error(`Error updating competitor: ${errMsg}`);
+
+    if (!res.ok) {
+      throw new Error(
+        `Error updating competitor: ${await res.text()}`,
+      );
     }
+    return (await res.json()) as Competitor;
   }
 
-  // POST /competitors/:id/unlink-character
-  async unlinkCharacterFromCompetitor(
-    competitorId: string
+  /* ───────── LINK / UNLINK CHARACTER VARIANT ───────── */
+
+  // POST /competitors/:id/character-variant
+  async linkCharacterToCompetitor(
+    competitorId: string,
+    variantId: string,
   ): Promise<Competitor> {
     const res = await fetch(
-      `${this.baseUrl}/competitors/${competitorId}/unlink-character`,
+      `${this.baseUrl}/competitors/${competitorId}/character-variant`,
       {
         method: "POST",
-      }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ characterVariantId: variantId }),
+      },
     );
-    if (res.ok) {
-      return await res.json();
-    } else {
-      const errMsg = await res.text();
-      throw new Error(`Error unlinking character from competitor: ${errMsg}`);
+
+    if (!res.ok) {
+      throw new Error(
+        `Error linking character: ${await res.text()}`,
+      );
     }
+    return (await res.json()) as Competitor;
+  }
+
+  // DELETE /competitors/:id/character-variant
+  async unlinkCharacterFromCompetitor(
+    competitorId: string,
+  ): Promise<Competitor> {
+    const res = await fetch(
+      `${this.baseUrl}/competitors/${competitorId}/character-variant`,
+      { method: "DELETE" },
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `Error unlinking character: ${await res.text()}`,
+      );
+    }
+    return (await res.json()) as Competitor;
   }
 }

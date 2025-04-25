@@ -1,7 +1,10 @@
 "use client";
 
-import { createContext } from "react";
-import { Competitor } from "../models/Competitor";
+import { createContext, useContext } from "react";
+import {
+  Competitor,
+  UpdateCompetitorPayload,
+} from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
@@ -9,28 +12,48 @@ import { BaseCharacter, CharacterVariant } from "../models/Character";
 import { RaceAnalysisResult } from "../repositories/RaceAnalysisRepository";
 
 export interface AppContextType {
+  /* ---- global ---- */
   isLoading: boolean;
   allCompetitors: Competitor[];
   allRaces: RaceEvent[];
   baseCharacters: BaseCharacter[];
-  loadInitialData: () => Promise<[Competitor[], RaceEvent[], BaseCharacter[]]>;
+
+  /* ---- chargement ---- */
+  loadInitialData: () => Promise<
+    [Competitor[], RaceEvent[], BaseCharacter[]]
+  >;
+
+  /* ---- compétiteurs ---- */
   addCompetitor: (newCompetitor: Competitor) => Promise<Competitor>;
-  updateCompetitor: (competitor: Competitor) => Promise<Competitor>;
+  updateCompetitor: (
+    id: string,
+    payload: UpdateCompetitorPayload
+  ) => Promise<Competitor>;
+  linkCharacterToCompetitor: (
+    competitorId: string,
+    variantId: string
+  ) => Promise<Competitor>;
+  unlinkCharacterFromCompetitor: (competitorId: string) => Promise<Competitor>;
+
+  /* ---- courses ---- */
   addRaceEvent: (results: RaceResult[]) => Promise<RaceEvent>;
-  analyzeRaceImage: (
-    image: File,
-    competitorIds: string[]
-  ) => Promise<RaceAnalysisResult>;
   getRaceById: (raceId: string) => Promise<RaceEvent>;
   getRecentRacesOfCompetitor: (
     competitorId: string
   ) => Promise<RecentRaceInfo[]>;
   getSimilarRaces: (raceId: string) => Promise<RaceEvent[]>;
+
+  /* ---- image analyse ---- */
+  analyzeRaceImage: (
+    image: File,
+    competitorIds: string[]
+  ) => Promise<RaceAnalysisResult>;
+
+  /* ---- personnages ---- */
   getCharacterVariants: (
     baseCharacterId: string
   ) => Promise<CharacterVariant[]>;
   getAvailableBaseCharacters: () => Promise<BaseCharacter[]>;
-  unlinkCharacterFromCompetitor: (competitorId: string) => Promise<Competitor>;
   getAvailableVariantsForBaseCharacter: (
     baseCharacterId: string
   ) => Promise<CharacterVariant[]>;
@@ -42,61 +65,35 @@ export const AppContext = createContext<AppContextType>({
   allRaces: [],
   baseCharacters: [],
 
-  loadInitialData: async (): Promise<
-    [Competitor[], RaceEvent[], BaseCharacter[]]
-  > => {
-    return [[], [], []];
+  loadInitialData: async () => [[], [], []],
+
+  addCompetitor: async (c) => ({ ...c, id: "tmp" }),
+  updateCompetitor: async () => {
+    throw new Error("updateCompetitor not initialised");
   },
-  addCompetitor: async (newCompetitor: Competitor): Promise<Competitor> => {
-    return { ...newCompetitor, id: "default-id" };
+  linkCharacterToCompetitor: async () => {
+    throw new Error("linkCharacterToCompetitor not initialised");
   },
-  updateCompetitor: async (competitor: Competitor): Promise<Competitor> => {
-    return { ...competitor };
+  unlinkCharacterFromCompetitor: async () => {
+    throw new Error("unlinkCharacterFromCompetitor not initialised");
   },
-  addRaceEvent: async (results: RaceResult[]): Promise<RaceEvent> => {
-    return {
-      id: "default-race-id",
-      date: new Date().toISOString(),
-      results,
-    };
+
+  addRaceEvent: async () => {
+    throw new Error("addRaceEvent not initialised");
   },
-  analyzeRaceImage: async (
-    image: File,
-    competitorIds: string[]
-  ): Promise<RaceAnalysisResult> => {
-    return {
-      results: competitorIds.map((id, index) => ({
-        competitorId: id,
-        rank12: index + 1,
-        score: Math.random() * 100,
-      })),
-    };
+  getRaceById: async () => {
+    throw new Error("getRaceById not initialised");
   },
-  getRaceById: async (raceId: string): Promise<RaceEvent> => {
-    return {
-      id: raceId,
-      date: new Date().toISOString(),
-      results: [],
-    };
+  getRecentRacesOfCompetitor: async () => [],
+  getSimilarRaces: async () => [],
+
+  analyzeRaceImage: async () => {
+    throw new Error("analyzeRaceImage not initialised");
   },
-  getRecentRacesOfCompetitor: async (): Promise<RecentRaceInfo[]> => {
-    return [];
-  },
-  getSimilarRaces: async (): Promise<RaceEvent[]> => {
-    return [];
-  },
-  getCharacterVariants: async (): Promise<CharacterVariant[]> => {
-    return [];
-  },
-  getAvailableBaseCharacters: async (): Promise<BaseCharacter[]> => {
-    return [];
-  },
-  unlinkCharacterFromCompetitor: async (competitorId: string): Promise<Competitor> => {
-    return { id: competitorId, firstName: "Competitor", lastName: "Name", profilePictureUrl: "" };
-  },
-  getAvailableVariantsForBaseCharacter: async (
-    baseCharacterId: string
-  ): Promise<CharacterVariant[]> => {
-    return [];
-  },
+
+  getCharacterVariants: async () => [],
+  getAvailableBaseCharacters: async () => [],
+  getAvailableVariantsForBaseCharacter: async () => [],
 });
+
+export const useApp = () => useContext(AppContext);
