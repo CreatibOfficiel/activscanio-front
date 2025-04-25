@@ -7,7 +7,6 @@ import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
 import { MdPersonAdd, MdSearch, MdCameraAlt } from "react-icons/md";
-import { RaceResult } from "@/app/models/RaceResult";
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 4;

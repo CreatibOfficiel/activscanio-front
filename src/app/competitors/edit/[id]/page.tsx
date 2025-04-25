@@ -82,7 +82,7 @@ const EditCompetitorPage: NextPage = () => {
           setLoadingBC(false);
         }
       } catch (err) {
-        alert('Erreur de chargement du compétiteur');
+        alert('Erreur de chargement du compétiteur' + (err instanceof Error ? `: ${err.message}` : ''));
       } finally {
         setLoading(false);
       }

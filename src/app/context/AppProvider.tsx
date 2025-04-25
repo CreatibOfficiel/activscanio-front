@@ -8,8 +8,7 @@ import {
 } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
-import { RecentRaceInfo } from "../models/RecentRaceInfo";
-import { BaseCharacter, CharacterVariant } from "../models/Character";
+import { BaseCharacter } from "../models/Character";
 import { CompetitorsRepository } from "../repositories/CompetitorsRepository";
 import { RacesRepository } from "../repositories/RacesRepository";
 import {
