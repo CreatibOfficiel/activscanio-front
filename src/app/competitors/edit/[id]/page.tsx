@@ -20,6 +20,7 @@ const EditCompetitorPage: NextPage = () => {
   const params = useParams<{ id: string }>();
 
   const {
+    getCompetitorById,
     updateCompetitor,
     linkCharacterToCompetitor,
     unlinkCharacterFromCompetitor,
@@ -66,17 +67,14 @@ const EditCompetitorPage: NextPage = () => {
 
     (async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/competitors/${params.id}`,
-        );
-        if (!res.ok) throw new Error('Not found');
-        const data: Competitor = await res.json();
-        setCompetitor(data);
-        setFirstName(data.firstName);
-        setLastName(data.lastName);
-        setProfileUrl(data.profilePictureUrl);
+        const competitor = await getCompetitorById(params.id);
+        if (!competitor) throw new Error('Not found');
+        setCompetitor(competitor);
+        setFirstName(competitor.firstName);
+        setLastName(competitor.lastName);
+        setProfileUrl(competitor.profilePictureUrl);
 
-        if (!data.characterVariant) {
+        if (!competitor.characterVariant) {
           setLoadingBC(true);
           setAvailableBC(await getAvailableBaseCharacters());
           setLoadingBC(false);

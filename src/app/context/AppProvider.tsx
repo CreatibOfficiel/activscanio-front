@@ -18,7 +18,7 @@ import {
 import { CharactersRepository } from "../repositories/CharactersRepository";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://azule.ascan.io/api";
 
 const competitorsRepo = new CompetitorsRepository(baseUrl);
 const racesRepo = new RacesRepository(baseUrl);
@@ -75,6 +75,12 @@ export function AppProvider({ children }: PropsWithChildren) {
     setCompetitors((prev) => [...prev, created]);
     return created;
   };
+
+  const getCompetitorById = (id: string) => {
+    const competitor = competitors.find((c) => c.id === id);
+    if (competitor) return Promise.resolve(competitor);
+    return competitorsRepo.fetchCompetitorById(id);
+  }
 
   const updateCompetitor = async (
     id: string,
@@ -151,6 +157,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         loadInitialData,
 
         addCompetitor,
+        getCompetitorById,
         updateCompetitor,
         linkCharacterToCompetitor,
         unlinkCharacterFromCompetitor,

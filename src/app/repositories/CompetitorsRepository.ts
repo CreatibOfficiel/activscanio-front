@@ -44,6 +44,17 @@ export class CompetitorsRepository {
     return (await res.json()) as Competitor;
   }
 
+  /* ───────── READ BY ID ───────── */
+
+  // GET /competitors/:id
+  async fetchCompetitorById(id: string): Promise<Competitor> {
+    const res = await fetch(`${this.baseUrl}/competitors/${id}`);
+    if (!res.ok) {
+      throw new Error(`Error fetching competitor: ${await res.text()}`);
+    }
+    return (await res.json()) as Competitor;
+  }
+
   /* ───────── UPDATE ───────── */
 
   // PUT /competitors/:id

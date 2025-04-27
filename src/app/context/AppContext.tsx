@@ -25,6 +25,7 @@ export interface AppContextType {
 
   /* ---- compétiteurs ---- */
   addCompetitor: (newCompetitor: Competitor) => Promise<Competitor>;
+  getCompetitorById: (id: string) => Promise<Competitor>;
   updateCompetitor: (
     id: string,
     payload: UpdateCompetitorPayload
@@ -68,6 +69,9 @@ export const AppContext = createContext<AppContextType>({
   loadInitialData: async () => [[], [], []],
 
   addCompetitor: async (c) => ({ ...c, id: "tmp" }),
+  getCompetitorById: async () => {
+    throw new Error("getCompetitorById not initialised");
+  },
   updateCompetitor: async () => {
     throw new Error("updateCompetitor not initialised");
   },
