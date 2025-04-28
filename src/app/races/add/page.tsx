@@ -7,12 +7,14 @@ import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
 import { MdPersonAdd, MdSearch, MdCameraAlt } from "react-icons/md";
+import imageCompression from "browser-image-compression";
 
 const MIN_PLAYERS = 2;
 const MAX_PLAYERS = 4;
 
 const AddRacePage: NextPage = () => {
   const router = useRouter();
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { allCompetitors, isLoading, analyzeRaceImage } =
     useContext(AppContext);
 
@@ -20,7 +22,7 @@ const AddRacePage: NextPage = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    [],
+    []
   );
   const [isUploading, setIsUploading] = useState(false);
 
@@ -81,28 +83,34 @@ const AddRacePage: NextPage = () => {
 
   /* ---------- Upload & analyse ---------- */
 
-  const handlePhotoUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
-
+  
     if (selectedCompetitors.length < MIN_PLAYERS) {
       alert("Sélectionnez au moins 2 compétiteurs avant l’analyse.");
       return;
     }
-
+  
     setIsUploading(true);
-
     try {
-      const image = files[0];
-      const competitorIds = selectedCompetitors.map((c) => c.id);
+      const originalFile = files[0];
+  
+      const options = {
+        maxSizeMB: 1,              // taille cible ≤ 1 MB
+        maxWidthOrHeight: 1400,    // redimensionnement si nécessaire
+        useWebWorker: true,        // thread séparé : UI non bloquée
+      };
+  
+      const compressedFile = await imageCompression(originalFile, options);
 
-      /** { results: [...] } */
-      const { results } = await analyzeRaceImage(image, competitorIds);
+      const competitorIds = selectedCompetitors.map((c) => c.id);
+      const { results } = await analyzeRaceImage(compressedFile, competitorIds);
 
       if (results.length === 0) {
-        alert("Aucun résultat trouvé sur la photo, réessayez avec une meilleure image.");
+        alert(
+          "Aucun résultat trouvé sur la photo, réessayez avec une meilleure image."
+        );
         return;
       }
 
@@ -127,6 +135,7 @@ const AddRacePage: NextPage = () => {
       router.push(`/races/score-setup?${params.toString()}`);
     } catch (err) {
       console.error(err);
+      setErrorMsg(err instanceof Error ? err.message : String(err));
       alert("Une erreur est survenue pendant l'analyse. Merci de réessayer.");
     } finally {
       setIsUploading(false);
@@ -138,6 +147,11 @@ const AddRacePage: NextPage = () => {
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6">
+      {errorMsg && (
+        <div style={{ color: "red", margin: 8, fontSize: 12 }}>
+          Erreur : {errorMsg}
+        </div>
+      )}
       <div className="max-w-lg mx-auto">
         <h1 className="text-2xl font-bold mb-1">Sélection des joueurs</h1>
         <p className="text-sm text-neutral-400 mb-6">

@@ -3,6 +3,7 @@ services:
     container_name: activscanio-front
     build:
       context: .
+      dockerfile: Dockerfile.dev
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     ports:
