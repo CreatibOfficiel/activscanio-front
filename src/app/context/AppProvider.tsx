@@ -2,10 +2,7 @@
 
 import React, { PropsWithChildren, useEffect, useState } from "react";
 import { AppContext } from "./AppContext";
-import {
-  Competitor,
-  UpdateCompetitorPayload,
-} from "../models/Competitor";
+import { Competitor, UpdateCompetitorPayload } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { BaseCharacter } from "../models/Character";
@@ -65,9 +62,8 @@ export function AppProvider({ children }: PropsWithChildren) {
   const getAvailableBaseCharacters = () =>
     charactersRepo.fetchAvailableBaseCharacters();
 
-  const getAvailableVariantsForBaseCharacter = (
-    bcId: string,
-  ) => charactersRepo.fetchAvailableVariantsForBaseCharacter(bcId);
+  const getAvailableVariantsForBaseCharacter = (bcId: string) =>
+    charactersRepo.fetchAvailableVariantsForBaseCharacter(bcId);
 
   /* ───────── competitor CRUD ───────── */
   const addCompetitor = async (newCompetitor: Competitor) => {
@@ -80,38 +76,39 @@ export function AppProvider({ children }: PropsWithChildren) {
     const competitor = competitors.find((c) => c.id === id);
     if (competitor) return Promise.resolve(competitor);
     return competitorsRepo.fetchCompetitorById(id);
-  }
+  };
 
   const updateCompetitor = async (
     id: string,
-    payload: UpdateCompetitorPayload,
+    payload: UpdateCompetitorPayload
   ) => {
     const updated = await competitorsRepo.updateCompetitor(id, payload);
     setCompetitors((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c)),
+      prev.map((c) => (c.id === updated.id ? updated : c))
     );
     return updated;
   };
 
   const linkCharacterToCompetitor = async (
     competitorId: string,
-    variantId: string,
+    variantId: string
   ) => {
     const updated = await competitorsRepo.linkCharacterToCompetitor(
       competitorId,
-      variantId,
+      variantId
     );
     setCompetitors((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c)),
+      prev.map((c) => (c.id === updated.id ? updated : c))
     );
     return updated;
   };
 
   const unlinkCharacterFromCompetitor = async (competitorId: string) => {
-    const updated =
-      await competitorsRepo.unlinkCharacterFromCompetitor(competitorId);
+    const updated = await competitorsRepo.unlinkCharacterFromCompetitor(
+      competitorId
+    );
     setCompetitors((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c)),
+      prev.map((c) => (c.id === updated.id ? updated : c))
     );
     return updated;
   };
@@ -141,7 +138,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   /* ───────── image analyse ───────── */
   const analyzeRaceImage = (
     image: File,
-    competitorIds: string[],
+    competitorIds: string[]
   ): Promise<RaceAnalysisResult> =>
     raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds);
 

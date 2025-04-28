@@ -13,6 +13,7 @@ export interface Competitor {
   rank?: number;
   raceCount?: number;
   avgRank12?: number;
+  lastRaceDate? : string;
 }
 
 /* -------- Helpers -------- */
