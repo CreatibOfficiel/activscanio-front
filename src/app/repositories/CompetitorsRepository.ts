@@ -27,8 +27,9 @@ export class CompetitorsRepository {
       body: JSON.stringify({
         firstName: competitor.firstName,
         lastName: competitor.lastName,
-        mu: competitor.mu,
-        sigma: competitor.sigma,
+        rating: competitor.rating,
+        rd: competitor.rd,
+        vol: competitor.vol,
         profilePictureUrl: competitor.profilePictureUrl,
         raceCount: competitor.raceCount,
         avgRank12: competitor.avgRank12,

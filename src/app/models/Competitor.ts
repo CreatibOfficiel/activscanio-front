@@ -1,6 +1,6 @@
 import { CharacterVariant } from './Character';
 
-/* -------- Types principaux -------- */
+/* -------- Principal types -------- */
 
 export interface Competitor {
   id: string;
@@ -8,37 +8,37 @@ export interface Competitor {
   lastName: string;
   profilePictureUrl: string;
   characterVariant?: CharacterVariant | null;
-  mu?: number;
-  sigma?: number;
+  rating: number;
+  rd: number;
+  vol: number;
   rank?: number;
   raceCount?: number;
   avgRank12?: number;
-  lastRaceDate? : string;
+  lastRaceDate?: string;
+  conservativeScore: number;
+  provisional: boolean;
 }
 
-/* -------- Helpers -------- */
+/* -------- Helpers types -------- */
 
 export const getFullName = (c: Competitor) =>
   `${c.firstName} ${c.lastName[0]}.`;
 
 export function getDisplayScore(c: Competitor): string {
-  if (c.mu == null || c.sigma == null) return 'N/A';
-  const baseSkill = c.mu - 3 * c.sigma;
-  const A = 1500;
-  const B = 30;
-  return Math.max(0, Math.round(A + B * baseSkill)).toString();
+  if (c.rating == null || c.rd == null) return 'N/A';
+  return Math.round(c.rating).toString();
 }
 
-/* -------- Payload de mise à jour -------- */
+/* -------- Update payload types -------- */
 
 export interface UpdateCompetitorPayload {
   firstName?: string;
   lastName?: string;
   profilePictureUrl?: string;
   /**
-   * UUID du CharacterVariant à lier,
-   * null pour délier,
-   * ou absent pour ne rien changer
+   * UUID of the CharacterVariant to link,
+   * null to unlink,
+   * or absent to not change
    */
   characterVariantId?: string | null;
 }
