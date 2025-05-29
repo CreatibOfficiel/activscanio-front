@@ -24,12 +24,12 @@ const ScoreSetupPage: NextPage = () => {
 
     if (!ids) return;
 
-    const competitorIds = ids.split(",");
+    const competitorIds = ids.split(",").filter(id => id !== '');
     const found = allCompetitors.filter((c) => competitorIds.includes(c.id));
     setSelectedCompetitors(found);
     setIsFromAnalysis(fromAnalysis);
 
-    // Récupérer les scores et rangs depuis l'URL
+    // Récupérer les scores et rangs depuis l'URL pour l'initialisation
     const newRankMap: Record<string, number | undefined> = {};
     const newScoreMap: Record<string, number | undefined> = {};
 
@@ -100,15 +100,6 @@ const ScoreSetupPage: NextPage = () => {
       [competitorId]: isNaN(parsed) ? undefined : parsed,
     };
     setRankMap(newRankMap);
-
-    // Mettre à jour l'URL sans scroll
-    const params = new URLSearchParams(searchParams);
-    if (isNaN(parsed)) {
-      params.delete(`rank_${competitorId}`);
-    } else {
-      params.set(`rank_${competitorId}`, parsed.toString());
-    }
-    router.replace(`/races/score-setup?${params.toString()}`, { scroll: false });
   };
 
   // Update score
@@ -119,15 +110,6 @@ const ScoreSetupPage: NextPage = () => {
       [competitorId]: isNaN(parsed) ? undefined : parsed,
     };
     setScoreMap(newScoreMap);
-
-    // Mettre à jour l'URL sans scroll
-    const params = new URLSearchParams(searchParams);
-    if (isNaN(parsed)) {
-      params.delete(`score_${competitorId}`);
-    } else {
-      params.set(`score_${competitorId}`, parsed.toString());
-    }
-    router.replace(`/races/score-setup?${params.toString()}`, { scroll: false });
   };
 
   // On "Continue" button click
@@ -142,11 +124,11 @@ const ScoreSetupPage: NextPage = () => {
       return;
     }
 
-    // Construire les paramètres pour la page suivante
+    // Construire les paramètres pour la page suivante en utilisant l'état local
     const params = new URLSearchParams();
     params.set('ids', selectedCompetitors.map(c => c.id).join(','));
     
-    // Ajouter les scores et rangs
+    // Ajouter les scores et rangs depuis l'état local
     selectedCompetitors.forEach(c => {
       if (rankMap[c.id] !== undefined) params.set(`rank_${c.id}`, rankMap[c.id]!.toString());
       if (scoreMap[c.id] !== undefined) params.set(`score_${c.id}`, scoreMap[c.id]!.toString());
@@ -163,7 +145,12 @@ const ScoreSetupPage: NextPage = () => {
       {/* Back button + title */}
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            // Renvoyer vers la page add avec les compétiteurs sélectionnés
+            const params = new URLSearchParams();
+            params.set('ids', selectedCompetitors.map(c => c.id).join(','));
+            router.push(`/races/add?${params.toString()}`);
+          }}
           className="text-neutral-400 hover:text-neutral-200 transition-colors"
         >
           <MdArrowBack size={26} />

@@ -52,7 +52,17 @@ const RaceSummaryPage: NextPage = () => {
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            // Mettre à jour l'URL de la page précédente avec les données actuelles
+            const params = new URLSearchParams();
+            params.set('ids', selectedCompetitors.map(c => c.id).join(','));
+            results.forEach(r => {
+              params.set(`rank_${r.competitorId}`, r.rank12.toString());
+              params.set(`score_${r.competitorId}`, r.score.toString());
+            });
+            // Naviguer vers la page précédente avec les données
+            router.push(`/races/score-setup?${params.toString()}`);
+          }}
           className="text-neutral-400 hover:text-neutral-200 transition-colors"
         >
           <MdArrowBack size={26} />

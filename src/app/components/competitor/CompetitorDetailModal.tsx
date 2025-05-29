@@ -84,11 +84,8 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
               className="object-cover w-full h-full"
             />
           </div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+          <h2 className="text-2xl font-bold">
             <span>{getFullName(competitor)}</span>
-            {playerRank && (
-              <span className="text-2xl text-neutral-400">• {playerRank}</span>
-            )}
           </h2>
 
           {/* Character info */}
@@ -172,21 +169,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
                 : "Votre niveau est très stable et prévisible."}
             </p>
           </div>
-
-          {/* Provisional Status */}
-          {competitor.provisional && (
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm text-neutral-300">Statut</span>
-                <span className="text-sm font-medium text-primary-400">En placement</span>
-              </div>
-              <p className="text-xs text-neutral-400">
-                {competitor.raceCount 
-                  ? `Plus que ${5 - competitor.raceCount} partie${5 - competitor.raceCount > 1 ? 's' : ''} avant que votre niveau soit définitif.`
-                  : "Commencez à jouer pour établir votre niveau initial."}
-              </p>
-            </div>
-          )}
         </div>
 
         <hr className="mb-4 border-neutral-700" />

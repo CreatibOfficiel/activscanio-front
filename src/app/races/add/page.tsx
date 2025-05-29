@@ -22,8 +22,9 @@ const AddRacePage: NextPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // Get the selected competitor IDs from the URL
-  const selectedCompetitorIds = searchParams.get('ids')?.split(',') || [];
+  // Get the selected competitor IDs from the URL and filter out empty strings
+  const initialSelectedIds = searchParams.get('ids')?.split(',').filter(id => id !== '') || [];
+  const [selectedCompetitorIds, setSelectedCompetitorIds] = useState<string[]>(initialSelectedIds);
   const selectedCompetitors = allCompetitors.filter(c => selectedCompetitorIds.includes(c.id));
 
   /* ---------- Helpers ---------- */
@@ -84,10 +85,8 @@ const AddRacePage: NextPage = () => {
       newSelection = selectedCompetitorIds;
     }
     
-    // Update the URL without scrolling to the top
-    const params = new URLSearchParams(searchParams);
-    params.set('ids', newSelection.join(','));
-    router.replace(`/races/add?${params.toString()}`, { scroll: false });
+    // Update local state only
+    setSelectedCompetitorIds(newSelection);
   };
 
   /* ---------- Navigation ---------- */
@@ -97,7 +96,7 @@ const AddRacePage: NextPage = () => {
       selectedCompetitors.length >= MIN_PLAYERS &&
       selectedCompetitors.length <= MAX_PLAYERS
     ) {
-      // Navigate to the next page with scroll
+      // Navigate to the next page with scroll, using the local state
       router.push(`/races/score-setup?ids=${selectedCompetitorIds.join(',')}`);
     }
   };
@@ -133,7 +132,7 @@ const AddRacePage: NextPage = () => {
         return;
       }
 
-      // Build the parameters for the next page
+      // Build the parameters for the next page using local state
       const params = new URLSearchParams();
       params.set('ids', selectedCompetitorIds.join(','));
       params.set('fromAnalysis', 'true');
@@ -192,7 +191,12 @@ const AddRacePage: NextPage = () => {
               {/* Add player */}
               <div
                 className="flex-1 flex items-center cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
-                onClick={() => router.push("/competitors/add")}
+                onClick={() => {
+                  // Mettre à jour l'URL avec les données actuelles avant d'ajouter un joueur
+                  const params = new URLSearchParams();
+                  params.set('ids', selectedCompetitorIds.join(','));
+                  router.push(`/competitors/add?${params.toString()}`);
+                }}
               >
                 <MdPersonAdd className="text-2xl text-primary-500 mr-2" />
                 <span className="text-base font-semibold">
