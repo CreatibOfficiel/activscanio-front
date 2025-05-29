@@ -33,7 +33,6 @@ export class CompetitorsRepository {
         profilePictureUrl: competitor.profilePictureUrl,
         raceCount: competitor.raceCount,
         avgRank12: competitor.avgRank12,
-        rank: competitor.rank,
       }),
     });
 

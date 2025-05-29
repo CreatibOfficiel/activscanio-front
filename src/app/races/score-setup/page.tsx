@@ -13,74 +13,36 @@ const ScoreSetupPage: NextPage = () => {
   const searchParams = useSearchParams();
   const { allCompetitors } = useContext(AppContext);
 
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    []
-  );
-  const [rankMap, setRankMap] = useState<Record<string, number | undefined>>(
-    {}
-  );
-  const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>(
-    {}
-  );
+  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
   const [isFromAnalysis, setIsFromAnalysis] = useState(false);
+  const [rankMap, setRankMap] = useState<Record<string, number | undefined>>({});
+  const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>({});
 
-  // Retrieve competitors and data from the URL
   useEffect(() => {
-    const idsParam = searchParams.get("ids");
-    const rankMapParam = searchParams.get("rankMap");
-    const scoreMapParam = searchParams.get("scoreMap");
-    const fromAnalysisParam = searchParams.get("fromAnalysis");
+    const ids = searchParams.get("ids");
+    const fromAnalysis = searchParams.get("fromAnalysis") === "true";
 
-    if (idsParam) {
-      const ids = idsParam.split(",");
-      const comps = allCompetitors.filter((c) => ids.includes(c.id));
-      setSelectedCompetitors(comps);
-    }
+    if (!ids) return;
 
-    // Set ranks and scores if present in the URL
-    if (rankMapParam) {
-      try {
-        const parsedRankMap = JSON.parse(rankMapParam);
-        setRankMap(parsedRankMap);
-      } catch (e) {
-        console.error("Error parsing rankMap:", e);
-      }
-    }
+    const competitorIds = ids.split(",");
+    const found = allCompetitors.filter((c) => competitorIds.includes(c.id));
+    setSelectedCompetitors(found);
+    setIsFromAnalysis(fromAnalysis);
 
-    if (scoreMapParam) {
-      try {
-        const parsedScoreMap = JSON.parse(scoreMapParam);
-        setScoreMap(parsedScoreMap);
-      } catch (e) {
-        console.error("Error parsing scoreMap:", e);
-      }
-    }
+    // Récupérer les scores et rangs depuis l'URL
+    const newRankMap: Record<string, number | undefined> = {};
+    const newScoreMap: Record<string, number | undefined> = {};
 
-    // Check if coming from analysis
-    setIsFromAnalysis(fromAnalysisParam === "true");
+    competitorIds.forEach(id => {
+      const rank = searchParams.get(`rank_${id}`);
+      const score = searchParams.get(`score_${id}`);
+      if (rank) newRankMap[id] = parseInt(rank, 10);
+      if (score) newScoreMap[id] = parseInt(score, 10);
+    });
+
+    setRankMap(newRankMap);
+    setScoreMap(newScoreMap);
   }, [searchParams, allCompetitors]);
-
-  // Initialize rankMap / scoreMap if not already set
-  useEffect(() => {
-    const ids = selectedCompetitors.map((c) => c.id);
-  
-    // s’assurer que chaque id existe au moins comme clef
-    setRankMap((prev) => {
-      const copy = { ...prev };
-      ids.forEach((id) => {
-        if (!(id in copy)) copy[id] = undefined;
-      });
-      return copy;
-    });
-  
-    setScoreMap((prev) => {
-      const copy = { ...prev };
-      ids.forEach((id) => {
-        if (!(id in copy)) copy[id] = undefined;
-      });
-      return copy;
-    });
-  }, [selectedCompetitors]);
 
   // Basic check: each competitor has a rank (1..12) and a score (0..60)
   const isAllValid = selectedCompetitors.every((c) => {
@@ -130,6 +92,44 @@ const ScoreSetupPage: NextPage = () => {
     return true;
   }
 
+  // Update rank
+  const handleChangeRank = (competitorId: string, val: string) => {
+    const parsed = parseInt(val, 10);
+    const newRankMap = {
+      ...rankMap,
+      [competitorId]: isNaN(parsed) ? undefined : parsed,
+    };
+    setRankMap(newRankMap);
+
+    // Mettre à jour l'URL sans scroll
+    const params = new URLSearchParams(searchParams);
+    if (isNaN(parsed)) {
+      params.delete(`rank_${competitorId}`);
+    } else {
+      params.set(`rank_${competitorId}`, parsed.toString());
+    }
+    router.replace(`/races/score-setup?${params.toString()}`, { scroll: false });
+  };
+
+  // Update score
+  const handleChangeScore = (competitorId: string, val: string) => {
+    const parsed = parseInt(val, 10);
+    const newScoreMap = {
+      ...scoreMap,
+      [competitorId]: isNaN(parsed) ? undefined : parsed,
+    };
+    setScoreMap(newScoreMap);
+
+    // Mettre à jour l'URL sans scroll
+    const params = new URLSearchParams(searchParams);
+    if (isNaN(parsed)) {
+      params.delete(`score_${competitorId}`);
+    } else {
+      params.set(`score_${competitorId}`, parsed.toString());
+    }
+    router.replace(`/races/score-setup?${params.toString()}`, { scroll: false });
+  };
+
   // On "Continue" button click
   const handleNext = () => {
     if (!isAllValid) {
@@ -141,30 +141,18 @@ const ScoreSetupPage: NextPage = () => {
       alert("Logique rang/score incorrecte (ex: un 2e a un score >= au 1er).");
       return;
     }
-    const competitorIds = selectedCompetitors.map((c) => c.id).join(",");
-    const rankJson = JSON.stringify(rankMap);
-    const scoreJson = JSON.stringify(scoreMap);
-    router.push(
-      `/races/summary?ids=${competitorIds}&rankMap=${rankJson}&scoreMap=${scoreJson}`
-    );
-  };
 
-  // Update rank
-  const handleChangeRank = (competitorId: string, val: string) => {
-    const parsed = parseInt(val, 10);
-    setRankMap((prev) => ({
-      ...prev,
-      [competitorId]: isNaN(parsed) ? undefined : parsed,
-    }));
-  };
+    // Construire les paramètres pour la page suivante
+    const params = new URLSearchParams();
+    params.set('ids', selectedCompetitors.map(c => c.id).join(','));
+    
+    // Ajouter les scores et rangs
+    selectedCompetitors.forEach(c => {
+      if (rankMap[c.id] !== undefined) params.set(`rank_${c.id}`, rankMap[c.id]!.toString());
+      if (scoreMap[c.id] !== undefined) params.set(`score_${c.id}`, scoreMap[c.id]!.toString());
+    });
 
-  // Update score
-  const handleChangeScore = (competitorId: string, val: string) => {
-    const parsed = parseInt(val, 10);
-    setScoreMap((prev) => ({
-      ...prev,
-      [competitorId]: isNaN(parsed) ? undefined : parsed,
-    }));
+    router.push(`/races/summary?${params.toString()}`);
   };
 
   const canContinue =
@@ -189,7 +177,7 @@ const ScoreSetupPage: NextPage = () => {
           <MdOutlineCheckCircle size={24} className="shrink-0 text-primary-400 mt-0.5" />
           <p className="text-sm text-neutral-100 leading-relaxed">
             Les résultats des joueurs ont été&nbsp;pré-remplis grâce à
-            l’analyse&nbsp;d’image. Vérifie-les et ajuste si nécessaire !
+            l'analyse&nbsp;d'image. Vérifie-les et ajuste si nécessaire !
           </p>
         </div>
       )}
@@ -201,12 +189,9 @@ const ScoreSetupPage: NextPage = () => {
       </p>
 
       {/* List of competitors */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {selectedCompetitors.map((c) => (
-          <div
-            key={c.id}
-            className="flex items-center justify-between px-4 py-3 rounded"
-          >
+          <div key={c.id} className="flex items-center justify-between bg-neutral-800 p-4 rounded">
             {/* Avatar + name */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full overflow-hidden">

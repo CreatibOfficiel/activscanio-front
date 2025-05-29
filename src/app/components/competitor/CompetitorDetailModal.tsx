@@ -38,10 +38,9 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
     return rank === 1 ? "1er" : `${rank}e`;
   };
 
-  const playerRank =
-    competitor.rank && competitor.rank > 0
-      ? formatRankFR(competitor.rank)
-      : null;
+  const playerRank = competitor.conservativeScore !== undefined
+    ? formatRankFR(Math.round(competitor.conservativeScore))
+    : null;
 
   const variant = competitor.characterVariant;
   const baseName = variant?.baseCharacter?.name;
@@ -118,9 +117,76 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
           </div>
           <div className="w-px h-8 my-auto bg-neutral-700" />
           <div className="px-4">
-            <p className="text-2xl font-bold">{getDisplayScore(competitor)}</p>
+            <p className="text-2xl font-bold">{competitor.conservativeScore.toFixed(0)}</p>
             <p className="text-xs text-neutral-400 mt-1">Elo</p>
           </div>
+        </div>
+
+        <hr className="mb-4 border-neutral-700" />
+
+        {/* Glicko-2 Stats */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Statistiques Glicko-2</h3>
+          
+          {/* Score Reliability */}
+          <div className="mb-4">
+            <p className="text-sm text-neutral-400">
+              {(() => {
+                const scoreDiff = competitor.conservativeScore - competitor.rating;
+                const margin = Math.max(10, competitor.rd * 0.1);
+                return scoreDiff < -margin
+                  ? "Votre niveau réel est probablement plus élevé que votre Elo actuel."
+                  : scoreDiff > margin
+                  ? "Votre niveau réel est probablement plus bas que votre Elo actuel."
+                  : "Votre niveau actuel est très fiable.";
+              })()}
+            </p>
+          </div>
+
+          {/* Rating Deviation (RD) */}
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm text-neutral-300">Incertitude (RD)</span>
+              <span className="text-sm font-medium">{competitor.rd.toFixed(0)}</span>
+            </div>
+            <p className="text-xs text-neutral-400">
+              {competitor.rd > 100
+                ? "Votre niveau est encore incertain. Plus vous jouerez, plus il sera précis."
+                : competitor.rd > 50
+                ? "Votre niveau se stabilise. Continuez à jouer régulièrement."
+                : "Votre niveau est très stable et précis."}
+            </p>
+          </div>
+
+          {/* Volatility */}
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm text-neutral-300">Volatilité</span>
+              <span className="text-sm font-medium">{competitor.vol.toFixed(3)}</span>
+            </div>
+            <p className="text-xs text-neutral-400">
+              {competitor.vol > 0.06
+                ? "Votre niveau varie beaucoup. Essayez de jouer plus régulièrement."
+                : competitor.vol > 0.03
+                ? "Votre niveau est assez stable."
+                : "Votre niveau est très stable et prévisible."}
+            </p>
+          </div>
+
+          {/* Provisional Status */}
+          {competitor.provisional && (
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm text-neutral-300">Statut</span>
+                <span className="text-sm font-medium text-primary-400">En placement</span>
+              </div>
+              <p className="text-xs text-neutral-400">
+                {competitor.raceCount 
+                  ? `Plus que ${5 - competitor.raceCount} partie${5 - competitor.raceCount > 1 ? 's' : ''} avant que votre niveau soit définitif.`
+                  : "Commencez à jouer pour établir votre niveau initial."}
+              </p>
+            </div>
+          )}
         </div>
 
         <hr className="mb-4 border-neutral-700" />

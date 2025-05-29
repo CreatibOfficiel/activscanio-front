@@ -22,22 +22,22 @@ export default function Home() {
   }
 
   // Take only competitors who have already played in the last 7 days
-  const eightDaysAgo = new Date(now);
-  eightDaysAgo.setDate(now.getDate() - 7);
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(now.getDate() - 7);
 
   const withGames = allCompetitors.filter(
     (c) =>
       c.raceCount &&
       c.raceCount > 0 &&
       c.lastRaceDate &&
-      new Date(c.lastRaceDate) > eightDaysAgo
+      new Date(c.lastRaceDate) > sevenDaysAgo
   );
-  // Sort by rank
+  // Sort by conservativeScore (higher is better)
   withGames.sort((a, b) => {
-    if (a.rank === undefined && b.rank === undefined) return 0;
-    if (a.rank === undefined) return 1;
-    if (b.rank === undefined) return -1;
-    return a.rank - b.rank;
+    if (a.conservativeScore === undefined && b.conservativeScore === undefined) return 0;
+    if (a.conservativeScore === undefined) return 1;
+    if (b.conservativeScore === undefined) return -1;
+    return b.conservativeScore - a.conservativeScore;
   });
 
   // Top 3 (podium)

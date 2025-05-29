@@ -25,8 +25,6 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
           className="flex items-center gap-3 flex-grow"
           onClick={() => setShowModal(true)}
         >
-          <span className="text-neutral-500 font-bold">{competitor.rank}</span>
-
           <Image
             src={competitor.profilePictureUrl}
             alt={competitor.firstName}
@@ -51,6 +49,11 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
                   {variantLabel &&
                     variantLabel !== "Default" &&
                     ` (${variantLabel})`}
+                </span>
+              )}
+              {competitor.provisional && competitor.raceCount && (
+                <span className="text-xs text-primary-400">
+                  • En placement ({competitor.raceCount}/5)
                 </span>
               )}
             </div>

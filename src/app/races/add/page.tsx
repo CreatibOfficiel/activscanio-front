@@ -2,7 +2,7 @@
 
 import { NextPage } from "next";
 import { useContext, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
@@ -14,22 +14,21 @@ const MAX_PLAYERS = 4;
 
 const AddRacePage: NextPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const { allCompetitors, isLoading, analyzeRaceImage } =
-    useContext(AppContext);
+  const { allCompetitors, isLoading, analyzeRaceImage } = useContext(AppContext);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    []
-  );
   const [isUploading, setIsUploading] = useState(false);
+
+  // Get the selected competitor IDs from the URL
+  const selectedCompetitorIds = searchParams.get('ids')?.split(',') || [];
+  const selectedCompetitors = allCompetitors.filter(c => selectedCompetitorIds.includes(c.id));
 
   /* ---------- Helpers ---------- */
 
-  const canTakePhoto =
-    selectedCompetitors.length >= MIN_PLAYERS && !isUploading;
+  const canTakePhoto = selectedCompetitors.length >= MIN_PLAYERS && !isUploading;
 
   const triggerFileInput = () => {
     if (!canTakePhoto) return;
@@ -42,9 +41,25 @@ const AddRacePage: NextPage = () => {
   /* ---------- Tri + filtre ---------- */
 
   const sortedCompetitors = [...allCompetitors].sort((a, b) => {
+    // Date of last race (most recent first)
+    if (a.lastRaceDate && b.lastRaceDate) {
+      const dateA = new Date(a.lastRaceDate).getTime();
+      const dateB = new Date(b.lastRaceDate).getTime();
+      if (dateA !== dateB) {
+        return dateB - dateA;
+      }
+    } else if (a.lastRaceDate) {
+      return -1;
+    } else if (b.lastRaceDate) {
+      return 1;
+    }
+
+    // Number of races played (most played first)
     if ((b.raceCount ?? 0) !== (a.raceCount ?? 0)) {
       return (b.raceCount ?? 0) - (a.raceCount ?? 0);
     }
+
+    // Alphabetical order (A-Z)
     const nA = (a.firstName + " " + a.lastName).toLowerCase();
     const nB = (b.firstName + " " + b.lastName).toLowerCase();
     return nA.localeCompare(nB);
@@ -58,15 +73,21 @@ const AddRacePage: NextPage = () => {
   /* ---------- Sélection ---------- */
 
   const toggleSelection = (competitor: Competitor) => {
-    setSelectedCompetitors((prev) => {
-      if (prev.includes(competitor)) {
-        return prev.filter((c) => c.id !== competitor.id);
-      }
-      if (prev.length < MAX_PLAYERS) {
-        return [...prev, competitor];
-      }
-      return prev;
-    });
+    const isSelected = selectedCompetitorIds.includes(competitor.id);
+    let newSelection: string[];
+    
+    if (isSelected) {
+      newSelection = selectedCompetitorIds.filter(id => id !== competitor.id);
+    } else if (selectedCompetitorIds.length < MAX_PLAYERS) {
+      newSelection = [...selectedCompetitorIds, competitor.id];
+    } else {
+      newSelection = selectedCompetitorIds;
+    }
+    
+    // Update the URL without scrolling to the top
+    const params = new URLSearchParams(searchParams);
+    params.set('ids', newSelection.join(','));
+    router.replace(`/races/add?${params.toString()}`, { scroll: false });
   };
 
   /* ---------- Navigation ---------- */
@@ -76,8 +97,8 @@ const AddRacePage: NextPage = () => {
       selectedCompetitors.length >= MIN_PLAYERS &&
       selectedCompetitors.length <= MAX_PLAYERS
     ) {
-      const ids = selectedCompetitors.map((c) => c.id).join(",");
-      router.push(`/races/score-setup?ids=${ids}`);
+      // Navigate to the next page with scroll
+      router.push(`/races/score-setup?ids=${selectedCompetitorIds.join(',')}`);
     }
   };
 
@@ -88,7 +109,7 @@ const AddRacePage: NextPage = () => {
     if (!files?.length) return;
   
     if (selectedCompetitors.length < MIN_PLAYERS) {
-      alert("Sélectionnez au moins 2 compétiteurs avant l’analyse.");
+      alert("Sélectionnez au moins 2 compétiteurs avant l'analyse.");
       return;
     }
   
@@ -97,15 +118,13 @@ const AddRacePage: NextPage = () => {
       const originalFile = files[0];
   
       const options = {
-        maxSizeMB: 1,              // taille cible ≤ 1 MB
-        maxWidthOrHeight: 1400,    // redimensionnement si nécessaire
-        useWebWorker: true,        // thread séparé : UI non bloquée
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1400,
+        useWebWorker: true,
       };
   
       const compressedFile = await imageCompression(originalFile, options);
-
-      const competitorIds = selectedCompetitors.map((c) => c.id);
-      const { results } = await analyzeRaceImage(compressedFile, competitorIds);
+      const { results } = await analyzeRaceImage(compressedFile, selectedCompetitorIds);
 
       if (results.length === 0) {
         alert(
@@ -114,24 +133,18 @@ const AddRacePage: NextPage = () => {
         return;
       }
 
-      /* ----- maps init ----- */
-      const rankMap: Record<string, number | undefined> = {};
-      const scoreMap: Record<string, number | undefined> = {};
-
+      // Build the parameters for the next page
+      const params = new URLSearchParams();
+      params.set('ids', selectedCompetitorIds.join(','));
+      params.set('fromAnalysis', 'true');
+      
+      // Add the scores and ranks
       results.forEach((r) => {
-        rankMap[r.competitorId] = r.rank12;
-        scoreMap[r.competitorId] = r.score;
+        params.set(`score_${r.competitorId}`, r.score.toString());
+        params.set(`rank_${r.competitorId}`, r.rank12.toString());
       });
 
-      /* ----- URL params ----- */
-      const ids = selectedCompetitors.map((c) => c.id).join(",");
-      const params = new URLSearchParams({
-        ids,
-        rankMap: JSON.stringify(rankMap),
-        scoreMap: JSON.stringify(scoreMap),
-        fromAnalysis: "true",
-      });
-
+      // Navigate to the next page with scroll
       router.push(`/races/score-setup?${params.toString()}`);
     } catch (err) {
       console.error(err);
@@ -146,13 +159,13 @@ const AddRacePage: NextPage = () => {
   /* ---------- Render ---------- */
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6">
+    <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6 flex flex-col">
       {errorMsg && (
         <div style={{ color: "red", margin: 8, fontSize: 12 }}>
           Erreur : {errorMsg}
         </div>
       )}
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-lg mx-auto w-full flex-1 flex flex-col">
         <h1 className="text-2xl font-bold mb-1">Sélection des joueurs</h1>
         <p className="text-sm text-neutral-400 mb-6">
           Qui veut se la coller&nbsp;?
@@ -161,7 +174,7 @@ const AddRacePage: NextPage = () => {
         {isLoading ? (
           <p className="text-neutral-300">Chargement…</p>
         ) : (
-          <>
+          <div className="flex-1 flex flex-col">
             {/* Search */}
             <div className="relative mb-4">
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -207,31 +220,32 @@ const AddRacePage: NextPage = () => {
 
                 {/* hidden input */}
                 <input
-                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  capture="environment"
                   className="hidden"
                   onChange={handlePhotoUpload}
+                  ref={fileInputRef}
                 />
               </div>
             </div>
 
-            {/* Liste joueurs */}
-            <div className="flex flex-col">
-              {filteredCompetitors.map((c) => (
-                <CheckableCompetitorItem
-                  key={c.id}
-                  competitor={c}
-                  isSelected={selectedCompetitors.includes(c)}
-                  toggleSelection={toggleSelection}
-                />
-              ))}
+            {/* List of players */}
+            <div className="flex-1 overflow-y-auto mb-4">
+              <div className="flex flex-col">
+                {filteredCompetitors.map((c) => (
+                  <CheckableCompetitorItem
+                    key={c.id}
+                    competitor={c}
+                    isSelected={selectedCompetitorIds.includes(c.id)}
+                    toggleSelection={toggleSelection}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Footer */}
-            <div className="mt-8 text-center">
-              <p className="text-sm text-neutral-400 mb-4">
+            {/* Sticky footer */}
+            <div className="sticky bottom-0 left-0 right-0 bg-neutral-900 pt-4 pb-16">
+              <p className="text-sm text-neutral-400 mb-4 text-center">
                 {selectedCompetitors.length} joueur
                 {selectedCompetitors.length > 1 ? "s" : ""} sélectionné
                 {selectedCompetitors.length > 1 ? "s" : ""}
@@ -255,7 +269,7 @@ const AddRacePage: NextPage = () => {
                 Continuer
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

@@ -71,6 +71,11 @@ const PodiumCard: FC<PodiumCardProps> = ({
             </span>
           </div>
         </div>
+        {competitor.provisional && competitor.raceCount && (
+          <div className="mt-2 text-sm font-medium text-primary-400">
+            En placement ({competitor.raceCount}/5)
+          </div>
+        )}
       </div>
     </div>
   );

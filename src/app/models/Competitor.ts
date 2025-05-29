@@ -11,7 +11,6 @@ export interface Competitor {
   rating: number;
   rd: number;
   vol: number;
-  rank?: number;
   raceCount?: number;
   avgRank12?: number;
   lastRaceDate?: string;
@@ -25,8 +24,8 @@ export const getFullName = (c: Competitor) =>
   `${c.firstName} ${c.lastName[0]}.`;
 
 export function getDisplayScore(c: Competitor): string {
-  if (c.rating == null || c.rd == null) return 'N/A';
-  return Math.round(c.rating).toString();
+  if (c.conservativeScore == null) return 'N/A';
+  return Math.round(c.conservativeScore).toString();
 }
 
 /* -------- Update payload types -------- */

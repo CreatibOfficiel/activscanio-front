@@ -14,31 +14,30 @@ const RaceSummaryPage: NextPage = () => {
   const searchParams = useSearchParams();
   const { addRaceEvent, allCompetitors } = useContext(AppContext);
 
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    []
-  );
+  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
   const [results, setResults] = useState<RaceResult[]>([]);
 
+  // Update selected competitors and results when the search params change
   useEffect(() => {
     const ids = searchParams.get("ids");
-    const rankMapStr = searchParams.get("rankMap");
-    const scoreMapStr = searchParams.get("scoreMap");
-
-    // Check that we have everything
-    if (!ids || !rankMapStr || !scoreMapStr) return;
+    if (!ids) return;
 
     const competitorIds = ids.split(",");
     const found = allCompetitors.filter((c) => competitorIds.includes(c.id));
     setSelectedCompetitors(found);
 
-    const rankObj = JSON.parse(rankMapStr);
-    const scoreObj = JSON.parse(scoreMapStr);
+    // Construire les résultats à partir des paramètres d'URL
+    const raceResults: RaceResult[] = found.map((c) => {
+      const rank = searchParams.get(`rank_${c.id}`);
+      const score = searchParams.get(`score_${c.id}`);
+      return {
+        competitorId: c.id,
+        rank12: rank ? parseInt(rank, 10) : 12,
+        score: score ? parseInt(score, 10) : 0,
+      };
+    });
 
-    const raceResults: RaceResult[] = found.map((c) => ({
-      competitorId: c.id,
-      rank12: rankObj[c.id] ?? 12,
-      score: scoreObj[c.id] ?? 0,
-    }));
+    // Trier par rang
     raceResults.sort((a, b) => a.rank12 - b.rank12);
     setResults(raceResults);
   }, [searchParams, allCompetitors]);
@@ -60,11 +59,6 @@ const RaceSummaryPage: NextPage = () => {
         </button>
         <h1 className="text-xl font-bold">Ajouter une course</h1>
       </div>
-
-      {/* <p className="text-neutral-300 text-sm mb-6">
-        L&apos;estimation de l&apos;Élo affichée peut différer du calcul final
-        (bonus, malus...).
-      </p> */}
 
       <RaceResultEloSummary
         results={results}
