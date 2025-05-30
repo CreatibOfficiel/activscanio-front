@@ -55,7 +55,7 @@ const PodiumCard: FC<PodiumCardProps> = ({
       <div className="p-4 flex flex-col items-center text-center text-black flex-grow">
         <span className="text-xl font-bold">{shortName}</span>
 
-        <div className="flex gap-8 mt-3">
+        <div className="flex gap-4 mt-3">
           {/* ELO */}
           <div className="flex flex-col items-center">
             <span className="text-sm font-semibold uppercase">ELO</span>
@@ -70,6 +70,15 @@ const PodiumCard: FC<PodiumCardProps> = ({
               {competitor.avgRank12 ? competitor.avgRank12.toFixed(1) : "N/A"}
             </span>
           </div>
+          {/* Calibration */}
+          {competitor.provisional && (
+            <div className="flex flex-col items-center">
+              <span className="text-sm font-semibold uppercase">CAL</span>
+              <span className="text-lg font-bold text-primary-400">
+                {competitor.raceCount ?? 0}/5
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

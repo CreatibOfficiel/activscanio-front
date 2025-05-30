@@ -1,5 +1,6 @@
 import { RaceEvent } from "../models/RaceEvent";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
+import { RaceAnalysisResult } from "./RaceAnalysisRepository";
 
 export class RacesRepository {
   constructor(private baseUrl: string) {}
@@ -68,5 +69,25 @@ export class RacesRepository {
       const errMsg = await res.text();
       throw new Error(`Error fetching race ${raceId}: ${errMsg}`);
     }
+  }
+
+  // POST /races/analyze-photo
+  async analyzePhoto(file: File): Promise<RaceAnalysisResult> {
+    const url = `${this.baseUrl}/races/analyze-photo`;
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Erreur lors de l’analyse de la photo (${response.statusText})`
+      );
+    }
+
+    return response.json();
   }
 }

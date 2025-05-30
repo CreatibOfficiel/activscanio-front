@@ -6,44 +6,43 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import Image from "next/image";
-import { MdArrowBack } from "react-icons/md";
+import { MdArrowBack, MdOutlineCheckCircle } from "react-icons/md";
 
 const ScoreSetupPage: NextPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { allCompetitors } = useContext(AppContext);
 
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    []
-  );
-  const [rankMap, setRankMap] = useState<Record<string, number | undefined>>(
-    {}
-  );
-  const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>(
-    {}
-  );
+  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
+  const [isFromAnalysis, setIsFromAnalysis] = useState(false);
+  const [rankMap, setRankMap] = useState<Record<string, number | undefined>>({});
+  const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>({});
 
-  // Retrieve competitors from the URL (query param "ids")
   useEffect(() => {
-    const idsParam = searchParams.get("ids");
-    if (idsParam) {
-      const ids = idsParam.split(",");
-      const comps = allCompetitors.filter((c) => ids.includes(c.id));
-      setSelectedCompetitors(comps);
-    }
-  }, [searchParams, allCompetitors]);
+    const ids = searchParams.get("ids");
+    const fromAnalysis = searchParams.get("fromAnalysis") === "true";
 
-  // Initialize rankMap / scoreMap each time we have new competitors
-  useEffect(() => {
-    const initRank: Record<string, number | undefined> = {};
-    const initScore: Record<string, number | undefined> = {};
-    selectedCompetitors.forEach((c) => {
-      initRank[c.id] = undefined;
-      initScore[c.id] = undefined;
+    if (!ids) return;
+
+    const competitorIds = ids.split(",").filter(id => id !== '');
+    const found = allCompetitors.filter((c) => competitorIds.includes(c.id));
+    setSelectedCompetitors(found);
+    setIsFromAnalysis(fromAnalysis);
+
+    // Récupérer les scores et rangs depuis l'URL pour l'initialisation
+    const newRankMap: Record<string, number | undefined> = {};
+    const newScoreMap: Record<string, number | undefined> = {};
+
+    competitorIds.forEach(id => {
+      const rank = searchParams.get(`rank_${id}`);
+      const score = searchParams.get(`score_${id}`);
+      if (rank) newRankMap[id] = parseInt(rank, 10);
+      if (score) newScoreMap[id] = parseInt(score, 10);
     });
-    setRankMap(initRank);
-    setScoreMap(initScore);
-  }, [selectedCompetitors]);
+
+    setRankMap(newRankMap);
+    setScoreMap(newScoreMap);
+  }, [searchParams, allCompetitors]);
 
   // Basic check: each competitor has a rank (1..12) and a score (0..60)
   const isAllValid = selectedCompetitors.every((c) => {
@@ -93,6 +92,26 @@ const ScoreSetupPage: NextPage = () => {
     return true;
   }
 
+  // Update rank
+  const handleChangeRank = (competitorId: string, val: string) => {
+    const parsed = parseInt(val, 10);
+    const newRankMap = {
+      ...rankMap,
+      [competitorId]: isNaN(parsed) ? undefined : parsed,
+    };
+    setRankMap(newRankMap);
+  };
+
+  // Update score
+  const handleChangeScore = (competitorId: string, val: string) => {
+    const parsed = parseInt(val, 10);
+    const newScoreMap = {
+      ...scoreMap,
+      [competitorId]: isNaN(parsed) ? undefined : parsed,
+    };
+    setScoreMap(newScoreMap);
+  };
+
   // On "Continue" button click
   const handleNext = () => {
     if (!isAllValid) {
@@ -104,30 +123,18 @@ const ScoreSetupPage: NextPage = () => {
       alert("Logique rang/score incorrecte (ex: un 2e a un score >= au 1er).");
       return;
     }
-    const competitorIds = selectedCompetitors.map((c) => c.id).join(",");
-    const rankJson = JSON.stringify(rankMap);
-    const scoreJson = JSON.stringify(scoreMap);
-    router.push(
-      `/races/summary?ids=${competitorIds}&rankMap=${rankJson}&scoreMap=${scoreJson}`
-    );
-  };
 
-  // Update rank
-  const handleChangeRank = (competitorId: string, val: string) => {
-    const parsed = parseInt(val, 10);
-    setRankMap((prev) => ({
-      ...prev,
-      [competitorId]: isNaN(parsed) ? undefined : parsed,
-    }));
-  };
+    // Construire les paramètres pour la page suivante en utilisant l'état local
+    const params = new URLSearchParams();
+    params.set('ids', selectedCompetitors.map(c => c.id).join(','));
+    
+    // Ajouter les scores et rangs depuis l'état local
+    selectedCompetitors.forEach(c => {
+      if (rankMap[c.id] !== undefined) params.set(`rank_${c.id}`, rankMap[c.id]!.toString());
+      if (scoreMap[c.id] !== undefined) params.set(`score_${c.id}`, scoreMap[c.id]!.toString());
+    });
 
-  // Update score
-  const handleChangeScore = (competitorId: string, val: string) => {
-    const parsed = parseInt(val, 10);
-    setScoreMap((prev) => ({
-      ...prev,
-      [competitorId]: isNaN(parsed) ? undefined : parsed,
-    }));
+    router.push(`/races/summary?${params.toString()}`);
   };
 
   const canContinue =
@@ -138,13 +145,29 @@ const ScoreSetupPage: NextPage = () => {
       {/* Back button + title */}
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            // Renvoyer vers la page add avec les compétiteurs sélectionnés
+            const params = new URLSearchParams();
+            params.set('ids', selectedCompetitors.map(c => c.id).join(','));
+            router.push(`/races/add?${params.toString()}`);
+          }}
           className="text-neutral-400 hover:text-neutral-200 transition-colors"
         >
           <MdArrowBack size={26} />
         </button>
         <h1 className="text-xl font-bold">Configuration du score</h1>
       </div>
+
+      {/* Notification for auto-detected results */}
+      {isFromAnalysis && (
+        <div className="mb-6 rounded-lg bg-gradient-to-r from-primary-500/15 to-primary-400/10 p-4 flex items-start gap-3 ring-1 ring-primary-500/30">
+          <MdOutlineCheckCircle size={24} className="shrink-0 text-primary-400 mt-0.5" />
+          <p className="text-sm text-neutral-100 leading-relaxed">
+            Les résultats des joueurs ont été&nbsp;pré-remplis grâce à
+            l&apos;analyse&nbsp;d&apos;image. Vérifie-les et ajuste si nécessaire !
+          </p>
+        </div>
+      )}
 
       {/* Explication */}
       <p className="text-sm text-neutral-300 mb-8">
@@ -153,12 +176,9 @@ const ScoreSetupPage: NextPage = () => {
       </p>
 
       {/* List of competitors */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {selectedCompetitors.map((c) => (
-          <div
-            key={c.id}
-            className="flex items-center justify-between px-4 py-3 rounded"
-          >
+          <div key={c.id} className="flex items-center justify-between bg-neutral-800 p-4 rounded">
             {/* Avatar + name */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full overflow-hidden">
@@ -188,7 +208,7 @@ const ScoreSetupPage: NextPage = () => {
                   max={12}
                   className="w-14 h-10 bg-neutral-900 border border-neutral-700 rounded text-center
                              text-neutral-100 focus:outline-none focus:border-primary-500"
-                  value={rankMap[c.id] ?? ""}
+                  value={rankMap[c.id] !== undefined ? String(rankMap[c.id]) : ""}
                   onChange={(e) => handleChangeRank(c.id, e.target.value)}
                 />
               </div>
@@ -204,7 +224,7 @@ const ScoreSetupPage: NextPage = () => {
                   max={60}
                   className="w-14 h-10 bg-neutral-900 border border-neutral-700 rounded text-center
                              text-neutral-100 focus:outline-none focus:border-primary-500"
-                  value={scoreMap[c.id] ?? ""}
+                  value={scoreMap[c.id] !== undefined ? String(scoreMap[c.id]) : ""}
                   onChange={(e) => handleChangeScore(c.id, e.target.value)}
                 />
               </div>
@@ -225,6 +245,7 @@ const ScoreSetupPage: NextPage = () => {
             }
           `}
           onClick={handleNext}
+          disabled={!canContinue}
         >
           Continuer
         </button>

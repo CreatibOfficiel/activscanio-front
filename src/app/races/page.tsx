@@ -1,15 +1,20 @@
 "use client";
 
 import { NextPage } from "next";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import RaceOverviewItem from "../components/race/RaceOverviewItem";
 import { RaceEvent } from "../models/RaceEvent";
 
 const RacesPage: NextPage = () => {
   const { isLoading, allRaces } = useContext(AppContext);
+  const [now, setNow] = useState<Date | null>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
+
+  if (isLoading || !now) {
     return (
       <div className="p-4 bg-neutral-900 text-regular text-neutral-300">
         <p>Chargement des courses...</p>
@@ -24,7 +29,6 @@ const RacesPage: NextPage = () => {
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    const now = new Date();
     if (
       d.getFullYear() === now.getFullYear() &&
       d.getMonth() === now.getMonth() &&

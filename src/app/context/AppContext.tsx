@@ -1,35 +1,103 @@
 "use client";
 
-import { createContext } from "react";
-import { Competitor } from "../models/Competitor";
+import { createContext, useContext } from "react";
+import {
+  Competitor,
+  UpdateCompetitorPayload,
+} from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
+import { BaseCharacter, CharacterVariant } from "../models/Character";
+import { RaceAnalysisResult } from "../repositories/RaceAnalysisRepository";
 
 export interface AppContextType {
+  /* ---- global ---- */
   isLoading: boolean;
   allCompetitors: Competitor[];
   allRaces: RaceEvent[];
-  loadInitialData: () => Promise<void>;
-  addCompetitor: (newCompetitor: Competitor) => Promise<void>;
-  addRaceEvent: (results: RaceResult[]) => Promise<void>;
+  baseCharacters: BaseCharacter[];
+
+  /* ---- chargement ---- */
+  loadInitialData: () => Promise<
+    [Competitor[], RaceEvent[], BaseCharacter[]]
+  >;
+
+  /* ---- compétiteurs ---- */
+  addCompetitor: (newCompetitor: Competitor) => Promise<Competitor>;
+  getCompetitorById: (id: string) => Promise<Competitor>;
+  updateCompetitor: (
+    id: string,
+    payload: UpdateCompetitorPayload
+  ) => Promise<Competitor>;
+  linkCharacterToCompetitor: (
+    competitorId: string,
+    variantId: string
+  ) => Promise<Competitor>;
+  unlinkCharacterFromCompetitor: (competitorId: string) => Promise<Competitor>;
+
+  /* ---- courses ---- */
+  addRaceEvent: (results: RaceResult[]) => Promise<RaceEvent>;
   getRaceById: (raceId: string) => Promise<RaceEvent>;
   getRecentRacesOfCompetitor: (
     competitorId: string
   ) => Promise<RecentRaceInfo[]>;
   getSimilarRaces: (raceId: string) => Promise<RaceEvent[]>;
+
+  /* ---- image analyse ---- */
+  analyzeRaceImage: (
+    image: File,
+    competitorIds: string[]
+  ) => Promise<RaceAnalysisResult>;
+
+  /* ---- personnages ---- */
+  getCharacterVariants: (
+    baseCharacterId: string
+  ) => Promise<CharacterVariant[]>;
+  getAvailableBaseCharacters: () => Promise<BaseCharacter[]>;
+  getAvailableVariantsForBaseCharacter: (
+    baseCharacterId: string
+  ) => Promise<CharacterVariant[]>;
 }
 
 export const AppContext = createContext<AppContextType>({
   isLoading: false,
   allCompetitors: [],
   allRaces: [],
-  loadInitialData: async () => {},
-  addCompetitor: async () => {},
-  addRaceEvent: async () => {},
+  baseCharacters: [],
+
+  loadInitialData: async () => [[], [], []],
+
+  addCompetitor: async (c) => ({ ...c, id: "tmp" }),
+  getCompetitorById: async () => {
+    throw new Error("getCompetitorById not initialised");
+  },
+  updateCompetitor: async () => {
+    throw new Error("updateCompetitor not initialised");
+  },
+  linkCharacterToCompetitor: async () => {
+    throw new Error("linkCharacterToCompetitor not initialised");
+  },
+  unlinkCharacterFromCompetitor: async () => {
+    throw new Error("unlinkCharacterFromCompetitor not initialised");
+  },
+
+  addRaceEvent: async () => {
+    throw new Error("addRaceEvent not initialised");
+  },
   getRaceById: async () => {
-    throw new Error("Not implemented");
+    throw new Error("getRaceById not initialised");
   },
   getRecentRacesOfCompetitor: async () => [],
   getSimilarRaces: async () => [],
+
+  analyzeRaceImage: async () => {
+    throw new Error("analyzeRaceImage not initialised");
+  },
+
+  getCharacterVariants: async () => [],
+  getAvailableBaseCharacters: async () => [],
+  getAvailableVariantsForBaseCharacter: async () => [],
 });
+
+export const useApp = () => useContext(AppContext);

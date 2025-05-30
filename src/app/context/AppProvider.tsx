@@ -1,110 +1,174 @@
 "use client";
 
-import React, { useState, useEffect, PropsWithChildren } from "react";
+import React, { PropsWithChildren, useEffect, useState } from "react";
 import { AppContext } from "./AppContext";
-import { Competitor } from "../models/Competitor";
+import { Competitor, UpdateCompetitorPayload } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
-import { RecentRaceInfo } from "../models/RecentRaceInfo";
+import { BaseCharacter } from "../models/Character";
 import { CompetitorsRepository } from "../repositories/CompetitorsRepository";
 import { RacesRepository } from "../repositories/RacesRepository";
+import {
+  RaceAnalysisRepository,
+  RaceAnalysisResult,
+} from "../repositories/RaceAnalysisRepository";
+import { CharactersRepository } from "../repositories/CharactersRepository";
 
-// We assume the base URL is in an environment variable
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
+const baseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://azule.ascan.io/api";
 
-// Create the repository instances
 const competitorsRepo = new CompetitorsRepository(baseUrl);
 const racesRepo = new RacesRepository(baseUrl);
+const raceAnalysisRepo = new RaceAnalysisRepository(baseUrl);
+const charactersRepo = new CharactersRepository(baseUrl);
 
 export function AppProvider({ children }: PropsWithChildren) {
+  /* ───────── state ───────── */
   const [isLoading, setIsLoading] = useState(false);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [raceEvents, setRaceEvents] = useState<RaceEvent[]>([]);
+  const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
 
+  /* ───────── bootstrap ───────── */
   useEffect(() => {
-    // On initial load, fetch data
     loadInitialData().catch(console.error);
   }, []);
 
-  const loadInitialData = async () => {
+  const loadInitialData = async (): Promise<
+    [Competitor[], RaceEvent[], BaseCharacter[]]
+  > => {
     try {
       setIsLoading(true);
-      const remoteCompetitors = await competitorsRepo.fetchCompetitors();
-      const remoteRaces = await racesRepo.fetchRecentRaces();
+      const [remoteCompetitors, remoteRaces, remoteBaseChars] =
+        await Promise.all([
+          competitorsRepo.fetchCompetitors(),
+          racesRepo.fetchRecentRaces(),
+          charactersRepo.fetchBaseCharacters(),
+        ]);
+
       setCompetitors(remoteCompetitors);
       setRaceEvents(remoteRaces);
-    } catch (err) {
-      console.error("Error loading data:", err);
+      setBaseCharacters(remoteBaseChars);
+      return [remoteCompetitors, remoteRaces, remoteBaseChars];
     } finally {
       setIsLoading(false);
     }
   };
 
+  /* ───────── characters helpers ───────── */
+  const getCharacterVariants = (baseCharacterId: string) =>
+    charactersRepo.fetchCharacterVariants(baseCharacterId);
+
+  const getAvailableBaseCharacters = () =>
+    charactersRepo.fetchAvailableBaseCharacters();
+
+  const getAvailableVariantsForBaseCharacter = (bcId: string) =>
+    charactersRepo.fetchAvailableVariantsForBaseCharacter(bcId);
+
+  /* ───────── competitor CRUD ───────── */
   const addCompetitor = async (newCompetitor: Competitor) => {
-    try {
-      const created = await competitorsRepo.createCompetitor(newCompetitor);
-      setCompetitors((prev) => [...prev, created]);
-    } catch (err) {
-      console.error("Error adding competitor:", err);
-    }
+    const created = await competitorsRepo.createCompetitor(newCompetitor);
+    setCompetitors((prev) => [...prev, created]);
+    return created;
   };
 
+  const getCompetitorById = (id: string) => {
+    const competitor = competitors.find((c) => c.id === id);
+    if (competitor) return Promise.resolve(competitor);
+    return competitorsRepo.fetchCompetitorById(id);
+  };
+
+  const updateCompetitor = async (
+    id: string,
+    payload: UpdateCompetitorPayload
+  ) => {
+    const updated = await competitorsRepo.updateCompetitor(id, payload);
+    setCompetitors((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c))
+    );
+    return updated;
+  };
+
+  const linkCharacterToCompetitor = async (
+    competitorId: string,
+    variantId: string
+  ) => {
+    const updated = await competitorsRepo.linkCharacterToCompetitor(
+      competitorId,
+      variantId
+    );
+    setCompetitors((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c))
+    );
+    return updated;
+  };
+
+  const unlinkCharacterFromCompetitor = async (competitorId: string) => {
+    const updated = await competitorsRepo.unlinkCharacterFromCompetitor(
+      competitorId
+    );
+    setCompetitors((prev) =>
+      prev.map((c) => (c.id === updated.id ? updated : c))
+    );
+    return updated;
+  };
+
+  /* ───────── races ───────── */
   const addRaceEvent = async (results: RaceResult[]) => {
-    // We generate an ID client-side just as in the Flutter code (Random).
-    const generatedId = Math.floor(Math.random() * 999999).toString();
+    const generatedId = Math.floor(Math.random() * 999_999).toString();
     const newEvent: RaceEvent = {
       id: generatedId,
       date: new Date().toISOString(),
       results,
     };
-
-    try {
-      const createdRace = await racesRepo.createRace(newEvent);
-      // Insert it at the beginning
-      setRaceEvents((prev) => [createdRace, ...prev]);
-      // Reload to update rank, etc if needed
-      await loadInitialData();
-    } catch (err) {
-      console.error("Error saving race event:", err);
-    }
+    const created = await racesRepo.createRace(newEvent);
+    setRaceEvents((prev) => [created, ...prev]);
+    await loadInitialData();
+    return created;
   };
 
-  const getRaceById = async (raceId: string): Promise<RaceEvent> => {
-    return racesRepo.fetchRaceById(raceId);
-  };
+  const getRaceById = (raceId: string) => racesRepo.fetchRaceById(raceId);
 
-  const getRecentRacesOfCompetitor = async (
-    competitorId: string
-  ): Promise<RecentRaceInfo[]> => {
-    try {
-      return await racesRepo.fetchRecentRacesOfCompetitor(competitorId);
-    } catch (err) {
-      console.error("Error fetching recent races of competitor:", err);
-      return [];
-    }
-  };
+  const getRecentRacesOfCompetitor = (competitorId: string) =>
+    racesRepo.fetchRecentRacesOfCompetitor(competitorId);
 
-  const getSimilarRaces = async (raceId: string): Promise<RaceEvent[]> => {
-    try {
-      return await racesRepo.fetchSimilarRaces(raceId);
-    } catch (err) {
-      console.error("Error fetching similar races:", err);
-      return [];
-    }
-  };
+  const getSimilarRaces = (raceId: string) =>
+    racesRepo.fetchSimilarRaces(raceId);
 
+  /* ───────── image analyse ───────── */
+  const analyzeRaceImage = (
+    image: File,
+    competitorIds: string[]
+  ): Promise<RaceAnalysisResult> =>
+    raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds);
+
+  /* ───────── context value ───────── */
   return (
     <AppContext.Provider
       value={{
         isLoading,
         allCompetitors: competitors,
         allRaces: raceEvents,
+        baseCharacters,
+
         loadInitialData,
+
         addCompetitor,
+        getCompetitorById,
+        updateCompetitor,
+        linkCharacterToCompetitor,
+        unlinkCharacterFromCompetitor,
+
         addRaceEvent,
         getRaceById,
         getRecentRacesOfCompetitor,
         getSimilarRaces,
+
+        analyzeRaceImage,
+
+        getCharacterVariants,
+        getAvailableBaseCharacters,
+        getAvailableVariantsForBaseCharacter,
       }}
     >
       {children}

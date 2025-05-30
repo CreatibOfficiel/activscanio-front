@@ -1,14 +1,19 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "./context/AppContext";
 import RankedCompetitorItem from "./components/competitor/RankedCompetitorItem";
 import ScrollablePodiumView from "./components/race/ScrollablePodiumView";
 
 export default function Home() {
   const { isLoading, allCompetitors } = useContext(AppContext);
+  const [now, setNow] = useState<Date | null>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
+
+  if (isLoading || !now) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 text-regular">
         <p>Chargement...</p>
@@ -16,16 +21,23 @@ export default function Home() {
     );
   }
 
-  // Take only competitors who have already played
+  // Take only competitors who have already played in the last 7 days
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(now.getDate() - 7);
+
   const withGames = allCompetitors.filter(
-    (c) => c.raceCount && c.raceCount > 0
+    (c) =>
+      c.raceCount &&
+      c.raceCount > 0 &&
+      c.lastRaceDate &&
+      new Date(c.lastRaceDate) > sevenDaysAgo
   );
-  // Sort by rank
+  // Sort by conservativeScore (higher is better)
   withGames.sort((a, b) => {
-    if (a.rank === undefined && b.rank === undefined) return 0;
-    if (a.rank === undefined) return 1;
-    if (b.rank === undefined) return -1;
-    return a.rank - b.rank;
+    if (a.conservativeScore === undefined && b.conservativeScore === undefined) return 0;
+    if (a.conservativeScore === undefined) return 1;
+    if (b.conservativeScore === undefined) return -1;
+    return b.conservativeScore - a.conservativeScore;
   });
 
   // Top 3 (podium)
