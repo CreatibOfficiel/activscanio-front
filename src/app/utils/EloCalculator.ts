@@ -69,46 +69,46 @@ export class EloCalculator {
 
     // Create players with their current ratings
     const players = new Map<string, Player>();
-    const playerRatings = competitors.map(competitor => ({
-      id: competitor.id,
-      rating: competitor.conservativeScore ?? competitor.rating
-    }));
-
-    // Calculate expected scores
-    const expectedScores = this.computeExpectedScores(playerRatings);
-
-    // Calculate actual scores based on race results
-    const actualScores = this.computeActualScores(
-      competitors.map(competitor => ({
-        id: competitor.id,
-        position: results[competitor.id]?.rank12 ?? 12
-      }))
-    );
-
-    // Create players and update their ratings
     competitors.forEach(competitor => {
       const player = glicko.makePlayer(
-        competitor.conservativeScore ?? competitor.rating,
+        competitor.rating,
         competitor.rd || this.RD,
         competitor.vol || this.VOL
       );
       players.set(competitor.id, player);
-
-      // Calculate rating change based on expected vs actual scores
-      const expected = expectedScores[competitor.id];
-      const actual = actualScores[competitor.id];
-      const ratingChange = (actual - expected) * (competitor.provisional ? 64 : 32);
-      
-      // Update player's rating
-      player.setRating(player.getRating() + ratingChange);
     });
+
+    // Create matches between players based on their ranks
+    const matches: Array<[Player, Player, number]> = [];
+    const sortedResults = competitors
+      .map(c => ({
+        id: c.id,
+        rank12: results[c.id]?.rank12 ?? 12,
+        player: players.get(c.id)!
+      }))
+      .sort((a, b) => a.rank12 - b.rank12);
+
+    // Create matches between all players
+    for (let i = 0; i < sortedResults.length; i++) {
+      for (let j = i + 1; j < sortedResults.length; j++) {
+        const p1 = sortedResults[i], p2 = sortedResults[j];
+        const score = p1.rank12 === p2.rank12 ? 0.5 : 1;   // p1 vs p2
+        matches.push([p1.player, p2.player, score]);
+      }
+    }
+
+    // Update ratings using Glicko2
+    glicko.updateRatings(matches);
 
     // Get new ratings
     const updatedRatings: Record<string, number> = {};
     competitors.forEach(competitor => {
       const player = players.get(competitor.id);
       if (player) {
-        updatedRatings[competitor.id] = player.getRating();
+        const newRating = player.getRating();
+        const newRd = player.getRd();
+        // Calculate conservative score: rating - 2 * RD
+        updatedRatings[competitor.id] = newRating - 2 * newRd;
       }
     });
 
