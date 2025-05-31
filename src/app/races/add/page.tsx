@@ -237,7 +237,6 @@ const AddRaceContent = () => {
                 <input
                   type="file"
                   accept="image/*"
-                  capture
                   className="hidden"
                   onChange={handlePhotoUpload}
                   ref={fileInputRef}
