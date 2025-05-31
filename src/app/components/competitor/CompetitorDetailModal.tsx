@@ -3,10 +3,7 @@
 import { FC, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { AppContext } from "@/app/context/AppContext";
-import {
-  Competitor,
-  getFullName,
-} from "@/app/models/Competitor";
+import { Competitor, getFullName } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
 import EditCompetitorButton from "./EditCompetitorButton";
 
@@ -109,7 +106,9 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
           </div>
           <div className="w-px h-8 my-auto bg-neutral-700" />
           <div className="px-4">
-            <p className="text-2xl font-bold">{(competitor.conservativeScore ?? competitor.rating).toFixed(0)}</p>
+            <p className="text-2xl font-bold">
+              {(competitor.conservativeScore ?? competitor.rating).toFixed(0)}
+            </p>
             <p className="text-xs text-neutral-400 mt-1">Elo</p>
           </div>
         </div>
@@ -119,12 +118,14 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
         {/* Glicko-2 Stats */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3">Statistiques Glicko-2</h3>
-          
+
           {/* Score Reliability */}
           <div className="mb-4">
             <p className="text-sm text-neutral-400">
               {(() => {
-                const scoreDiff = (competitor.conservativeScore ?? competitor.rating) - competitor.rating;
+                const scoreDiff =
+                  (competitor.conservativeScore ?? competitor.rating) -
+                  competitor.rating;
                 const margin = Math.max(10, competitor.rd * 0.1);
                 return scoreDiff < -margin
                   ? "Votre niveau réel est probablement plus élevé que votre Elo actuel."
@@ -139,7 +140,9 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
           <div className="mb-4">
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm text-neutral-300">Incertitude (RD)</span>
-              <span className="text-sm font-medium">{competitor.rd.toFixed(0)}</span>
+              <span className="text-sm font-medium">
+                {competitor.rd.toFixed(0)}
+              </span>
             </div>
             <p className="text-xs text-neutral-400">
               {competitor.rd > 100
@@ -154,12 +157,14 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
           <div className="mb-4">
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm text-neutral-300">Volatilité</span>
-              <span className="text-sm font-medium">{competitor.vol.toFixed(3)}</span>
+              <span className="text-sm font-medium">
+                {competitor.vol.toFixed(3)}
+              </span>
             </div>
             <p className="text-xs text-neutral-400">
-              {competitor.vol > 0.06
-                ? "Votre niveau varie beaucoup. Essayez de jouer plus régulièrement."
-                : competitor.vol > 0.03
+              {competitor.vol > 0.07
+                ? "Votre niveau varie beaucoup…"
+                : competitor.vol > 0.045
                 ? "Votre niveau est assez stable."
                 : "Votre niveau est très stable et prévisible."}
             </p>
