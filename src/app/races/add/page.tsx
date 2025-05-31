@@ -75,8 +75,11 @@ const AddRaceContent = () => {
   });
 
   const filteredCompetitors = sortedCompetitors.filter((c) => {
-    const fullName = (c.firstName + " " + c.lastName).toLowerCase();
-    return fullName.includes(searchTerm.toLowerCase());
+    const normalizeText = (text: string) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const fullName = (c.firstName + " " + c.lastName);
+    const characterName = c.characterVariant?.baseCharacter?.name || '';
+    const searchableText = `${fullName} ${characterName}`;
+    return normalizeText(searchableText).includes(normalizeText(searchTerm));
   });
 
   /* ---------- Sélection ---------- */
@@ -234,6 +237,7 @@ const AddRaceContent = () => {
                 <input
                   type="file"
                   accept="image/*"
+                  capture
                   className="hidden"
                   onChange={handlePhotoUpload}
                   ref={fileInputRef}

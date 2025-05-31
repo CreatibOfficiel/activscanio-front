@@ -53,7 +53,9 @@ const PodiumCard: FC<PodiumCardProps> = ({
       </div>
 
       <div className="p-4 flex flex-col items-center text-center text-black flex-grow">
-        <span className="text-xl font-bold">{shortName}</span>
+        <span className="text-xl font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px]">
+          {shortName}
+        </span>
 
         <div className="flex gap-4 mt-3">
           {/* ELO */}

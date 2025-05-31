@@ -64,7 +64,7 @@ const ScrollablePodiumView: FC<Props> = ({ topThreeCompetitors }) => {
                 className="rounded-lg object-cover"
               />
               <div className="flex flex-col">
-                <span className="text-black font-medium text-lg">
+                <span className="text-black font-medium text-lg whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
                   {shortName}
                 </span>
                 <div className="flex items-center gap-2">

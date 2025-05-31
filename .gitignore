@@ -19,6 +19,7 @@
 
 # production
 /build
+/activscanio-front.tar
 
 # misc
 .DS_Store
