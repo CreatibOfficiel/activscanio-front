@@ -28,13 +28,13 @@ const ScrollablePodiumView: FC<Props> = ({ topThreeCompetitors }) => {
   const getGradient = (index: number): string => {
     switch (index) {
       case 0:
-        return "bg-gradient-to-br from-[#FFF5CC] via-[#FFD770] to-[#D6A700]";
+        return "bg-gradient-gold";
       case 1:
-        return "bg-gradient-to-br from-[#F0F0F0] via-[#D9D9D9] to-[#A0A0A0]";
+        return "bg-gradient-silver";
       case 2:
-        return "bg-gradient-to-br from-[#F4E8DC] via-[#D7B58B] to-[#A1784F]";
+        return "bg-gradient-bronze";
       default:
-        return "bg-gradient-to-br from-gray-200 via-gray-300 to-gray-500";
+        return "bg-gradient-gray";
     }
   };
 

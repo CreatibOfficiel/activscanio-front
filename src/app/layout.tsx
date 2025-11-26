@@ -1,8 +1,9 @@
 import "./globals.css";
 import { AppProvider } from "./context/AppProvider";
-import BottomNav from "./components/layout/BottomNav";
+import { BottomNav, Sidebar } from "./components/layout";
 import { ReactNode } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
 
 export const metadata = {
   title: "Activscanio",
@@ -24,10 +25,30 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-neutral-900 text-neutral-100">
         <AppProvider>
-          {/* Wrapper so that BottomNav doesn't overlap content */}
-          <div className="pb-20">{children}</div>
+          {/* Toast notifications */}
+          <Toaster
+            position="top-right"
+            theme="dark"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                background: '#1e2d3b',
+                border: '1px solid #334455',
+                color: '#f1f5f9',
+              },
+            }}
+          />
 
-          {/* Persistent bottom navigation */}
+          {/* Desktop Sidebar */}
+          <Sidebar />
+
+          {/* Main content with responsive margins */}
+          <main className="pb-20 lg:pb-0 lg:pl-64">
+            {children}
+          </main>
+
+          {/* Mobile BottomNav (hidden on desktop) */}
           <BottomNav />
         </AppProvider>
       </body>

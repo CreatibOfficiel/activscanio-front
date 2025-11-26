@@ -3,7 +3,7 @@
 import { FC, useEffect, useState, useCallback } from 'react';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { BettorRanking } from '@/app/models/CompetitorOdds';
-import { Card, Badge } from '@/app/components/layout';
+import { Card, Badge } from '@/app/components/ui';
 import { MONTH_NAMES } from '@/app/utils/constants';
 import { MdEmojiEvents, MdTrendingUp } from 'react-icons/md';
 

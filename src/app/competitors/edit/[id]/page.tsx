@@ -2,14 +2,18 @@
 
 import { NextPage } from 'next';
 import { useRouter, useParams } from 'next/navigation';
-import { FormEvent, useEffect, useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import { MdLinkOff } from 'react-icons/md';
+import { toast } from 'sonner';
 
 import { useApp } from '@/app/context/AppContext';
 import { UpdateCompetitorPayload } from '@/app/models/Competitor';
 import { BaseCharacter } from '@/app/models/Character';
-import { validateImageUrl, validateCompetitorName } from '@/app/utils/validators';
+import { editCompetitorSchema, EditCompetitorFormData } from '@/app/schemas';
+import { Input, Button } from '@/app/components/ui';
 import {
   editCompetitorReducer,
   initialState,
@@ -30,13 +34,21 @@ const EditCompetitorPage: NextPage = () => {
 
   const [state, dispatch] = useReducer(editCompetitorReducer, initialState);
 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<EditCompetitorFormData>({
+    resolver: zodResolver(editCompetitorSchema),
+    mode: 'onChange',
+  });
+
+  const profilePictureUrl = watch('profilePictureUrl');
   const currentVariant = state.competitor?.characterVariant ?? null;
 
-  const isFormValid = () =>
-    validateCompetitorName(state.firstName) &&
-    validateCompetitorName(state.lastName) &&
-    validateImageUrl(state.profileUrl) &&
-    (currentVariant || state.selectedVariant);
+  const isFormComplete = isValid && (currentVariant || state.selectedVariant);
 
   /* -------------- Initial load -------------- */
 
@@ -50,6 +62,11 @@ const EditCompetitorPage: NextPage = () => {
 
         dispatch({ type: 'SET_COMPETITOR', payload: competitor });
 
+        // Initialize form values
+        setValue('firstName', competitor.firstName);
+        setValue('lastName', competitor.lastName);
+        setValue('profilePictureUrl', competitor.profilePictureUrl);
+
         if (!competitor.characterVariant) {
           dispatch({ type: 'SET_LOADING_BC', payload: true });
           const availableChars = await getAvailableBaseCharacters();
@@ -57,7 +74,7 @@ const EditCompetitorPage: NextPage = () => {
           dispatch({ type: 'SET_LOADING_BC', payload: false });
         }
       } catch (err) {
-        alert(
+        toast.error(
           'Erreur de chargement du compétiteur' +
             (err instanceof Error ? `: ${err.message}` : '')
         );
@@ -65,7 +82,7 @@ const EditCompetitorPage: NextPage = () => {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     })();
-  }, [params.id, getCompetitorById, getAvailableBaseCharacters]);
+  }, [params.id, getCompetitorById, getAvailableBaseCharacters, setValue]);
 
   /* -------------- Character selection -------------- */
 
@@ -86,7 +103,7 @@ const EditCompetitorPage: NextPage = () => {
         payload: vars.length === 1 ? vars[0] : null,
       });
     } catch {
-      alert('Impossible de récupérer les variantes');
+      toast.error('Impossible de récupérer les variantes');
     } finally {
       dispatch({ type: 'SET_LOADING_VARIANTS', payload: false });
     }
@@ -109,7 +126,7 @@ const EditCompetitorPage: NextPage = () => {
       dispatch({ type: 'SET_AVAILABLE_BC', payload: availableChars });
       dispatch({ type: 'SET_LOADING_BC', payload: false });
     } catch {
-      alert('Erreur lors du déliage');
+      toast.error('Erreur lors du déliage');
     } finally {
       dispatch({ type: 'SET_UNLINKING', payload: false });
     }
@@ -117,27 +134,31 @@ const EditCompetitorPage: NextPage = () => {
 
   /* -------------- Submit -------------- */
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!state.competitor || !isFormValid()) return;
+  const onSubmit = async (data: EditCompetitorFormData) => {
+    if (!state.competitor) return;
 
-    const payload: UpdateCompetitorPayload = {
-      firstName: state.firstName,
-      lastName: state.lastName,
-      profilePictureUrl: state.profileUrl,
-    };
+    try {
+      const payload: UpdateCompetitorPayload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        profilePictureUrl: data.profilePictureUrl,
+      };
 
-    await updateCompetitor(state.competitor.id, payload);
+      await updateCompetitor(state.competitor.id, payload);
 
-    if (!currentVariant && state.selectedVariant) {
-      await linkCharacterToCompetitor(
-        state.competitor.id,
-        state.selectedVariant.id
-      );
+      if (!currentVariant && state.selectedVariant) {
+        await linkCharacterToCompetitor(
+          state.competitor.id,
+          state.selectedVariant.id
+        );
+      }
+
+      toast.success('Compétiteur mis à jour !');
+      router.back();
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+      console.error(error);
     }
-
-    alert('Mis à jour !');
-    router.back();
   };
 
   /* -------------- Render -------------- */
@@ -154,12 +175,13 @@ const EditCompetitorPage: NextPage = () => {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
         <p>Compétiteur introuvable.</p>
-        <button
+        <Button
           onClick={() => router.back()}
-          className="mt-4 p-3 bg-primary-500 text-neutral-900 rounded"
+          className="mt-4"
+          variant="primary"
         >
           Retour
-        </button>
+        </Button>
       </div>
     );
   }
@@ -168,68 +190,46 @@ const EditCompetitorPage: NextPage = () => {
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
       <h1 className="text-title mb-4">Modifier le compétiteur</h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="block mb-1 text-neutral-300">Prénom</label>
-          <input
-            type="text"
-            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-            value={state.firstName}
-            onChange={(e) =>
-              dispatch({
-                type: 'SET_FORM_FIELD',
-                field: 'firstName',
-                value: e.target.value,
-              })
-            }
-          />
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <Input
+          label="Prénom"
+          type="text"
+          placeholder="Entrez le prénom"
+          error={errors.firstName?.message}
+          required
+          {...register('firstName')}
+        />
+
+        <Input
+          label="Nom"
+          type="text"
+          placeholder="Entrez le nom"
+          error={errors.lastName?.message}
+          required
+          {...register('lastName')}
+        />
 
         <div>
-          <label className="block mb-1 text-neutral-300">Nom</label>
-          <input
-            type="text"
-            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-            value={state.lastName}
-            onChange={(e) =>
-              dispatch({
-                type: 'SET_FORM_FIELD',
-                field: 'lastName',
-                value: e.target.value,
-              })
-            }
+          <Input
+            label="Image de profil (URL)"
+            type="url"
+            placeholder="https://example.com/image.jpg"
+            error={errors.profilePictureUrl?.message}
+            required
+            {...register('profilePictureUrl')}
           />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-neutral-300">
-            Image de profil (URL)
-          </label>
-          <input
-            type="text"
-            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
-            value={state.profileUrl}
-            onChange={(e) =>
-              dispatch({
-                type: 'SET_FORM_FIELD',
-                field: 'profileUrl',
-                value: e.target.value,
-              })
-            }
-          />
-          {state.profileUrl && (
-            <div className="mt-2 flex justify-center">
-              <div className="w-16 h-16 rounded-full overflow-hidden">
+          {profilePictureUrl && !errors.profilePictureUrl && (
+            <div className="mt-4 flex justify-center">
+              <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-primary-500/30">
                 <Image
-                  src={
-                    validateImageUrl(state.profileUrl)
-                      ? state.profileUrl
-                      : '/placeholder.png'
-                  }
+                  src={profilePictureUrl}
                   alt="Preview"
                   width={64}
                   height={64}
                   className="object-cover w-full h-full"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               </div>
             </div>
@@ -250,15 +250,17 @@ const EditCompetitorPage: NextPage = () => {
                     ` – ${currentVariant.label}`}
                 </p>
               </div>
-              <button
+              <Button
                 type="button"
-                className="p-2 bg-red-700 hover:bg-red-600 rounded flex items-center gap-1"
+                variant="error"
+                size="sm"
                 onClick={handleUnlink}
                 disabled={state.unlinking}
+                loading={state.unlinking}
+                leftIcon={<MdLinkOff className="text-lg" />}
               >
-                <MdLinkOff className="text-lg" />
-                <span>Délier</span>
-              </button>
+                Délier
+              </Button>
             </div>
           </div>
         )}
@@ -320,24 +322,23 @@ const EditCompetitorPage: NextPage = () => {
         )}
 
         <div className="mt-6 flex gap-2">
-          <button
+          <Button
             type="button"
-            className="flex-1 p-3 bg-transparent border-2 border-primary-500 rounded text-primary-500"
+            variant="outline"
+            fullWidth
             onClick={() => router.back()}
           >
             Annuler
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            disabled={!isFormValid()}
-            className={`flex-1 p-3 rounded font-bold ${
-              isFormValid()
-                ? 'bg-primary-500 text-neutral-900'
-                : 'bg-neutral-500 text-neutral-600'
-            }`}
+            variant="primary"
+            fullWidth
+            disabled={!isFormComplete || isSubmitting}
+            loading={isSubmitting}
           >
             Enregistrer
-          </button>
+          </Button>
         </div>
       </form>
     </div>

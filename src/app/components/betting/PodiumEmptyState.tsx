@@ -1,7 +1,7 @@
 "use client";
 
 import { FC } from 'react';
-import { Card } from '@/app/components/layout';
+import { Card } from '@/app/components/ui';
 
 const PodiumEmptyState: FC = () => {
   return (

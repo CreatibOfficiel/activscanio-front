@@ -35,17 +35,15 @@
   --color-close-button-500: #7c7c8e;
 
   /* Polices (fonts) */
-  --font-tt-smalls: "TT Smalls", sans-serif;
-  --font-inter: "Inter", sans-serif;
   --font-sf-pro-display: "SF Pro Display", sans-serif;
 
-  /* Tailles (en rem = px / 16) */
-  --text-title: 2rem; /* 32px */
-  --text-heading: 1.25rem; /* 20px */
-  --text-bold: 0.9375rem; /* 15px */
-  --text-regular: 0.9375rem; /* 15px */
-  --text-sub: 0.75rem; /* 12px */
-  --text-statistic: 1.25rem; /* 20px */
+  /* Tailles responsive avec clamp() */
+  --text-title: clamp(1.5rem, 4vw + 0.5rem, 2rem); /* 24px → 32px */
+  --text-heading: clamp(1rem, 2vw + 0.5rem, 1.25rem); /* 16px → 20px */
+  --text-bold: clamp(0.875rem, 1vw + 0.5rem, 0.9375rem); /* 14px → 15px */
+  --text-regular: clamp(0.875rem, 1vw + 0.5rem, 0.9375rem); /* 14px → 15px */
+  --text-sub: clamp(0.6875rem, 0.5vw + 0.5rem, 0.75rem); /* 11px → 12px */
+  --text-statistic: clamp(1.125rem, 2vw + 0.5rem, 1.25rem); /* 18px → 20px */
 
   /* Font weights */
   --font-weight-400: 400; /* normal */
@@ -53,6 +51,76 @@
   --font-weight-700: 700; /* bold */
   --font-weight-800: 800; /* extra-bold */
   --font-weight-900: 900; /* black */
+
+  /* Spacing scale (8px base) */
+  --spacing-0: 0;
+  --spacing-0_5: 0.125rem;  /* 2px */
+  --spacing-1: 0.25rem;     /* 4px */
+  --spacing-2: 0.5rem;      /* 8px */
+  --spacing-3: 0.75rem;     /* 12px */
+  --spacing-4: 1rem;        /* 16px */
+  --spacing-5: 1.25rem;     /* 20px */
+  --spacing-6: 1.5rem;      /* 24px */
+  --spacing-8: 2rem;        /* 32px */
+  --spacing-10: 2.5rem;     /* 40px */
+  --spacing-12: 3rem;       /* 48px */
+  --spacing-16: 4rem;       /* 64px */
+  --spacing-20: 5rem;       /* 80px */
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-primary: 0 10px 15px -3px rgb(64 228 228 / 0.2);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Border radius */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.5rem;    /* 8px */
+  --radius-lg: 0.75rem;   /* 12px */
+  --radius-xl: 1rem;      /* 16px */
+  --radius-2xl: 1.5rem;   /* 24px */
+  --radius-3xl: 2rem;     /* 32px */
+  --radius-full: 9999px;
+
+  /* Podium gradients */
+  --gradient-gold-start: #FFF5CC;
+  --gradient-gold-mid: #FFD770;
+  --gradient-gold-end: #D6A700;
+  --gradient-silver-start: #F0F0F0;
+  --gradient-silver-mid: #D9D9D9;
+  --gradient-silver-end: #A0A0A0;
+  --gradient-bronze-start: #F4E8DC;
+  --gradient-bronze-mid: #D7B58B;
+  --gradient-bronze-end: #A1784F;
+  --gradient-gray-start: #e5e5e5;
+  --gradient-gray-mid: #d4d4d4;
+  --gradient-gray-end: #737373;
+
+  /* Primary variants */
+  --color-primary-400: #60e9e9;
+  --color-primary-600: #30cfcf;
+
+  /* Success/Error variants */
+  --color-success-400: #4ade80;
+  --color-success-600: #16a34a;
+  --color-error-400: #f87171;
+  --color-error-600: #dc2626;
+
+  /* Neutral variants supplémentaires */
+  --color-neutral-200: #e2e8f0;
+
+  /* Transitions */
+  --transition-fast: 150ms;
+  --transition-base: 200ms;
+  --transition-slow: 300ms;
+  --transition-slower: 500ms;
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
 }
 
 @font-face {
@@ -191,5 +259,22 @@
 
   .animate-slideLeft {
     animation: slideLeft 0.3s ease-out;
+  }
+
+  /* Gradients podium */
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, var(--gradient-gold-start), var(--gradient-gold-mid), var(--gradient-gold-end));
+  }
+
+  .bg-gradient-silver {
+    background: linear-gradient(135deg, var(--gradient-silver-start), var(--gradient-silver-mid), var(--gradient-silver-end));
+  }
+
+  .bg-gradient-bronze {
+    background: linear-gradient(135deg, var(--gradient-bronze-start), var(--gradient-bronze-mid), var(--gradient-bronze-end));
+  }
+
+  .bg-gradient-gray {
+    background: linear-gradient(135deg, var(--gradient-gray-start), var(--gradient-gray-mid), var(--gradient-gray-end));
   }
 }

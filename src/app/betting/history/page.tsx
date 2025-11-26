@@ -7,7 +7,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { Bet, BetPosition } from '@/app/models/Bet';
-import { Card, Badge } from '@/app/components/layout';
+import { Card, Badge, Button, Spinner } from '@/app/components/ui';
 import { BET_POSITION_LABELS } from '@/app/utils/constants';
 import { formatPoints, formatOdds, formatDateLocale } from '@/app/utils/formatters';
 import { MdHistory, MdCheckCircle, MdCancel, MdPending, MdBolt } from 'react-icons/md';
@@ -64,7 +64,7 @@ const HistoryPage: FC = () => {
     return (
       <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <Spinner size="lg" className="mx-auto mb-4" />
           <p className="text-regular">Chargement...</p>
         </div>
       </div>
@@ -76,12 +76,14 @@ const HistoryPage: FC = () => {
       <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
         <Card variant="error" className="p-6 max-w-2xl mx-auto">
           <p className="text-regular">{error}</p>
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => router.push('/betting/place-bet')}
-            className="mt-4 px-6 py-2 bg-primary-500 hover:bg-primary-600 text-neutral-900 rounded-lg font-bold transition-colors"
+            className="mt-4"
           >
             Placer un pari
-          </button>
+          </Button>
         </Card>
       </div>
     );
@@ -139,12 +141,13 @@ const HistoryPage: FC = () => {
             <p className="text-regular text-neutral-400 mb-4">
               Vous n&apos;avez pas encore placé de pari.
             </p>
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => router.push('/betting/place-bet')}
-              className="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-neutral-900 rounded-lg font-bold transition-colors"
             >
               Placer mon premier pari
-            </button>
+            </Button>
           </Card>
         ) : (
           <div className="space-y-4">
@@ -286,12 +289,13 @@ const HistoryPage: FC = () => {
         {/* CTA */}
         {bets.length > 0 && (
           <div className="mt-6 text-center">
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={() => router.push('/betting/place-bet')}
-              className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-neutral-900 rounded-lg font-bold transition-colors"
             >
               Placer un nouveau pari
-            </button>
+            </Button>
           </div>
         )}
       </div>

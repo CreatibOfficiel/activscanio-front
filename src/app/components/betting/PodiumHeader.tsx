@@ -2,7 +2,7 @@
 
 import { FC } from 'react';
 import { BetPosition } from '@/app/models/Bet';
-import { Card, Badge } from '@/app/components/layout';
+import { Card, Badge } from '@/app/components/ui';
 
 interface PodiumHeaderProps {
   selectedCount: number;

@@ -2,7 +2,7 @@
 
 import { FC } from 'react';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
-import { Card, Badge } from '@/app/components/layout';
+import { Card, Badge } from '@/app/components/ui';
 import { MdBolt } from 'react-icons/md';
 
 interface CompetitorOddsCardProps {

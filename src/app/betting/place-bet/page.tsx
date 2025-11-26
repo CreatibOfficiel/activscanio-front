@@ -10,8 +10,9 @@ import { BettingWeek, BettingWeekStatus } from '@/app/models/BettingWeek';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
 import { BetPosition } from '@/app/models/Bet';
 import PodiumSelector from '@/app/components/betting/PodiumSelector';
-import { Card, Badge } from '@/app/components/layout';
+import { Card, Badge, Button } from '@/app/components/ui';
 import { MdTrendingUp, MdInfo } from 'react-icons/md';
+import { toast } from 'sonner';
 
 interface PodiumSelection {
   [BetPosition.FIRST]?: string;
@@ -27,7 +28,6 @@ const PlaceBetPage: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const [currentWeek, setCurrentWeek] = useState<BettingWeek | null>(null);
   const [odds, setOdds] = useState<CompetitorOdds[]>([]);
@@ -165,16 +165,12 @@ const PlaceBetPage: FC = () => {
         token
       );
 
-      setSuccess(true);
-
-      // Redirect to history after 2 seconds
-      setTimeout(() => {
-        router.push('/betting/history');
-      }, 2000);
+      toast.success('Pari placé avec succès ! 🎉');
+      router.push('/betting/history');
     } catch (err) {
       console.error('Error placing bet:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du placement du pari.';
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -191,23 +187,6 @@ const PlaceBetPage: FC = () => {
     );
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 flex items-center justify-center">
-        <Card variant="success" className="p-8 max-w-md text-center">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-heading text-white mb-2">Pari placé avec succès !</h2>
-          <p className="text-regular text-neutral-300">
-            Votre pari a été enregistré. Bonne chance !
-          </p>
-          <p className="text-sub text-neutral-500 mt-4">
-            Redirection vers l&apos;historique...
-          </p>
-        </Card>
-      </div>
-    );
-  }
-
   if (error && (!currentWeek || currentWeek.status !== BettingWeekStatus.OPEN || existingBet)) {
     return (
       <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
@@ -218,12 +197,14 @@ const PlaceBetPage: FC = () => {
               <h2 className="text-heading text-white mb-2">Information</h2>
               <p className="text-regular">{error}</p>
               {existingBet && (
-                <button
+                <Button
+                  variant="primary"
+                  size="md"
                   onClick={() => router.push('/betting/history')}
-                  className="mt-4 px-6 py-2 bg-primary-500 hover:bg-primary-600 text-neutral-900 rounded-lg font-bold transition-colors"
+                  className="mt-4"
                 >
                   Voir mon pari
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -306,20 +287,17 @@ const PlaceBetPage: FC = () => {
         {/* Submit button */}
         {isSelectionComplete && (
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-800 border-t border-neutral-700">
-            <button
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={isSubmitting}
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full max-w-4xl mx-auto px-6 py-4 bg-primary-500 hover:bg-primary-600 disabled:bg-neutral-700 disabled:text-neutral-500 text-neutral-900 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
+              className="max-w-4xl mx-auto"
             >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-neutral-900"></div>
-                  Placement en cours...
-                </>
-              ) : (
-                <>Valider mon pari</>
-              )}
-            </button>
+              Valider mon pari
+            </Button>
           </div>
         )}
       </div>

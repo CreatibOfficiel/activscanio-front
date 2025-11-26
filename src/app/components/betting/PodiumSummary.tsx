@@ -3,7 +3,7 @@
 import { FC } from 'react';
 import { BetPosition } from '@/app/models/Bet';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
-import { Card, Badge } from '@/app/components/layout';
+import { Card, Badge } from '@/app/components/ui';
 
 interface PodiumSummaryProps {
   selection: Partial<Record<BetPosition, string>>;

@@ -1,3 +1,3 @@
-export { default as Card } from './Card';
-export { default as Badge } from './Badge';
+// Card et Badge sont maintenant dans components/ui/
 export { default as BottomNav } from './BottomNav';
+export { default as Sidebar } from './Sidebar';

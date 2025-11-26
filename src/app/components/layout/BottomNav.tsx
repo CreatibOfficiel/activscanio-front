@@ -2,53 +2,53 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FC } from "react";
+import {
+  MdLeaderboard,
+  MdSportsScore,
+  MdEmojiEvents,
+  MdAddCircleOutline,
+  MdFlag,
+} from "react-icons/md";
 
-import { MdLeaderboard, MdAddCircleOutline, MdFlag, MdSportsScore, MdEmojiEvents } from "react-icons/md";
-
-const BottomNav: FC = () => {
+export default function BottomNav() {
   const pathname = usePathname();
 
-  const navItems = [
-    { label: "Classement", route: "/", icon: <MdLeaderboard /> },
-    { label: "Paris", route: "/betting/place-bet", icon: <MdSportsScore /> },
-    { label: "Historique", route: "/betting/history", icon: <MdEmojiEvents /> },
-    { label: "Ajouter", route: "/races/add", icon: <MdAddCircleOutline /> },
-    { label: "Courses", route: "/races", icon: <MdFlag /> },
+  const items = [
+    { href: "/", icon: MdLeaderboard, label: "Classement" },
+    { href: "/betting/place-bet", icon: MdSportsScore, label: "Paris" },
+    { href: "/betting/history", icon: MdEmojiEvents, label: "Historique" },
+    { href: "/races/add", icon: MdAddCircleOutline, label: "Ajouter" },
+    { href: "/races", icon: MdFlag, label: "Courses" },
   ];
 
   return (
-    <div
-      className="fixed bottom-0 left-0 right-0 h-14 bg-neutral-800 border-t border-neutral-700
-                    flex justify-around items-center shadow-md z-50"
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-neutral-800 border-t border-neutral-700 h-14 flex items-center justify-around px-2 z-50 lg:hidden"
+      role="navigation"
+      aria-label="Navigation mobile"
     >
-      {navItems.map((item) => {
-        const isActive = pathname === item.route;
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = pathname === item.href;
+
         return (
-          <Link href={item.route} key={item.route}>
-            <div className="flex flex-col items-center cursor-pointer transition-colors">
-              {/* Icône */}
-              <span
-                className={`text-2xl ${
-                  isActive ? "text-primary-500" : "text-neutral-300"
-                }`}
-              >
-                {item.icon}
-              </span>
-              {/* Label */}
-              <span
-                className={`text-xs ${
-                  isActive ? "text-primary-500" : "text-neutral-500"
-                }`}
-              >
-                {item.label}
-              </span>
-            </div>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`
+              flex flex-col items-center justify-center flex-1 h-full
+              transition-colors duration-200
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
+              ${isActive ? "text-primary-500" : "text-neutral-300"}
+            `}
+            aria-current={isActive ? "page" : undefined}
+            aria-label={item.label}
+          >
+            <Icon className="text-xl" aria-hidden="true" />
+            <span className="text-xs">{item.label}</span>
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
-};
-
-export default BottomNav;
+}

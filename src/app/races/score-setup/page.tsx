@@ -1,160 +1,104 @@
 "use client";
 
 import { NextPage } from "next";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AppContext } from "@/app/context/AppContext";
-import { Competitor } from "@/app/models/Competitor";
 import Image from "next/image";
 import { MdArrowBack, MdOutlineCheckCircle } from "react-icons/md";
+import { toast } from "sonner";
+import { scoreSetupSchema, ScoreSetupFormData } from "@/app/schemas";
+import { Button } from "@/app/components/ui";
 
 const ScoreSetupPage: NextPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { allCompetitors } = useContext(AppContext);
 
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
-  const [isFromAnalysis, setIsFromAnalysis] = useState(false);
-  const [rankMap, setRankMap] = useState<Record<string, number | undefined>>({});
-  const [scoreMap, setScoreMap] = useState<Record<string, number | undefined>>({});
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<ScoreSetupFormData>({
+    resolver: zodResolver(scoreSetupSchema),
+    mode: "onChange",
+    defaultValues: {
+      scores: [],
+    },
+  });
+
+  const { fields } = useFieldArray({
+    control,
+    name: "scores",
+  });
 
   useEffect(() => {
     const ids = searchParams.get("ids");
-    const fromAnalysis = searchParams.get("fromAnalysis") === "true";
 
     if (!ids) return;
 
     const competitorIds = ids.split(",").filter(id => id !== '');
     const found = allCompetitors.filter((c) => competitorIds.includes(c.id));
-    setSelectedCompetitors(found);
-    setIsFromAnalysis(fromAnalysis);
 
-    // Récupérer les scores et rangs depuis l'URL pour l'initialisation
-    const newRankMap: Record<string, number | undefined> = {};
-    const newScoreMap: Record<string, number | undefined> = {};
+    // Initialize form with competitors
+    const initialScores = found.map((competitor) => {
+      const rank = searchParams.get(`rank_${competitor.id}`);
+      const score = searchParams.get(`score_${competitor.id}`);
 
-    competitorIds.forEach(id => {
-      const rank = searchParams.get(`rank_${id}`);
-      const score = searchParams.get(`score_${id}`);
-      if (rank) newRankMap[id] = parseInt(rank, 10);
-      if (score) newScoreMap[id] = parseInt(score, 10);
+      return {
+        competitorId: competitor.id,
+        rank: rank ? parseInt(rank, 10) : 1,
+        score: score ? parseInt(score, 10) : 0,
+      };
     });
 
-    setRankMap(newRankMap);
-    setScoreMap(newScoreMap);
-  }, [searchParams, allCompetitors]);
+    setValue("scores", initialScores);
+  }, [searchParams, allCompetitors, setValue]);
 
-  // Basic check: each competitor has a rank (1..12) and a score (0..60)
-  const isAllValid = selectedCompetitors.every((c) => {
-    const r = rankMap[c.id];
-    const s = scoreMap[c.id];
-    if (r == null || s == null) return false;
-    if (r < 1 || r > 12) return false;
-    if (s < 0 || s > 60) return false;
-    return true;
-  });
+  const onSubmit = async (data: ScoreSetupFormData) => {
+    try {
+      // Construire les paramètres pour la page suivante
+      const params = new URLSearchParams();
+      const competitorIds = data.scores.map(s => s.competitorId);
+      params.set('ids', competitorIds.join(','));
 
-  /**
-   * Control rank/score consistency:
-   * - if two players have the same rank, they must have the same score
-   *  if player A is ranked higher than player B, A must have a score > B, etc.
-   */
-  function validateLogic(
-    selected: Competitor[],
-    rankMap: Record<string, number | undefined>,
-    scoreMap: Record<string, number | undefined>
-  ): boolean {
-    const results = selected.map((c) => ({
-      id: c.id,
-      rank12: rankMap[c.id] ?? 12,
-      score: scoreMap[c.id] ?? 0,
-    }));
-    // Sort by rank
-    results.sort((a, b) => a.rank12 - b.rank12);
+      // Ajouter les scores et rangs
+      data.scores.forEach(s => {
+        params.set(`rank_${s.competitorId}`, s.rank.toString());
+        params.set(`score_${s.competitorId}`, s.score.toString());
+      });
 
-    for (let i = 0; i < results.length - 1; i++) {
-      const current = results[i];
-      const next = results[i + 1];
-
-      // Same rank => scores must be identical
-      if (current.rank12 === next.rank12) {
-        if (current.score !== next.score) return false;
-      } else {
-        // Rank more important => score more important
-        if (current.rank12 < next.rank12) {
-          if (current.score <= next.score) return false;
-        } else {
-          // rank not strictly increasing => inconsistency
-          return false;
-        }
-      }
+      router.push(`/races/summary?${params.toString()}`);
+    } catch (error) {
+      toast.error("Erreur lors de la validation");
+      console.error(error);
     }
-    return true;
-  }
-
-  // Update rank
-  const handleChangeRank = (competitorId: string, val: string) => {
-    const parsed = parseInt(val, 10);
-    const newRankMap = {
-      ...rankMap,
-      [competitorId]: isNaN(parsed) ? undefined : parsed,
-    };
-    setRankMap(newRankMap);
   };
 
-  // Update score
-  const handleChangeScore = (competitorId: string, val: string) => {
-    const parsed = parseInt(val, 10);
-    const newScoreMap = {
-      ...scoreMap,
-      [competitorId]: isNaN(parsed) ? undefined : parsed,
-    };
-    setScoreMap(newScoreMap);
-  };
-
-  // On "Continue" button click
-  const handleNext = () => {
-    if (!isAllValid) {
-      alert("Les résultats sont en dehors des limites autorisées.");
-      return;
-    }
-    const logicOk = validateLogic(selectedCompetitors, rankMap, scoreMap);
-    if (!logicOk) {
-      alert("Logique rang/score incorrecte (ex: un 2e a un score >= au 1er).");
-      return;
-    }
-
-    // Construire les paramètres pour la page suivante en utilisant l'état local
-    const params = new URLSearchParams();
-    params.set('ids', selectedCompetitors.map(c => c.id).join(','));
-    
-    // Ajouter les scores et rangs depuis l'état local
-    selectedCompetitors.forEach(c => {
-      if (rankMap[c.id] !== undefined) params.set(`rank_${c.id}`, rankMap[c.id]!.toString());
-      if (scoreMap[c.id] !== undefined) params.set(`score_${c.id}`, scoreMap[c.id]!.toString());
-    });
-
-    router.push(`/races/summary?${params.toString()}`);
-  };
-
-  const canContinue =
-    isAllValid && validateLogic(selectedCompetitors, rankMap, scoreMap);
+  const isFromAnalysis = searchParams.get("fromAnalysis") === "true";
+  const selectedCompetitors = allCompetitors.filter((c) =>
+    fields.some(f => f.competitorId === c.id)
+  );
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
       {/* Back button + title */}
       <div className="flex items-center gap-3 mb-6">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => {
-            // Renvoyer vers la page add avec les compétiteurs sélectionnés
             const params = new URLSearchParams();
             params.set('ids', selectedCompetitors.map(c => c.id).join(','));
             router.push(`/races/add?${params.toString()}`);
           }}
-          className="text-neutral-400 hover:text-neutral-200 transition-colors"
+          ariaLabel="Retour"
         >
           <MdArrowBack size={26} />
-        </button>
+        </Button>
         <h1 className="text-xl font-bold">Configuration du score</h1>
       </div>
 
@@ -175,81 +119,111 @@ const ScoreSetupPage: NextPage = () => {
         sélectionnés.
       </p>
 
-      {/* List of competitors */}
-      <div className="flex flex-col gap-4">
-        {selectedCompetitors.map((c) => (
-          <div key={c.id} className="flex items-center justify-between bg-neutral-800 p-4 rounded">
-            {/* Avatar + name */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden">
-                <Image
-                  src={c.profilePictureUrl}
-                  alt={c.firstName}
-                  width={40}
-                  height={40}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-              <span className="text-base font-medium text-neutral-100">
-                {c.firstName} {c.lastName}
-              </span>
-            </div>
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        {fields.map((field, index) => {
+          const competitor = allCompetitors.find(c => c.id === field.competitorId);
+          if (!competitor) return null;
 
-            {/* Rank + Score */}
-            <div className="flex items-center gap-6">
-              {/* Rank */}
-              <div className="text-center">
-                <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
-                  Rang
-                </p>
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  className="w-14 h-10 bg-neutral-900 border border-neutral-700 rounded text-center
-                             text-neutral-100 focus:outline-none focus:border-primary-500"
-                  value={rankMap[c.id] !== undefined ? String(rankMap[c.id]) : ""}
-                  onChange={(e) => handleChangeRank(c.id, e.target.value)}
-                />
+          return (
+            <div key={field.id} className="flex items-center justify-between bg-neutral-800 p-4 rounded">
+              {/* Avatar + name */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden">
+                  <Image
+                    src={competitor.profilePictureUrl}
+                    alt={competitor.firstName}
+                    width={40}
+                    height={40}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <span className="text-base font-medium text-neutral-100">
+                  {competitor.firstName} {competitor.lastName}
+                </span>
               </div>
 
-              {/* Score */}
-              <div className="text-center">
-                <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
-                  Score
-                </p>
-                <input
-                  type="number"
-                  min={0}
-                  max={60}
-                  className="w-14 h-10 bg-neutral-900 border border-neutral-700 rounded text-center
-                             text-neutral-100 focus:outline-none focus:border-primary-500"
-                  value={scoreMap[c.id] !== undefined ? String(scoreMap[c.id]) : ""}
-                  onChange={(e) => handleChangeScore(c.id, e.target.value)}
-                />
+              {/* Rank + Score */}
+              <div className="flex items-center gap-6">
+                {/* Rank */}
+                <div className="text-center">
+                  <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
+                    Rang
+                  </p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    className={`w-14 h-10 bg-neutral-900 border rounded text-center
+                               text-neutral-100 focus:outline-none transition-colors
+                               ${errors.scores?.[index]?.rank
+                                 ? 'border-error-500 focus:border-error-500'
+                                 : 'border-neutral-700 focus:border-primary-500'}`}
+                    defaultValue={field.rank}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseInt(e.target.value, 10) : 1;
+                      setValue(`scores.${index}.rank`, value);
+                    }}
+                  />
+                  {errors.scores?.[index]?.rank && (
+                    <p className="text-error-500 text-xs mt-1">
+                      {errors.scores[index]?.rank?.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Score */}
+                <div className="text-center">
+                  <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
+                    Score
+                  </p>
+                  <input
+                    type="number"
+                    min={0}
+                    max={60}
+                    className={`w-14 h-10 bg-neutral-900 border rounded text-center
+                               text-neutral-100 focus:outline-none transition-colors
+                               ${errors.scores?.[index]?.score
+                                 ? 'border-error-500 focus:border-error-500'
+                                 : 'border-neutral-700 focus:border-primary-500'}`}
+                    defaultValue={field.score}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseInt(e.target.value, 10) : 0;
+                      setValue(`scores.${index}.score`, value);
+                    }}
+                  />
+                  {errors.scores?.[index]?.score && (
+                    <p className="text-error-500 text-xs mt-1">
+                      {errors.scores[index]?.score?.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
+          );
+        })}
+
+        {/* Global form errors */}
+        {errors.scores && typeof errors.scores.message === 'string' && (
+          <div className="bg-error-500/10 border border-error-500 rounded p-3">
+            <p className="text-error-500 text-sm">{errors.scores.message}</p>
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Footer : back button + continue button */}
-      <div className="mt-8">
-        <button
-          className={`
-            w-full h-12 rounded font-semibold transition-colors
-            ${
-              canContinue
-                ? "bg-primary-500 text-neutral-900 hover:bg-primary-400"
-                : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-            }
-          `}
-          onClick={handleNext}
-          disabled={!canContinue}
-        >
-          Continuer
-        </button>
-      </div>
+        {/* Footer : continue button */}
+        <div className="mt-8">
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          >
+            Continuer
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };
