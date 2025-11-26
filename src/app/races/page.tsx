@@ -3,8 +3,32 @@
 import { NextPage } from "next";
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
-import RaceOverviewItem from "../components/race/RaceOverviewItem";
 import { RaceEvent } from "../models/RaceEvent";
+import { formatDate } from "../utils/formatters";
+import RaceOverviewItem from "../components/race/RaceOverviewItem";
+
+const sortRacesByDate = (races: RaceEvent[]): RaceEvent[] => {
+  return [...races].sort(
+    (a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf()
+  );
+};
+
+const groupRacesByDate = (
+  races: RaceEvent[],
+  dateFormatter: (dateStr: string) => string
+): Record<string, RaceEvent[]> => {
+  const grouped: Record<string, RaceEvent[]> = {};
+
+  races.forEach((race) => {
+    const label = dateFormatter(race.date);
+    if (!grouped[label]) {
+      grouped[label] = [];
+    }
+    grouped[label].push(race);
+  });
+
+  return grouped;
+};
 
 const RacesPage: NextPage = () => {
   const { isLoading, allRaces } = useContext(AppContext);
@@ -22,34 +46,13 @@ const RacesPage: NextPage = () => {
     );
   }
 
-  // Sort by descending date
-  const sortedRaces = [...allRaces].sort(
-    (a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf()
-  );
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    if (
-      d.getFullYear() === now.getFullYear() &&
-      d.getMonth() === now.getMonth() &&
-      d.getDate() === now.getDate()
-    ) {
-      return "Aujourd\u2019hui";
-    }
-    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-  };
-
-  // Group by date
-  const racesByDate: Record<string, RaceEvent[]> = {};
-  sortedRaces.forEach((race) => {
-    const label = formatDate(race.date);
-    if (!racesByDate[label]) racesByDate[label] = [];
-    racesByDate[label].push(race);
-  });
+  const sortedRaces = sortRacesByDate(allRaces);
+  const racesByDate = groupRacesByDate(sortedRaces, formatDate);
 
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
       <h1 className="text-center text-title mb-4">Courses</h1>
+
       {sortedRaces.length === 0 ? (
         <p className="text-neutral-300 text-regular">
           Aucune course enregistrée.

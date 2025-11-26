@@ -4,13 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FC } from "react";
 
-import { MdLeaderboard, MdAddCircleOutline, MdFlag } from "react-icons/md";
+import { MdLeaderboard, MdAddCircleOutline, MdFlag, MdSportsScore, MdEmojiEvents } from "react-icons/md";
 
 const BottomNav: FC = () => {
   const pathname = usePathname();
 
   const navItems = [
     { label: "Classement", route: "/", icon: <MdLeaderboard /> },
+    { label: "Paris", route: "/betting/place-bet", icon: <MdSportsScore /> },
+    { label: "Historique", route: "/betting/history", icon: <MdEmojiEvents /> },
     { label: "Ajouter", route: "/races/add", icon: <MdAddCircleOutline /> },
     { label: "Courses", route: "/races", icon: <MdFlag /> },
   ];

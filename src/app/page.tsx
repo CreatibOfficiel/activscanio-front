@@ -2,8 +2,37 @@
 
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "./context/AppContext";
+import { Competitor } from "./models/Competitor";
 import RankedCompetitorItem from "./components/competitor/RankedCompetitorItem";
 import ScrollablePodiumView from "./components/race/ScrollablePodiumView";
+
+const DAYS_THRESHOLD = 7;
+
+const filterRecentCompetitors = (
+  competitors: Competitor[],
+  daysAgo: number
+): Competitor[] => {
+  const threshold = new Date();
+  threshold.setDate(threshold.getDate() - daysAgo);
+
+  return competitors.filter(
+    (c) =>
+      c.raceCount &&
+      c.raceCount > 0 &&
+      c.lastRaceDate &&
+      new Date(c.lastRaceDate) > threshold
+  );
+};
+
+const sortByConservativeScore = (competitors: Competitor[]): Competitor[] => {
+  return [...competitors].sort((a, b) => {
+    if (a.conservativeScore === undefined && b.conservativeScore === undefined)
+      return 0;
+    if (a.conservativeScore === undefined) return 1;
+    if (b.conservativeScore === undefined) return -1;
+    return b.conservativeScore - a.conservativeScore;
+  });
+};
 
 export default function Home() {
   const { isLoading, allCompetitors } = useContext(AppContext);
@@ -21,29 +50,14 @@ export default function Home() {
     );
   }
 
-  // Take only competitors who have already played in the last 7 days
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(now.getDate() - 7);
-
-  const withGames = allCompetitors.filter(
-    (c) =>
-      c.raceCount &&
-      c.raceCount > 0 &&
-      c.lastRaceDate &&
-      new Date(c.lastRaceDate) > sevenDaysAgo
+  const recentCompetitors = filterRecentCompetitors(
+    allCompetitors,
+    DAYS_THRESHOLD
   );
-  // Sort by conservativeScore (higher is better)
-  withGames.sort((a, b) => {
-    if (a.conservativeScore === undefined && b.conservativeScore === undefined) return 0;
-    if (a.conservativeScore === undefined) return 1;
-    if (b.conservativeScore === undefined) return -1;
-    return b.conservativeScore - a.conservativeScore;
-  });
+  const sortedCompetitors = sortByConservativeScore(recentCompetitors);
 
-  // Top 3 (podium)
-  const topThree = withGames.slice(0, 3);
-  // Others
-  const others = withGames.slice(3);
+  const topThree = sortedCompetitors.slice(0, 3);
+  const others = sortedCompetitors.slice(3);
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
@@ -59,7 +73,6 @@ export default function Home() {
         </p>
       )}
 
-      {/* List of others */}
       <div className="flex flex-col gap-0">
         {others.map((competitor) => (
           <RankedCompetitorItem key={competitor.id} competitor={competitor} />

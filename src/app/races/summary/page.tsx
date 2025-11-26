@@ -9,38 +9,57 @@ import { RaceResult } from "@/app/models/RaceResult";
 import RaceResultEloSummary from "@/app/components/elo/RaceResultEloSummary";
 import { MdArrowBack } from "react-icons/md";
 
+const parseCompetitorIds = (idsParam: string | null): string[] => {
+  return idsParam ? idsParam.split(",") : [];
+};
+
+const buildRaceResults = (
+  competitors: Competitor[],
+  searchParams: URLSearchParams
+): RaceResult[] => {
+  const results = competitors.map((c) => {
+    const rank = searchParams.get(`rank_${c.id}`);
+    const score = searchParams.get(`score_${c.id}`);
+    return {
+      competitorId: c.id,
+      rank12: rank ? parseInt(rank, 10) : 12,
+      score: score ? parseInt(score, 10) : 0,
+    };
+  });
+
+  return results.sort((a, b) => a.rank12 - b.rank12);
+};
+
+const buildScoreSetupUrl = (
+  competitors: Competitor[],
+  results: RaceResult[]
+): string => {
+  const params = new URLSearchParams();
+  params.set("ids", competitors.map((c) => c.id).join(","));
+  results.forEach((r) => {
+    params.set(`rank_${r.competitorId}`, r.rank12.toString());
+    params.set(`score_${r.competitorId}`, r.score.toString());
+  });
+  return `/races/score-setup?${params.toString()}`;
+};
+
 const RaceSummaryPage: NextPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addRaceEvent, allCompetitors } = useContext(AppContext);
 
-  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>(
-    []
-  );
+  const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
   const [results, setResults] = useState<RaceResult[]>([]);
 
-  // Update selected competitors and results when the search params change
   useEffect(() => {
     const ids = searchParams.get("ids");
     if (!ids) return;
 
-    const competitorIds = ids.split(",");
+    const competitorIds = parseCompetitorIds(ids);
     const found = allCompetitors.filter((c) => competitorIds.includes(c.id));
     setSelectedCompetitors(found);
 
-    // Construire les résultats à partir des paramètres d'URL
-    const raceResults: RaceResult[] = found.map((c) => {
-      const rank = searchParams.get(`rank_${c.id}`);
-      const score = searchParams.get(`score_${c.id}`);
-      return {
-        competitorId: c.id,
-        rank12: rank ? parseInt(rank, 10) : 12,
-        score: score ? parseInt(score, 10) : 0,
-      };
-    });
-
-    // Trier par rang
-    raceResults.sort((a, b) => a.rank12 - b.rank12);
+    const raceResults = buildRaceResults(found, searchParams);
     setResults(raceResults);
   }, [searchParams, allCompetitors]);
 
@@ -50,21 +69,16 @@ const RaceSummaryPage: NextPage = () => {
     router.push("/");
   };
 
+  const handleBack = () => {
+    const url = buildScoreSetupUrl(selectedCompetitors, results);
+    router.push(url);
+  };
+
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => {
-            // Mettre à jour l'URL de la page précédente avec les données actuelles
-            const params = new URLSearchParams();
-            params.set('ids', selectedCompetitors.map(c => c.id).join(','));
-            results.forEach(r => {
-              params.set(`rank_${r.competitorId}`, r.rank12.toString());
-              params.set(`score_${r.competitorId}`, r.score.toString());
-            });
-            // Naviguer vers la page précédente avec les données
-            router.push(`/races/score-setup?${params.toString()}`);
-          }}
+          onClick={handleBack}
           className="text-neutral-400 hover:text-neutral-200 transition-colors"
         >
           <MdArrowBack size={26} />

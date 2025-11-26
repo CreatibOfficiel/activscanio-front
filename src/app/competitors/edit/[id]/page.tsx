@@ -2,18 +2,18 @@
 
 import { NextPage } from 'next';
 import { useRouter, useParams } from 'next/navigation';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useReducer } from 'react';
 import Image from 'next/image';
 import { MdLinkOff } from 'react-icons/md';
 
 import { useApp } from '@/app/context/AppContext';
+import { UpdateCompetitorPayload } from '@/app/models/Competitor';
+import { BaseCharacter } from '@/app/models/Character';
+import { validateImageUrl, validateCompetitorName } from '@/app/utils/validators';
 import {
-  Competitor,
-  UpdateCompetitorPayload,
-} from '@/app/models/Competitor';
-import { BaseCharacter, CharacterVariant } from '@/app/models/Character';
-
-/* ---------------------------------------------------- */
+  editCompetitorReducer,
+  initialState,
+} from '@/app/reducers/editCompetitorReducer';
 
 const EditCompetitorPage: NextPage = () => {
   const router = useRouter();
@@ -28,39 +28,17 @@ const EditCompetitorPage: NextPage = () => {
     getAvailableVariantsForBaseCharacter,
   } = useApp();
 
-  /* -------------- State -------------- */
+  const [state, dispatch] = useReducer(editCompetitorReducer, initialState);
 
-  const [loading, setLoading] = useState(true);
-  const [competitor, setCompetitor] = useState<Competitor | null>(null);
+  const currentVariant = state.competitor?.characterVariant ?? null;
 
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [profileUrl, setProfileUrl] = useState('');
+  const isFormValid = () =>
+    validateCompetitorName(state.firstName) &&
+    validateCompetitorName(state.lastName) &&
+    validateImageUrl(state.profileUrl) &&
+    (currentVariant || state.selectedVariant);
 
-  const currentVariant = competitor?.characterVariant ?? null;
-
-  /* Sélection personnage */
-  const [availableBC, setAvailableBC] = useState<BaseCharacter[]>([]);
-  const [selectedBC, setSelectedBC] = useState<BaseCharacter | null>(null);
-  const [variantsOfSelected, setVariantsOfSelected] = useState<CharacterVariant[]>([]);
-  const [selectedVariant, setSelectedVariant] = useState<CharacterVariant | null>(null);
-
-  const [loadingBC, setLoadingBC] = useState(false);
-  const [loadingVariants, setLoadingVariants] = useState(false);
-  const [unlinking, setUnlinking] = useState(false);
-
-  /* -------------- Helpers -------------- */
-
-  const isUrlValid = (url: string) =>
-    /^(https?:\/\/).+\.(png|jpe?g|webp)$/.test(url.trim().toLowerCase());
-
-  const isAllValid = () =>
-    firstName.trim() &&
-    lastName.trim() &&
-    isUrlValid(profileUrl) &&
-    (currentVariant || selectedVariant);
-
-  /* -------------- Initial charge -------------- */
+  /* -------------- Initial load -------------- */
 
   useEffect(() => {
     if (!params.id) return;
@@ -69,65 +47,71 @@ const EditCompetitorPage: NextPage = () => {
       try {
         const competitor = await getCompetitorById(params.id);
         if (!competitor) throw new Error('Not found');
-        setCompetitor(competitor);
-        setFirstName(competitor.firstName);
-        setLastName(competitor.lastName);
-        setProfileUrl(competitor.profilePictureUrl);
+
+        dispatch({ type: 'SET_COMPETITOR', payload: competitor });
 
         if (!competitor.characterVariant) {
-          setLoadingBC(true);
-          setAvailableBC(await getAvailableBaseCharacters());
-          setLoadingBC(false);
+          dispatch({ type: 'SET_LOADING_BC', payload: true });
+          const availableChars = await getAvailableBaseCharacters();
+          dispatch({ type: 'SET_AVAILABLE_BC', payload: availableChars });
+          dispatch({ type: 'SET_LOADING_BC', payload: false });
         }
       } catch (err) {
-        alert('Erreur de chargement du compétiteur' + (err instanceof Error ? `: ${err.message}` : ''));
+        alert(
+          'Erreur de chargement du compétiteur' +
+            (err instanceof Error ? `: ${err.message}` : '')
+        );
       } finally {
-        setLoading(false);
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
     })();
-  }, [params.id, getAvailableBaseCharacters]);
+  }, [params.id, getCompetitorById, getAvailableBaseCharacters]);
 
-  /* -------------- Sélection BC -------------- */
+  /* -------------- Character selection -------------- */
 
   const handleSelectBC = async (bc: BaseCharacter) => {
-    if (selectedBC?.id === bc.id) {
-      setSelectedBC(null);
-      setVariantsOfSelected([]);
-      setSelectedVariant(null);
+    if (state.selectedBC?.id === bc.id) {
+      dispatch({ type: 'RESET_CHARACTER_SELECTION' });
       return;
     }
 
-    setSelectedBC(bc);
-    setLoadingVariants(true);
+    dispatch({ type: 'SET_SELECTED_BC', payload: bc });
+    dispatch({ type: 'SET_LOADING_VARIANTS', payload: true });
+
     try {
       const vars = await getAvailableVariantsForBaseCharacter(bc.id);
-      setVariantsOfSelected(vars);
-      setSelectedVariant(vars.length === 1 ? vars[0] : null);
+      dispatch({ type: 'SET_VARIANTS', payload: vars });
+      dispatch({
+        type: 'SET_SELECTED_VARIANT',
+        payload: vars.length === 1 ? vars[0] : null,
+      });
     } catch {
       alert('Impossible de récupérer les variantes');
     } finally {
-      setLoadingVariants(false);
+      dispatch({ type: 'SET_LOADING_VARIANTS', payload: false });
     }
   };
 
-  /* -------------- Unlink -------------- */
+  /* -------------- Unlink character -------------- */
 
   const handleUnlink = async () => {
-    if (!competitor) return;
-    setUnlinking(true);
+    if (!state.competitor) return;
+
+    dispatch({ type: 'SET_UNLINKING', payload: true });
+
     try {
-      const updated = await unlinkCharacterFromCompetitor(competitor.id);
-      setCompetitor(updated);
-      setSelectedBC(null);
-      setSelectedVariant(null);
-      setVariantsOfSelected([]);
-      setLoadingBC(true);
-      setAvailableBC(await getAvailableBaseCharacters());
-      setLoadingBC(false);
+      const updated = await unlinkCharacterFromCompetitor(state.competitor.id);
+      dispatch({ type: 'SET_COMPETITOR', payload: updated });
+      dispatch({ type: 'RESET_CHARACTER_SELECTION' });
+
+      dispatch({ type: 'SET_LOADING_BC', payload: true });
+      const availableChars = await getAvailableBaseCharacters();
+      dispatch({ type: 'SET_AVAILABLE_BC', payload: availableChars });
+      dispatch({ type: 'SET_LOADING_BC', payload: false });
     } catch {
       alert('Erreur lors du déliage');
     } finally {
-      setUnlinking(false);
+      dispatch({ type: 'SET_UNLINKING', payload: false });
     }
   };
 
@@ -135,19 +119,21 @@ const EditCompetitorPage: NextPage = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!competitor || !isAllValid()) return;
+    if (!state.competitor || !isFormValid()) return;
 
-    // 1. Mise à jour des champs simples
     const payload: UpdateCompetitorPayload = {
-      firstName,
-      lastName,
-      profilePictureUrl: profileUrl,
+      firstName: state.firstName,
+      lastName: state.lastName,
+      profilePictureUrl: state.profileUrl,
     };
-    await updateCompetitor(competitor.id, payload);
 
-    // 2. Lien du personnage si nécessaire
-    if (!currentVariant && selectedVariant) {
-      await linkCharacterToCompetitor(competitor.id, selectedVariant.id);
+    await updateCompetitor(state.competitor.id, payload);
+
+    if (!currentVariant && state.selectedVariant) {
+      await linkCharacterToCompetitor(
+        state.competitor.id,
+        state.selectedVariant.id
+      );
     }
 
     alert('Mis à jour !');
@@ -156,14 +142,15 @@ const EditCompetitorPage: NextPage = () => {
 
   /* -------------- Render -------------- */
 
-  if (loading) {
+  if (state.loading) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
         <p>Chargement…</p>
       </div>
     );
   }
-  if (!competitor) {
+
+  if (!state.competitor) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
         <p>Compétiteur introuvable.</p>
@@ -180,42 +167,95 @@ const EditCompetitorPage: NextPage = () => {
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
       <h1 className="text-title mb-4">Modifier le compétiteur</h1>
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Prénom */}
         <div>
           <label className="block mb-1 text-neutral-300">Prénom</label>
-          <input type="text" className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          <input
+            type="text"
+            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
+            value={state.firstName}
+            onChange={(e) =>
+              dispatch({
+                type: 'SET_FORM_FIELD',
+                field: 'firstName',
+                value: e.target.value,
+              })
+            }
+          />
         </div>
-        {/* Nom */}
+
         <div>
           <label className="block mb-1 text-neutral-300">Nom</label>
-          <input type="text" className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          <input
+            type="text"
+            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
+            value={state.lastName}
+            onChange={(e) =>
+              dispatch({
+                type: 'SET_FORM_FIELD',
+                field: 'lastName',
+                value: e.target.value,
+              })
+            }
+          />
         </div>
-        {/* Image URL */}
+
         <div>
-          <label className="block mb-1 text-neutral-300">Image de profil (URL)</label>
-          <input type="text" className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750" value={profileUrl} onChange={(e) => setProfileUrl(e.target.value)} />
-          {profileUrl && (
+          <label className="block mb-1 text-neutral-300">
+            Image de profil (URL)
+          </label>
+          <input
+            type="text"
+            className="w-full p-2 bg-neutral-800 text-neutral-300 rounded border border-neutral-750"
+            value={state.profileUrl}
+            onChange={(e) =>
+              dispatch({
+                type: 'SET_FORM_FIELD',
+                field: 'profileUrl',
+                value: e.target.value,
+              })
+            }
+          />
+          {state.profileUrl && (
             <div className="mt-2 flex justify-center">
               <div className="w-16 h-16 rounded-full overflow-hidden">
-                <Image src={isUrlValid(profileUrl) ? profileUrl : "/placeholder.png"} alt="Preview" width={64} height={64} className="object-cover w-full h-full" />
+                <Image
+                  src={
+                    validateImageUrl(state.profileUrl)
+                      ? state.profileUrl
+                      : '/placeholder.png'
+                  }
+                  alt="Preview"
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                />
               </div>
             </div>
           )}
         </div>
 
-        {/* Personnage lié */}
         {currentVariant && (
           <div className="mt-4 p-3 bg-neutral-800 rounded">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-neutral-300 font-semibold">Personnage lié</h3>
+                <h3 className="text-neutral-300 font-semibold">
+                  Personnage lié
+                </h3>
                 <p className="text-neutral-200">
                   {currentVariant.baseCharacter.name}
-                  {currentVariant.label && currentVariant.label !== "Default" && ` – ${currentVariant.label}`}
+                  {currentVariant.label &&
+                    currentVariant.label !== 'Default' &&
+                    ` – ${currentVariant.label}`}
                 </p>
               </div>
-              <button type="button" className="p-2 bg-red-700 hover:bg-red-600 rounded flex items-center gap-1" onClick={handleUnlink} disabled={unlinking}>
+              <button
+                type="button"
+                className="p-2 bg-red-700 hover:bg-red-600 rounded flex items-center gap-1"
+                onClick={handleUnlink}
+                disabled={state.unlinking}
+              >
                 <MdLinkOff className="text-lg" />
                 <span>Délier</span>
               </button>
@@ -223,32 +263,54 @@ const EditCompetitorPage: NextPage = () => {
           </div>
         )}
 
-        {/* Sélection */}
         {!currentVariant && (
           <>
             <div className="mt-4">
               <label className="block mb-2 text-neutral-300">Personnage</label>
-              {loadingBC ? (
+              {state.loadingBC ? (
                 <p className="text-neutral-500">Chargement…</p>
-              ) : availableBC.length === 0 ? (
+              ) : state.availableBC.length === 0 ? (
                 <p className="text-neutral-500">Aucun disponible</p>
               ) : (
                 <div className="grid grid-cols-5 gap-2">
-                  {availableBC.map((bc) => (
-                    <div key={bc.id} onClick={() => handleSelectBC(bc)} className={`p-2 rounded cursor-pointer ${selectedBC?.id === bc.id ? "bg-primary-500 text-neutral-900" : "bg-neutral-800 hover:bg-neutral-700"}`}> {bc.name} </div>
+                  {state.availableBC.map((bc) => (
+                    <div
+                      key={bc.id}
+                      onClick={() => handleSelectBC(bc)}
+                      className={`p-2 rounded cursor-pointer ${
+                        state.selectedBC?.id === bc.id
+                          ? 'bg-primary-500 text-neutral-900'
+                          : 'bg-neutral-800 hover:bg-neutral-700'
+                      }`}
+                    >
+                      {bc.name}
+                    </div>
                   ))}
                 </div>
               )}
             </div>
-            {selectedBC && variantsOfSelected.length > 1 && (
+
+            {state.selectedBC && state.variantsOfSelected.length > 1 && (
               <div>
                 <label className="block mb-1 text-neutral-300">Variantes</label>
-                {loadingVariants ? (
+                {state.loadingVariants ? (
                   <p className="text-neutral-500">Chargement…</p>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
-                    {variantsOfSelected.map((v) => (
-                      <div key={v.id} onClick={() => setSelectedVariant(v)} className={`p-2 rounded cursor-pointer ${selectedVariant?.id === v.id ? "bg-primary-500 text-neutral-900" : "bg-neutral-800 hover:bg-neutral-700"}`}>{v.label}</div>
+                    {state.variantsOfSelected.map((v) => (
+                      <div
+                        key={v.id}
+                        onClick={() =>
+                          dispatch({ type: 'SET_SELECTED_VARIANT', payload: v })
+                        }
+                        className={`p-2 rounded cursor-pointer ${
+                          state.selectedVariant?.id === v.id
+                            ? 'bg-primary-500 text-neutral-900'
+                            : 'bg-neutral-800 hover:bg-neutral-700'
+                        }`}
+                      >
+                        {v.label}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -257,10 +319,25 @@ const EditCompetitorPage: NextPage = () => {
           </>
         )}
 
-        {/* Actions */}
         <div className="mt-6 flex gap-2">
-          <button type="button" className="flex-1 p-3 bg-transparent border-2 border-primary-500 rounded text-primary-500" onClick={() => router.back()}>Annuler</button>
-          <button type="submit" disabled={!isAllValid()} className={`flex-1 p-3 rounded font-bold ${isAllValid() ? "bg-primary-500 text-neutral-900" : "bg-neutral-500 text-neutral-600"}`}>Enregistrer</button>
+          <button
+            type="button"
+            className="flex-1 p-3 bg-transparent border-2 border-primary-500 rounded text-primary-500"
+            onClick={() => router.back()}
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={!isFormValid()}
+            className={`flex-1 p-3 rounded font-bold ${
+              isFormValid()
+                ? 'bg-primary-500 text-neutral-900'
+                : 'bg-neutral-500 text-neutral-600'
+            }`}
+          >
+            Enregistrer
+          </button>
         </div>
       </form>
     </div>

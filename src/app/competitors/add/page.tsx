@@ -5,6 +5,8 @@ import { FormEvent, useContext, useState } from "react";
 import { AppContext } from "@/app/context/AppContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { validateImageUrl, validateCompetitorName } from "@/app/utils/validators";
+import { normalizeText } from "@/app/utils/formatters";
 
 const AddCompetitorPage: NextPage = () => {
   const router = useRouter();
@@ -14,44 +16,23 @@ const AddCompetitorPage: NextPage = () => {
   const [lastName, setLastName] = useState("");
   const [url, setUrl] = useState("");
 
-  /**
-   * Check if a URL is valid (starts with http(s) and ends with an image format).
-   */
-  const isUrlValid = (urlStr: string): boolean => {
-    const lower = urlStr.trim().toLowerCase();
-    if (!lower.startsWith("http://") && !lower.startsWith("https://")) return false;
-    if (
-      !(
-        lower.endsWith(".png") ||
-        lower.endsWith(".jpg") ||
-        lower.endsWith(".jpeg") ||
-        lower.endsWith(".webp")
-      )
-    ) {
-      return false;
-    }
-    return true;
+  const isFormValid = (): boolean => {
+    return (
+      validateCompetitorName(firstName) &&
+      validateCompetitorName(lastName) &&
+      validateImageUrl(url)
+    );
   };
 
-  /**
-   * Check if all required fields are filled and the URL is valid.
-   */
-  const isAllValid = (): boolean => {
-    if (!firstName.trim() || !lastName.trim()) return false;
-    return isUrlValid(url);
-  };
-
-  /**
-   * Validation of the form and saving a new competitor.
-   */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!isAllValid()) return;
+
+    if (!isFormValid()) return;
 
     await addCompetitor({
       id: "",
-      firstName,
-      lastName,
+      firstName: normalizeText(firstName),
+      lastName: normalizeText(lastName),
       profilePictureUrl: url,
       rating: 1500,
       rd: 350,
@@ -66,8 +47,8 @@ const AddCompetitorPage: NextPage = () => {
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
       <h1 className="text-title mb-4">Ajouter un·e compétiteur·trice</h1>
       <p className="text-neutral-300 text-regular mb-4">Nouveau astronaute ?</p>
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* First Name */}
         <div>
           <label className="block mb-1 text-neutral-300">Prénom</label>
           <input
@@ -78,7 +59,6 @@ const AddCompetitorPage: NextPage = () => {
           />
         </div>
 
-        {/* Last Name */}
         <div>
           <label className="block mb-1 text-neutral-300">Nom</label>
           <input
@@ -89,7 +69,6 @@ const AddCompetitorPage: NextPage = () => {
           />
         </div>
 
-        {/* Profile Picture URL */}
         <div>
           <label className="block mb-1 text-neutral-300">
             Image de profil (URL)
@@ -100,7 +79,7 @@ const AddCompetitorPage: NextPage = () => {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          {url && isUrlValid(url) && (
+          {url && validateImageUrl(url) && (
             <div className="mt-2 flex justify-center">
               <div className="w-16 h-16 rounded-full overflow-hidden">
                 <Image
@@ -115,7 +94,6 @@ const AddCompetitorPage: NextPage = () => {
           )}
         </div>
 
-        {/* Buttons */}
         <div className="mt-6 flex gap-2">
           <button
             type="button"
@@ -127,7 +105,7 @@ const AddCompetitorPage: NextPage = () => {
           <button
             type="submit"
             className={`flex-1 p-3 rounded text-bold ${
-              isAllValid()
+              isFormValid()
                 ? "bg-primary-500 text-neutral-900"
                 : "bg-neutral-500 text-neutral-600"
             }`}
