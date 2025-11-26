@@ -8,6 +8,13 @@ interface CardProps {
   variant?: 'default' | 'primary' | 'success' | 'error';
   hover?: boolean;
   loading?: boolean;
+  role?: string;
+  tabIndex?: number;
+  onKeyPress?: (e: React.KeyboardEvent) => void;
+  'aria-label'?: string;
+  'aria-checked'?: boolean;
+  'aria-describedby'?: string;
+  'aria-required'?: boolean;
 }
 
 const Card: FC<CardProps> = ({
@@ -17,6 +24,13 @@ const Card: FC<CardProps> = ({
   variant = 'default',
   hover = false,
   loading = false,
+  role,
+  tabIndex,
+  onKeyPress,
+  'aria-label': ariaLabel,
+  'aria-checked': ariaChecked,
+  'aria-describedby': ariaDescribedBy,
+  'aria-required': ariaRequired,
 }) => {
   const variants = {
     default: 'bg-neutral-800 border-neutral-700',
@@ -31,26 +45,49 @@ const Card: FC<CardProps> = ({
 
   const cursorClass = onClick ? 'cursor-pointer' : '';
 
-  const Component = onClick && !loading ? 'button' : 'div';
-  const extraProps = onClick && !loading ? {
-    onClick,
-    type: 'button' as const,
-    className: `text-left w-full rounded-lg border ${variants[variant]} ${hoverClass} ${cursorClass} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${className}`,
-  } : {
-    className: `rounded-lg border ${variants[variant]} ${hoverClass} ${className}`,
+  const ariaProps = {
+    ...(role && { role }),
+    ...(ariaLabel && { 'aria-label': ariaLabel }),
+    ...(ariaChecked !== undefined && { 'aria-checked': ariaChecked }),
+    ...(ariaDescribedBy && { 'aria-describedby': ariaDescribedBy }),
+    ...(ariaRequired !== undefined && { 'aria-required': ariaRequired }),
   };
 
+  const content = (
+    <div className="relative">
+      {children}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-800/80 rounded-lg">
+          <Spinner size="md" />
+        </div>
+      )}
+    </div>
+  );
+
+  if (onClick && !loading) {
+    return (
+      <button
+        onClick={onClick}
+        type="button"
+        className={`text-left w-full rounded-lg border ${variants[variant]} ${hoverClass} ${cursorClass} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${className}`}
+        {...(tabIndex !== undefined && { tabIndex })}
+        {...(onKeyPress && { onKeyPress })}
+        {...ariaProps}
+      >
+        {content}
+      </button>
+    );
+  }
+
   return (
-    <Component {...extraProps}>
-      <div className="relative">
-        {children}
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-neutral-800/80 rounded-lg">
-            <Spinner size="md" />
-          </div>
-        )}
-      </div>
-    </Component>
+    <div
+      className={`rounded-lg border ${variants[variant]} ${hoverClass} ${className}`}
+      {...(tabIndex !== undefined && { tabIndex })}
+      {...(onKeyPress && { onKeyPress })}
+      {...ariaProps}
+    >
+      {content}
+    </div>
   );
 };
 

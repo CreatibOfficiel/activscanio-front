@@ -18,12 +18,14 @@ interface PodiumSelectorProps {
   competitors: CompetitorOdds[];
   onSelectionChange: (selection: PodiumSelection, boostedCompetitorId?: string) => void;
   disabled?: boolean;
+  boostAvailable?: boolean;
 }
 
 const PodiumSelector: FC<PodiumSelectorProps> = ({
   competitors,
   onSelectionChange,
   disabled = false,
+  boostAvailable = true,
 }) => {
   const [selection, setSelection] = useState<PodiumSelection>({});
   const [boostedCompetitorId, setBoostedCompetitorId] = useState<string | undefined>();
@@ -74,7 +76,7 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
 
   const selectedCount = Object.keys(selection).length;
   const isComplete = selectedCount === 3;
-  const canBoost = isComplete && !boostedCompetitorId;
+  const canBoost = isComplete && !boostedCompetitorId && boostAvailable;
 
   return (
     <div className="space-y-6">

@@ -34,6 +34,7 @@ const PlaceBetPage: FC = () => {
   const [selection, setSelection] = useState<PodiumSelection>({});
   const [boostedCompetitorId, setBoostedCompetitorId] = useState<string | undefined>();
   const [existingBet, setExistingBet] = useState(false);
+  const [boostAvailable, setBoostAvailable] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
@@ -61,7 +62,7 @@ const PlaceBetPage: FC = () => {
       const oddsData = await BettingRepository.getCurrentWeekOdds();
       setOdds(oddsData);
 
-      // Check if user already has a bet
+      // Check if user already has a bet and load boost availability
       if (user) {
         const token = await getToken();
         if (token) {
@@ -69,6 +70,16 @@ const PlaceBetPage: FC = () => {
           if (bet) {
             setExistingBet(true);
             setError('Vous avez déjà placé un pari pour cette semaine.');
+          }
+
+          // Load boost availability
+          try {
+            const boostStatus = await BettingRepository.getBoostAvailability(token);
+            setBoostAvailable(boostStatus.available);
+          } catch (err) {
+            console.error('Error loading boost availability:', err);
+            // Default to available on error
+            setBoostAvailable(true);
           }
         }
       }
@@ -246,6 +257,13 @@ const PlaceBetPage: FC = () => {
                 <li>Gagnez des points pour chaque prédiction correcte</li>
                 <li>Bonus x2 si vous prédisez le podium complet !</li>
               </ul>
+              {!boostAvailable && (
+                <div className="mt-3 p-2 bg-warning-500/10 border border-warning-500/30 rounded-lg">
+                  <p className="text-sub text-warning-500">
+                    ⚠️ Vous avez déjà utilisé votre boost mensuel. Il sera réinitialisé le 1er du mois prochain.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -282,6 +300,7 @@ const PlaceBetPage: FC = () => {
           competitors={odds}
           onSelectionChange={handleSelectionChange}
           disabled={isSubmitting}
+          boostAvailable={boostAvailable}
         />
 
         {/* Submit button */}

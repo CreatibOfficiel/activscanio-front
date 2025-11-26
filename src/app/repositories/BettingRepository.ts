@@ -209,4 +209,29 @@ export class BettingRepository {
       throw error;
     }
   }
+
+  /**
+   * Get boost availability for current user
+   */
+  static async getBoostAvailability(
+    authToken: string
+  ): Promise<{ available: boolean; lastUsedMonth: number | null; lastUsedYear: number | null }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/betting/boost-availability`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch boost availability: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching boost availability:', error);
+      throw error;
+    }
+  }
 }
