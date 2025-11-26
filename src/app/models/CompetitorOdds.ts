@@ -24,6 +24,7 @@ export interface BettorRanking {
   year: number;
   totalPoints: number;
   rank: number;
+  currentMonthlyStreak: number;
   createdAt: string;
   updatedAt: string;
 }

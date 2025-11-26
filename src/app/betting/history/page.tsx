@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { Bet, BetPosition } from '@/app/models/Bet';
 import { Card, Badge, Button, Spinner } from '@/app/components/ui';
+import { AchievementCard } from '@/app/components/achievements';
 import { BET_POSITION_LABELS } from '@/app/utils/constants';
 import { formatPoints, formatOdds, formatDateLocale } from '@/app/utils/formatters';
 import { MdHistory, MdCheckCircle, MdCancel, MdPending, MdBolt } from 'react-icons/md';
@@ -59,6 +60,7 @@ const HistoryPage: FC = () => {
   const getPositionBadgeVariant = (position: BetPosition) => {
     return position === BetPosition.FIRST ? 'gold' : position === BetPosition.SECOND ? 'silver' : 'bronze';
   };
+
 
   if (isLoading) {
     return (
@@ -280,6 +282,32 @@ const HistoryPage: FC = () => {
                         </div>
                       ))}
                   </div>
+
+                  {/* Achievement Timeline - Show achievements unlocked for this bet */}
+                  {bet.achievementsUnlocked && bet.achievementsUnlocked.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-neutral-700">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm font-semibold text-primary-400">
+                          ✨ Achievements débloqués
+                        </span>
+                        <Badge variant="primary" size="sm">
+                          +{bet.achievementsUnlocked.reduce((sum, a) => sum + a.xpReward, 0)} XP
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {bet.achievementsUnlocked.map((achievement) => (
+                          <AchievementCard
+                            key={achievement.id}
+                            achievement={{
+                              ...achievement,
+                              isUnlocked: true,
+                            }}
+                            variant="compact"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </Card>
               );
             })}

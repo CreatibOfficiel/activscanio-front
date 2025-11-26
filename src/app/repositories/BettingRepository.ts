@@ -140,7 +140,7 @@ export class BettingRepository {
   ): Promise<Bet[]> {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/betting/bets/history`,
+        `${API_BASE_URL}/betting/bets/my-bets`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ export class BettingRepository {
   ): Promise<BettorRanking[]> {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/betting/rankings?month=${month}&year=${year}`,
+        `${API_BASE_URL}/betting/rankings/monthly?month=${month}&year=${year}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -181,7 +181,9 @@ export class BettingRepository {
         throw new Error(`Failed to fetch rankings: ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      // Backend returns { month, year, count, rankings: [...] }
+      return data.rankings || [];
     } catch (error) {
       console.error('Error fetching rankings:', error);
       throw error;

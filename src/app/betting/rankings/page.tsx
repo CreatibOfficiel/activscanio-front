@@ -4,6 +4,7 @@ import { FC, useEffect, useState, useCallback } from 'react';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { BettorRanking } from '@/app/models/CompetitorOdds';
 import { Card, Badge } from '@/app/components/ui';
+import { FlameIndicator } from '@/app/components/achievements';
 import { MONTH_NAMES } from '@/app/utils/constants';
 import { MdEmojiEvents, MdTrendingUp } from 'react-icons/md';
 
@@ -128,12 +129,13 @@ const RankingsPage: FC = () => {
                           <h3 className="text-bold text-white mb-1">
                             User #{topThree[1].userId.slice(0, 8)}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-silver-500">
+                          <div className="flex items-center justify-center gap-1 text-silver-500 mb-2">
                             <MdTrendingUp />
                             <span className="text-statistic font-bold">
                               {topThree[1].totalPoints.toFixed(1)}
                             </span>
                           </div>
+                          <FlameIndicator streak={topThree[1].currentMonthlyStreak} variant="compact" type="monthly" />
                         </div>
                       </Card>
                       <div className="w-full h-24 bg-silver-500/20 rounded-t-lg mt-2"></div>
@@ -157,12 +159,13 @@ const RankingsPage: FC = () => {
                           <h3 className="text-heading text-white mb-1">
                             User #{topThree[0].userId.slice(0, 8)}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-gold-500">
+                          <div className="flex items-center justify-center gap-1 text-gold-500 mb-2">
                             <MdTrendingUp />
                             <span className="text-statistic font-bold text-2xl">
                               {topThree[0].totalPoints.toFixed(1)}
                             </span>
                           </div>
+                          <FlameIndicator streak={topThree[0].currentMonthlyStreak} variant="compact" type="monthly" />
                         </div>
                       </Card>
                       <div className="w-full h-32 bg-gold-500/20 rounded-t-lg mt-2"></div>
@@ -186,12 +189,13 @@ const RankingsPage: FC = () => {
                           <h3 className="text-bold text-white mb-1">
                             User #{topThree[2].userId.slice(0, 8)}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-bronze-500">
+                          <div className="flex items-center justify-center gap-1 text-bronze-500 mb-2">
                             <MdTrendingUp />
                             <span className="text-statistic font-bold">
                               {topThree[2].totalPoints.toFixed(1)}
                             </span>
                           </div>
+                          <FlameIndicator streak={topThree[2].currentMonthlyStreak} variant="compact" type="monthly" />
                         </div>
                       </Card>
                       <div className="w-full h-16 bg-bronze-500/20 rounded-t-lg mt-2"></div>
@@ -226,14 +230,21 @@ const RankingsPage: FC = () => {
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-primary-500">
-                            <MdTrendingUp />
-                            <span className="text-statistic font-bold">
-                              {ranking.totalPoints.toFixed(1)}
-                            </span>
+                        <div className="flex items-center gap-4">
+                          <FlameIndicator
+                            streak={ranking.currentMonthlyStreak}
+                            variant="compact"
+                            type="monthly"
+                          />
+                          <div className="text-right">
+                            <div className="flex items-center gap-1 text-primary-500">
+                              <MdTrendingUp />
+                              <span className="text-statistic font-bold">
+                                {ranking.totalPoints.toFixed(1)}
+                              </span>
+                            </div>
+                            <p className="text-sub text-neutral-500">points</p>
                           </div>
-                          <p className="text-sub text-neutral-500">points</p>
                         </div>
                       </div>
                     </Card>

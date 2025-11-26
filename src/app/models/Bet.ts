@@ -1,3 +1,5 @@
+import { AchievementCategory, AchievementRarity } from './Achievement';
+
 export enum BetPosition {
   FIRST = 'first',
   SECOND = 'second',
@@ -23,6 +25,18 @@ export interface Bet {
   isFinalized: boolean;
   pointsEarned?: number;
   picks: BetPick[];
+  achievementsUnlocked?: Array<{
+    id: string;
+    key: string;
+    name: string;
+    description: string;
+    category: AchievementCategory;
+    rarity: AchievementRarity;
+    icon: string;
+    xpReward: number;
+    unlocksTitle: string | null;
+    unlockedAt: Date;
+  }>;
 }
 
 export interface CreateBetDto {
