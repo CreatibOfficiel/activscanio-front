@@ -8,10 +8,11 @@ import { Competitor } from '@/app/models/Competitor';
 import { CharacterVariant } from '@/app/models/Character';
 import { Card, Button, Input } from '@/app/components/ui';
 import { toast } from 'sonner';
-import { MdSearch, MdPerson, MdPersonAdd, MdSkipNext } from 'react-icons/md';
+import { MdSearch, MdPerson, MdPersonAdd } from 'react-icons/md';
 import { useDebounce } from '@/app/hooks/useDebounce';
 
 enum OnboardingStep {
+  ROLE_SELECTION = 'role',
   COMPETITOR_SEARCH = 'search',
   CHARACTER_SELECT = 'character',
   CREATE_COMPETITOR = 'create',
@@ -22,7 +23,7 @@ const OnboardingPage: FC = () => {
   const { getToken } = useAuth();
   const { user } = useUser();
 
-  const [step, setStep] = useState<OnboardingStep>(OnboardingStep.COMPETITOR_SEARCH);
+  const [step, setStep] = useState<OnboardingStep>(OnboardingStep.ROLE_SELECTION);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -124,12 +125,21 @@ const OnboardingPage: FC = () => {
     setStep(OnboardingStep.CREATE_COMPETITOR);
   };
 
-  // Go back to search
+  // Go back to previous step
   const handleBackToSearch = () => {
     setStep(OnboardingStep.COMPETITOR_SEARCH);
     setSelectedCompetitor(null);
     setNewCompetitorFirstName('');
     setNewCompetitorLastName('');
+  };
+
+  // Go back to role selection
+  const handleBackToRoleSelection = () => {
+    setStep(OnboardingStep.ROLE_SELECTION);
+    setSelectedCompetitor(null);
+    setNewCompetitorFirstName('');
+    setNewCompetitorLastName('');
+    setSelectedVariantId(null);
   };
 
   // Validate name format
@@ -200,8 +210,8 @@ const OnboardingPage: FC = () => {
     }
   };
 
-  // Skip onboarding
-  const handleSkip = async () => {
+  // Handle spectator selection (no competitor/character needed)
+  const handleSpectatorSelection = async () => {
     try {
       setIsSubmitting(true);
       const token = await getToken();
@@ -209,12 +219,17 @@ const OnboardingPage: FC = () => {
         throw new Error('Token non disponible');
       }
 
-      await OnboardingRepository.skipOnboarding(token);
-      toast.success('Vous pourrez compléter votre profil plus tard');
+      await OnboardingRepository.completeOnboarding(
+        { isSpectator: true },
+        token
+      );
+
+      toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses ! 🎉');
       router.push('/');
     } catch (error) {
-      console.error('Error skipping onboarding:', error);
-      toast.error('Erreur lors du passage de l\'onboarding');
+      console.error('Error completing onboarding as spectator:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la création du profil';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -230,6 +245,65 @@ const OnboardingPage: FC = () => {
             Créez votre profil de compétiteur pour participer aux courses
           </p>
         </div>
+
+        {/* Step: Role Selection */}
+        {step === OnboardingStep.ROLE_SELECTION && (
+          <div className="space-y-6">
+            <Card className="p-6">
+              <h2 className="text-heading text-white mb-4">Choisissez votre rôle</h2>
+              <p className="text-sub text-neutral-300 mb-6">
+                Voulez-vous participer aux courses ou seulement parier sur les résultats ?
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Option Compétiteur */}
+                <Card
+                  className="p-6 cursor-pointer hover:border-primary-500 transition-colors"
+                  onClick={() => {
+                    setStep(OnboardingStep.COMPETITOR_SEARCH);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      setStep(OnboardingStep.COMPETITOR_SEARCH);
+                    }
+                  }}
+                >
+                  <div className="text-center">
+                    <div className="text-5xl mb-3">🏁</div>
+                    <h3 className="text-bold text-white mb-2">Je suis un coureur</h3>
+                    <p className="text-sub text-neutral-400">
+                      Participez aux courses Mario Kart et pariez sur les résultats
+                    </p>
+                  </div>
+                </Card>
+
+                {/* Option Spectateur */}
+                <Card
+                  className="p-6 cursor-pointer hover:border-primary-500 transition-colors"
+                  onClick={handleSpectatorSelection}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSpectatorSelection();
+                    }
+                  }}
+                  aria-disabled={isSubmitting}
+                >
+                  <div className="text-center">
+                    <div className="text-5xl mb-3">🎲</div>
+                    <h3 className="text-bold text-white mb-2">Je suis un spectateur</h3>
+                    <p className="text-sub text-neutral-400">
+                      Pariez sur les courses et grimpez dans le classement
+                    </p>
+                  </div>
+                </Card>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Step: Competitor Search */}
         {step === OnboardingStep.COMPETITOR_SEARCH && (
@@ -303,19 +377,9 @@ const OnboardingPage: FC = () => {
                   variant="secondary"
                   fullWidth
                   onClick={handleCreateNewCompetitor}
-                  className="mb-2"
                 >
                   <MdPersonAdd className="text-xl mr-2" />
                   Créer un nouveau profil
-                </Button>
-                <Button
-                  variant="ghost"
-                  fullWidth
-                  onClick={handleSkip}
-                  disabled={isSubmitting}
-                >
-                  <MdSkipNext className="text-xl mr-2" />
-                  Passer cette étape
                 </Button>
               </div>
             </Card>
@@ -427,7 +491,7 @@ const OnboardingPage: FC = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="ghost" onClick={handleBackToSearch} fullWidth>
+                <Button variant="ghost" onClick={handleBackToRoleSelection} fullWidth>
                   Retour
                 </Button>
                 <Button

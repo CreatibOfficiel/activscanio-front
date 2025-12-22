@@ -24,7 +24,7 @@ const RankingsPage: FC = () => {
         selectedMonth,
         selectedYear
       );
-      setRankings(data);
+      setRankings(data.rankings);
 
       setIsLoading(false);
     } catch (err) {
@@ -211,7 +211,7 @@ const RankingsPage: FC = () => {
                 <h2 className="text-heading text-white mb-4">Autres classés</h2>
                 <div className="space-y-2">
                   {others.map((ranking) => (
-                    <Card key={ranking.id} className="p-4" hover>
+                    <Card key={ranking.userId} className="p-4" hover>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <Badge variant="default" size="md">
@@ -225,7 +225,7 @@ const RankingsPage: FC = () => {
                               User #{ranking.userId.slice(0, 8)}
                             </h3>
                             <p className="text-sub text-neutral-500">
-                              {MONTH_NAMES[ranking.month - 1]} {ranking.year}
+                              {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
                             </p>
                           </div>
                         </div>

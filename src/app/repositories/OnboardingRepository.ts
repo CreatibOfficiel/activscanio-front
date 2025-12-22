@@ -4,12 +4,14 @@ import { CharacterVariant } from '../models/Character';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface CompleteOnboardingDto {
+  isSpectator?: boolean;
   existingCompetitorId?: string;
   newCompetitor?: {
     firstName: string;
     lastName: string;
+    profilePictureUrl?: string;
   };
-  characterVariantId: string;
+  characterVariantId?: string;
 }
 
 export class OnboardingRepository {

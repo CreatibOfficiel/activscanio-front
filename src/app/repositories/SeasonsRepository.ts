@@ -6,6 +6,7 @@ export interface SeasonArchive {
   year: number;
   seasonName: string | null;
   totalCompetitors: number;
+  totalBettors: number;
   totalRaces: number;
   totalBets: number;
   avgCompetitorRating: number;

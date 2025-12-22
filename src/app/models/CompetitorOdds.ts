@@ -18,13 +18,14 @@ export interface CompetitorOdds {
 }
 
 export interface BettorRanking {
-  id: string;
-  userId: string;
-  month: number;
-  year: number;
-  totalPoints: number;
   rank: number;
+  userId: string;
+  userName: string;
+  totalPoints: number;
+  betsPlaced: number;
+  betsWon: number;
+  perfectBets: number;
+  boostsUsed: number;
+  winRate: number;
   currentMonthlyStreak: number;
-  createdAt: string;
-  updatedAt: string;
 }

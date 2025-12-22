@@ -166,7 +166,12 @@ export class BettingRepository {
   static async getMonthlyRankings(
     month: number,
     year: number
-  ): Promise<BettorRanking[]> {
+  ): Promise<{
+    month: number;
+    year: number;
+    count: number;
+    rankings: BettorRanking[];
+  }> {
     try {
       const response = await fetch(
         `${API_BASE_URL}/betting/rankings/monthly?month=${month}&year=${year}`,
@@ -183,7 +188,7 @@ export class BettingRepository {
 
       const data = await response.json();
       // Backend returns { month, year, count, rankings: [...] }
-      return data.rankings || [];
+      return data;
     } catch (error) {
       console.error('Error fetching rankings:', error);
       throw error;
