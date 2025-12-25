@@ -101,7 +101,7 @@ describe('ShareAchievementButton', () => {
     });
 
     // Mock createElement only for 'a' elements to capture link click
-    const mockLink = {
+    const mockLink: Partial<HTMLAnchorElement> = {
       href: '',
       download: '',
       click: jest.fn(),
@@ -111,7 +111,7 @@ describe('ShareAchievementButton', () => {
     const originalCreateElement = document.createElement.bind(document);
     jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
       if (tagName === 'a') {
-        return mockLink as any;
+        return mockLink as HTMLAnchorElement;
       }
       return originalCreateElement(tagName);
     });

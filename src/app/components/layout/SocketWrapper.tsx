@@ -102,7 +102,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
     });
 
     // Race results (broadcast)
-    const unsubscribeResults = subscribeToRaceResults((results) => {
+    const unsubscribeResults = subscribeToRaceResults(() => {
       toast.info(
         '🏆 Race Results Available',
         {

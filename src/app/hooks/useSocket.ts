@@ -3,6 +3,29 @@
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
+interface Achievement {
+  icon: string;
+  name: string;
+  xpReward: number;
+}
+
+interface LevelUpData {
+  newLevel: number;
+  rewards: unknown[];
+}
+
+interface Bet {
+  pointsEarned?: number;
+}
+
+interface PerfectScoreData {
+  imageUrl?: string;
+}
+
+interface Race {
+  title?: string;
+}
+
 let socket: Socket | null = null;
 
 export const useSocket = (userId?: string) => {
@@ -30,7 +53,7 @@ export const useSocket = (userId?: string) => {
         hasRegistered.current = false;
       });
 
-      socket.on('error', (error: any) => {
+      socket.on('error', (error: unknown) => {
         console.error('Socket error:', error);
       });
     }
@@ -41,7 +64,7 @@ export const useSocket = (userId?: string) => {
       socket.emit('register', userId);
       hasRegistered.current = true;
 
-      socket.once('registered', (data: any) => {
+      socket.once('registered', (data: unknown) => {
         console.log('✅ User registered:', data);
       });
     }
@@ -59,14 +82,14 @@ export const useSocket = (userId?: string) => {
  * Subscribe to achievement unlocked events
  */
 export const subscribeToAchievements = (
-  callback: (achievement: any) => void,
+  callback: (achievement: Achievement) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('achievement:unlocked', callback);
 
   return () => {
-    socket.off('achievement:unlocked', callback);
+    socket?.off('achievement:unlocked', callback);
   };
 };
 
@@ -74,14 +97,14 @@ export const subscribeToAchievements = (
  * Subscribe to level up events
  */
 export const subscribeToLevelUp = (
-  callback: (data: { newLevel: number; rewards: any[] }) => void,
+  callback: (data: LevelUpData) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('level:up', callback);
 
   return () => {
-    socket.off('level:up', callback);
+    socket?.off('level:up', callback);
   };
 };
 
@@ -89,14 +112,14 @@ export const subscribeToLevelUp = (
  * Subscribe to achievement revoked events
  */
 export const subscribeToAchievementRevoked = (
-  callback: (achievement: any) => void,
+  callback: (achievement: Achievement) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('achievement:revoked', callback);
 
   return () => {
-    socket.off('achievement:revoked', callback);
+    socket?.off('achievement:revoked', callback);
   };
 };
 
@@ -104,14 +127,14 @@ export const subscribeToAchievementRevoked = (
  * Subscribe to bet finalized events
  */
 export const subscribeToBetFinalized = (
-  callback: (bet: any) => void,
+  callback: (bet: Bet) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('bet:finalized', callback);
 
   return () => {
-    socket.off('bet:finalized', callback);
+    socket?.off('bet:finalized', callback);
   };
 };
 
@@ -119,14 +142,14 @@ export const subscribeToBetFinalized = (
  * Subscribe to perfect score events
  */
 export const subscribeToPerfectScore = (
-  callback: (data: any) => void,
+  callback: (data: PerfectScoreData) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('perfect:score', callback);
 
   return () => {
-    socket.off('perfect:score', callback);
+    socket?.off('perfect:score', callback);
   };
 };
 
@@ -134,14 +157,14 @@ export const subscribeToPerfectScore = (
  * Subscribe to race announcement events (broadcast)
  */
 export const subscribeToRaceAnnouncements = (
-  callback: (race: any) => void,
+  callback: (race: Race) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('race:announcement', callback);
 
   return () => {
-    socket.off('race:announcement', callback);
+    socket?.off('race:announcement', callback);
   };
 };
 
@@ -149,14 +172,14 @@ export const subscribeToRaceAnnouncements = (
  * Subscribe to race results events (broadcast)
  */
 export const subscribeToRaceResults = (
-  callback: (results: any) => void,
+  callback: (results: unknown) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('race:results', callback);
 
   return () => {
-    socket.off('race:results', callback);
+    socket?.off('race:results', callback);
   };
 };
 
@@ -164,13 +187,13 @@ export const subscribeToRaceResults = (
  * Subscribe to rankings updated events (broadcast)
  */
 export const subscribeToRankingsUpdated = (
-  callback: (rankings: any) => void,
+  callback: (rankings: unknown) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
   socket.on('rankings:updated', callback);
 
   return () => {
-    socket.off('rankings:updated', callback);
+    socket?.off('rankings:updated', callback);
   };
 };

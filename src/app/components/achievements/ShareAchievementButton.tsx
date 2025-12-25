@@ -112,7 +112,7 @@ export default function ShareAchievementButton({
             </div>
 
             <p className="text-neutral-400 mb-6">
-              Share your "{achievementName}" achievement with the world!
+              Share your &ldquo;{achievementName}&rdquo; achievement with the world!
             </p>
 
             <div className="space-y-3">

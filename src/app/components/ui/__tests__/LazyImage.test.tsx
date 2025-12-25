@@ -16,7 +16,7 @@ class MockIntersectionObserver {
             target,
           } as IntersectionObserverEntry,
         ],
-        this as any,
+        this as unknown as IntersectionObserver,
       );
     }, 0);
   }
@@ -25,7 +25,7 @@ class MockIntersectionObserver {
   unobserve() {}
 }
 
-global.IntersectionObserver = MockIntersectionObserver as any;
+global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
 
 // Mock Image loading
 let imageInstanceCount = 0;
@@ -45,7 +45,7 @@ class MockImage {
   }
 }
 
-global.Image = MockImage as any;
+global.Image = MockImage as unknown as typeof Image;
 
 describe('LazyImage', () => {
   it('should render image with correct src', async () => {
@@ -134,7 +134,7 @@ describe('LazyImage', () => {
       }
     }
 
-    global.Image = ErrorImage as any;
+    global.Image = ErrorImage as unknown as typeof Image;
 
     const onError = jest.fn();
 
@@ -150,7 +150,7 @@ describe('LazyImage', () => {
     expect(img).toHaveClass('grayscale');
 
     // Restore MockImage
-    global.Image = MockImage as any;
+    global.Image = MockImage as unknown as typeof Image;
   });
 
   it('should accept additional img attributes', () => {
@@ -274,7 +274,7 @@ describe('LazyImage Performance', () => {
       unobserve() {}
     }
 
-    global.IntersectionObserver = NoIntersectObserver as any;
+    global.IntersectionObserver = NoIntersectObserver as unknown as typeof IntersectionObserver;
 
     render(<LazyImage src="/test-image.jpg" alt="Test image" />);
 
@@ -284,7 +284,7 @@ describe('LazyImage Performance', () => {
     expect(img).toHaveAttribute('src', '/placeholder-image.png');
 
     // Restore original mock
-    global.IntersectionObserver = MockIntersectionObserver as any;
+    global.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
   });
 
   it('should only create one Image instance per load', async () => {

@@ -24,7 +24,6 @@ interface WinRateChartProps {
 
 const WinRateChart = React.memo(function WinRateChart({
   userId,
-  days: _days = 30, // Reserved for future backend support
   authToken,
   className = '',
 }: WinRateChartProps) {
