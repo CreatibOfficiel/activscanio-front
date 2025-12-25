@@ -10,6 +10,11 @@ import {
   AchievementGrid,
 } from '../components/achievements';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
+import XPProgressChart from '../components/stats/XPProgressChart';
+import WinRateChart from '../components/stats/WinRateChart';
+import ComparisonCard from '../components/stats/ComparisonCard';
+import AdvancedStatsPanel from '../components/stats/AdvancedStatsPanel';
+import LevelRewardsPanel from '../components/profile/LevelRewardsPanel';
 
 const ProfilePage: FC = () => {
   const { getToken } = useAuth();
@@ -20,6 +25,7 @@ const ProfilePage: FC = () => {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   // Fetch user stats and achievements
   useEffect(() => {
@@ -32,6 +38,8 @@ const ProfilePage: FC = () => {
         if (!token) {
           throw new Error('Non authentifié');
         }
+
+        setAuthToken(token);
 
         // Fetch stats and achievements in parallel
         const [statsData, achievementsData] = await Promise.all([
@@ -286,6 +294,54 @@ const ProfilePage: FC = () => {
               </p>
             </div>
           )}
+        </div>
+
+        {/* XP Progress Chart */}
+        <div className="p-6 rounded-xl bg-neutral-800 border border-neutral-700">
+          <XPProgressChart
+            userId={stats.userId}
+            period="30d"
+            authToken={authToken || undefined}
+            className=""
+          />
+        </div>
+
+        {/* Win Rate Chart */}
+        <div className="p-6 rounded-xl bg-neutral-800 border border-neutral-700">
+          <WinRateChart
+            userId={stats.userId}
+            days={30}
+            authToken={authToken || undefined}
+            className=""
+          />
+        </div>
+
+        {/* Comparison Card */}
+        <div className="p-6 rounded-xl bg-neutral-800 border border-neutral-700">
+          <ComparisonCard
+            userId={stats.userId}
+            authToken={authToken || undefined}
+            className=""
+          />
+        </div>
+
+        {/* Advanced Stats Panel */}
+        <div className="p-6 rounded-xl bg-neutral-800 border border-neutral-700">
+          <AdvancedStatsPanel
+            userId={stats.userId}
+            authToken={authToken || undefined}
+            className=""
+          />
+        </div>
+
+        {/* Level Rewards Panel */}
+        <div className="rounded-xl bg-neutral-800 border border-neutral-700 p-6">
+          <LevelRewardsPanel
+            userId={stats.userId}
+            currentLevel={stats.level}
+            authToken={authToken || undefined}
+            className=""
+          />
         </div>
 
         {/* Notification Settings */}

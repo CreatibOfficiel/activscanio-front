@@ -1,0 +1,334 @@
+/* ActivScanIO - Custom Animations */
+
+/* Achievement Unlock Animation - Bounce Once */
+@keyframes bounce-once {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-15px) scale(1.05);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+  75% {
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+.animate-bounce-once {
+  animation: bounce-once 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Achievement Glow Effect */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3),
+                0 0 10px rgba(255, 215, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6),
+                0 0 25px rgba(255, 215, 0, 0.4),
+                0 0 35px rgba(255, 215, 0, 0.2);
+  }
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Legendary Achievement Glow */
+@keyframes glow-legendary {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4),
+                0 0 20px rgba(255, 140, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8),
+                0 0 40px rgba(255, 140, 0, 0.6),
+                0 0 60px rgba(255, 215, 0, 0.4);
+  }
+}
+
+.animate-glow-legendary {
+  animation: glow-legendary 2.5s ease-in-out infinite;
+}
+
+/* Slide In From Right (Notifications) */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Slide In From Top (Level Up) */
+@keyframes slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-top {
+  animation: slide-in-top 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Fade In */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in;
+}
+
+/* Fade In Up (Cards appearing) */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Scale In (Modal Open) */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Pulse (Loading/Processing) */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Shake (Error/Warning) */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s;
+}
+
+/* Level Up Celebration */
+@keyframes level-up {
+  0% {
+    transform: scale(0.5) rotate(-10deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-level-up {
+  animation: level-up 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* XP Progress Fill */
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+.animate-progress-fill {
+  animation: progress-fill 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Shimmer Loading Effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Rotate (Loading Spinner) */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-rotate {
+  animation: rotate 1s linear infinite;
+}
+
+/* Confetti Fall (Achievement Unlock) */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti-fall 3s linear;
+}
+
+/* Heartbeat (Favorite/Important) */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10%, 30% {
+    transform: scale(1.1);
+  }
+  20%, 40% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* Wiggle (Attention Grabber) */
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Stagger Children Animation (for lists) */
+.stagger-children > * {
+  animation: fade-in-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(9) { animation-delay: 0.45s; }
+.stagger-children > *:nth-child(10) { animation-delay: 0.5s; }
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile Performance Optimization */
+@media (max-width: 768px) {
+  /* Reduce animation complexity on mobile */
+  .animate-glow,
+  .animate-glow-legendary {
+    animation: none;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  }
+
+  .animate-shimmer {
+    animation: none;
+  }
+
+  /* Faster animations on mobile for better performance */
+  .animate-bounce-once,
+  .animate-slide-in-right,
+  .animate-slide-in-top,
+  .animate-scale-in,
+  .animate-level-up {
+    animation-duration: 0.3s;
+  }
+}

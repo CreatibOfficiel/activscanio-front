@@ -32,6 +32,15 @@ export interface Achievement {
   xpReward: number;
   unlocksTitle: string | null;
 
+  // Progressive chain fields
+  prerequisiteAchievementKey?: string | null;
+  tierLevel?: number; // 0 for standalone, 1-4 for chain tiers
+  chainName?: string | null; // e.g., "perfect_podium_chain"
+
+  // Temporary achievement fields
+  isTemporary?: boolean;
+  canBeLost?: boolean;
+
   // User-specific fields (when fetched with user context)
   isUnlocked?: boolean;
   unlockedAt?: Date | null;

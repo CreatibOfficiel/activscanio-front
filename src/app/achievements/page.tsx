@@ -9,6 +9,8 @@ import {
 } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
 import { AchievementGrid } from '../components/achievements';
+import AchievementChain from '../components/achievements/AchievementChain';
+import { LayoutGrid, GitBranch } from 'lucide-react';
 
 const AchievementsPage: FC = () => {
   const { getToken } = useAuth();
@@ -34,6 +36,9 @@ const AchievementsPage: FC = () => {
     locked: 0,
     progress: 0,
   });
+
+  // View toggle
+  const [view, setView] = useState<'grid' | 'chains'>('grid');
 
   // Fetch achievements
   useEffect(() => {
@@ -212,6 +217,32 @@ const AchievementsPage: FC = () => {
           </div>
         </div>
 
+        {/* View Toggle */}
+        <div className="mb-6 flex items-center justify-center gap-2 p-2 rounded-lg bg-neutral-800 border border-neutral-700 w-fit mx-auto">
+          <button
+            onClick={() => setView('grid')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              view === 'grid'
+                ? 'bg-primary-500 text-white'
+                : 'text-neutral-400 hover:text-white hover:bg-neutral-700'
+            }`}
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span className="text-sm font-medium">Grille</span>
+          </button>
+          <button
+            onClick={() => setView('chains')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              view === 'chains'
+                ? 'bg-primary-500 text-white'
+                : 'text-neutral-400 hover:text-white hover:bg-neutral-700'
+            }`}
+          >
+            <GitBranch className="w-4 h-4" />
+            <span className="text-sm font-medium">Chaînes</span>
+          </button>
+        </div>
+
         {/* Error state */}
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-error-500/10 border border-error-500 text-error-400">
@@ -219,12 +250,87 @@ const AchievementsPage: FC = () => {
           </div>
         )}
 
-        {/* Achievement Grid */}
-        <AchievementGrid
-          achievements={achievements}
-          loading={loading}
-          emptyMessage="Aucun achievement ne correspond à vos filtres"
-        />
+        {/* Grid View */}
+        {view === 'grid' && (
+          <AchievementGrid
+            achievements={achievements}
+            loading={loading}
+            emptyMessage="Aucun achievement ne correspond à vos filtres"
+          />
+        )}
+
+        {/* Chains View */}
+        {view === 'chains' && (
+          <div className="space-y-8">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500" />
+              </div>
+            ) : achievements.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🏆</div>
+                <p className="text-neutral-400 text-lg">
+                  Aucun achievement ne correspond à vos filtres
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Group achievements by chain */}
+                {(() => {
+                  const chainGroups = new Map<string, Achievement[]>();
+                  const standalone: Achievement[] = [];
+
+                  achievements.forEach((achievement) => {
+                    if (achievement.chainName) {
+                      if (!chainGroups.has(achievement.chainName)) {
+                        chainGroups.set(achievement.chainName, []);
+                      }
+                      chainGroups.get(achievement.chainName)!.push(achievement);
+                    } else {
+                      standalone.push(achievement);
+                    }
+                  });
+
+                  // Define chain titles
+                  const chainTitles: Record<string, string> = {
+                    perfect_podium_chain: '🎯 Chaîne Précision - Podiums Parfaits',
+                    participation_chain: '📅 Chaîne Régularité - Participation',
+                    points_monthly_chain: '🎲 Chaîne Audace - Points Mensuels',
+                    win_streak_chain: '🏅 Chaîne Classement - Séries de Victoires',
+                  };
+
+                  return (
+                    <>
+                      {/* Render chains */}
+                      {Array.from(chainGroups.entries()).map(([chainName, chainAchievements]) => (
+                        <AchievementChain
+                          key={chainName}
+                          chainName={chainName}
+                          chainTitle={chainTitles[chainName] || chainName}
+                          achievements={chainAchievements}
+                        />
+                      ))}
+
+                      {/* Render standalone achievements */}
+                      {standalone.length > 0 && (
+                        <div>
+                          <h3 className="text-xl font-bold text-white mb-4">
+                            🌟 Achievements Indépendants
+                          </h3>
+                          <AchievementGrid
+                            achievements={standalone}
+                            loading={false}
+                            emptyMessage=""
+                          />
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

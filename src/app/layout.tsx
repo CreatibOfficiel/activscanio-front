@@ -1,9 +1,11 @@
 import "./globals.css";
+import "./styles/animations.css";
 import { AppProvider } from "./context/AppProvider";
 import { BottomNav, Sidebar } from "./components/layout";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
 import { PWAUpdateBanner } from "./components/ui/PWAUpdateBanner";
 import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
+import SocketProvider from "./components/layout/SocketProvider";
 import { ReactNode } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
@@ -53,6 +55,9 @@ export default function RootLayout({
 
               {/* PWA Install Prompt */}
               <PWAInstallPrompt />
+
+              {/* WebSocket real-time notifications */}
+              <SocketProvider />
 
               {/* Toast notifications */}
               <Toaster

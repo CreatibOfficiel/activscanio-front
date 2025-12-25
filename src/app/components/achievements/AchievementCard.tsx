@@ -31,6 +31,8 @@ const AchievementCard: FC<AchievementCardProps> = ({
     unlocksTitle,
     isUnlocked,
     progress = 0,
+    isTemporary = false,
+    canBeLost = false,
   } = achievement;
 
   // Get rarity-based colors
@@ -97,9 +99,16 @@ const AchievementCard: FC<AchievementCardProps> = ({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h3 className={`font-bold text-sm ${colors.text} truncate`}>
-            {name}
-          </h3>
+          <div className="flex items-center gap-1 mb-1">
+            <h3 className={`font-bold text-sm ${colors.text} truncate`}>
+              {name}
+            </h3>
+            {isTemporary && (
+              <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-warning-500/20 text-warning-400 border border-warning-500/50">
+                ⏱️ TEMP
+              </span>
+            )}
+          </div>
           <p className="text-xs text-neutral-500 truncate">{description}</p>
         </div>
 
@@ -126,6 +135,13 @@ const AchievementCard: FC<AchievementCardProps> = ({
       {isUnlocked && (
         <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-success-500/20 border border-success-500">
           <span className="text-xs font-bold text-success-400">✓ Débloqué</span>
+        </div>
+      )}
+
+      {/* Temporary badge */}
+      {isTemporary && (
+        <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-warning-500/20 border border-warning-500/50">
+          <span className="text-xs font-bold text-warning-400">⏱️ TEMPORAIRE</span>
         </div>
       )}
 
@@ -186,6 +202,13 @@ const AchievementCard: FC<AchievementCardProps> = ({
       {isLocked && (
         <p className="mt-3 text-xs text-neutral-600 text-center italic">
           🔒 Continuez à jouer pour débloquer cet achievement
+        </p>
+      )}
+
+      {/* Temporary achievement warning */}
+      {isTemporary && isUnlocked && canBeLost && (
+        <p className="mt-3 text-xs text-warning-500 text-center italic border-t border-warning-500/30 pt-3">
+          ⚠️ Achievement temporaire - Peut être révoqué si les conditions ne sont plus remplies
         </p>
       )}
     </div>
