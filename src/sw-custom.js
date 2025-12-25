@@ -1,0 +1,55 @@
+// Service Worker personnalisé pour gérer les notifications push
+// Import workbox depuis le SW généré par next-pwa
+importScripts('/workbox-0c822247.js');
+
+// Événement push : Afficher la notification
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {};
+
+  const title = data.title || 'Activscanio';
+  const options = {
+    body: data.body || '',
+    icon: data.icon || '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    tag: data.tag || 'default',
+    data: data.data || {},
+    requireInteraction: data.requireInteraction || false,
+    vibrate: [200, 100, 200],
+    silent: false,
+    renotify: true,
+    // Actions (boutons dans la notification)
+    actions: data.actions || [],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+// Événement click : Ouvrir l'URL correspondante
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Si une fenêtre est déjà ouverte, la focus
+        for (let client of windowClients) {
+          if (client.url.includes(urlToOpen) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Sinon, ouvrir nouvelle fenêtre
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Événement close : Analytics (optionnel)
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification fermée', event.notification.tag);
+});

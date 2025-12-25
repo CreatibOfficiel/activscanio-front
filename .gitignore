@@ -24,6 +24,7 @@
 # misc
 .DS_Store
 *.pem
+generate-icons.js
 
 # debug
 npm-debug.log*
@@ -40,3 +41,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PWA files
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map

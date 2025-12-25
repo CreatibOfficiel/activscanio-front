@@ -2,13 +2,33 @@ import "./globals.css";
 import { AppProvider } from "./context/AppProvider";
 import { BottomNav, Sidebar } from "./components/layout";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
+import { PWAUpdateBanner } from "./components/ui/PWAUpdateBanner";
+import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
 import { ReactNode } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
+import type { Metadata, Viewport } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Activscanio",
-  description: "Activscanio est une application de classement de courses.",
+  description: "Activscanio est une application de classement de courses avec système de paris et statistiques en temps réel.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Activscanio",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f1d2a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -17,11 +37,23 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="fr">
+      <head>
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+      </head>
       <body className="bg-neutral-900 text-neutral-100">
         <ClerkProvider>
           <AppProvider>
             <OnboardingGuard>
+              {/* PWA Update Banner */}
+              <PWAUpdateBanner />
+
+              {/* PWA Install Prompt */}
+              <PWAInstallPrompt />
+
               {/* Toast notifications */}
               <Toaster
                 position="top-right"

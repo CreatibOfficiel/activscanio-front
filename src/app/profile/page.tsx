@@ -9,6 +9,7 @@ import {
   FlameIndicator,
   AchievementGrid,
 } from '../components/achievements';
+import { NotificationSettings } from '../components/settings/NotificationSettings';
 
 const ProfilePage: FC = () => {
   const { getToken } = useAuth();
@@ -285,6 +286,11 @@ const ProfilePage: FC = () => {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Notification Settings */}
+        <div className="p-6 rounded-xl bg-neutral-800 border border-neutral-700">
+          <NotificationSettings />
         </div>
       </div>
     </div>
