@@ -7,7 +7,7 @@ import { PWAUpdateBanner } from "./components/ui/PWAUpdateBanner";
 import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
 import SocketProvider from "./components/layout/SocketProvider";
 import { ReactNode } from "react";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import type { Metadata, Viewport } from "next";
 
@@ -74,16 +74,29 @@ export default function RootLayout({
                 }}
               />
 
-              {/* Desktop Sidebar */}
-              <Sidebar />
+              {/* Desktop Sidebar - only when signed in */}
+              <SignedIn>
+                <Sidebar />
+              </SignedIn>
 
-              {/* Main content with responsive margins */}
-              <main className="pb-20 lg:pb-0 lg:pl-64">
-                {children}
-              </main>
+              {/* Main content with responsive margins - when signed in */}
+              <SignedIn>
+                <main className="pb-20 lg:pb-0 lg:pl-64">
+                  {children}
+                </main>
+              </SignedIn>
 
-              {/* Mobile BottomNav (hidden on desktop) */}
-              <BottomNav />
+              {/* Main content without margins - when signed out (sign-in/sign-up pages) */}
+              <SignedOut>
+                <main>
+                  {children}
+                </main>
+              </SignedOut>
+
+              {/* Mobile BottomNav - only when signed in */}
+              <SignedIn>
+                <BottomNav />
+              </SignedIn>
             </OnboardingGuard>
           </AppProvider>
         </ClerkProvider>
