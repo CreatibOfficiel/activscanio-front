@@ -1,5 +1,5 @@
 import { Competitor } from '../models/Competitor';
-import { CharacterVariant } from '../models/Character';
+import { BaseCharacter, CharacterVariant } from '../models/Character';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -99,11 +99,12 @@ export class OnboardingRepository {
   /**
    * Get all character variants
    */
-  static async getAllCharacterVariants(): Promise<CharacterVariant[]> {
+  static async getAllCharacterVariants(authToken: string): Promise<CharacterVariant[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/character-variants`, {
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
@@ -114,6 +115,52 @@ export class OnboardingRepository {
       return await response.json();
     } catch (error) {
       console.error('Error fetching character variants:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all base characters with their available variants
+   */
+  static async getAvailableBaseCharacters(authToken: string): Promise<BaseCharacter[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/base-characters/available`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch base characters: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching base characters:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get available variants for a specific base character
+   */
+  static async getAvailableVariants(baseCharacterId: string, authToken: string): Promise<CharacterVariant[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/base-characters/${baseCharacterId}/available-variants`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch available variants: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching available variants:', error);
       throw error;
     }
   }

@@ -1,20 +1,21 @@
 "use client";
 
-import { FC, useState, useEffect, useCallback } from 'react';
+import { FC, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { OnboardingRepository } from '@/app/repositories/OnboardingRepository';
 import { Competitor } from '@/app/models/Competitor';
-import { CharacterVariant } from '@/app/models/Character';
+import { BaseCharacter, CharacterVariant } from '@/app/models/Character';
 import { Card, Button, Input } from '@/app/components/ui';
 import { toast } from 'sonner';
-import { MdSearch, MdPerson, MdPersonAdd } from 'react-icons/md';
+import { MdSearch, MdPerson, MdPersonAdd, MdArrowBack, MdCheck, MdSportsEsports, MdColorLens } from 'react-icons/md';
 import { useDebounce } from '@/app/hooks/useDebounce';
 
 enum OnboardingStep {
   ROLE_SELECTION = 'role',
   COMPETITOR_SEARCH = 'search',
   CHARACTER_SELECT = 'character',
+  VARIANT_SELECT = 'variant',
   CREATE_COMPETITOR = 'create',
 }
 
@@ -27,9 +28,10 @@ const OnboardingPage: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Search state
+  // Search state for competitors
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Competitor[]>([]);
+  const [allCompetitors, setAllCompetitors] = useState<Competitor[]>([]);
+  const [filteredCompetitors, setFilteredCompetitors] = useState<Competitor[]>([]);
   const [selectedCompetitor, setSelectedCompetitor] = useState<Competitor | null>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -38,81 +40,118 @@ const OnboardingPage: FC = () => {
   const [newCompetitorLastName, setNewCompetitorLastName] = useState('');
 
   // Character selection state
-  const [characterVariants, setCharacterVariants] = useState<CharacterVariant[]>([]);
+  const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
+  const [filteredCharacters, setFilteredCharacters] = useState<BaseCharacter[]>([]);
+  const [characterSearchQuery, setCharacterSearchQuery] = useState('');
+  const [selectedBaseCharacter, setSelectedBaseCharacter] = useState<BaseCharacter | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const debouncedCharacterSearch = useDebounce(characterSearchQuery, 300);
 
-  // Load character variants on mount
+  // Load base characters with available variants on mount
   useEffect(() => {
-    const loadCharacterVariants = async () => {
+    const loadBaseCharacters = async () => {
       try {
-        const variants = await OnboardingRepository.getAllCharacterVariants();
-        setCharacterVariants(variants);
+        const token = await getToken();
+        if (!token) return;
+
+        const characters = await OnboardingRepository.getAvailableBaseCharacters(token);
+        setBaseCharacters(characters);
+        setFilteredCharacters(characters);
       } catch (error) {
-        console.error('Error loading character variants:', error);
+        console.error('Error loading base characters:', error);
         toast.error('Erreur lors du chargement des personnages');
       }
     };
 
-    loadCharacterVariants();
-  }, []);
+    loadBaseCharacters();
+  }, [getToken]);
 
-  // Auto-search with debounce
+  // Load all competitors when entering search step
   useEffect(() => {
-    const autoSearch = async () => {
-      if (debouncedSearchQuery.length < 2) {
-        setSearchResults([]);
-        return;
-      }
+    const loadAllCompetitors = async () => {
+      if (step !== OnboardingStep.COMPETITOR_SEARCH) return;
+      if (allCompetitors.length > 0) return;
 
       try {
         setIsLoading(true);
         const token = await getToken();
         if (!token) return;
 
-        const results = await OnboardingRepository.searchCompetitors(debouncedSearchQuery, token);
-        setSearchResults(results);
+        const results = await OnboardingRepository.searchCompetitors('', token);
+        setAllCompetitors(results);
+        setFilteredCompetitors(results);
 
-        if (results.length === 0) {
-          toast.info('Aucun compétiteur trouvé');
+        // Pre-select competitor matching user's first name
+        if (user?.firstName) {
+          const match = results.find(
+            (c) => c.firstName.toLowerCase() === user.firstName?.toLowerCase()
+          );
+          if (match) {
+            setSelectedCompetitor(match);
+            toast.success(`${match.firstName} ${match.lastName} pré-sélectionné !`);
+          }
         }
       } catch (error) {
-        console.error('Error searching:', error);
-        toast.error('Erreur lors de la recherche');
+        console.error('Error loading competitors:', error);
+        toast.error('Erreur lors du chargement des compétiteurs');
       } finally {
         setIsLoading(false);
       }
     };
 
-    autoSearch();
-  }, [debouncedSearchQuery, getToken]);
+    loadAllCompetitors();
+  }, [step, getToken, user?.firstName, allCompetitors.length]);
 
-  // Search competitors
-  const handleSearch = useCallback(async () => {
-    if (searchQuery.length < 2) {
-      toast.error('Veuillez saisir au moins 2 caractères');
+  // Filter competitors locally based on search query
+  useEffect(() => {
+    if (debouncedSearchQuery.length === 0) {
+      setFilteredCompetitors(allCompetitors);
       return;
     }
 
-    try {
-      setIsLoading(true);
-      const token = await getToken();
-      if (!token) {
-        throw new Error('Token non disponible');
-      }
+    const query = debouncedSearchQuery.toLowerCase();
+    const filtered = allCompetitors.filter(
+      (c) =>
+        c.firstName.toLowerCase().includes(query) ||
+        c.lastName.toLowerCase().includes(query) ||
+        `${c.firstName} ${c.lastName}`.toLowerCase().includes(query)
+    );
+    setFilteredCompetitors(filtered);
+  }, [debouncedSearchQuery, allCompetitors]);
 
-      const results = await OnboardingRepository.searchCompetitors(searchQuery, token);
-      setSearchResults(results);
-
-      if (results.length === 0) {
-        toast.info('Aucun compétiteur trouvé. Vous pouvez en créer un nouveau !');
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
-      toast.error('Erreur lors de la recherche');
-    } finally {
-      setIsLoading(false);
+  // Filter characters locally based on search query
+  useEffect(() => {
+    if (debouncedCharacterSearch.length === 0) {
+      setFilteredCharacters(baseCharacters);
+      return;
     }
-  }, [searchQuery, getToken]);
+
+    const query = debouncedCharacterSearch.toLowerCase();
+    const filtered = baseCharacters.filter((c) =>
+      c.name.toLowerCase().includes(query)
+    );
+    setFilteredCharacters(filtered);
+  }, [debouncedCharacterSearch, baseCharacters]);
+
+  // Select base character and handle variants
+  const handleSelectBaseCharacter = useCallback((character: BaseCharacter) => {
+    setSelectedBaseCharacter(character);
+
+    // If only one variant, select it automatically and skip variant step
+    if (character.variants.length === 1) {
+      setSelectedVariantId(character.variants[0].id);
+      // Don't change step, just show confirmation
+    } else {
+      // Multiple variants, go to variant selection
+      setSelectedVariantId(null);
+      setStep(OnboardingStep.VARIANT_SELECT);
+    }
+  }, []);
+
+  // Select variant
+  const handleSelectVariant = useCallback((variant: CharacterVariant) => {
+    setSelectedVariantId(variant.id);
+  }, []);
 
   // Select existing competitor and move to character selection
   const handleSelectCompetitor = (competitor: Competitor) => {
@@ -125,7 +164,7 @@ const OnboardingPage: FC = () => {
     setStep(OnboardingStep.CREATE_COMPETITOR);
   };
 
-  // Go back to previous step
+  // Go back handlers
   const handleBackToSearch = () => {
     setStep(OnboardingStep.COMPETITOR_SEARCH);
     setSelectedCompetitor(null);
@@ -133,12 +172,17 @@ const OnboardingPage: FC = () => {
     setNewCompetitorLastName('');
   };
 
-  // Go back to role selection
   const handleBackToRoleSelection = () => {
     setStep(OnboardingStep.ROLE_SELECTION);
     setSelectedCompetitor(null);
     setNewCompetitorFirstName('');
     setNewCompetitorLastName('');
+    setSelectedVariantId(null);
+    setSelectedBaseCharacter(null);
+  };
+
+  const handleBackToCharacterSelect = () => {
+    setStep(OnboardingStep.CHARACTER_SELECT);
     setSelectedVariantId(null);
   };
 
@@ -235,20 +279,48 @@ const OnboardingPage: FC = () => {
     }
   };
 
+  // Get current step number for progress indicator
+  const stepNumber = useMemo(() => {
+    switch (step) {
+      case OnboardingStep.ROLE_SELECTION: return 1;
+      case OnboardingStep.COMPETITOR_SEARCH:
+      case OnboardingStep.CREATE_COMPETITOR: return 2;
+      case OnboardingStep.CHARACTER_SELECT: return 3;
+      case OnboardingStep.VARIANT_SELECT: return 4;
+      default: return 1;
+    }
+  }, [step]);
+
+  const totalSteps = selectedBaseCharacter && selectedBaseCharacter.variants.length > 1 ? 4 : 3;
+
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-title mb-2">Bienvenue {user?.firstName}!</h1>
+          <h1 className="text-title mb-2">Bienvenue {user?.firstName} !</h1>
           <p className="text-regular text-neutral-300">
             Créez votre profil de compétiteur pour participer aux courses
           </p>
+
+          {/* Progress indicator */}
+          {step !== OnboardingStep.ROLE_SELECTION && (
+            <div className="flex justify-center mt-6 gap-2">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-2 w-12 rounded-full transition-all duration-300 ${
+                    i + 1 <= stepNumber ? 'bg-primary-500' : 'bg-neutral-700'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Step: Role Selection */}
         {step === OnboardingStep.ROLE_SELECTION && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fadeIn">
             <Card className="p-6">
               <h2 className="text-heading text-white mb-4">Choisissez votre rôle</h2>
               <p className="text-sub text-neutral-300 mb-6">
@@ -258,20 +330,14 @@ const OnboardingPage: FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Option Compétiteur */}
                 <Card
-                  className="p-6 cursor-pointer hover:border-primary-500 transition-colors"
-                  onClick={() => {
-                    setStep(OnboardingStep.COMPETITOR_SEARCH);
-                  }}
+                  className="p-6 cursor-pointer hover:border-primary-500 hover:bg-primary-500/5 transition-all duration-200 group"
+                  onClick={() => setStep(OnboardingStep.COMPETITOR_SEARCH)}
                   role="button"
                   tabIndex={0}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      setStep(OnboardingStep.COMPETITOR_SEARCH);
-                    }
-                  }}
+                  onKeyPress={(e) => e.key === 'Enter' && setStep(OnboardingStep.COMPETITOR_SEARCH)}
                 >
                   <div className="text-center">
-                    <div className="text-5xl mb-3">🏁</div>
+                    <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🏁</div>
                     <h3 className="text-bold text-white mb-2">Je suis un coureur</h3>
                     <p className="text-sub text-neutral-400">
                       Participez aux courses Mario Kart et pariez sur les résultats
@@ -281,19 +347,15 @@ const OnboardingPage: FC = () => {
 
                 {/* Option Spectateur */}
                 <Card
-                  className="p-6 cursor-pointer hover:border-primary-500 transition-colors"
+                  className="p-6 cursor-pointer hover:border-primary-500 hover:bg-primary-500/5 transition-all duration-200 group"
                   onClick={handleSpectatorSelection}
                   role="button"
                   tabIndex={0}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSpectatorSelection();
-                    }
-                  }}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSpectatorSelection()}
                   aria-disabled={isSubmitting}
                 >
                   <div className="text-center">
-                    <div className="text-5xl mb-3">🎲</div>
+                    <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🎲</div>
                     <h3 className="text-bold text-white mb-2">Je suis un spectateur</h3>
                     <p className="text-sub text-neutral-400">
                       Pariez sur les courses et grimpez dans le classement
@@ -307,80 +369,169 @@ const OnboardingPage: FC = () => {
 
         {/* Step: Competitor Search */}
         {step === OnboardingStep.COMPETITOR_SEARCH && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-slideUp">
             <Card className="p-6">
               <h2 className="text-heading text-white mb-4 flex items-center gap-2">
-                <MdSearch className="text-xl" />
+                <MdSearch className="text-xl text-primary-500" />
                 Trouver votre profil
               </h2>
               <p className="text-sub text-neutral-300 mb-4">
-                Recherchez votre nom pour lier votre compte à un profil de compétiteur existant
+                Sélectionnez votre profil dans la liste ci-dessous
               </p>
 
-              <div className="flex gap-2 mb-4">
+              {/* Search filter */}
+              <div className="relative mb-4">
+                <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <Input
                   type="text"
-                  placeholder="Rechercher un nom..."
+                  placeholder="Rechercher par nom..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  aria-label="Rechercher un compétiteur par nom"
-                  aria-describedby="search-help"
+                  className="pl-10"
+                  aria-label="Filtrer les compétiteurs par nom"
                 />
-                <Button
-                  variant="primary"
-                  onClick={handleSearch}
-                  loading={isLoading}
-                  disabled={isLoading || searchQuery.length < 2}
-                  aria-label="Lancer la recherche"
-                >
-                  <MdSearch className="text-xl" />
-                </Button>
               </div>
-              <p id="search-help" className="sr-only">
-                Entrez au moins 2 caractères pour rechercher un compétiteur
-              </p>
 
-              {/* Search results */}
-              {searchResults.length > 0 && (
-                <div className="space-y-2 mb-4" role="list" aria-label="Résultats de recherche">
-                  {searchResults.map((competitor) => (
-                    <Card
-                      key={competitor.id}
-                      className="p-4 cursor-pointer hover:border-primary-500 transition-colors"
-                      onClick={() => handleSelectCompetitor(competitor)}
-                      role="listitem"
-                      tabIndex={0}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSelectCompetitor(competitor)}
-                      aria-label={`Sélectionner ${competitor.firstName} ${competitor.lastName}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <MdPerson className="text-2xl text-primary-500" aria-hidden="true" />
-                        <div>
-                          <p className="text-bold text-white">
-                            {competitor.firstName} {competitor.lastName}
-                          </p>
-                          {competitor.characterVariant && (
-                            <p className="text-sub text-neutral-400">
-                              {competitor.characterVariant.baseCharacter.name} - {competitor.characterVariant.label}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+              {/* Loading state */}
+              {isLoading && (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
                 </div>
               )}
 
-              <div className="border-t border-neutral-700 pt-4">
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onClick={handleCreateNewCompetitor}
+              {/* Competitors list */}
+              {!isLoading && filteredCompetitors.length > 0 && (
+                <div
+                  className="space-y-2 mb-4 max-h-80 overflow-y-auto scrollbar-hide pr-1"
+                  role="list"
+                  aria-label="Liste des compétiteurs"
                 >
-                  <MdPersonAdd className="text-xl mr-2" />
-                  Créer un nouveau profil
+                  {/* Pre-selected competitor at top */}
+                  {selectedCompetitor && (
+                    <>
+                      <p className="text-sub text-primary-400 mb-2 flex items-center gap-1">
+                        <MdCheck className="text-sm" />
+                        Suggestion basée sur votre prénom
+                      </p>
+                      <Card
+                        key={`preselected-${selectedCompetitor.id}`}
+                        className="p-4 cursor-pointer transition-all duration-200 border-primary-500 bg-primary-500/10"
+                        onClick={() => setSelectedCompetitor(selectedCompetitor)}
+                        role="listitem"
+                        tabIndex={0}
+                        aria-label={`Sélectionné: ${selectedCompetitor.firstName} ${selectedCompetitor.lastName}`}
+                        aria-selected={true}
+                      >
+                        <div className="flex items-center gap-3">
+                          {selectedCompetitor.profilePictureUrl ? (
+                            <img
+                              src={selectedCompetitor.profilePictureUrl}
+                              alt={`${selectedCompetitor.firstName} ${selectedCompetitor.lastName}`}
+                              className="w-12 h-12 rounded-full object-cover ring-2 ring-primary-500"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center ring-2 ring-primary-500">
+                              <MdPerson className="text-2xl text-primary-400" aria-hidden="true" />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="text-bold text-white">
+                              {selectedCompetitor.firstName} {selectedCompetitor.lastName}
+                            </p>
+                            {selectedCompetitor.characterVariant && (
+                              <p className="text-sub text-neutral-400">
+                                {selectedCompetitor.characterVariant.baseCharacter.name} - {selectedCompetitor.characterVariant.label}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-primary-500 text-xl">
+                            <MdCheck />
+                          </div>
+                        </div>
+                      </Card>
+                      <div className="border-t border-neutral-700 my-3 pt-2">
+                        <p className="text-sub text-neutral-500">Autres compétiteurs</p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Other competitors */}
+                  {filteredCompetitors
+                    .filter((c) => c.id !== selectedCompetitor?.id)
+                    .map((competitor) => (
+                      <Card
+                        key={competitor.id}
+                        className="p-4 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5"
+                        onClick={() => setSelectedCompetitor(competitor)}
+                        role="listitem"
+                        tabIndex={0}
+                        onKeyPress={(e) => e.key === 'Enter' && setSelectedCompetitor(competitor)}
+                        aria-label={`Sélectionner ${competitor.firstName} ${competitor.lastName}`}
+                        aria-selected={false}
+                      >
+                        <div className="flex items-center gap-3">
+                          {competitor.profilePictureUrl ? (
+                            <img
+                              src={competitor.profilePictureUrl}
+                              alt={`${competitor.firstName} ${competitor.lastName}`}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-neutral-700 flex items-center justify-center">
+                              <MdPerson className="text-2xl text-neutral-400" aria-hidden="true" />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="text-bold text-white">
+                              {competitor.firstName} {competitor.lastName}
+                            </p>
+                            {competitor.characterVariant && (
+                              <p className="text-sub text-neutral-400">
+                                {competitor.characterVariant.baseCharacter.name} - {competitor.characterVariant.label}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                </div>
+              )}
+
+              {/* No results */}
+              {!isLoading && filteredCompetitors.length === 0 && allCompetitors.length > 0 && (
+                <p className="text-center text-neutral-400 py-4">
+                  Aucun compétiteur trouvé pour &quot;{searchQuery}&quot;
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 border-t border-neutral-700 pt-4">
+                <Button
+                  variant="ghost"
+                  onClick={handleBackToRoleSelection}
+                  className="flex items-center gap-1"
+                >
+                  <MdArrowBack />
+                  Retour
                 </Button>
+                <div className="flex-1" />
+                {selectedCompetitor ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => handleSelectCompetitor(selectedCompetitor)}
+                  >
+                    Continuer avec {selectedCompetitor.firstName}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    onClick={handleCreateNewCompetitor}
+                    className="flex items-center gap-1"
+                  >
+                    <MdPersonAdd className="text-xl" />
+                    Créer un profil
+                  </Button>
+                )}
               </div>
             </Card>
           </div>
@@ -388,10 +539,10 @@ const OnboardingPage: FC = () => {
 
         {/* Step: Create Competitor */}
         {step === OnboardingStep.CREATE_COMPETITOR && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-slideUp">
             <Card className="p-6">
               <h2 className="text-heading text-white mb-4 flex items-center gap-2">
-                <MdPersonAdd className="text-xl" />
+                <MdPersonAdd className="text-xl text-primary-500" />
                 Nouveau profil
               </h2>
 
@@ -430,14 +581,15 @@ const OnboardingPage: FC = () => {
                   />
                 </div>
 
-                <div className="flex gap-2">
-                  <Button variant="ghost" onClick={handleBackToSearch} fullWidth>
+                <div className="flex gap-2 pt-2">
+                  <Button variant="ghost" onClick={handleBackToSearch} className="flex items-center gap-1">
+                    <MdArrowBack />
                     Retour
                   </Button>
+                  <div className="flex-1" />
                   <Button
                     variant="primary"
                     onClick={handleProceedToCharacterSelect}
-                    fullWidth
                     disabled={!newCompetitorFirstName.trim() || !newCompetitorLastName.trim()}
                   >
                     Continuer
@@ -450,54 +602,201 @@ const OnboardingPage: FC = () => {
 
         {/* Step: Character Selection */}
         {step === OnboardingStep.CHARACTER_SELECT && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-slideUp">
             <Card className="p-6">
-              <h2 className="text-heading text-white mb-4">Choisir votre personnage</h2>
-              <p className="text-sub text-neutral-300 mb-4">
-                {selectedCompetitor
-                  ? `Profil: ${selectedCompetitor.firstName} ${selectedCompetitor.lastName}`
-                  : `Nouveau profil: ${newCompetitorFirstName} ${newCompetitorLastName}`}
-              </p>
-
-              <div
-                className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4"
-                role="radiogroup"
-                aria-label="Sélection du personnage"
-              >
-                {characterVariants.map((variant) => {
-                  const isSelected = selectedVariantId === variant.id;
-                  return (
-                    <Card
-                      key={variant.id}
-                      className={`p-4 cursor-pointer hover:border-primary-500 transition-colors ${
-                        isSelected ? 'border-primary-500 bg-primary-500/10' : ''
-                      }`}
-                      onClick={() => setSelectedVariantId(variant.id)}
-                      role="radio"
-                      aria-checked={isSelected}
-                      tabIndex={0}
-                      onKeyPress={(e) => e.key === 'Enter' && setSelectedVariantId(variant.id)}
-                      aria-label={`${variant.baseCharacter.name} - ${variant.label}`}
-                    >
-                      <div className="text-center">
-                        <p className="text-bold text-white mb-1">
-                          {variant.baseCharacter.name}
-                        </p>
-                        <p className="text-sub text-neutral-400">{variant.label}</p>
-                      </div>
-                    </Card>
-                  );
-                })}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-heading text-white flex items-center gap-2">
+                    <MdSportsEsports className="text-xl text-primary-500" />
+                    Choisir votre personnage
+                  </h2>
+                  <p className="text-sub text-neutral-400 mt-1">
+                    {selectedCompetitor
+                      ? `Profil: ${selectedCompetitor.firstName} ${selectedCompetitor.lastName}`
+                      : `Nouveau profil: ${newCompetitorFirstName} ${newCompetitorLastName}`}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={handleBackToRoleSelection} fullWidth>
+              {/* Search filter for characters */}
+              <div className="relative mb-4">
+                <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <Input
+                  type="text"
+                  placeholder="Rechercher un personnage..."
+                  value={characterSearchQuery}
+                  onChange={(e) => setCharacterSearchQuery(e.target.value)}
+                  className="pl-10"
+                  aria-label="Rechercher un personnage"
+                />
+              </div>
+
+              {/* Character grid */}
+              <div
+                className="max-h-96 overflow-y-auto scrollbar-hide pr-1"
+                role="listbox"
+                aria-label="Liste des personnages"
+              >
+                {filteredCharacters.length === 0 ? (
+                  <p className="text-center text-neutral-400 py-8">
+                    {characterSearchQuery
+                      ? `Aucun personnage trouvé pour "${characterSearchQuery}"`
+                      : 'Aucun personnage disponible'}
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {filteredCharacters.map((character) => {
+                      const isSelected = selectedBaseCharacter?.id === character.id;
+                      const hasMultipleVariants = character.variants.length > 1;
+
+                      return (
+                        <Card
+                          key={character.id}
+                          className={`p-4 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
+                            isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
+                          }`}
+                          onClick={() => handleSelectBaseCharacter(character)}
+                          role="option"
+                          aria-selected={isSelected}
+                          tabIndex={0}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSelectBaseCharacter(character)}
+                          aria-label={`${character.name}${hasMultipleVariants ? ` (${character.variants.length} variantes)` : ''}`}
+                        >
+                          <div className="text-center">
+                            {/* Character icon placeholder - could be replaced with actual images */}
+                            <div className={`w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center text-3xl ${
+                              isSelected ? 'bg-primary-500/30' : 'bg-neutral-700'
+                            }`}>
+                              🎮
+                            </div>
+                            <p className={`text-bold mb-1 ${isSelected ? 'text-primary-400' : 'text-white'}`}>
+                              {character.name}
+                            </p>
+                            {hasMultipleVariants && (
+                              <p className="text-sub text-neutral-500 flex items-center justify-center gap-1">
+                                <MdColorLens className="text-xs" />
+                                {character.variants.length} variantes
+                              </p>
+                            )}
+                            {isSelected && !hasMultipleVariants && (
+                              <div className="mt-2 flex items-center justify-center text-primary-400 text-sub gap-1">
+                                <MdCheck className="text-sm" />
+                                Sélectionné
+                              </div>
+                            )}
+                            {isSelected && hasMultipleVariants && (
+                              <div className="mt-2 text-primary-400 text-sub">
+                                Cliquez pour choisir
+                              </div>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 border-t border-neutral-700 pt-4 mt-4">
+                <Button
+                  variant="ghost"
+                  onClick={selectedCompetitor ? handleBackToSearch : handleBackToSearch}
+                  className="flex items-center gap-1"
+                >
+                  <MdArrowBack />
                   Retour
                 </Button>
+                <div className="flex-1" />
                 <Button
                   variant="primary"
                   onClick={handleComplete}
-                  fullWidth
+                  loading={isSubmitting}
+                  disabled={!selectedVariantId || isSubmitting}
+                >
+                  Terminer
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Step: Variant Selection */}
+        {step === OnboardingStep.VARIANT_SELECT && selectedBaseCharacter && (
+          <div className="space-y-6 animate-slideUp">
+            <Card className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-heading text-white flex items-center gap-2">
+                    <MdColorLens className="text-xl text-primary-500" />
+                    Choisir votre variante
+                  </h2>
+                  <p className="text-sub text-neutral-400 mt-1">
+                    Personnage: <span className="text-primary-400">{selectedBaseCharacter.name}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Variants grid */}
+              <div
+                className="max-h-80 overflow-y-auto scrollbar-hide pr-1"
+                role="listbox"
+                aria-label="Liste des variantes"
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {selectedBaseCharacter.variants.map((variant) => {
+                    const isSelected = selectedVariantId === variant.id;
+
+                    return (
+                      <Card
+                        key={variant.id}
+                        className={`p-4 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
+                          isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
+                        }`}
+                        onClick={() => handleSelectVariant(variant)}
+                        role="option"
+                        aria-selected={isSelected}
+                        tabIndex={0}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSelectVariant(variant)}
+                        aria-label={`${selectedBaseCharacter.name} - ${variant.label}`}
+                      >
+                        <div className="text-center">
+                          {/* Variant color indicator */}
+                          <div className={`w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl ${
+                            isSelected ? 'bg-primary-500/30 ring-2 ring-primary-500' : 'bg-neutral-700'
+                          }`}>
+                            🎨
+                          </div>
+                          <p className={`text-bold ${isSelected ? 'text-primary-400' : 'text-white'}`}>
+                            {variant.label}
+                          </p>
+                          {isSelected && (
+                            <div className="mt-2 flex items-center justify-center text-primary-400 text-sub gap-1">
+                              <MdCheck className="text-sm" />
+                              Sélectionné
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 border-t border-neutral-700 pt-4 mt-4">
+                <Button
+                  variant="ghost"
+                  onClick={handleBackToCharacterSelect}
+                  className="flex items-center gap-1"
+                >
+                  <MdArrowBack />
+                  Retour
+                </Button>
+                <div className="flex-1" />
+                <Button
+                  variant="primary"
+                  onClick={handleComplete}
                   loading={isSubmitting}
                   disabled={!selectedVariantId || isSubmitting}
                 >
