@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwind-scrollbar-hide";
 
 /* On définit notre thème custom en "CSS-first configuration" via @theme. */
 @theme {
