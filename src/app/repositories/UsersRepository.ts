@@ -6,7 +6,7 @@ export interface UserData {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'spectator' | 'competitor' | 'both';
+  role: 'pending' | 'bettor' | 'player';
   hasCompletedOnboarding: boolean;
   competitorId?: string;
   competitor?: {

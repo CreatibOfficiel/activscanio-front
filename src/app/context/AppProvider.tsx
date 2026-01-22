@@ -1,6 +1,7 @@
 "use client";
 
-import React, { PropsWithChildren, useEffect, useState } from "react";
+import React, { PropsWithChildren, useEffect, useState, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { AppContext } from "./AppContext";
 import { Competitor, UpdateCompetitorPayload } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
@@ -24,27 +25,56 @@ const charactersRepo = new CharactersRepository(baseUrl);
 
 export function AppProvider({ children }: PropsWithChildren) {
   /* ───────── state ───────── */
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [raceEvents, setRaceEvents] = useState<RaceEvent[]>([]);
   const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
 
+  /* ───────── authenticated fetch helper ───────── */
+  const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
+    const token = await getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  }, [getToken]);
+
   /* ───────── bootstrap ───────── */
   useEffect(() => {
-    loadInitialData().catch(console.error);
-  }, []);
+    // Only load data when user is authenticated
+    if (isLoaded && isSignedIn) {
+      loadInitialData().catch(console.error);
+    }
+  }, [isLoaded, isSignedIn]);
 
   const loadInitialData = async (): Promise<
     [Competitor[], RaceEvent[], BaseCharacter[]]
   > => {
     try {
       setIsLoading(true);
-      const [remoteCompetitors, remoteRaces, remoteBaseChars] =
-        await Promise.all([
-          competitorsRepo.fetchCompetitors(),
-          racesRepo.fetchRecentRaces(),
-          charactersRepo.fetchBaseCharacters(),
-        ]);
+      const token = await getToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const [competitorsRes, racesRes, charsRes] = await Promise.all([
+        fetch(`${baseUrl}/competitors`, { headers }),
+        fetch(`${baseUrl}/races?recent=true`, { headers }),
+        fetch(`${baseUrl}/base-characters`, { headers }),
+      ]);
+
+      if (!competitorsRes.ok) throw new Error('Failed to fetch competitors');
+      if (!racesRes.ok) throw new Error('Failed to fetch races');
+      if (!charsRes.ok) throw new Error('Failed to fetch characters');
+
+      const [remoteCompetitors, remoteRaces, remoteBaseChars] = await Promise.all([
+        competitorsRes.json(),
+        racesRes.json(),
+        charsRes.json(),
+      ]);
 
       setCompetitors(remoteCompetitors);
       setRaceEvents(remoteRaces);

@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { UsersRepository } from '@/app/repositories/UsersRepository';
 
-const ALLOWED_PATHS_WITHOUT_ONBOARDING = ['/onboarding', '/tv/display'];
+const ALLOWED_PATHS_WITHOUT_ONBOARDING = ['/onboarding', '/tv/display', '/sign-in', '/sign-up'];
 
 /**
  * OnboardingGuard Component
