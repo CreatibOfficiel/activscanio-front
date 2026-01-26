@@ -13,7 +13,6 @@ import {
   MdCasino,
   MdHistory,
   MdLeaderboard,
-  MdArrowForward,
   MdTimer,
   MdCheckCircle,
   MdPending,
@@ -58,7 +57,7 @@ const BettingPage: FC = () => {
             now.getFullYear()
           );
           const myRanking = rankingsData.rankings.find(
-            (r) => r.oddsUserId === user.id
+            (r) => r.userId === user.id
           );
           setUserRanking(myRanking || null);
         }
@@ -84,7 +83,7 @@ const BettingPage: FC = () => {
 
     const updateTimeRemaining = () => {
       const now = new Date();
-      const end = new Date(currentWeek.bettingEndDate);
+      const end = new Date(currentWeek.endDate);
       const diff = end.getTime() - now.getTime();
 
       if (diff <= 0) {

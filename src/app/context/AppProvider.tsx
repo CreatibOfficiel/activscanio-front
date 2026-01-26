@@ -58,7 +58,9 @@ export function AppProvider({ children }: PropsWithChildren) {
     try {
       setIsLoading(true);
       const token = await getToken();
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers: HeadersInit = token
+        ? { Authorization: `Bearer ${token}` }
+        : {};
 
       const [competitorsRes, racesRes, charsRes] = await Promise.all([
         fetch(`${baseUrl}/competitors`, { headers }),
