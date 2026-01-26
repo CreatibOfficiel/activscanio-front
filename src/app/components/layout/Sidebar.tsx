@@ -3,17 +3,30 @@
 import { FC } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MdLeaderboard, MdSportsScore, MdEmojiEvents, MdAddCircleOutline, MdFlag } from 'react-icons/md';
+import { MdLeaderboard, MdFlag, MdCasino, MdPerson } from 'react-icons/md';
 
 const Sidebar: FC = () => {
   const pathname = usePathname();
 
+  // Hide navigation during onboarding
+  if (pathname.startsWith('/onboarding')) {
+    return null;
+  }
+
+  // Check if current path matches item or any of its sub-paths
+  const isActiveRoute = (href: string, activePaths?: string[]) => {
+    if (pathname === href) return true;
+    if (activePaths) {
+      return activePaths.some(path => pathname.startsWith(path));
+    }
+    return false;
+  };
+
   const navItems = [
     { href: '/', label: 'Classement', icon: MdLeaderboard },
-    { href: '/betting/place-bet', label: 'Paris', icon: MdSportsScore },
-    { href: '/betting/history', label: 'Historique', icon: MdEmojiEvents },
-    { href: '/races/add', label: 'Ajouter', icon: MdAddCircleOutline },
-    { href: '/races', label: 'Courses', icon: MdFlag },
+    { href: '/races', label: 'Courses', icon: MdFlag, activePaths: ['/races'] },
+    { href: '/betting', label: 'Paris', icon: MdCasino, activePaths: ['/betting'] },
+    { href: '/profile', label: 'Profil', icon: MdPerson, activePaths: ['/profile'] },
   ];
 
   return (
@@ -31,7 +44,7 @@ const Sidebar: FC = () => {
         {/* Navigation Links */}
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = isActiveRoute(item.href, item.activePaths);
             const Icon = item.icon;
 
             return (

@@ -4,21 +4,33 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   MdLeaderboard,
-  MdSportsScore,
-  MdEmojiEvents,
-  MdAddCircleOutline,
   MdFlag,
+  MdCasino,
+  MdPerson,
 } from "react-icons/md";
 
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // Hide navigation during onboarding
+  if (pathname.startsWith("/onboarding")) {
+    return null;
+  }
+
+  // Check if current path matches item or any of its sub-paths
+  const isActiveRoute = (href: string, activePaths?: string[]) => {
+    if (pathname === href) return true;
+    if (activePaths) {
+      return activePaths.some(path => pathname.startsWith(path));
+    }
+    return false;
+  };
+
   const items = [
     { href: "/", icon: MdLeaderboard, label: "Classement" },
-    { href: "/betting/place-bet", icon: MdSportsScore, label: "Paris" },
-    { href: "/betting/history", icon: MdEmojiEvents, label: "Historique" },
-    { href: "/races/add", icon: MdAddCircleOutline, label: "Ajouter" },
-    { href: "/races", icon: MdFlag, label: "Courses" },
+    { href: "/races", icon: MdFlag, label: "Courses", activePaths: ["/races"] },
+    { href: "/betting", icon: MdCasino, label: "Paris", activePaths: ["/betting"] },
+    { href: "/profile", icon: MdPerson, label: "Profil", activePaths: ["/profile"] },
   ];
 
   return (
@@ -29,7 +41,7 @@ export default function BottomNav() {
     >
       {items.map((item) => {
         const Icon = item.icon;
-        const isActive = pathname === item.href;
+        const isActive = isActiveRoute(item.href, item.activePaths);
 
         return (
           <Link

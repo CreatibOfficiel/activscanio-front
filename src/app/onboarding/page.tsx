@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useEffect, useCallback, useMemo } from 'react';
+import { FC, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { OnboardingRepository } from '@/app/repositories/OnboardingRepository';
@@ -9,6 +9,7 @@ import { BaseCharacter, CharacterVariant } from '@/app/models/Character';
 import { Card, Button, Input } from '@/app/components/ui';
 import { toast } from 'sonner';
 import { MdSearch, MdPerson, MdPersonAdd, MdArrowBack, MdCheck, MdSportsEsports, MdColorLens } from 'react-icons/md';
+import Image from 'next/image';
 import { useDebounce } from '@/app/hooks/useDebounce';
 
 enum OnboardingStep {
@@ -32,6 +33,7 @@ const OnboardingPage: FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [allCompetitors, setAllCompetitors] = useState<Competitor[]>([]);
   const [filteredCompetitors, setFilteredCompetitors] = useState<Competitor[]>([]);
+  const [suggestedCompetitor, setSuggestedCompetitor] = useState<Competitor | null>(null);
   const [selectedCompetitor, setSelectedCompetitor] = useState<Competitor | null>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -46,6 +48,10 @@ const OnboardingPage: FC = () => {
   const [selectedBaseCharacter, setSelectedBaseCharacter] = useState<BaseCharacter | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const debouncedCharacterSearch = useDebounce(characterSearchQuery, 300);
+
+  // Ref to preserve scroll position when navigating between character and variant selection
+  const characterListRef = useRef<HTMLDivElement>(null);
+  const savedScrollPosition = useRef<number>(0);
 
   // Load base characters with available variants on mount
   useEffect(() => {
@@ -87,6 +93,7 @@ const OnboardingPage: FC = () => {
             (c) => c.firstName.toLowerCase() === user.firstName?.toLowerCase()
           );
           if (match) {
+            setSuggestedCompetitor(match);
             setSelectedCompetitor(match);
             toast.success(`${match.firstName} ${match.lastName} pré-sélectionné !`);
           }
@@ -142,6 +149,10 @@ const OnboardingPage: FC = () => {
       setSelectedVariantId(character.variants[0].id);
       // Don't change step, just show confirmation
     } else {
+      // Save scroll position before navigating to variant selection
+      if (characterListRef.current) {
+        savedScrollPosition.current = characterListRef.current.scrollTop;
+      }
       // Multiple variants, go to variant selection
       setSelectedVariantId(null);
       setStep(OnboardingStep.VARIANT_SELECT);
@@ -181,10 +192,16 @@ const OnboardingPage: FC = () => {
     setSelectedBaseCharacter(null);
   };
 
-  const handleBackToCharacterSelect = () => {
+  const handleBackToCharacterSelect = useCallback(() => {
     setStep(OnboardingStep.CHARACTER_SELECT);
     setSelectedVariantId(null);
-  };
+    // Restore scroll position after render
+    requestAnimationFrame(() => {
+      if (characterListRef.current) {
+        characterListRef.current.scrollTop = savedScrollPosition.current;
+      }
+    });
+  }, []);
 
   // Validate name format
   const validateName = (name: string): boolean => {
@@ -322,13 +339,13 @@ const OnboardingPage: FC = () => {
         {step === OnboardingStep.ROLE_SELECTION && (
           <div className="space-y-6 animate-fadeIn">
             <Card className="p-6">
-              <h2 className="text-heading text-white mb-4">Choisissez votre rôle</h2>
+              <h2 className="text-heading text-white mb-4">Comment voulez-vous participer ?</h2>
               <p className="text-sub text-neutral-300 mb-6">
-                Voulez-vous participer aux courses ou seulement parier sur les résultats ?
+                Choisissez votre mode de participation
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Option Compétiteur */}
+                {/* Option Joueur */}
                 <Card
                   className="p-6 cursor-pointer hover:border-primary-500 hover:bg-primary-500/5 transition-all duration-200 group"
                   onClick={() => setStep(OnboardingStep.COMPETITOR_SEARCH)}
@@ -337,15 +354,15 @@ const OnboardingPage: FC = () => {
                   onKeyPress={(e) => e.key === 'Enter' && setStep(OnboardingStep.COMPETITOR_SEARCH)}
                 >
                   <div className="text-center">
-                    <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🏁</div>
-                    <h3 className="text-bold text-white mb-2">Je suis un coureur</h3>
+                    <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🎮</div>
+                    <h3 className="text-bold text-white mb-2">Je joue</h3>
                     <p className="text-sub text-neutral-400">
-                      Participez aux courses Mario Kart et pariez sur les résultats
+                      Je participe aux courses et je peux aussi parier
                     </p>
                   </div>
                 </Card>
 
-                {/* Option Spectateur */}
+                {/* Option Parieur */}
                 <Card
                   className="p-6 cursor-pointer hover:border-primary-500 hover:bg-primary-500/5 transition-all duration-200 group"
                   onClick={handleSpectatorSelection}
@@ -356,9 +373,9 @@ const OnboardingPage: FC = () => {
                 >
                   <div className="text-center">
                     <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🎲</div>
-                    <h3 className="text-bold text-white mb-2">Je suis un spectateur</h3>
+                    <h3 className="text-bold text-white mb-2">Je parie</h3>
                     <p className="text-sub text-neutral-400">
-                      Pariez sur les courses et grimpez dans le classement
+                      Je mise sur les résultats sans participer aux courses
                     </p>
                   </div>
                 </Card>
@@ -406,47 +423,61 @@ const OnboardingPage: FC = () => {
                   role="list"
                   aria-label="Liste des compétiteurs"
                 >
-                  {/* Pre-selected competitor at top */}
-                  {selectedCompetitor && (
+                  {/* Suggested competitor at top (based on first name match) */}
+                  {suggestedCompetitor && (
                     <>
                       <p className="text-sub text-primary-400 mb-2 flex items-center gap-1">
                         <MdCheck className="text-sm" />
                         Suggestion basée sur votre prénom
                       </p>
                       <Card
-                        key={`preselected-${selectedCompetitor.id}`}
-                        className="p-4 cursor-pointer transition-all duration-200 border-primary-500 bg-primary-500/10"
-                        onClick={() => setSelectedCompetitor(selectedCompetitor)}
+                        key={`suggested-${suggestedCompetitor.id}`}
+                        className={`p-4 cursor-pointer transition-all duration-200 ${
+                          selectedCompetitor?.id === suggestedCompetitor.id
+                            ? 'border-primary-500 bg-primary-500/10'
+                            : 'hover:border-primary-500 hover:bg-primary-500/5'
+                        }`}
+                        onClick={() => setSelectedCompetitor(suggestedCompetitor)}
                         role="listitem"
                         tabIndex={0}
-                        aria-label={`Sélectionné: ${selectedCompetitor.firstName} ${selectedCompetitor.lastName}`}
-                        aria-selected={true}
+                        aria-label={`Suggestion: ${suggestedCompetitor.firstName} ${suggestedCompetitor.lastName}`}
+                        aria-selected={selectedCompetitor?.id === suggestedCompetitor.id}
                       >
                         <div className="flex items-center gap-3">
-                          {selectedCompetitor.profilePictureUrl ? (
+                          {suggestedCompetitor.profilePictureUrl ? (
                             <img
-                              src={selectedCompetitor.profilePictureUrl}
-                              alt={`${selectedCompetitor.firstName} ${selectedCompetitor.lastName}`}
-                              className="w-12 h-12 rounded-full object-cover ring-2 ring-primary-500"
+                              src={suggestedCompetitor.profilePictureUrl}
+                              alt={`${suggestedCompetitor.firstName} ${suggestedCompetitor.lastName}`}
+                              className={`w-12 h-12 rounded-full object-cover ${
+                                selectedCompetitor?.id === suggestedCompetitor.id ? 'ring-2 ring-primary-500' : ''
+                              }`}
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center ring-2 ring-primary-500">
-                              <MdPerson className="text-2xl text-primary-400" aria-hidden="true" />
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                              selectedCompetitor?.id === suggestedCompetitor.id
+                                ? 'bg-primary-500/20 ring-2 ring-primary-500'
+                                : 'bg-neutral-700'
+                            }`}>
+                              <MdPerson className={`text-2xl ${
+                                selectedCompetitor?.id === suggestedCompetitor.id ? 'text-primary-400' : 'text-neutral-400'
+                              }`} aria-hidden="true" />
                             </div>
                           )}
                           <div className="flex-1">
                             <p className="text-bold text-white">
-                              {selectedCompetitor.firstName} {selectedCompetitor.lastName}
+                              {suggestedCompetitor.firstName} {suggestedCompetitor.lastName}
                             </p>
-                            {selectedCompetitor.characterVariant && (
+                            {suggestedCompetitor.characterVariant && (
                               <p className="text-sub text-neutral-400">
-                                {selectedCompetitor.characterVariant.baseCharacter.name} - {selectedCompetitor.characterVariant.label}
+                                {suggestedCompetitor.characterVariant.baseCharacter.name} - {suggestedCompetitor.characterVariant.label}
                               </p>
                             )}
                           </div>
-                          <div className="text-primary-500 text-xl">
-                            <MdCheck />
-                          </div>
+                          {selectedCompetitor?.id === suggestedCompetitor.id && (
+                            <div className="text-primary-500 text-xl">
+                              <MdCheck />
+                            </div>
+                          )}
                         </div>
                       </Card>
                       <div className="border-t border-neutral-700 my-3 pt-2">
@@ -457,43 +488,57 @@ const OnboardingPage: FC = () => {
 
                   {/* Other competitors */}
                   {filteredCompetitors
-                    .filter((c) => c.id !== selectedCompetitor?.id)
-                    .map((competitor) => (
-                      <Card
-                        key={competitor.id}
-                        className="p-4 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5"
-                        onClick={() => setSelectedCompetitor(competitor)}
-                        role="listitem"
-                        tabIndex={0}
-                        onKeyPress={(e) => e.key === 'Enter' && setSelectedCompetitor(competitor)}
-                        aria-label={`Sélectionner ${competitor.firstName} ${competitor.lastName}`}
-                        aria-selected={false}
-                      >
-                        <div className="flex items-center gap-3">
-                          {competitor.profilePictureUrl ? (
-                            <img
-                              src={competitor.profilePictureUrl}
-                              alt={`${competitor.firstName} ${competitor.lastName}`}
-                              className="w-12 h-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-neutral-700 flex items-center justify-center">
-                              <MdPerson className="text-2xl text-neutral-400" aria-hidden="true" />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <p className="text-bold text-white">
-                              {competitor.firstName} {competitor.lastName}
-                            </p>
-                            {competitor.characterVariant && (
-                              <p className="text-sub text-neutral-400">
-                                {competitor.characterVariant.baseCharacter.name} - {competitor.characterVariant.label}
+                    .filter((c) => c.id !== suggestedCompetitor?.id)
+                    .map((competitor) => {
+                      const isSelected = selectedCompetitor?.id === competitor.id;
+                      return (
+                        <Card
+                          key={competitor.id}
+                          className={`p-4 cursor-pointer transition-all duration-200 ${
+                            isSelected
+                              ? 'border-primary-500 bg-primary-500/10'
+                              : 'hover:border-primary-500 hover:bg-primary-500/5'
+                          }`}
+                          onClick={() => setSelectedCompetitor(competitor)}
+                          role="listitem"
+                          tabIndex={0}
+                          onKeyPress={(e) => e.key === 'Enter' && setSelectedCompetitor(competitor)}
+                          aria-label={`Sélectionner ${competitor.firstName} ${competitor.lastName}`}
+                          aria-selected={isSelected}
+                        >
+                          <div className="flex items-center gap-3">
+                            {competitor.profilePictureUrl ? (
+                              <img
+                                src={competitor.profilePictureUrl}
+                                alt={`${competitor.firstName} ${competitor.lastName}`}
+                                className={`w-12 h-12 rounded-full object-cover ${isSelected ? 'ring-2 ring-primary-500' : ''}`}
+                              />
+                            ) : (
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                                isSelected ? 'bg-primary-500/20 ring-2 ring-primary-500' : 'bg-neutral-700'
+                              }`}>
+                                <MdPerson className={`text-2xl ${isSelected ? 'text-primary-400' : 'text-neutral-400'}`} aria-hidden="true" />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="text-bold text-white">
+                                {competitor.firstName} {competitor.lastName}
                               </p>
+                              {competitor.characterVariant && (
+                                <p className="text-sub text-neutral-400">
+                                  {competitor.characterVariant.baseCharacter.name} - {competitor.characterVariant.label}
+                                </p>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <div className="text-primary-500 text-xl">
+                                <MdCheck />
+                              </div>
                             )}
                           </div>
-                        </div>
-                      </Card>
-                    ))}
+                        </Card>
+                      );
+                    })}
                 </div>
               )}
 
@@ -633,6 +678,7 @@ const OnboardingPage: FC = () => {
 
               {/* Character grid */}
               <div
+                ref={characterListRef}
                 className="max-h-96 overflow-y-auto scrollbar-hide pr-1"
                 role="listbox"
                 aria-label="Liste des personnages"
@@ -652,7 +698,7 @@ const OnboardingPage: FC = () => {
                       return (
                         <Card
                           key={character.id}
-                          className={`p-4 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
+                          className={`p-3 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
                             isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
                           }`}
                           onClick={() => handleSelectBaseCharacter(character)}
@@ -663,30 +709,40 @@ const OnboardingPage: FC = () => {
                           aria-label={`${character.name}${hasMultipleVariants ? ` (${character.variants.length} variantes)` : ''}`}
                         >
                           <div className="text-center">
-                            {/* Character icon placeholder - could be replaced with actual images */}
-                            <div className={`w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center text-3xl ${
-                              isSelected ? 'bg-primary-500/30' : 'bg-neutral-700'
+                            {/* Character image */}
+                            <div className={`w-16 h-16 mx-auto mb-2 rounded-full flex items-center justify-center overflow-hidden ${
+                              isSelected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-800' : 'bg-neutral-700'
                             }`}>
-                              🎮
+                              {character.imageUrl ? (
+                                <Image
+                                  src={character.imageUrl}
+                                  alt={character.name}
+                                  width={64}
+                                  height={64}
+                                  className="w-full h-full object-contain"
+                                />
+                              ) : (
+                                <span className="text-3xl">🎮</span>
+                              )}
                             </div>
-                            <p className={`text-bold mb-1 ${isSelected ? 'text-primary-400' : 'text-white'}`}>
+                            <p className={`text-bold text-sm mb-0.5 truncate ${isSelected ? 'text-primary-400' : 'text-white'}`}>
                               {character.name}
                             </p>
                             {hasMultipleVariants && (
-                              <p className="text-sub text-neutral-500 flex items-center justify-center gap-1">
+                              <p className="text-sub text-xs text-neutral-500 flex items-center justify-center gap-1">
                                 <MdColorLens className="text-xs" />
-                                {character.variants.length} variantes
+                                {character.variants.length} couleurs
                               </p>
                             )}
                             {isSelected && !hasMultipleVariants && (
-                              <div className="mt-2 flex items-center justify-center text-primary-400 text-sub gap-1">
-                                <MdCheck className="text-sm" />
+                              <div className="mt-1 flex items-center justify-center text-primary-400 text-sub text-xs gap-1">
+                                <MdCheck className="text-xs" />
                                 Sélectionné
                               </div>
                             )}
                             {isSelected && hasMultipleVariants && (
-                              <div className="mt-2 text-primary-400 text-sub">
-                                Cliquez pour choisir
+                              <div className="mt-1 text-primary-400 text-sub text-xs">
+                                Choisir couleur →
                               </div>
                             )}
                           </div>
@@ -743,14 +799,14 @@ const OnboardingPage: FC = () => {
                 role="listbox"
                 aria-label="Liste des variantes"
               >
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {selectedBaseCharacter.variants.map((variant) => {
                     const isSelected = selectedVariantId === variant.id;
 
                     return (
                       <Card
                         key={variant.id}
-                        className={`p-4 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
+                        className={`p-3 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
                           isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
                         }`}
                         onClick={() => handleSelectVariant(variant)}
@@ -761,19 +817,29 @@ const OnboardingPage: FC = () => {
                         aria-label={`${selectedBaseCharacter.name} - ${variant.label}`}
                       >
                         <div className="text-center">
-                          {/* Variant color indicator */}
-                          <div className={`w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl ${
-                            isSelected ? 'bg-primary-500/30 ring-2 ring-primary-500' : 'bg-neutral-700'
+                          {/* Variant image */}
+                          <div className={`w-14 h-14 mx-auto mb-2 rounded-full flex items-center justify-center overflow-hidden ${
+                            isSelected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-800' : 'bg-neutral-700'
                           }`}>
-                            🎨
+                            {variant.imageUrl ? (
+                              <Image
+                                src={variant.imageUrl}
+                                alt={`${selectedBaseCharacter.name} ${variant.label}`}
+                                width={56}
+                                height={56}
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <span className="text-2xl">🎨</span>
+                            )}
                           </div>
-                          <p className={`text-bold ${isSelected ? 'text-primary-400' : 'text-white'}`}>
+                          <p className={`text-bold text-sm ${isSelected ? 'text-primary-400' : 'text-white'}`}>
                             {variant.label}
                           </p>
                           {isSelected && (
-                            <div className="mt-2 flex items-center justify-center text-primary-400 text-sub gap-1">
-                              <MdCheck className="text-sm" />
-                              Sélectionné
+                            <div className="mt-1 flex items-center justify-center text-primary-400 text-sub text-xs gap-1">
+                              <MdCheck className="text-xs" />
+                              Choisi
                             </div>
                           )}
                         </div>

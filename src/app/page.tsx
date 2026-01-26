@@ -1,10 +1,14 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { AppContext } from "./context/AppContext";
 import { Competitor } from "./models/Competitor";
 import RankedCompetitorItem from "./components/competitor/RankedCompetitorItem";
 import ScrollablePodiumView from "./components/race/ScrollablePodiumView";
+import { Button } from "./components/ui";
+import { MdFlag } from "react-icons/md";
 
 const DAYS_THRESHOLD = 7;
 
@@ -68,9 +72,37 @@ export default function Home() {
           <ScrollablePodiumView topThreeCompetitors={topThree} />
         </div>
       ) : (
-        <p className="text-neutral-300 text-regular">
-          Il n&apos;y a aucun compétiteur pour l&apos;instant.
-        </p>
+        <div className="flex flex-col items-center justify-center py-12 px-4">
+          {/* Illustration */}
+          <div className="mb-6">
+            <Image
+              src="/illustrations/empty-podium.svg"
+              alt="Podium vide"
+              width={240}
+              height={200}
+              priority
+            />
+          </div>
+
+          {/* Text content */}
+          <div className="text-center max-w-sm">
+            <h2 className="text-heading text-white mb-2">
+              Le podium vous attend !
+            </h2>
+            <p className="text-regular text-neutral-400 mb-6">
+              Aucune course n&apos;a encore été disputée cette semaine.
+              Ajoutez votre première course pour voir le classement !
+            </p>
+
+            {/* CTA Button */}
+            <Link href="/races/add">
+              <Button variant="primary" className="gap-2">
+                <MdFlag className="text-lg" />
+                Ajouter une course
+              </Button>
+            </Link>
+          </div>
+        </div>
       )}
 
       <div className="flex flex-col gap-0">

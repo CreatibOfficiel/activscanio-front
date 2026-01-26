@@ -1,0 +1,73 @@
+<svg width="240" height="200" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background glow -->
+  <ellipse cx="120" cy="175" rx="90" ry="12" fill="url(#glow)" opacity="0.3"/>
+
+  <!-- Road/Track -->
+  <path d="M40 160 Q120 120 200 160" stroke="#404050" stroke-width="40" stroke-linecap="round" fill="none"/>
+  <path d="M40 160 Q120 120 200 160" stroke="#2a2a3e" stroke-width="36" stroke-linecap="round" fill="none"/>
+
+  <!-- Road dashes -->
+  <path d="M60 155 Q120 125 180 155" stroke="#505060" stroke-width="2" stroke-dasharray="12 8" fill="none"/>
+
+  <!-- Checkered flag pole -->
+  <rect x="115" y="45" width="6" height="95" rx="3" fill="#606070"/>
+  <rect x="115" y="45" width="6" height="10" fill="#808090"/>
+
+  <!-- Checkered flag -->
+  <g transform="translate(121, 35)">
+    <!-- Flag shape with wave -->
+    <path d="M0 10 Q15 5 30 12 Q45 19 55 14 L55 50 Q45 55 30 48 Q15 41 0 46 Z" fill="#1a1a2e"/>
+
+    <!-- White squares row 1 -->
+    <rect x="0" y="10" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="18" y="12" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="36" y="14" width="9" height="9" fill="white" opacity="0.9"/>
+
+    <!-- White squares row 2 -->
+    <rect x="9" y="19" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="27" y="21" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="45" y="22" width="9" height="9" fill="white" opacity="0.9"/>
+
+    <!-- White squares row 3 -->
+    <rect x="0" y="28" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="18" y="30" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="36" y="31" width="9" height="9" fill="white" opacity="0.9"/>
+
+    <!-- White squares row 4 -->
+    <rect x="9" y="37" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="27" y="39" width="9" height="9" fill="white" opacity="0.9"/>
+    <rect x="45" y="40" width="9" height="8" fill="white" opacity="0.9"/>
+  </g>
+
+  <!-- Question mark circle -->
+  <circle cx="120" cy="130" r="24" fill="#2a2a3e" stroke="#404050" stroke-width="2"/>
+  <text x="120" y="139" text-anchor="middle" fill="#606080" font-family="system-ui" font-size="26" font-weight="bold">?</text>
+
+  <!-- Decorative elements - small flags -->
+  <g transform="translate(45, 70) scale(0.4)">
+    <rect x="0" y="0" width="3" height="30" fill="#505060"/>
+    <path d="M3 0 L25 5 L25 20 L3 15 Z" fill="#ef4444" opacity="0.7"/>
+  </g>
+
+  <g transform="translate(185, 75) scale(0.4)">
+    <rect x="0" y="0" width="3" height="30" fill="#505060"/>
+    <path d="M3 0 L25 5 L25 20 L3 15 Z" fill="#3b82f6" opacity="0.7"/>
+  </g>
+
+  <!-- Speed lines -->
+  <line x1="30" y1="100" x2="50" y2="105" stroke="#404050" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="25" y1="110" x2="55" y2="115" stroke="#404050" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <line x1="30" y1="120" x2="45" y2="122" stroke="#404050" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+
+  <line x1="210" y1="100" x2="190" y2="105" stroke="#404050" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="215" y1="110" x2="185" y2="115" stroke="#404050" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+  <line x1="210" y1="120" x2="195" y2="122" stroke="#404050" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+
+  <!-- Gradients -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:transparent"/>
+    </radialGradient>
+  </defs>
+</svg>

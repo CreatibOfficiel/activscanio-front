@@ -16,9 +16,11 @@ export interface UserData {
     characterVariant?: {
       id: string;
       label: string;
+      imageUrl?: string;
       baseCharacter: {
         id: string;
         name: string;
+        imageUrl?: string;
       };
     };
   };

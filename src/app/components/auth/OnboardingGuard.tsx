@@ -5,8 +5,6 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { UsersRepository } from '@/app/repositories/UsersRepository';
 
-const ALLOWED_PATHS_WITHOUT_ONBOARDING = ['/onboarding', '/tv/display', '/sign-in', '/sign-up'];
-
 /**
  * OnboardingGuard Component
  * Checks if authenticated user has completed onboarding
@@ -23,8 +21,9 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     const checkOnboarding = async () => {
       if (!isLoaded) return;
 
-      // Allow certain paths without onboarding check
-      if (ALLOWED_PATHS_WITHOUT_ONBOARDING.some(path => pathname.startsWith(path))) {
+      // Skip check for non-onboarding public paths (TV display, auth pages)
+      const isPublicPath = ['/tv/display', '/sign-in', '/sign-up'].some(path => pathname.startsWith(path));
+      if (isPublicPath) {
         setIsChecking(false);
         return;
       }
@@ -38,13 +37,26 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
         }
 
         const userData = await UsersRepository.getMe(token);
+        const isOnboardingPath = pathname.startsWith('/onboarding');
 
-        if (!userData.hasCompletedOnboarding) {
-          // User hasn't completed onboarding, redirect
-          router.push('/onboarding');
+        if (userData.hasCompletedOnboarding) {
+          // User has completed onboarding
+          if (isOnboardingPath) {
+            // Redirect away from onboarding page to dashboard
+            router.push('/');
+          } else {
+            // Allow access to the page
+            setIsChecking(false);
+          }
         } else {
-          // User has completed onboarding, allow access
-          setIsChecking(false);
+          // User hasn't completed onboarding
+          if (isOnboardingPath) {
+            // Allow access to onboarding page
+            setIsChecking(false);
+          } else {
+            // Redirect to onboarding
+            router.push('/onboarding');
+          }
         }
       } catch (error) {
         console.error('Error checking onboarding status:', error);

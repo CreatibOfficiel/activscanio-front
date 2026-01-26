@@ -4,7 +4,14 @@ import { FC, useState } from 'react';
 import { useNotifications } from '@/app/hooks/useNotifications';
 import { toast } from 'sonner';
 
-export const NotificationSettings: FC = () => {
+interface NotificationSettingsProps {
+  /** Show compact version without header */
+  compact?: boolean;
+}
+
+export const NotificationSettings: FC<NotificationSettingsProps> = ({
+  compact = false,
+}) => {
   const {
     permission,
     preferences,
@@ -100,44 +107,44 @@ export const NotificationSettings: FC = () => {
   };
 
   if (isLoading) {
-    return <div className="animate-pulse">Chargement des préférences...</div>;
+    return (
+      <div className="animate-pulse text-neutral-400 p-4">
+        Chargement des préférences...
+      </div>
+    );
   }
 
   if (!isSupported) {
     return (
-      <div className="rounded-lg bg-warning-500/10 border border-warning-500 p-4">
-        <p className="text-warning-500">
+      <div className="rounded-xl bg-warning-500/10 border border-warning-500 p-4">
+        <p className="text-warning-500 text-regular">
           Les notifications ne sont pas supportées sur cet appareil
         </p>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div>
-        <h3 className="text-xl font-bold mb-2">Notifications</h3>
-        <p className="text-neutral-400 text-sm">
-          Gérez vos préférences de notifications pour rester informé
-        </p>
-      </div>
+  // Spacing based on compact mode
+  const sectionSpacing = compact ? 'space-y-3' : 'space-y-4 sm:space-y-6';
+  const cardPadding = compact ? 'p-3 sm:p-4' : 'p-4 sm:p-6';
 
+  return (
+    <div className={sectionSpacing}>
       {/* Avertissement iOS */}
       {isIOS && !isPWAInstalled && (
-        <div className="rounded-lg bg-info-500/10 border border-info-500 p-4">
-          <p className="text-info-500 text-sm">
+        <div className="rounded-xl bg-info-500/10 border border-info-500 p-3 sm:p-4">
+          <p className="text-info-500 text-sub sm:text-regular">
             Sur iOS, ajoutez l&apos;app à votre écran d&apos;accueil pour activer les notifications push
           </p>
         </div>
       )}
 
       {/* Notifications Push */}
-      <div className="rounded-lg bg-neutral-800 border border-neutral-700 p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h4 className="font-semibold mb-1">Notifications Push</h4>
-            <p className="text-sm text-neutral-400">
+      <div className={`rounded-xl bg-neutral-800 border border-neutral-700 ${cardPadding}`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-bold text-white mb-1">Notifications Push</h4>
+            <p className="text-sub text-neutral-400">
               Recevez des notifications même quand l&apos;app est fermée
             </p>
           </div>
@@ -145,18 +152,18 @@ export const NotificationSettings: FC = () => {
           <button
             onClick={preferences?.enablePush ? handleDisablePush : handleEnablePush}
             disabled={isSaving || permission === 'denied'}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sub sm:text-regular font-semibold transition-colors whitespace-nowrap min-h-[44px] ${
               preferences?.enablePush
                 ? 'bg-success-500 hover:bg-success-600 text-neutral-900'
                 : 'bg-primary-500 hover:bg-primary-600 text-neutral-900'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {preferences?.enablePush ? 'Activées ✓' : 'Activer'}
+            {isSaving ? '...' : preferences?.enablePush ? 'Activées' : 'Activer'}
           </button>
         </div>
 
         {permission === 'denied' && (
-          <p className="text-error-500 text-sm">
+          <p className="text-error-500 text-sub mt-3">
             Vous avez refusé les notifications. Modifiez les permissions dans les paramètres de votre navigateur.
           </p>
         )}
@@ -164,7 +171,7 @@ export const NotificationSettings: FC = () => {
         {preferences?.enablePush && (
           <button
             onClick={handleTestNotification}
-            className="text-sm text-primary-500 hover:text-primary-400 underline"
+            className="text-sub text-primary-500 hover:text-primary-400 underline mt-3 min-h-[44px]"
           >
             Envoyer une notification de test
           </button>
@@ -172,16 +179,16 @@ export const NotificationSettings: FC = () => {
       </div>
 
       {/* Notifications In-App */}
-      <div className="rounded-lg bg-neutral-800 border border-neutral-700 p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h4 className="font-semibold mb-1">Notifications In-App</h4>
-            <p className="text-sm text-neutral-400">
+      <div className={`rounded-xl bg-neutral-800 border border-neutral-700 ${cardPadding}`}>
+        <div className="flex items-center justify-between gap-3 min-h-[44px]">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-bold text-white mb-1">Notifications In-App</h4>
+            <p className="text-sub text-neutral-400">
               Toasts dans l&apos;application quand vous êtes connecté
             </p>
           </div>
 
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
             <input
               type="checkbox"
               checked={preferences?.enableInApp ?? true}
@@ -194,10 +201,10 @@ export const NotificationSettings: FC = () => {
       </div>
 
       {/* Catégories de Notifications */}
-      <div className="rounded-lg bg-neutral-800 border border-neutral-700 p-6">
-        <h4 className="font-semibold mb-4">Types de notifications</h4>
+      <div className={`rounded-xl bg-neutral-800 border border-neutral-700 ${cardPadding}`}>
+        <h4 className="text-bold text-white mb-3 sm:mb-4">Types de notifications</h4>
 
-        <div className="space-y-4">
+        <div className="space-y-1">
           <NotificationToggle
             icon="🎲"
             title="Paris"
@@ -243,6 +250,19 @@ export const NotificationSettings: FC = () => {
   );
 };
 
+/** Hook to get push notification status summary */
+export const useNotificationStatus = () => {
+  const { preferences, isLoading } = useNotifications();
+
+  if (isLoading) return 'Chargement...';
+  if (!preferences) return 'Non configuré';
+
+  const pushStatus = preferences.enablePush ? 'Push activées' : 'Push désactivées';
+  const enabledCategories = Object.values(preferences.categories).filter(Boolean).length;
+
+  return `${pushStatus} · ${enabledCategories}/5 catégories`;
+};
+
 // Sous-composant pour les toggles
 interface NotificationToggleProps {
   icon: string;
@@ -260,21 +280,24 @@ const NotificationToggle: FC<NotificationToggleProps> = ({
   onChange,
 }) => {
   return (
-    <div className="flex items-start justify-between py-3 border-b border-neutral-700 last:border-0">
-      <div className="flex items-start gap-3 flex-1">
-        <span className="text-2xl">{icon}</span>
-        <div>
-          <h5 className="font-medium mb-0.5">{title}</h5>
-          <p className="text-sm text-neutral-400">{description}</p>
+    <div className="flex items-center justify-between py-3 gap-3 border-b border-neutral-700/50 last:border-0 min-h-[52px]">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <span className="text-xl flex-shrink-0" aria-hidden="true">
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <h5 className="text-regular text-white">{title}</h5>
+          <p className="text-sub text-neutral-400 truncate">{description}</p>
         </div>
       </div>
 
-      <label className="relative inline-flex items-center cursor-pointer">
+      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
         <input
           type="checkbox"
           checked={enabled}
           onChange={(e) => onChange(e.target.checked)}
           className="sr-only peer"
+          aria-label={`${title}: ${enabled ? 'activé' : 'désactivé'}`}
         />
         <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
       </label>

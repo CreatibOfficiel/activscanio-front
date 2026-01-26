@@ -1,0 +1,55 @@
+<svg width="240" height="200" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background glow -->
+  <ellipse cx="120" cy="180" rx="100" ry="15" fill="url(#glow)" opacity="0.3"/>
+
+  <!-- Podium base -->
+  <!-- 2nd place (left) -->
+  <rect x="30" y="120" width="60" height="60" rx="4" fill="url(#silver)"/>
+  <rect x="30" y="120" width="60" height="8" rx="2" fill="#C0C0C0" opacity="0.5"/>
+  <text x="60" y="155" text-anchor="middle" fill="#1a1a2e" font-family="system-ui" font-size="24" font-weight="bold" opacity="0.7">2</text>
+
+  <!-- 1st place (center) -->
+  <rect x="90" y="80" width="60" height="100" rx="4" fill="url(#gold)"/>
+  <rect x="90" y="80" width="60" height="8" rx="2" fill="#FFD700" opacity="0.5"/>
+  <text x="120" y="135" text-anchor="middle" fill="#1a1a2e" font-family="system-ui" font-size="28" font-weight="bold" opacity="0.7">1</text>
+
+  <!-- 3rd place (right) -->
+  <rect x="150" y="140" width="60" height="40" rx="4" fill="url(#bronze)"/>
+  <rect x="150" y="140" width="60" height="8" rx="2" fill="#CD7F32" opacity="0.5"/>
+  <text x="180" y="168" text-anchor="middle" fill="#1a1a2e" font-family="system-ui" font-size="20" font-weight="bold" opacity="0.7">3</text>
+
+  <!-- Question marks (empty spots) -->
+  <circle cx="60" cy="95" r="22" fill="#2a2a3e" stroke="#404050" stroke-width="2"/>
+  <text x="60" y="103" text-anchor="middle" fill="#606080" font-family="system-ui" font-size="24" font-weight="bold">?</text>
+
+  <circle cx="120" cy="50" r="26" fill="#2a2a3e" stroke="#404050" stroke-width="2"/>
+  <text x="120" y="60" text-anchor="middle" fill="#606080" font-family="system-ui" font-size="28" font-weight="bold">?</text>
+
+  <circle cx="180" cy="115" r="20" fill="#2a2a3e" stroke="#404050" stroke-width="2"/>
+  <text x="180" y="122" text-anchor="middle" fill="#606080" font-family="system-ui" font-size="20" font-weight="bold">?</text>
+
+  <!-- Decorative stars -->
+  <path d="M25 30 L27 36 L33 36 L28 40 L30 46 L25 42 L20 46 L22 40 L17 36 L23 36 Z" fill="#FFD700" opacity="0.3"/>
+  <path d="M210 45 L212 49 L216 49 L213 52 L214 56 L210 53 L206 56 L207 52 L204 49 L208 49 Z" fill="#FFD700" opacity="0.2"/>
+  <path d="M195 20 L196 23 L199 23 L197 25 L198 28 L195 26 L192 28 L193 25 L191 23 L194 23 Z" fill="#FFD700" opacity="0.25"/>
+
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700"/>
+      <stop offset="100%" style="stop-color:#B8860B"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#C0C0C0"/>
+      <stop offset="100%" style="stop-color:#808080"/>
+    </linearGradient>
+    <linearGradient id="bronze" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#CD7F32"/>
+      <stop offset="100%" style="stop-color:#8B4513"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:transparent"/>
+    </radialGradient>
+  </defs>
+</svg>

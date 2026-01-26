@@ -2,10 +2,14 @@
 
 import { NextPage } from "next";
 import { useContext, useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { AppContext } from "../context/AppContext";
 import { RaceEvent } from "../models/RaceEvent";
 import { formatDate } from "../utils/formatters";
 import RaceOverviewItem from "../components/race/RaceOverviewItem";
+import { Button } from "../components/ui";
+import { MdAdd, MdFlag } from "react-icons/md";
 
 const sortRacesByDate = (races: RaceEvent[]): RaceEvent[] => {
   return [...races].sort(
@@ -50,13 +54,41 @@ const RacesPage: NextPage = () => {
   const racesByDate = groupRacesByDate(sortedRaces, formatDate);
 
   return (
-    <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
+    <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-24">
       <h1 className="text-center text-title mb-4">Courses</h1>
 
       {sortedRaces.length === 0 ? (
-        <p className="text-neutral-300 text-regular">
-          Aucune course enregistrée.
-        </p>
+        <div className="flex flex-col items-center justify-center py-12 px-4">
+          {/* Illustration */}
+          <div className="mb-6">
+            <Image
+              src="/illustrations/empty-races.svg"
+              alt="Aucune course"
+              width={240}
+              height={200}
+              priority
+            />
+          </div>
+
+          {/* Text content */}
+          <div className="text-center max-w-sm">
+            <h2 className="text-heading text-white mb-2">
+              Prêt pour la course ?
+            </h2>
+            <p className="text-regular text-neutral-400 mb-6">
+              Aucune course n&apos;a encore été enregistrée.
+              Créez votre première course et que la compétition commence !
+            </p>
+
+            {/* CTA Button */}
+            <Link href="/races/add">
+              <Button variant="primary" className="gap-2">
+                <MdFlag className="text-lg" />
+                Ajouter une course
+              </Button>
+            </Link>
+          </div>
+        </div>
       ) : (
         Object.keys(racesByDate).map((dateLabel) => (
           <div key={dateLabel} className="mb-4">
@@ -66,6 +98,17 @@ const RacesPage: NextPage = () => {
             ))}
           </div>
         ))
+      )}
+
+      {/* Floating Action Button - Add Race (only when there are races) */}
+      {sortedRaces.length > 0 && (
+        <Link
+          href="/races/add"
+          className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 w-14 h-14 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 focus:ring-offset-neutral-900 z-40"
+          aria-label="Ajouter une course"
+        >
+          <MdAdd className="text-2xl" />
+        </Link>
       )}
     </div>
   );

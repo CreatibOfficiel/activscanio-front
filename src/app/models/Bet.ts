@@ -6,6 +6,13 @@ export enum BetPosition {
   THIRD = 'third',
 }
 
+export enum BetStatus {
+  PENDING = 'pending',
+  WON = 'won',
+  LOST = 'lost',
+  CANCELLED = 'cancelled',
+}
+
 export interface BetPick {
   id: string;
   betId: string;
@@ -23,6 +30,7 @@ export interface Bet {
   bettingWeekId: string;
   placedAt: string;
   isFinalized: boolean;
+  status: BetStatus;
   pointsEarned?: number;
   picks: BetPick[];
   achievementsUnlocked?: Array<{

@@ -18,9 +18,11 @@ interface StatItemProps {
   format?: (value: number) => string;
 }
 
-const StatItem = React.memo(function StatItem({ label, userValue, avgValue, format = (v) => v.toFixed(1) }: StatItemProps) {
-  const diff = userValue - avgValue;
-  const percentDiff = avgValue !== 0 ? (diff / avgValue) * 100 : 0;
+const StatItem = React.memo(function StatItem({ label, userValue, avgValue, format = (v) => v?.toFixed(1) ?? '0' }: StatItemProps) {
+  const safeUserValue = userValue ?? 0;
+  const safeAvgValue = avgValue ?? 0;
+  const diff = safeUserValue - safeAvgValue;
+  const percentDiff = safeAvgValue !== 0 ? (diff / safeAvgValue) * 100 : 0;
   const isBetter = diff > 0;
   const isNeutral = Math.abs(percentDiff) < 5;
 
@@ -41,8 +43,8 @@ const StatItem = React.memo(function StatItem({ label, userValue, avgValue, form
       <div className="text-sm text-gray-600 mb-2">{label}</div>
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-2xl font-bold text-gray-900">{format(userValue)}</div>
-          <div className="text-xs text-gray-500">Moyenne: {format(avgValue)}</div>
+          <div className="text-2xl font-bold text-gray-900">{format(safeUserValue)}</div>
+          <div className="text-xs text-gray-500">Moyenne: {format(safeAvgValue)}</div>
         </div>
         <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${bgClass}`}>
           <Icon className={`w-4 h-4 ${colorClass}`} />
@@ -128,25 +130,25 @@ const ComparisonCard = React.memo(function ComparisonCard({
           label="Total de Paris"
           userValue={data.user.totalBets}
           avgValue={data.average.totalBets}
-          format={(v) => v.toFixed(0)}
+          format={(v) => (v ?? 0).toFixed(0)}
         />
         <StatItem
           label="Taux de Victoire"
           userValue={data.user.winRate}
           avgValue={data.average.winRate}
-          format={(v) => `${v.toFixed(1)}%`}
+          format={(v) => `${(v ?? 0).toFixed(1)}%`}
         />
         <StatItem
           label="Points Moyens par Pari"
           userValue={data.user.avgPointsPerBet}
           avgValue={data.average.avgPointsPerBet}
-          format={(v) => v.toFixed(1)}
+          format={(v) => (v ?? 0).toFixed(1)}
         />
         <StatItem
           label="XP Moyen par Jour"
           userValue={data.user.avgXPPerDay}
           avgValue={data.average.avgXPPerDay}
-          format={(v) => v.toFixed(0)}
+          format={(v) => (v ?? 0).toFixed(0)}
         />
       </div>
     </div>
