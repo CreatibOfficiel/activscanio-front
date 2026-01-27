@@ -2,12 +2,31 @@
 
 import { FC } from 'react';
 import Link from 'next/link';
+import {
+  MdEmojiEvents,
+  MdStar,
+  MdCasino,
+  MdCheckCircle,
+  MdDirectionsCar,
+  MdSpeed,
+  MdTrendingUp,
+} from 'react-icons/md';
 import { UserStats, UserAchievement } from '../../models/Achievement';
-import { FlameIndicator, AchievementGrid } from '../achievements';
+import { AchievementGrid } from '../achievements';
+import StatCard from '../ui/StatCard';
+
+// Type for competitor stats
+interface CompetitorStats {
+  rating: number;
+  raceCount: number;
+  avgRank12: number;
+  rd: number;
+}
 
 interface OverviewTabProps {
   stats: UserStats;
   recentAchievements: UserAchievement[];
+  competitorStats?: CompetitorStats | null;
   className?: string;
 }
 
@@ -15,13 +34,14 @@ interface OverviewTabProps {
  * OverviewTab Component
  *
  * Default tab displaying:
- * - Streaks (monthly + lifetime)
- * - Quick performance stats (this month)
- * - Achievement showcase
+ * - Quick performance stats (this month) - BETTING focused (green/emerald)
+ * - Races stats for players (blue)
+ * - Achievement showcase with progress bar
  */
 const OverviewTab: FC<OverviewTabProps> = ({
   stats,
   recentAchievements,
+  competitorStats,
   className = '',
 }) => {
   // Transform achievements for the grid
@@ -46,73 +66,96 @@ const OverviewTab: FC<OverviewTabProps> = ({
       aria-labelledby="tab-overview"
       className={`space-y-6 ${className}`}
     >
-      {/* Streaks Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700">
-          <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-            <span>🔥</span>
-            <span>Série Mensuelle</span>
-          </h3>
-          <FlameIndicator
-            streak={stats.currentMonthlyStreak}
-            type="monthly"
-            variant="detailed"
-          />
-        </div>
-
-        <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700">
-          <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-            <span>⭐</span>
-            <span>Record Lifetime</span>
-          </h3>
-          <FlameIndicator
-            streak={stats.longestLifetimeStreak}
-            type="lifetime"
-            variant="detailed"
-          />
-        </div>
-      </div>
-
-      {/* Monthly Performance Grid */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700">
+      {/* Monthly Betting Performance */}
+      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span>📅</span>
-          <span>Ce Mois-ci</span>
+          <MdCasino className="text-emerald-400" />
+          <span>Mes paris ce mois</span>
         </h3>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard
-            label="Paris"
+            label="Placés"
             value={stats.monthlyBetsPlaced}
-            icon="🎲"
+            icon={<MdCasino className="text-emerald-400" />}
+            variant="compact"
+            animated
           />
           <StatCard
-            label="Victoires"
+            label="Gagnés"
             value={stats.monthlyBetsWon}
-            icon="✅"
+            icon={<MdCheckCircle className="text-success-400" />}
             colorClass="text-success-400"
+            variant="compact"
+            animated
           />
           <StatCard
             label="Points"
-            value={stats.monthlyPoints.toFixed(0)}
-            icon="⭐"
+            value={Math.round(stats.monthlyPoints)}
+            icon={<MdStar className="text-primary-400" />}
             colorClass="text-primary-400"
+            variant="compact"
+            animated
           />
           <StatCard
             label="Rang"
             value={stats.monthlyRank ? `#${stats.monthlyRank}` : '-'}
-            icon="🏆"
+            icon={<MdEmojiEvents className="text-gold-500" />}
             colorClass="text-gold-500"
+            variant="compact"
           />
         </div>
       </div>
+
+      {/* Races Section - Only shown for players with competitor stats */}
+      {competitorStats && (
+        <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <MdDirectionsCar className="text-blue-400" />
+            <span>Mes courses</span>
+          </h3>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatCard
+              label="Courses"
+              value={competitorStats.raceCount}
+              icon={<MdDirectionsCar className="text-blue-400" />}
+              variant="compact"
+              animated
+            />
+            <StatCard
+              label="Rang Moyen"
+              value={competitorStats.avgRank12 > 0 ? competitorStats.avgRank12.toFixed(1) : '-'}
+              icon={<MdEmojiEvents className="text-gold-500" />}
+              colorClass="text-gold-500"
+              variant="compact"
+            />
+            <StatCard
+              label="ELO"
+              value={Math.round(competitorStats.rating)}
+              icon={<MdSpeed className="text-blue-400" />}
+              colorClass="text-blue-400"
+              variant="compact"
+              animated
+            />
+            <StatCard
+              label="RD"
+              value={Math.round(competitorStats.rd)}
+              icon={<MdTrendingUp className="text-neutral-400" />}
+              colorClass="text-neutral-400"
+              variant="compact"
+              animated
+            />
+          </div>
+        </div>
+      )}
 
       {/* Achievement Showcase */}
       <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <span>🏆</span>
-            <span>Succès Récents</span>
+            <MdEmojiEvents className="text-gold-500" />
+            <span>Succès récents</span>
           </h3>
           <Link
             href="/achievements"
@@ -130,7 +173,7 @@ const OverviewTab: FC<OverviewTabProps> = ({
           />
         ) : (
           <div className="text-center py-8 text-neutral-400">
-            <div className="text-4xl mb-2">🏆</div>
+            <MdEmojiEvents className="text-4xl mx-auto mb-2 text-neutral-600" />
             <p>Aucun succès débloqué pour le moment</p>
             <p className="text-sm text-neutral-500 mt-1">
               Continuez à jouer pour en débloquer !
@@ -154,72 +197,8 @@ const OverviewTab: FC<OverviewTabProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Quick Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <QuickStatPill
-          label="Win Rate"
-          value={`${stats.winRate.toFixed(0)}%`}
-          colorClass="text-success-400"
-        />
-        <QuickStatPill
-          label="Total Paris"
-          value={stats.totalBetsPlaced.toString()}
-        />
-        <QuickStatPill
-          label="Podiums Parfaits"
-          value={stats.totalPerfectBets.toString()}
-          colorClass="text-warning-500"
-        />
-        <QuickStatPill
-          label="Points Totaux"
-          value={stats.totalPoints.toFixed(0)}
-          colorClass="text-primary-400"
-        />
-      </div>
     </div>
   );
 };
-
-// Sub-component for stat cards
-interface StatCardProps {
-  label: string;
-  value: string | number;
-  icon: string;
-  colorClass?: string;
-}
-
-const StatCard: FC<StatCardProps> = ({
-  label,
-  value,
-  icon,
-  colorClass = 'text-white',
-}) => (
-  <div className="p-3 rounded-lg bg-neutral-900 border border-neutral-700">
-    <div className="flex items-center gap-2 mb-1">
-      <span className="text-base">{icon}</span>
-      <span className="text-xs text-neutral-400">{label}</span>
-    </div>
-    <div className={`text-xl font-bold ${colorClass}`}>{value}</div>
-  </div>
-);
-
-// Sub-component for quick stat pills
-interface QuickStatPillProps {
-  label: string;
-  value: string;
-  colorClass?: string;
-}
-
-const QuickStatPill: FC<QuickStatPillProps> = ({
-  label,
-  value,
-  colorClass = 'text-white',
-}) => (
-  <div className="flex flex-col items-center p-3 rounded-lg bg-neutral-800/50 border border-neutral-700">
-    <span className={`text-lg font-bold ${colorClass}`}>{value}</span>
-    <span className="text-xs text-neutral-400">{label}</span>
-  </div>
-);
 
 export default OverviewTab;

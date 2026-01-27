@@ -303,6 +303,39 @@
     animation: shrink linear forwards;
   }
 
+  /* Pulse Glow for Epic/Legendary Achievements */
+  @keyframes pulse-glow-epic {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(249, 115, 22, 0.4),
+                  0 0 10px rgba(249, 115, 22, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(249, 115, 22, 0.7),
+                  0 0 25px rgba(249, 115, 22, 0.5),
+                  0 0 35px rgba(249, 115, 22, 0.3);
+    }
+  }
+
+  @keyframes pulse-glow-legendary {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(168, 85, 247, 0.4),
+                  0 0 10px rgba(168, 85, 247, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.7),
+                  0 0 25px rgba(168, 85, 247, 0.5),
+                  0 0 35px rgba(168, 85, 247, 0.3);
+    }
+  }
+
+  .animate-pulse-glow-epic {
+    animation: pulse-glow-epic 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow-legendary {
+    animation: pulse-glow-legendary 2s ease-in-out infinite;
+  }
+
   /* Gradients podium */
   .bg-gradient-gold {
     background: linear-gradient(135deg, var(--gradient-gold-start), var(--gradient-gold-mid), var(--gradient-gold-end));

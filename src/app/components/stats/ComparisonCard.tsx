@@ -28,23 +28,23 @@ const StatItem = React.memo(function StatItem({ label, userValue, avgValue, form
 
   const Icon = isNeutral ? Minus : isBetter ? TrendingUp : TrendingDown;
   const colorClass = isNeutral
-    ? 'text-gray-500'
+    ? 'text-neutral-400'
     : isBetter
-    ? 'text-green-600'
-    : 'text-red-600';
+    ? 'text-success-400'
+    : 'text-error-400';
   const bgClass = isNeutral
-    ? 'bg-gray-50'
+    ? 'bg-neutral-700/50'
     : isBetter
-    ? 'bg-green-50'
-    : 'bg-red-50';
+    ? 'bg-success-500/20'
+    : 'bg-error-500/20';
 
   return (
-    <div className="p-4 border border-gray-200 rounded-lg">
-      <div className="text-sm text-gray-600 mb-2">{label}</div>
+    <div className="p-4 border border-neutral-700 rounded-lg bg-neutral-900">
+      <div className="text-sm text-neutral-400 mb-2">{label}</div>
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-2xl font-bold text-gray-900">{format(safeUserValue)}</div>
-          <div className="text-xs text-gray-500">Moyenne: {format(safeAvgValue)}</div>
+          <div className="text-2xl font-bold text-white">{format(safeUserValue)}</div>
+          <div className="text-xs text-neutral-500">Moyenne: {format(safeAvgValue)}</div>
         </div>
         <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${bgClass}`}>
           <Icon className={`w-4 h-4 ${colorClass}`} />
@@ -87,10 +87,9 @@ const ComparisonCard = React.memo(function ComparisonCard({
   if (loading) {
     return (
       <div className={className}>
-        <Skeleton variant="text" width="50%" height="24px" className="mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 border border-gray-200 rounded-lg">
+            <div key={i} className="p-4 border border-neutral-700 rounded-lg bg-neutral-900">
               <Skeleton variant="text" width="60%" height="14px" className="mb-3" />
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -108,15 +107,15 @@ const ComparisonCard = React.memo(function ComparisonCard({
 
   if (error) {
     return (
-      <div className={`p-4 bg-red-50 border border-red-200 rounded-lg ${className}`}>
-        <p className="text-red-600 text-sm">{error}</p>
+      <div className={`p-4 bg-error-500/10 border border-error-500/30 rounded-lg ${className}`}>
+        <p className="text-error-400 text-sm">{error}</p>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className={`p-8 text-center text-gray-500 ${className}`}>
+      <div className={`p-8 text-center text-neutral-500 ${className}`}>
         Aucune donnée disponible
       </div>
     );
@@ -124,7 +123,6 @@ const ComparisonCard = React.memo(function ComparisonCard({
 
   return (
     <div className={className}>
-      <h3 className="text-lg font-semibold mb-4">Comparaison avec la Moyenne</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatItem
           label="Total de Paris"

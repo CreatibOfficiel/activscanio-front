@@ -2,6 +2,7 @@
 
 import { FC } from 'react';
 import Image from 'next/image';
+import { MdEdit } from 'react-icons/md';
 import { UserStats } from '../../models/Achievement';
 
 // Character color mappings for gradient backgrounds
@@ -50,6 +51,7 @@ interface CharacterInfo {
   name: string;
   variantLabel?: string;
   imageUrl?: string;
+  variantId?: string;
 }
 
 interface ProfileHeaderProps {
@@ -58,6 +60,7 @@ interface ProfileHeaderProps {
   userImageUrl?: string;
   character?: CharacterInfo | null;
   className?: string;
+  onEditCharacter?: () => void;
 }
 
 /**
@@ -76,6 +79,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
   userImageUrl,
   character,
   className = '',
+  onEditCharacter,
 }) => {
   const isPlayer = !!character;
   const colors = getCharacterColors(character?.name);
@@ -113,6 +117,17 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
                 className="object-contain drop-shadow-2xl"
                 priority
               />
+              {/* Edit button */}
+              {onEditCharacter && (
+                <button
+                  type="button"
+                  onClick={onEditCharacter}
+                  className="absolute bottom-0 right-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center text-white/90 hover:text-white transition-colors border border-white/20"
+                  aria-label="Changer de personnage"
+                >
+                  <MdEdit className="text-lg sm:text-xl" />
+                </button>
+              )}
             </div>
           ) : (
             <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden ring-4 ring-white/30 shadow-xl">

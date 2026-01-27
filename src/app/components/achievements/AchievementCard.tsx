@@ -36,46 +36,48 @@ const AchievementCard: FC<AchievementCardProps> = ({
   } = achievement;
 
   // Get rarity-based colors
+  // Get rarity-based colors with animated glow for Epic/Legendary when unlocked
   const getRarityColors = () => {
-    switch (rarity) {
-      case AchievementRarity.LEGENDARY:
-        return {
-          bg: 'from-purple-900/30 to-pink-900/30',
-          border: 'border-purple-500',
-          glow: 'shadow-lg shadow-purple-500/30',
-          text: 'text-purple-400',
-          gradient: 'from-purple-500 to-pink-500',
-          iconBg: 'bg-gradient-to-br from-purple-500 to-pink-500',
-        };
-      case AchievementRarity.EPIC:
-        return {
-          bg: 'from-orange-900/30 to-red-900/30',
-          border: 'border-orange-500',
-          glow: 'shadow-lg shadow-orange-500/30',
-          text: 'text-orange-400',
-          gradient: 'from-orange-500 to-red-500',
-          iconBg: 'bg-gradient-to-br from-orange-500 to-red-500',
-        };
-      case AchievementRarity.RARE:
-        return {
-          bg: 'from-blue-900/30 to-cyan-900/30',
-          border: 'border-blue-500',
-          glow: 'shadow-lg shadow-blue-500/30',
-          text: 'text-blue-400',
-          gradient: 'from-blue-500 to-cyan-500',
-          iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
-        };
-      case AchievementRarity.COMMON:
-      default:
-        return {
-          bg: 'from-neutral-800/30 to-neutral-900/30',
-          border: 'border-neutral-600',
-          glow: '',
-          text: 'text-neutral-400',
-          gradient: 'from-neutral-500 to-neutral-600',
-          iconBg: 'bg-gradient-to-br from-neutral-500 to-neutral-600',
-        };
-    }
+    const baseColors = {
+      [AchievementRarity.LEGENDARY]: {
+        bg: 'from-purple-900/30 to-pink-900/30',
+        border: 'border-purple-500',
+        glow: 'shadow-lg shadow-purple-500/30',
+        text: 'text-purple-400',
+        gradient: 'from-purple-500 to-pink-500',
+        iconBg: 'bg-gradient-to-br from-purple-500 to-pink-500',
+        animatedGlow: 'animate-pulse-glow-legendary',
+      },
+      [AchievementRarity.EPIC]: {
+        bg: 'from-orange-900/30 to-red-900/30',
+        border: 'border-orange-500',
+        glow: 'shadow-lg shadow-orange-500/30',
+        text: 'text-orange-400',
+        gradient: 'from-orange-500 to-red-500',
+        iconBg: 'bg-gradient-to-br from-orange-500 to-red-500',
+        animatedGlow: 'animate-pulse-glow-epic',
+      },
+      [AchievementRarity.RARE]: {
+        bg: 'from-blue-900/30 to-cyan-900/30',
+        border: 'border-blue-500',
+        glow: 'shadow-lg shadow-blue-500/30',
+        text: 'text-blue-400',
+        gradient: 'from-blue-500 to-cyan-500',
+        iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
+        animatedGlow: '',
+      },
+      [AchievementRarity.COMMON]: {
+        bg: 'from-neutral-800/30 to-neutral-900/30',
+        border: 'border-neutral-600',
+        glow: '',
+        text: 'text-neutral-400',
+        gradient: 'from-neutral-500 to-neutral-600',
+        iconBg: 'bg-gradient-to-br from-neutral-500 to-neutral-600',
+        animatedGlow: '',
+      },
+    };
+
+    return baseColors[rarity] || baseColors[AchievementRarity.COMMON];
   };
 
   const colors = getRarityColors();
@@ -84,10 +86,14 @@ const AchievementCard: FC<AchievementCardProps> = ({
   const isLocked = !isUnlocked;
   const lockedClass = isLocked ? 'opacity-60 grayscale' : '';
 
+  // Animated glow for unlocked Epic/Legendary achievements
+  const shouldAnimateGlow = isUnlocked && colors.animatedGlow;
+  const glowClass = shouldAnimateGlow ? colors.animatedGlow : colors.glow;
+
   if (variant === 'compact') {
     return (
       <div
-        className={`relative flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r ${colors.bg} border ${colors.border} ${colors.glow} ${lockedClass} ${onClick ? 'cursor-pointer hover:scale-105' : ''} transition-all duration-200 ${className}`}
+        className={`relative flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r ${colors.bg} border ${colors.border} ${glowClass} ${lockedClass} ${onClick ? 'cursor-pointer hover:scale-105' : ''} transition-all duration-200 ${className}`}
         onClick={onClick}
       >
         {/* Icon */}
@@ -128,7 +134,7 @@ const AchievementCard: FC<AchievementCardProps> = ({
   // Default variant
   return (
     <div
-      className={`relative flex flex-col p-5 rounded-xl bg-gradient-to-br ${colors.bg} border-2 ${colors.border} ${colors.glow} ${lockedClass} ${onClick ? 'cursor-pointer hover:scale-105 hover:border-opacity-100' : ''} transition-all duration-200 ${className}`}
+      className={`relative flex flex-col p-5 rounded-xl bg-gradient-to-br ${colors.bg} border-2 ${colors.border} ${glowClass} ${lockedClass} ${onClick ? 'cursor-pointer hover:scale-105 hover:border-opacity-100' : ''} transition-all duration-200 ${className}`}
       onClick={onClick}
     >
       {/* Unlocked badge */}

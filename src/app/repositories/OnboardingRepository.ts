@@ -1,5 +1,5 @@
-import { Competitor } from '../models/Competitor';
-import { BaseCharacter, CharacterVariant } from '../models/Character';
+import { Competitor, CompetitorWithAvailability } from '../models/Competitor';
+import { BaseCharacter, CharacterVariant, BaseCharacterWithAvailability } from '../models/Character';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -16,9 +16,9 @@ export interface CompleteOnboardingDto {
 
 export class OnboardingRepository {
   /**
-   * Search competitors by name
+   * Search competitors by name with availability status
    */
-  static async searchCompetitors(query: string, authToken: string): Promise<Competitor[]> {
+  static async searchCompetitors(query: string, authToken: string): Promise<CompetitorWithAvailability[]> {
     try {
       const response = await fetch(
         `${API_BASE_URL}/onboarding/search?query=${encodeURIComponent(query)}`,
@@ -120,7 +120,7 @@ export class OnboardingRepository {
   }
 
   /**
-   * Get all base characters with their available variants
+   * Get all base characters with their available variants (legacy - only available ones)
    */
   static async getAvailableBaseCharacters(authToken: string): Promise<BaseCharacter[]> {
     try {
@@ -138,6 +138,29 @@ export class OnboardingRepository {
       return await response.json();
     } catch (error) {
       console.error('Error fetching base characters:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get ALL base characters with availability status (available + taken with info)
+   */
+  static async getAllBaseCharactersWithStatus(authToken: string): Promise<BaseCharacterWithAvailability[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/base-characters/all-with-status`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch base characters: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching base characters with status:', error);
       throw error;
     }
   }

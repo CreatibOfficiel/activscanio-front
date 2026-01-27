@@ -106,7 +106,7 @@ describe('ShareAchievementButton', () => {
       download: '',
       click: jest.fn(),
       setAttribute: jest.fn(),
-      style: {},
+      style: { display: '' } as CSSStyleDeclaration,
     };
     const originalCreateElement = document.createElement.bind(document);
     jest.spyOn(document, 'createElement').mockImplementation((tagName: string) => {

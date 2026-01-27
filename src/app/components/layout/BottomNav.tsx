@@ -30,7 +30,7 @@ export default function BottomNav() {
     { href: "/", icon: MdLeaderboard, label: "Classement" },
     { href: "/races", icon: MdFlag, label: "Courses", activePaths: ["/races"] },
     { href: "/betting", icon: MdCasino, label: "Paris", activePaths: ["/betting"] },
-    { href: "/profile", icon: MdPerson, label: "Profil", activePaths: ["/profile"] },
+    { href: "/profile", icon: MdPerson, label: "Profil", activePaths: ["/profile", "/achievements"] },
   ];
 
   return (

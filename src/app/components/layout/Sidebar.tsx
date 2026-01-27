@@ -26,7 +26,7 @@ const Sidebar: FC = () => {
     { href: '/', label: 'Classement', icon: MdLeaderboard },
     { href: '/races', label: 'Courses', icon: MdFlag, activePaths: ['/races'] },
     { href: '/betting', label: 'Paris', icon: MdCasino, activePaths: ['/betting'] },
-    { href: '/profile', label: 'Profil', icon: MdPerson, activePaths: ['/profile'] },
+    { href: '/profile', label: 'Profil', icon: MdPerson, activePaths: ['/profile', '/achievements'] },
   ];
 
   return (
@@ -38,7 +38,7 @@ const Sidebar: FC = () => {
       <div className="flex flex-col flex-1 p-4">
         {/* Logo/Title */}
         <h1 className="text-heading text-primary-500 mb-8 px-4">
-          Activscanio
+          MushroomBet
         </h1>
 
         {/* Navigation Links */}

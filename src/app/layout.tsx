@@ -12,13 +12,13 @@ import { Toaster } from "sonner";
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: "Activscanio",
-  description: "Activscanio est une application de classement de courses avec système de paris et statistiques en temps réel.",
+  title: "MushroomBet",
+  description: "MushroomBet est une application de classement de courses avec système de paris et statistiques en temps réel.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Activscanio",
+    title: "MushroomBet",
   },
   formatDetection: {
     telephone: false,

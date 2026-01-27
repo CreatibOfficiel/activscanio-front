@@ -4,11 +4,11 @@ import { FC, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { OnboardingRepository } from '@/app/repositories/OnboardingRepository';
-import { Competitor } from '@/app/models/Competitor';
-import { BaseCharacter, CharacterVariant } from '@/app/models/Character';
+import { CompetitorWithAvailability } from '@/app/models/Competitor';
+import { BaseCharacterWithAvailability, CharacterVariantWithAvailability } from '@/app/models/Character';
 import { Card, Button, Input } from '@/app/components/ui';
 import { toast } from 'sonner';
-import { MdSearch, MdPerson, MdPersonAdd, MdArrowBack, MdCheck, MdSportsEsports, MdColorLens } from 'react-icons/md';
+import { MdSearch, MdPerson, MdPersonAdd, MdArrowBack, MdCheck, MdSportsEsports, MdColorLens, MdLock } from 'react-icons/md';
 import Image from 'next/image';
 import { useDebounce } from '@/app/hooks/useDebounce';
 
@@ -31,10 +31,10 @@ const OnboardingPage: FC = () => {
 
   // Search state for competitors
   const [searchQuery, setSearchQuery] = useState('');
-  const [allCompetitors, setAllCompetitors] = useState<Competitor[]>([]);
-  const [filteredCompetitors, setFilteredCompetitors] = useState<Competitor[]>([]);
-  const [suggestedCompetitor, setSuggestedCompetitor] = useState<Competitor | null>(null);
-  const [selectedCompetitor, setSelectedCompetitor] = useState<Competitor | null>(null);
+  const [allCompetitors, setAllCompetitors] = useState<CompetitorWithAvailability[]>([]);
+  const [filteredCompetitors, setFilteredCompetitors] = useState<CompetitorWithAvailability[]>([]);
+  const [suggestedCompetitor, setSuggestedCompetitor] = useState<CompetitorWithAvailability | null>(null);
+  const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorWithAvailability | null>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Create competitor state
@@ -42,10 +42,10 @@ const OnboardingPage: FC = () => {
   const [newCompetitorLastName, setNewCompetitorLastName] = useState('');
 
   // Character selection state
-  const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
-  const [filteredCharacters, setFilteredCharacters] = useState<BaseCharacter[]>([]);
+  const [baseCharacters, setBaseCharacters] = useState<BaseCharacterWithAvailability[]>([]);
+  const [filteredCharacters, setFilteredCharacters] = useState<BaseCharacterWithAvailability[]>([]);
   const [characterSearchQuery, setCharacterSearchQuery] = useState('');
-  const [selectedBaseCharacter, setSelectedBaseCharacter] = useState<BaseCharacter | null>(null);
+  const [selectedBaseCharacter, setSelectedBaseCharacter] = useState<BaseCharacterWithAvailability | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const debouncedCharacterSearch = useDebounce(characterSearchQuery, 300);
 
@@ -53,14 +53,14 @@ const OnboardingPage: FC = () => {
   const characterListRef = useRef<HTMLDivElement>(null);
   const savedScrollPosition = useRef<number>(0);
 
-  // Load base characters with available variants on mount
+  // Load base characters with availability status on mount
   useEffect(() => {
     const loadBaseCharacters = async () => {
       try {
         const token = await getToken();
         if (!token) return;
 
-        const characters = await OnboardingRepository.getAvailableBaseCharacters(token);
+        const characters = await OnboardingRepository.getAllBaseCharactersWithStatus(token);
         setBaseCharacters(characters);
         setFilteredCharacters(characters);
       } catch (error) {
@@ -87,10 +87,10 @@ const OnboardingPage: FC = () => {
         setAllCompetitors(results);
         setFilteredCompetitors(results);
 
-        // Pre-select competitor matching user's first name
+        // Pre-select competitor matching user's first name (only if available)
         if (user?.firstName) {
           const match = results.find(
-            (c) => c.firstName.toLowerCase() === user.firstName?.toLowerCase()
+            (c) => c.firstName.toLowerCase() === user.firstName?.toLowerCase() && c.isAvailable
           );
           if (match) {
             setSuggestedCompetitor(match);
@@ -141,14 +141,22 @@ const OnboardingPage: FC = () => {
   }, [debouncedCharacterSearch, baseCharacters]);
 
   // Select base character and handle variants
-  const handleSelectBaseCharacter = useCallback((character: BaseCharacter) => {
+  const handleSelectBaseCharacter = useCallback((character: BaseCharacterWithAvailability) => {
+    // Don't allow selection if no variants are available
+    if (!character.hasAvailableVariants) {
+      return;
+    }
+
     setSelectedBaseCharacter(character);
 
-    // If only one variant, select it automatically and skip variant step
-    if (character.variants.length === 1) {
-      setSelectedVariantId(character.variants[0].id);
+    // Get only available variants
+    const availableVariants = character.variants.filter(v => v.isAvailable);
+
+    // If only one available variant, select it automatically and skip variant step
+    if (availableVariants.length === 1) {
+      setSelectedVariantId(availableVariants[0].id);
       // Don't change step, just show confirmation
-    } else {
+    } else if (availableVariants.length > 1) {
       // Save scroll position before navigating to variant selection
       if (characterListRef.current) {
         savedScrollPosition.current = characterListRef.current.scrollTop;
@@ -160,12 +168,20 @@ const OnboardingPage: FC = () => {
   }, []);
 
   // Select variant
-  const handleSelectVariant = useCallback((variant: CharacterVariant) => {
+  const handleSelectVariant = useCallback((variant: CharacterVariantWithAvailability) => {
+    // Don't allow selection if variant is taken
+    if (!variant.isAvailable) {
+      return;
+    }
     setSelectedVariantId(variant.id);
   }, []);
 
   // Select existing competitor and move to character selection
-  const handleSelectCompetitor = (competitor: Competitor) => {
+  const handleSelectCompetitor = (competitor: CompetitorWithAvailability) => {
+    // Don't allow selection if competitor is already linked to another user
+    if (!competitor.isAvailable) {
+      return;
+    }
     setSelectedCompetitor(competitor);
     setStep(OnboardingStep.CHARACTER_SELECT);
   };
@@ -308,7 +324,8 @@ const OnboardingPage: FC = () => {
     }
   }, [step]);
 
-  const totalSteps = selectedBaseCharacter && selectedBaseCharacter.variants.length > 1 ? 4 : 3;
+  const availableVariantsCount = selectedBaseCharacter?.variants.filter(v => v.isAvailable).length ?? 0;
+  const totalSteps = selectedBaseCharacter && availableVariantsCount > 1 ? 4 : 3;
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
@@ -491,50 +508,70 @@ const OnboardingPage: FC = () => {
                     .filter((c) => c.id !== suggestedCompetitor?.id)
                     .map((competitor) => {
                       const isSelected = selectedCompetitor?.id === competitor.id;
+                      const isAvailable = competitor.isAvailable;
                       return (
                         <Card
                           key={competitor.id}
-                          className={`p-4 cursor-pointer transition-all duration-200 ${
-                            isSelected
-                              ? 'border-primary-500 bg-primary-500/10'
-                              : 'hover:border-primary-500 hover:bg-primary-500/5'
+                          className={`p-4 transition-all duration-200 ${
+                            !isAvailable
+                              ? 'opacity-60 cursor-not-allowed'
+                              : isSelected
+                                ? 'border-primary-500 bg-primary-500/10 cursor-pointer'
+                                : 'hover:border-primary-500 hover:bg-primary-500/5 cursor-pointer'
                           }`}
-                          onClick={() => setSelectedCompetitor(competitor)}
+                          onClick={() => isAvailable && setSelectedCompetitor(competitor)}
                           role="listitem"
-                          tabIndex={0}
-                          onKeyPress={(e) => e.key === 'Enter' && setSelectedCompetitor(competitor)}
-                          aria-label={`Sélectionner ${competitor.firstName} ${competitor.lastName}`}
+                          tabIndex={isAvailable ? 0 : -1}
+                          onKeyPress={(e) => e.key === 'Enter' && isAvailable && setSelectedCompetitor(competitor)}
+                          aria-label={`${competitor.firstName} ${competitor.lastName}${!isAvailable ? ' (déjà lié à un compte)' : ''}`}
                           aria-selected={isSelected}
+                          aria-disabled={!isAvailable}
                         >
                           <div className="flex items-center gap-3">
                             {competitor.profilePictureUrl ? (
                               <img
                                 src={competitor.profilePictureUrl}
                                 alt={`${competitor.firstName} ${competitor.lastName}`}
-                                className={`w-12 h-12 rounded-full object-cover ${isSelected ? 'ring-2 ring-primary-500' : ''}`}
+                                className={`w-12 h-12 rounded-full object-cover ${
+                                  !isAvailable ? 'grayscale' : isSelected ? 'ring-2 ring-primary-500' : ''
+                                }`}
                               />
                             ) : (
                               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                                isSelected ? 'bg-primary-500/20 ring-2 ring-primary-500' : 'bg-neutral-700'
+                                !isAvailable
+                                  ? 'bg-neutral-700'
+                                  : isSelected
+                                    ? 'bg-primary-500/20 ring-2 ring-primary-500'
+                                    : 'bg-neutral-700'
                               }`}>
-                                <MdPerson className={`text-2xl ${isSelected ? 'text-primary-400' : 'text-neutral-400'}`} aria-hidden="true" />
+                                <MdPerson className={`text-2xl ${
+                                  !isAvailable ? 'text-neutral-500' : isSelected ? 'text-primary-400' : 'text-neutral-400'
+                                }`} aria-hidden="true" />
                               </div>
                             )}
-                            <div className="flex-1">
-                              <p className="text-bold text-white">
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-bold truncate ${!isAvailable ? 'text-neutral-500' : 'text-white'}`}>
                                 {competitor.firstName} {competitor.lastName}
                               </p>
-                              {competitor.characterVariant && (
+                              {!isAvailable ? (
+                                <p className="text-sub text-neutral-500">
+                                  Déjà lié à un compte
+                                </p>
+                              ) : competitor.characterVariant ? (
                                 <p className="text-sub text-neutral-400">
                                   {competitor.characterVariant.baseCharacter.name} - {competitor.characterVariant.label}
                                 </p>
-                              )}
+                              ) : null}
                             </div>
-                            {isSelected && (
+                            {!isAvailable ? (
+                              <div className="text-neutral-500 text-lg">
+                                <MdLock />
+                              </div>
+                            ) : isSelected ? (
                               <div className="text-primary-500 text-xl">
                                 <MdCheck />
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         </Card>
                       );
@@ -565,7 +602,8 @@ const OnboardingPage: FC = () => {
                     variant="primary"
                     onClick={() => handleSelectCompetitor(selectedCompetitor)}
                   >
-                    Continuer avec {selectedCompetitor.firstName}
+                    <span className="sm:hidden">Continuer</span>
+                    <span className="hidden sm:inline">Continuer avec {selectedCompetitor.firstName}</span>
                   </Button>
                 ) : (
                   <Button
@@ -693,54 +731,91 @@ const OnboardingPage: FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {filteredCharacters.map((character) => {
                       const isSelected = selectedBaseCharacter?.id === character.id;
-                      const hasMultipleVariants = character.variants.length > 1;
+                      const availableVariants = character.variants.filter(v => v.isAvailable);
+                      const hasAvailable = character.hasAvailableVariants;
+                      const hasMultipleAvailableVariants = availableVariants.length > 1;
+
+                      // Find first person who took a variant (for display when all taken)
+                      const takenVariant = character.variants.find(v => !v.isAvailable && v.takenBy);
 
                       return (
                         <Card
                           key={character.id}
-                          className={`p-3 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
+                          className={`p-3 transition-all duration-200 ${
+                            !hasAvailable
+                              ? 'opacity-60 cursor-not-allowed'
+                              : 'cursor-pointer hover:border-primary-500 hover:bg-primary-500/5'
+                          } ${
                             isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
                           }`}
-                          onClick={() => handleSelectBaseCharacter(character)}
+                          onClick={() => hasAvailable && handleSelectBaseCharacter(character)}
                           role="option"
                           aria-selected={isSelected}
-                          tabIndex={0}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSelectBaseCharacter(character)}
-                          aria-label={`${character.name}${hasMultipleVariants ? ` (${character.variants.length} variantes)` : ''}`}
+                          aria-disabled={!hasAvailable}
+                          tabIndex={hasAvailable ? 0 : -1}
+                          onKeyPress={(e) => e.key === 'Enter' && hasAvailable && handleSelectBaseCharacter(character)}
+                          aria-label={`${character.name}${!hasAvailable ? ' (indisponible)' : hasMultipleAvailableVariants ? ` (${availableVariants.length} couleurs disponibles)` : ''}`}
                         >
                           <div className="text-center">
-                            {/* Character image */}
-                            <div className={`w-16 h-16 mx-auto mb-2 rounded-full flex items-center justify-center overflow-hidden ${
-                              isSelected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-800' : 'bg-neutral-700'
-                            }`}>
-                              {character.imageUrl ? (
-                                <Image
-                                  src={character.imageUrl}
-                                  alt={character.name}
-                                  width={64}
-                                  height={64}
-                                  className="w-full h-full object-contain"
-                                />
-                              ) : (
-                                <span className="text-3xl">🎮</span>
+                            {/* Character image with taken badge */}
+                            <div className={`relative w-16 h-16 mx-auto mb-2`}>
+                              <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden ${
+                                isSelected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-800' : 'bg-neutral-700'
+                              } ${!hasAvailable ? 'grayscale' : ''}`}>
+                                {character.imageUrl ? (
+                                  <Image
+                                    src={character.imageUrl}
+                                    alt={character.name}
+                                    width={64}
+                                    height={64}
+                                    className={`w-full h-full object-contain ${!hasAvailable ? 'opacity-50' : ''}`}
+                                  />
+                                ) : (
+                                  <span className="text-3xl">🎮</span>
+                                )}
+                              </div>
+                              {/* Badge showing who took it (when all variants are taken) */}
+                              {!hasAvailable && takenVariant?.takenBy && (
+                                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-2 border-neutral-800 overflow-hidden bg-neutral-700">
+                                  {takenVariant.takenBy.profilePictureUrl ? (
+                                    <img
+                                      src={takenVariant.takenBy.profilePictureUrl}
+                                      alt={takenVariant.takenBy.firstName}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <MdPerson className="text-neutral-400 text-sm" />
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
-                            <p className={`text-bold text-sm mb-0.5 truncate ${isSelected ? 'text-primary-400' : 'text-white'}`}>
+                            <p className={`text-bold text-sm mb-0.5 truncate ${
+                              !hasAvailable ? 'text-neutral-500' : isSelected ? 'text-primary-400' : 'text-white'
+                            }`}>
                               {character.name}
                             </p>
-                            {hasMultipleVariants && (
-                              <p className="text-sub text-xs text-neutral-500 flex items-center justify-center gap-1">
-                                <MdColorLens className="text-xs" />
-                                {character.variants.length} couleurs
+                            {/* Show "Taken by [Name]" when all variants are taken */}
+                            {!hasAvailable && takenVariant?.takenBy && (
+                              <p className="text-sub text-xs text-neutral-500">
+                                Pris par {takenVariant.takenBy.firstName}
                               </p>
                             )}
-                            {isSelected && !hasMultipleVariants && (
+                            {/* Show available variants count */}
+                            {hasAvailable && hasMultipleAvailableVariants && (
+                              <p className="text-sub text-xs text-neutral-500 flex items-center justify-center gap-1">
+                                <MdColorLens className="text-xs" />
+                                {availableVariants.length} couleurs
+                              </p>
+                            )}
+                            {isSelected && !hasMultipleAvailableVariants && (
                               <div className="mt-1 flex items-center justify-center text-primary-400 text-sub text-xs gap-1">
                                 <MdCheck className="text-xs" />
                                 Sélectionné
                               </div>
                             )}
-                            {isSelected && hasMultipleVariants && (
+                            {isSelected && hasMultipleAvailableVariants && (
                               <div className="mt-1 text-primary-400 text-sub text-xs">
                                 Choisir couleur →
                               </div>
@@ -802,41 +877,73 @@ const OnboardingPage: FC = () => {
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {selectedBaseCharacter.variants.map((variant) => {
                     const isSelected = selectedVariantId === variant.id;
+                    const isAvailable = variant.isAvailable;
 
                     return (
                       <Card
                         key={variant.id}
-                        className={`p-3 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 ${
+                        className={`p-3 transition-all duration-200 ${
+                          !isAvailable
+                            ? 'opacity-60 cursor-not-allowed'
+                            : 'cursor-pointer hover:border-primary-500 hover:bg-primary-500/5'
+                        } ${
                           isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
                         }`}
-                        onClick={() => handleSelectVariant(variant)}
+                        onClick={() => isAvailable && handleSelectVariant(variant)}
                         role="option"
                         aria-selected={isSelected}
-                        tabIndex={0}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSelectVariant(variant)}
-                        aria-label={`${selectedBaseCharacter.name} - ${variant.label}`}
+                        aria-disabled={!isAvailable}
+                        tabIndex={isAvailable ? 0 : -1}
+                        onKeyPress={(e) => e.key === 'Enter' && isAvailable && handleSelectVariant(variant)}
+                        aria-label={`${selectedBaseCharacter.name} - ${variant.label}${!isAvailable ? ' (indisponible)' : ''}`}
                       >
                         <div className="text-center">
-                          {/* Variant image */}
-                          <div className={`w-14 h-14 mx-auto mb-2 rounded-full flex items-center justify-center overflow-hidden ${
-                            isSelected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-800' : 'bg-neutral-700'
-                          }`}>
-                            {variant.imageUrl ? (
-                              <Image
-                                src={variant.imageUrl}
-                                alt={`${selectedBaseCharacter.name} ${variant.label}`}
-                                width={56}
-                                height={56}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <span className="text-2xl">🎨</span>
+                          {/* Variant image with taken badge */}
+                          <div className="relative w-14 h-14 mx-auto mb-2">
+                            <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden ${
+                              isSelected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-800' : 'bg-neutral-700'
+                            } ${!isAvailable ? 'grayscale' : ''}`}>
+                              {variant.imageUrl ? (
+                                <Image
+                                  src={variant.imageUrl}
+                                  alt={`${selectedBaseCharacter.name} ${variant.label}`}
+                                  width={56}
+                                  height={56}
+                                  className={`w-full h-full object-contain ${!isAvailable ? 'opacity-50' : ''}`}
+                                />
+                              ) : (
+                                <span className="text-2xl">🎨</span>
+                              )}
+                            </div>
+                            {/* Badge showing who took it */}
+                            {!isAvailable && variant.takenBy && (
+                              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-neutral-800 overflow-hidden bg-neutral-700">
+                                {variant.takenBy.profilePictureUrl ? (
+                                  <img
+                                    src={variant.takenBy.profilePictureUrl}
+                                    alt={variant.takenBy.firstName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <MdPerson className="text-neutral-400 text-xs" />
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
-                          <p className={`text-bold text-sm ${isSelected ? 'text-primary-400' : 'text-white'}`}>
+                          <p className={`text-bold text-sm ${
+                            !isAvailable ? 'text-neutral-500' : isSelected ? 'text-primary-400' : 'text-white'
+                          }`}>
                             {variant.label}
                           </p>
-                          {isSelected && (
+                          {/* Show who took it */}
+                          {!isAvailable && variant.takenBy && (
+                            <p className="text-sub text-xs text-neutral-500 truncate">
+                              {variant.takenBy.firstName}
+                            </p>
+                          )}
+                          {isSelected && isAvailable && (
                             <div className="mt-1 flex items-center justify-center text-primary-400 text-sub text-xs gap-1">
                               <MdCheck className="text-xs" />
                               Choisi

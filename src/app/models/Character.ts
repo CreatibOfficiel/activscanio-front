@@ -11,3 +11,23 @@ export interface CharacterVariant {
   imageUrl: string; // Image for this specific variant (e.g., "/characters/yoshi/red.png")
   baseCharacter: { id: string; name: string; imageUrl?: string };
 }
+
+// Extended types with availability status (for onboarding)
+export interface CharacterVariantWithAvailability {
+  id: string;
+  label: string;
+  imageUrl: string;
+  isAvailable: boolean;
+  takenBy?: {
+    firstName: string;
+    profilePictureUrl?: string;
+  };
+}
+
+export interface BaseCharacterWithAvailability {
+  id: string;
+  name: string;
+  imageUrl: string;
+  variants: CharacterVariantWithAvailability[];
+  hasAvailableVariants: boolean;
+}

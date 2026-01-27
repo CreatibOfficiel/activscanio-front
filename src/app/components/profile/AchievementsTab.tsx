@@ -1,6 +1,9 @@
 'use client';
 
 import { FC, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { motion } from 'motion/react';
+import { MdArrowForward, MdEmojiEvents } from 'react-icons/md';
 import { UserStats, Achievement, AchievementCategory, AchievementRarity } from '../../models/Achievement';
 import { AchievementsRepository } from '../../repositories/AchievementsRepository';
 import AchievementShowcase from './AchievementShowcase';
@@ -8,15 +11,12 @@ import { AchievementCard } from '../achievements';
 import { Skeleton } from '../ui';
 
 // Category display names
-const CATEGORY_LABELS: Record<AchievementCategory, { label: string; icon: string }> = {
-  [AchievementCategory.PRECISION]: { label: 'Précision', icon: '🎯' },
-  [AchievementCategory.REGULARITY]: { label: 'Régularité', icon: '📅' },
-  [AchievementCategory.AUDACITY]: { label: 'Audace', icon: '💥' },
-  [AchievementCategory.RANKING]: { label: 'Classement', icon: '🏆' },
+const CATEGORY_LABELS: Record<AchievementCategory, { label: string; icon: string; color: string }> = {
+  [AchievementCategory.PRECISION]: { label: 'Précision', icon: '🎯', color: 'text-emerald-400' },
+  [AchievementCategory.REGULARITY]: { label: 'Régularité', icon: '📅', color: 'text-blue-400' },
+  [AchievementCategory.AUDACITY]: { label: 'Audace', icon: '💥', color: 'text-orange-400' },
+  [AchievementCategory.RANKING]: { label: 'Classement', icon: '🏆', color: 'text-purple-400' },
 };
-
-// Filter types
-type FilterStatus = 'all' | 'unlocked' | 'locked';
 
 interface AchievementsTabProps {
   stats: UserStats;
@@ -25,13 +25,13 @@ interface AchievementsTabProps {
 }
 
 /**
- * AchievementsTab Component
+ * AchievementsTab Component (Simplified)
  *
- * Achievements tab displaying:
- * - Global progress bar
- * - Category and status filters
- * - Showcase section (featured achievements)
- * - Complete achievement grid
+ * Profile tab displaying achievement summary:
+ * - Global progress bar with rarity breakdown
+ * - Category progress overview
+ * - Showcase of recent/rare achievements
+ * - Link to full achievements page
  */
 const AchievementsTab: FC<AchievementsTabProps> = ({
   stats,
@@ -41,8 +41,6 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<AchievementCategory | 'all'>('all');
-  const [selectedStatus, setSelectedStatus] = useState<FilterStatus>('all');
 
   // Fetch all achievements with user context
   useEffect(() => {
@@ -63,41 +61,29 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
     fetchAchievements();
   }, [authToken]);
 
-  // Filter achievements based on selected filters
-  const filteredAchievements = achievements.filter((achievement) => {
-    // Category filter
-    if (selectedCategory !== 'all' && achievement.category !== selectedCategory) {
-      return false;
-    }
-
-    // Status filter
-    if (selectedStatus === 'unlocked' && !achievement.isUnlocked) {
-      return false;
-    }
-    if (selectedStatus === 'locked' && achievement.isUnlocked) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Separate unlocked and locked for showcase
+  // Get unlocked achievements for showcase
   const unlockedAchievements = achievements.filter((a) => a.isUnlocked);
 
-  // Sort achievements: unlocked first, then by rarity
-  const sortedFilteredAchievements = [...filteredAchievements].sort((a, b) => {
-    // Unlocked first
-    if (a.isUnlocked && !b.isUnlocked) return -1;
-    if (!a.isUnlocked && b.isUnlocked) return 1;
+  // Get recent achievements (last 6 unlocked, sorted by rarity)
+  const recentAchievements = [...unlockedAchievements]
+    .sort((a, b) => {
+      const rarityOrder: Record<AchievementRarity, number> = {
+        [AchievementRarity.LEGENDARY]: 4,
+        [AchievementRarity.EPIC]: 3,
+        [AchievementRarity.RARE]: 2,
+        [AchievementRarity.COMMON]: 1,
+      };
+      return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+    })
+    .slice(0, 6);
 
-    // Then by rarity (Legendary > Epic > Rare > Common)
-    const rarityOrder: Record<AchievementRarity, number> = {
-      [AchievementRarity.LEGENDARY]: 4,
-      [AchievementRarity.EPIC]: 3,
-      [AchievementRarity.RARE]: 2,
-      [AchievementRarity.COMMON]: 1,
-    };
-    return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+  // Calculate category stats
+  const categoryStats = Object.values(AchievementCategory).map((category) => {
+    const categoryAchievements = achievements.filter((a) => a.category === category);
+    const unlocked = categoryAchievements.filter((a) => a.isUnlocked).length;
+    const total = categoryAchievements.length;
+    const progress = total > 0 ? (unlocked / total) * 100 : 0;
+    return { category, unlocked, total, progress };
   });
 
   if (loading) {
@@ -108,11 +94,11 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
         aria-labelledby="tab-achievements"
         className={`space-y-6 ${className}`}
       >
+        <Skeleton className="h-32 rounded-xl" />
         <Skeleton className="h-24 rounded-xl" />
-        <Skeleton className="h-12 rounded-xl" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
       </div>
@@ -140,21 +126,27 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
       className={`space-y-6 ${className}`}
     >
       {/* Global Progress */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-5 rounded-xl bg-neutral-800 border border-neutral-700"
+      >
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <span>📊</span>
-            <span>Progression Globale</span>
+            <span>Progression globale</span>
           </h3>
           <span className="text-sm font-medium text-primary-400">
             {stats.unlockedAchievements}/{stats.totalAchievements}
           </span>
         </div>
 
-        <div className="relative h-4 bg-neutral-900 rounded-full overflow-hidden">
-          <div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-700"
-            style={{ width: `${stats.achievementProgress}%` }}
+        <div className="relative h-4 bg-neutral-900 rounded-full overflow-hidden mb-4">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${stats.achievementProgress}%` }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-primary-400"
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xs font-bold text-white drop-shadow">
@@ -164,17 +156,17 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
         </div>
 
         {/* Stats by rarity */}
-        <div className="grid grid-cols-4 gap-2 mt-4">
+        <div className="grid grid-cols-4 gap-2">
           {([
-            { rarity: AchievementRarity.COMMON, label: 'Commun', color: 'text-neutral-400' },
-            { rarity: AchievementRarity.RARE, label: 'Rare', color: 'text-blue-400' },
-            { rarity: AchievementRarity.EPIC, label: 'Épique', color: 'text-orange-400' },
-            { rarity: AchievementRarity.LEGENDARY, label: 'Légendaire', color: 'text-purple-400' },
-          ] as const).map(({ rarity, label, color }) => {
+            { rarity: AchievementRarity.COMMON, label: 'Commun', color: 'text-neutral-400', bg: 'bg-neutral-700' },
+            { rarity: AchievementRarity.RARE, label: 'Rare', color: 'text-blue-400', bg: 'bg-blue-500/20' },
+            { rarity: AchievementRarity.EPIC, label: 'Épique', color: 'text-orange-400', bg: 'bg-orange-500/20' },
+            { rarity: AchievementRarity.LEGENDARY, label: 'Légendaire', color: 'text-purple-400', bg: 'bg-purple-500/20' },
+          ] as const).map(({ rarity, label, color, bg }) => {
             const total = achievements.filter((a) => a.rarity === rarity).length;
             const unlocked = achievements.filter((a) => a.rarity === rarity && a.isUnlocked).length;
             return (
-              <div key={rarity} className="text-center">
+              <div key={rarity} className={`text-center p-2 rounded-lg ${bg}`}>
                 <div className={`text-sm font-bold ${color}`}>
                   {unlocked}/{total}
                 </div>
@@ -183,85 +175,87 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {/* Category filters */}
-        <button
-          onClick={() => setSelectedCategory('all')}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            selectedCategory === 'all'
-              ? 'bg-primary-500 text-neutral-900'
-              : 'bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-700'
-          }`}
+      {/* Category Progress */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="p-5 rounded-xl bg-neutral-800 border border-neutral-700"
+      >
+        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <span>📈</span>
+          <span>Par catégorie</span>
+        </h3>
+
+        <div className="space-y-3">
+          {categoryStats.map(({ category, unlocked, total, progress }) => {
+            const { label, icon, color } = CATEGORY_LABELS[category];
+            return (
+              <div key={category} className="flex items-center gap-3">
+                <span className="text-xl w-8">{icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-sm font-medium ${color}`}>{label}</span>
+                    <span className="text-xs text-neutral-500">{unlocked}/{total}</span>
+                  </div>
+                  <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 0.8, delay: 0.2 }}
+                      className={`h-full rounded-full ${
+                        category === AchievementCategory.PRECISION ? 'bg-emerald-500' :
+                        category === AchievementCategory.REGULARITY ? 'bg-blue-500' :
+                        category === AchievementCategory.AUDACITY ? 'bg-orange-500' :
+                        'bg-purple-500'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Showcase - Best Achievements */}
+      {unlockedAchievements.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="p-5 rounded-xl bg-neutral-800 border border-neutral-700"
         >
-          Tous
-        </button>
-        {Object.entries(CATEGORY_LABELS).map(([cat, { label, icon }]) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat as AchievementCategory)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-              selectedCategory === cat
-                ? 'bg-primary-500 text-neutral-900'
-                : 'bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-700'
-            }`}
-          >
-            <span>{icon}</span>
-            <span>{label}</span>
-          </button>
-        ))}
-
-        {/* Separator */}
-        <div className="w-px h-8 bg-neutral-700 mx-2" />
-
-        {/* Status filters */}
-        {([
-          { status: 'all' as FilterStatus, label: 'Tous' },
-          { status: 'unlocked' as FilterStatus, label: 'Débloqués' },
-          { status: 'locked' as FilterStatus, label: 'Verrouillés' },
-        ]).map(({ status, label }) => (
-          <button
-            key={status}
-            onClick={() => setSelectedStatus(status)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              selectedStatus === status
-                ? 'bg-neutral-600 text-white'
-                : 'bg-neutral-800 text-neutral-400 hover:text-white border border-neutral-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Showcase (only when showing all or unlocked) */}
-      {selectedStatus !== 'locked' && selectedCategory === 'all' && unlockedAchievements.length > 0 && (
-        <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700">
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <span>✨</span>
             <span>Succès à l&apos;Honneur</span>
           </h3>
           <AchievementShowcase achievements={unlockedAchievements} />
-        </div>
+        </motion.div>
       )}
 
-      {/* Achievement Grid */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span>🏆</span>
-          <span>
-            {selectedCategory === 'all' ? 'Tous les Succès' : CATEGORY_LABELS[selectedCategory].label}
-          </span>
-          <span className="text-sm font-normal text-neutral-500">
-            ({sortedFilteredAchievements.length})
-          </span>
-        </h3>
+      {/* Recent/Best Achievements Preview */}
+      {recentAchievements.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="p-5 rounded-xl bg-neutral-800 border border-neutral-700"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <MdEmojiEvents className="text-gold-500" />
+              <span>Meilleurs succès</span>
+            </h3>
+            <span className="text-sm text-neutral-500">
+              {unlockedAchievements.length} débloqués
+            </span>
+          </div>
 
-        {sortedFilteredAchievements.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedFilteredAchievements.map((achievement) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {recentAchievements.map((achievement) => (
               <AchievementCard
                 key={achievement.id}
                 achievement={achievement}
@@ -269,13 +263,35 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
               />
             ))}
           </div>
-        ) : (
-          <div className="text-center py-8 text-neutral-400">
-            <div className="text-4xl mb-2">🔍</div>
-            <p>Aucun succès trouvé avec ces filtres</p>
+        </motion.div>
+      )}
+
+      {/* CTA - View All Achievements */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Link
+          href="/achievements"
+          className="flex items-center justify-between p-5 rounded-xl bg-gradient-to-r from-primary-500/10 to-primary-600/10 border border-primary-500/30 hover:border-primary-500/50 hover:from-primary-500/20 hover:to-primary-600/20 transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center">
+              <span className="text-2xl">🏆</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-white group-hover:text-primary-400 transition-colors">
+                Explorer tous les succès
+              </h3>
+              <p className="text-sm text-neutral-400">
+                {achievements.length} succès • {achievements.length - unlockedAchievements.length} à débloquer
+              </p>
+            </div>
           </div>
-        )}
-      </div>
+          <MdArrowForward className="w-6 h-6 text-primary-400 group-hover:translate-x-1 transition-transform" />
+        </Link>
+      </motion.div>
     </div>
   );
 };

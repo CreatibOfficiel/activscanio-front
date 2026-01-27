@@ -37,11 +37,6 @@ interface XPProgressChartProps {
  * - Configurable time periods (7d, 30d, 3m, 1y)
  * - Loading skeleton for better UX
  * - Optimized with React.memo and useMemo
- *
- * @example
- * ```tsx
- * <XPProgressChart userId="user-123" period="30d" />
- * ```
  */
 const XPProgressChart = React.memo(function XPProgressChart({
   userId,
@@ -92,7 +87,6 @@ const XPProgressChart = React.memo(function XPProgressChart({
   if (loading) {
     return (
       <div className={className}>
-        <Skeleton variant="text" width="40%" height="24px" className="mb-4" />
         <div className="space-y-3">
           <Skeleton variant="rectangular" height="300px" />
           <div className="flex justify-center gap-4 mt-2">
@@ -106,15 +100,15 @@ const XPProgressChart = React.memo(function XPProgressChart({
 
   if (error) {
     return (
-      <div className={`p-4 bg-red-50 border border-red-200 rounded-lg ${className}`}>
-        <p className="text-red-600 text-sm">{error}</p>
+      <div className={`p-4 bg-error-500/10 border border-error-500/30 rounded-lg ${className}`}>
+        <p className="text-error-400 text-sm">{error}</p>
       </div>
     );
   }
 
   if (chartData.length === 0) {
     return (
-      <div className={`p-8 text-center text-gray-500 ${className}`}>
+      <div className={`p-8 text-center text-neutral-500 ${className}`}>
         Aucune donnée disponible pour cette période
       </div>
     );
@@ -122,33 +116,33 @@ const XPProgressChart = React.memo(function XPProgressChart({
 
   return (
     <div className={className}>
-      <h3 className="text-lg font-semibold mb-4">Progression XP</h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#404040" />
           <XAxis
             dataKey="date"
-            stroke="#6b7280"
+            stroke="#a3a3a3"
             style={{ fontSize: '12px' }}
           />
-          <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
+          <YAxis stroke="#a3a3a3" style={{ fontSize: '12px' }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              backgroundColor: '#262626',
+              border: '1px solid #404040',
               borderRadius: '8px',
+              color: '#fff',
             }}
-            labelStyle={{ fontWeight: 'bold' }}
+            labelStyle={{ fontWeight: 'bold', color: '#fff' }}
           />
-          <Legend />
+          <Legend wrapperStyle={{ color: '#a3a3a3' }} />
           <Line
             type="monotone"
             dataKey="xp"
             stroke="#8b5cf6"
             strokeWidth={2}
             name="XP quotidien"
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            dot={{ r: 3, fill: '#8b5cf6' }}
+            activeDot={{ r: 5, fill: '#8b5cf6' }}
           />
           <Line
             type="monotone"
@@ -156,8 +150,8 @@ const XPProgressChart = React.memo(function XPProgressChart({
             stroke="#10b981"
             strokeWidth={2}
             name="XP cumulé"
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            dot={{ r: 3, fill: '#10b981' }}
+            activeDot={{ r: 5, fill: '#10b981' }}
           />
         </LineChart>
       </ResponsiveContainer>

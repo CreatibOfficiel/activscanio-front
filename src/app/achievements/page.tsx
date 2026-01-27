@@ -1,16 +1,41 @@
 'use client';
 
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
+import { motion } from 'motion/react';
+import * as Tabs from '@radix-ui/react-tabs';
+import { MdArrowBack, MdPerson } from 'react-icons/md';
+import { LayoutGrid, GitBranch } from 'lucide-react';
 import {
   Achievement,
   AchievementCategory,
   AchievementRarity,
 } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
-import { AchievementGrid } from '../components/achievements';
+import { AchievementGrid, CollapsibleCategorySection } from '../components/achievements';
 import AchievementChain from '../components/achievements/AchievementChain';
-import { LayoutGrid, GitBranch } from 'lucide-react';
+
+// Category metadata for display
+const categoryMeta: Record<AchievementCategory, { name: string; icon: string; color: string }> = {
+  [AchievementCategory.PRECISION]: { name: 'Précision', icon: '🎯', color: 'text-emerald-400' },
+  [AchievementCategory.REGULARITY]: { name: 'Régularité', icon: '📅', color: 'text-blue-400' },
+  [AchievementCategory.AUDACITY]: { name: 'Audace', icon: '🎲', color: 'text-orange-400' },
+  [AchievementCategory.RANKING]: { name: 'Classement', icon: '🏅', color: 'text-purple-400' },
+};
+
+// Rarity metadata
+const rarityMeta: Record<AchievementRarity, { label: string; color: string; bg: string }> = {
+  [AchievementRarity.COMMON]: { label: 'Commun', color: 'text-neutral-400', bg: 'bg-neutral-700' },
+  [AchievementRarity.RARE]: { label: 'Rare', color: 'text-blue-400', bg: 'bg-blue-500/20' },
+  [AchievementRarity.EPIC]: { label: 'Épique', color: 'text-orange-400', bg: 'bg-orange-500/20' },
+  [AchievementRarity.LEGENDARY]: { label: 'Légendaire', color: 'text-purple-400', bg: 'bg-purple-500/20' },
+};
+
+// Filter types
+type FilterStatus = 'all' | 'unlocked' | 'locked';
+type FilterCategory = AchievementCategory | 'all';
+type FilterRarity = AchievementRarity | 'all';
 
 const AchievementsPage: FC = () => {
   const { getToken } = useAuth();
@@ -19,62 +44,23 @@ const AchievementsPage: FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
-  const [selectedCategory, setSelectedCategory] = useState<
-    AchievementCategory | 'ALL'
-  >('ALL');
-  const [selectedRarity, setSelectedRarity] = useState<
-    AchievementRarity | 'ALL'
-  >('ALL');
-  const [showUnlockedOnly, setShowUnlockedOnly] = useState(false);
-  const [showLockedOnly, setShowLockedOnly] = useState(false);
-
-  // Stats
-  const [stats, setStats] = useState({
-    total: 0,
-    unlocked: 0,
-    locked: 0,
-    progress: 0,
-  });
+  // Filters using Radix Tabs state
+  const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
+  const [selectedRarity, setSelectedRarity] = useState<FilterRarity>('all');
+  const [selectedStatus, setSelectedStatus] = useState<FilterStatus>('all');
 
   // View toggle
   const [view, setView] = useState<'grid' | 'chains'>('grid');
 
-  // Fetch achievements
+  // Fetch all achievements once
   useEffect(() => {
     const fetchAchievements = async () => {
       try {
         setLoading(true);
         setError(null);
-
         const token = await getToken();
-
-        const params: Record<string, string | boolean> = {};
-        if (selectedCategory !== 'ALL') params.category = selectedCategory;
-        if (selectedRarity !== 'ALL') params.rarity = selectedRarity;
-        if (showUnlockedOnly) params.unlockedOnly = true;
-        if (showLockedOnly) params.lockedOnly = true;
-
-        const data = await AchievementsRepository.getAchievements(
-          params,
-          token || undefined
-        );
-
+        const data = await AchievementsRepository.getAchievements({}, token || undefined);
         setAchievements(data);
-
-        // Calculate stats
-        const totalCount = data.length;
-        const unlockedCount = data.filter((a) => a.isUnlocked).length;
-        const lockedCount = totalCount - unlockedCount;
-        const progressPercent =
-          totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0;
-
-        setStats({
-          total: totalCount,
-          unlocked: unlockedCount,
-          locked: lockedCount,
-          progress: progressPercent,
-        });
       } catch (err) {
         console.error('Error fetching achievements:', err);
         setError('Impossible de charger les achievements');
@@ -84,164 +70,285 @@ const AchievementsPage: FC = () => {
     };
 
     fetchAchievements();
-  }, [selectedCategory, selectedRarity, showUnlockedOnly, showLockedOnly, getToken]);
+  }, [getToken]);
+
+  // Filter achievements client-side
+  const filteredAchievements = useMemo(() => {
+    return achievements.filter((a) => {
+      if (selectedCategory !== 'all' && a.category !== selectedCategory) return false;
+      if (selectedRarity !== 'all' && a.rarity !== selectedRarity) return false;
+      if (selectedStatus === 'unlocked' && !a.isUnlocked) return false;
+      if (selectedStatus === 'locked' && a.isUnlocked) return false;
+      return true;
+    });
+  }, [achievements, selectedCategory, selectedRarity, selectedStatus]);
+
+  // Stats
+  const stats = useMemo(() => {
+    const total = achievements.length;
+    const unlocked = achievements.filter((a) => a.isUnlocked).length;
+    return {
+      total,
+      unlocked,
+      locked: total - unlocked,
+      progress: total > 0 ? (unlocked / total) * 100 : 0,
+    };
+  }, [achievements]);
+
+  // Stats by rarity
+  const rarityStats = useMemo(() => {
+    return Object.values(AchievementRarity).map((rarity) => {
+      const total = achievements.filter((a) => a.rarity === rarity).length;
+      const unlocked = achievements.filter((a) => a.rarity === rarity && a.isUnlocked).length;
+      return { rarity, total, unlocked };
+    });
+  }, [achievements]);
+
+  // Group achievements by category for grid view
+  const groupedByCategory = useMemo(() => {
+    const groups: Record<AchievementCategory, Achievement[]> = {
+      [AchievementCategory.PRECISION]: [],
+      [AchievementCategory.REGULARITY]: [],
+      [AchievementCategory.AUDACITY]: [],
+      [AchievementCategory.RANKING]: [],
+    };
+
+    filteredAchievements.forEach((a) => {
+      if (groups[a.category]) {
+        groups[a.category].push(a);
+      }
+    });
+
+    return groups;
+  }, [filteredAchievements]);
+
+  // Order of categories for display
+  const categoryOrder: AchievementCategory[] = [
+    AchievementCategory.PRECISION,
+    AchievementCategory.REGULARITY,
+    AchievementCategory.AUDACITY,
+    AchievementCategory.RANKING,
+  ];
 
   return (
-    <div className="min-h-screen bg-neutral-900 p-6">
+    <div className="min-h-screen bg-neutral-900 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            🏆 Achievements
-          </h1>
-          <p className="text-neutral-400">
-            Débloquez des achievements en jouant et gagnez de l&apos;XP !
-          </p>
-        </div>
+        {/* Header with back button */}
+        <div className="mb-6">
+          <Link
+            href="/profile?tab=achievements"
+            className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors mb-4"
+          >
+            <MdArrowBack className="w-5 h-5" />
+            <span className="text-sm">Retour au profil</span>
+          </Link>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="p-4 rounded-lg bg-neutral-800 border border-neutral-700">
-            <div className="text-sm text-neutral-400 mb-1">Total</div>
-            <div className="text-3xl font-bold text-white">{stats.total}</div>
-          </div>
-          <div className="p-4 rounded-lg bg-neutral-800 border border-success-500/30">
-            <div className="text-sm text-neutral-400 mb-1">Débloqués</div>
-            <div className="text-3xl font-bold text-success-400">
-              {stats.unlocked}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+                <span>🏆</span>
+                <span>Tous les Succès</span>
+              </h1>
+              <p className="text-neutral-400">
+                Explorez et suivez votre progression sur tous les achievements
+              </p>
             </div>
-          </div>
-          <div className="p-4 rounded-lg bg-neutral-800 border border-neutral-700">
-            <div className="text-sm text-neutral-400 mb-1">Verrouillés</div>
-            <div className="text-3xl font-bold text-neutral-400">
-              {stats.locked}
-            </div>
-          </div>
-          <div className="p-4 rounded-lg bg-neutral-800 border border-primary-500/30">
-            <div className="text-sm text-neutral-400 mb-1">Progression</div>
-            <div className="text-3xl font-bold text-primary-400">
-              {stats.progress.toFixed(0)}%
-            </div>
+
+            {/* Quick link to profile */}
+            <Link
+              href="/profile"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-600 transition-all"
+            >
+              <MdPerson className="w-5 h-5" />
+              <span className="text-sm font-medium">Mon Profil</span>
+            </Link>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-6 p-4 rounded-lg bg-neutral-800 border border-neutral-700">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Category filter */}
+        {/* Progress Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-5 rounded-xl bg-neutral-800 border border-neutral-700"
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+            {/* Main progress */}
             <div className="flex-1">
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                Catégorie
-              </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) =>
-                  setSelectedCategory(
-                    e.target.value as AchievementCategory | 'ALL'
-                  )
-                }
-                className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="ALL">Toutes les catégories</option>
-                <option value={AchievementCategory.PRECISION}>
-                  🎯 Précision
-                </option>
-                <option value={AchievementCategory.REGULARITY}>
-                  📅 Régularité
-                </option>
-                <option value={AchievementCategory.AUDACITY}>
-                  🎲 Audace
-                </option>
-                <option value={AchievementCategory.RANKING}>
-                  🏅 Classement
-                </option>
-              </select>
-            </div>
-
-            {/* Rarity filter */}
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                Rareté
-              </label>
-              <select
-                value={selectedRarity}
-                onChange={(e) =>
-                  setSelectedRarity(e.target.value as AchievementRarity | 'ALL')
-                }
-                className="w-full px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="ALL">Toutes les raretés</option>
-                <option value={AchievementRarity.COMMON}>⚪ Commun</option>
-                <option value={AchievementRarity.RARE}>🔵 Rare</option>
-                <option value={AchievementRarity.EPIC}>🟠 Épique</option>
-                <option value={AchievementRarity.LEGENDARY}>
-                  🟣 Légendaire
-                </option>
-              </select>
-            </div>
-
-            {/* Status filter */}
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                Statut
-              </label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setShowUnlockedOnly(!showUnlockedOnly);
-                    if (!showUnlockedOnly) setShowLockedOnly(false);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded-lg border transition-all ${
-                    showUnlockedOnly
-                      ? 'bg-success-500/20 border-success-500 text-success-400'
-                      : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:border-neutral-600'
-                  }`}
-                >
-                  ✓ Débloqués
-                </button>
-                <button
-                  onClick={() => {
-                    setShowLockedOnly(!showLockedOnly);
-                    if (!showLockedOnly) setShowUnlockedOnly(false);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded-lg border transition-all ${
-                    showLockedOnly
-                      ? 'bg-neutral-700/50 border-neutral-600 text-neutral-300'
-                      : 'bg-neutral-900 border-neutral-700 text-neutral-400 hover:border-neutral-600'
-                  }`}
-                >
-                  🔒 Verrouillés
-                </button>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-white">Progression globale</h3>
+                <span className="text-sm font-medium text-primary-400">
+                  {stats.unlocked}/{stats.total} ({stats.progress.toFixed(0)}%)
+                </span>
+              </div>
+              <div className="relative h-3 bg-neutral-900 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${stats.progress}%` }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-primary-400"
+                />
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* View Toggle */}
-        <div className="mb-6 flex items-center justify-center gap-2 p-2 rounded-lg bg-neutral-800 border border-neutral-700 w-fit mx-auto">
-          <button
-            onClick={() => setView('grid')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-              view === 'grid'
-                ? 'bg-primary-500 text-white'
-                : 'text-neutral-400 hover:text-white hover:bg-neutral-700'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span className="text-sm font-medium">Grille</span>
-          </button>
-          <button
-            onClick={() => setView('chains')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-              view === 'chains'
-                ? 'bg-primary-500 text-white'
-                : 'text-neutral-400 hover:text-white hover:bg-neutral-700'
-            }`}
-          >
-            <GitBranch className="w-4 h-4" />
-            <span className="text-sm font-medium">Chaînes</span>
-          </button>
-        </div>
+            {/* Rarity breakdown */}
+            <div className="flex gap-2 flex-wrap">
+              {rarityStats.map(({ rarity, total, unlocked }) => {
+                const { label, color, bg } = rarityMeta[rarity];
+                return (
+                  <div
+                    key={rarity}
+                    className={`px-3 py-2 rounded-lg ${bg} text-center min-w-[70px]`}
+                  >
+                    <div className={`text-sm font-bold ${color}`}>
+                      {unlocked}/{total}
+                    </div>
+                    <div className="text-xs text-neutral-500">{label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6 p-4 rounded-xl bg-neutral-800 border border-neutral-700"
+        >
+          <div className="flex flex-col gap-4">
+            {/* Row 1: Status filter */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-medium text-neutral-400">Statut:</span>
+              <Tabs.Root
+                value={selectedStatus}
+                onValueChange={(value) => setSelectedStatus(value as FilterStatus)}
+              >
+                <Tabs.List className="inline-flex p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
+                  {([
+                    { value: 'all' as FilterStatus, label: 'Tous', icon: '📋' },
+                    { value: 'unlocked' as FilterStatus, label: 'Débloqués', icon: '✅' },
+                    { value: 'locked' as FilterStatus, label: 'Verrouillés', icon: '🔒' },
+                  ]).map(({ value, label, icon }) => (
+                    <Tabs.Trigger
+                      key={value}
+                      value={value}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        data-[state=active]:bg-neutral-600 data-[state=active]:text-white
+                        data-[state=inactive]:text-neutral-400 data-[state=inactive]:hover:text-neutral-300"
+                    >
+                      <span>{icon}</span>
+                      <span className="hidden sm:inline">{label}</span>
+                    </Tabs.Trigger>
+                  ))}
+                </Tabs.List>
+              </Tabs.Root>
+
+              <div className="w-px h-6 bg-neutral-700 hidden sm:block" />
+
+              {/* View toggle */}
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-sm font-medium text-neutral-400 hidden sm:inline">Vue:</span>
+                <Tabs.Root
+                  value={view}
+                  onValueChange={(value) => setView(value as 'grid' | 'chains')}
+                >
+                  <Tabs.List className="inline-flex p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
+                    <Tabs.Trigger
+                      value="grid"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        data-[state=active]:bg-primary-500 data-[state=active]:text-neutral-900
+                        data-[state=inactive]:text-neutral-400 data-[state=inactive]:hover:text-neutral-300"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      <span className="hidden sm:inline">Grille</span>
+                    </Tabs.Trigger>
+                    <Tabs.Trigger
+                      value="chains"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        data-[state=active]:bg-primary-500 data-[state=active]:text-neutral-900
+                        data-[state=inactive]:text-neutral-400 data-[state=inactive]:hover:text-neutral-300"
+                    >
+                      <GitBranch className="w-4 h-4" />
+                      <span className="hidden sm:inline">Chaînes</span>
+                    </Tabs.Trigger>
+                  </Tabs.List>
+                </Tabs.Root>
+              </div>
+            </div>
+
+            {/* Row 2: Category filter */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-medium text-neutral-400">Catégorie:</span>
+              <Tabs.Root
+                value={selectedCategory}
+                onValueChange={(value) => setSelectedCategory(value as FilterCategory)}
+              >
+                <Tabs.List className="inline-flex flex-wrap p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
+                  <Tabs.Trigger
+                    value="all"
+                    className="px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                      data-[state=active]:bg-primary-500 data-[state=active]:text-neutral-900
+                      data-[state=inactive]:text-neutral-400 data-[state=inactive]:hover:text-neutral-300"
+                  >
+                    Toutes
+                  </Tabs.Trigger>
+                  {Object.entries(categoryMeta).map(([cat, { name, icon }]) => (
+                    <Tabs.Trigger
+                      key={cat}
+                      value={cat}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        data-[state=active]:bg-primary-500 data-[state=active]:text-neutral-900
+                        data-[state=inactive]:text-neutral-400 data-[state=inactive]:hover:text-neutral-300"
+                    >
+                      <span>{icon}</span>
+                      <span className="hidden md:inline">{name}</span>
+                    </Tabs.Trigger>
+                  ))}
+                </Tabs.List>
+              </Tabs.Root>
+            </div>
+
+            {/* Row 3: Rarity filter */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-medium text-neutral-400">Rareté:</span>
+              <Tabs.Root
+                value={selectedRarity}
+                onValueChange={(value) => setSelectedRarity(value as FilterRarity)}
+              >
+                <Tabs.List className="inline-flex flex-wrap p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
+                  <Tabs.Trigger
+                    value="all"
+                    className="px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                      data-[state=active]:bg-primary-500 data-[state=active]:text-neutral-900
+                      data-[state=inactive]:text-neutral-400 data-[state=inactive]:hover:text-neutral-300"
+                  >
+                    Toutes
+                  </Tabs.Trigger>
+                  {Object.entries(rarityMeta).map(([rarity, { label, color }]) => (
+                    <Tabs.Trigger
+                      key={rarity}
+                      value={rarity}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        data-[state=active]:bg-primary-500 data-[state=active]:text-neutral-900
+                        data-[state=inactive]:${color} data-[state=inactive]:hover:opacity-80`}
+                    >
+                      {label}
+                    </Tabs.Trigger>
+                  ))}
+                </Tabs.List>
+              </Tabs.Root>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Results count */}
+        {!loading && (
+          <div className="mb-4 text-sm text-neutral-500">
+            {filteredAchievements.length} achievement{filteredAchievements.length !== 1 ? 's' : ''} trouvé{filteredAchievements.length !== 1 ? 's' : ''}
+          </div>
+        )}
 
         {/* Error state */}
         {error && (
@@ -250,13 +357,85 @@ const AchievementsPage: FC = () => {
           </div>
         )}
 
-        {/* Grid View */}
+        {/* Grid View - Grouped by Category */}
         {view === 'grid' && (
-          <AchievementGrid
-            achievements={achievements}
-            loading={loading}
-            emptyMessage="Aucun achievement ne correspond à vos filtres"
-          />
+          <>
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500" />
+              </div>
+            ) : filteredAchievements.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="text-6xl mb-4">🔍</div>
+                <p className="text-lg text-neutral-400">
+                  Aucun achievement ne correspond à vos filtres
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setSelectedRarity('all');
+                    setSelectedStatus('all');
+                  }}
+                  className="mt-4 px-4 py-2 rounded-lg bg-primary-500 text-neutral-900 font-medium hover:bg-primary-400 transition-colors"
+                >
+                  Réinitialiser les filtres
+                </button>
+              </div>
+            ) : selectedCategory !== 'all' ? (
+              // Single category view - no sections needed
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              >
+                {filteredAchievements.map((achievement) => (
+                  <motion.div
+                    key={achievement.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <div className="h-full">
+                      {/* Using AchievementCard from the grid */}
+                      <AchievementGrid
+                        achievements={[achievement]}
+                        loading={false}
+                        emptyMessage=""
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              // All categories - show collapsible sections
+              <div className="space-y-6">
+                {categoryOrder.map((category, index) => {
+                  const items = groupedByCategory[category];
+                  if (items.length === 0) return null;
+
+                  return (
+                    <motion.div
+                      key={category}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      {/* Divider between categories */}
+                      {index > 0 && (
+                        <div className="border-t border-neutral-700 mb-6" />
+                      )}
+                      <CollapsibleCategorySection
+                        categoryKey={category}
+                        categoryName={categoryMeta[category].name}
+                        categoryIcon={categoryMeta[category].icon}
+                        achievements={items}
+                        defaultExpanded={true}
+                      />
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
 
         {/* Chains View */}
@@ -266,12 +445,22 @@ const AchievementsPage: FC = () => {
               <div className="flex items-center justify-center py-16">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500" />
               </div>
-            ) : achievements.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">🏆</div>
+            ) : filteredAchievements.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="text-6xl mb-4">🔍</div>
                 <p className="text-neutral-400 text-lg">
                   Aucun achievement ne correspond à vos filtres
                 </p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setSelectedRarity('all');
+                    setSelectedStatus('all');
+                  }}
+                  className="mt-4 px-4 py-2 rounded-lg bg-primary-500 text-neutral-900 font-medium hover:bg-primary-400 transition-colors"
+                >
+                  Réinitialiser les filtres
+                </button>
               </div>
             ) : (
               <>
@@ -280,7 +469,7 @@ const AchievementsPage: FC = () => {
                   const chainGroups = new Map<string, Achievement[]>();
                   const standalone: Achievement[] = [];
 
-                  achievements.forEach((achievement) => {
+                  filteredAchievements.forEach((achievement) => {
                     if (achievement.chainName) {
                       if (!chainGroups.has(achievement.chainName)) {
                         chainGroups.set(achievement.chainName, []);
@@ -302,18 +491,28 @@ const AchievementsPage: FC = () => {
                   return (
                     <>
                       {/* Render chains */}
-                      {Array.from(chainGroups.entries()).map(([chainName, chainAchievements]) => (
-                        <AchievementChain
+                      {Array.from(chainGroups.entries()).map(([chainName, chainAchievements], index) => (
+                        <motion.div
                           key={chainName}
-                          chainName={chainName}
-                          chainTitle={chainTitles[chainName] || chainName}
-                          achievements={chainAchievements}
-                        />
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <AchievementChain
+                            chainName={chainName}
+                            chainTitle={chainTitles[chainName] || chainName}
+                            achievements={chainAchievements}
+                          />
+                        </motion.div>
                       ))}
 
                       {/* Render standalone achievements */}
                       {standalone.length > 0 && (
-                        <div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: chainGroups.size * 0.1 }}
+                        >
                           <h3 className="text-xl font-bold text-white mb-4">
                             🌟 Achievements Indépendants
                           </h3>
@@ -322,7 +521,7 @@ const AchievementsPage: FC = () => {
                             loading={false}
                             emptyMessage=""
                           />
-                        </div>
+                        </motion.div>
                       )}
                     </>
                   );

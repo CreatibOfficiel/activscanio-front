@@ -18,6 +18,25 @@ export interface Competitor {
   provisional?: boolean;
 }
 
+// Competitor with availability status (for onboarding)
+export interface CompetitorWithAvailability {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profilePictureUrl: string;
+  characterVariant?: {
+    id: string;
+    label: string;
+    imageUrl: string;
+    baseCharacter: {
+      id: string;
+      name: string;
+      imageUrl?: string;
+    };
+  } | null;
+  isAvailable: boolean;
+}
+
 /* -------- Helpers types -------- */
 
 export const getFullName = (c: Competitor) =>

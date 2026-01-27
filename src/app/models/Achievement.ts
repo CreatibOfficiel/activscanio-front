@@ -9,6 +9,15 @@ export enum AchievementCategory {
 }
 
 /**
+ * Achievement domain enum
+ * Distinguishes between betting achievements and racing achievements
+ */
+export enum AchievementDomain {
+  BETTING = 'betting',
+  RACING = 'racing',
+}
+
+/**
  * Achievement rarity enum
  */
 export enum AchievementRarity {
@@ -31,6 +40,9 @@ export interface Achievement {
   icon: string;
   xpReward: number;
   unlocksTitle: string | null;
+
+  // Domain field to distinguish betting vs racing achievements
+  domain?: AchievementDomain;
 
   // Progressive chain fields
   prerequisiteAchievementKey?: string | null;

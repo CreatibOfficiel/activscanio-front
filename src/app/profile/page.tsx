@@ -1,11 +1,14 @@
 'use client';
 
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 import { UserStats, UserAchievement } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
 import { UsersRepository, UserData } from '../repositories/UsersRepository';
+import { CompetitorsRepository } from '../repositories/CompetitorsRepository';
 import {
   ProfileHeader,
   ProfileTabs,
@@ -13,19 +16,43 @@ import {
   OverviewTab,
   StatsTab,
   AchievementsTab,
+  RacesTab,
+  CharacterSelectModal,
 } from '../components/profile';
+
+// Type for competitor stats used in profile
+export interface CompetitorStats {
+  rating: number;
+  raceCount: number;
+  avgRank12: number;
+  rd: number;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const ProfilePage: FC = () => {
   const { getToken } = useAuth();
   const { user: clerkUser } = useUser();
+  const searchParams = useSearchParams();
+
+  // Get initial tab from URL query param
+  const getInitialTab = (): ProfileTab => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'stats' || tabParam === 'achievements' || tabParam === 'races') {
+      return tabParam;
+    }
+    return 'overview';
+  };
 
   const [stats, setStats] = useState<UserStats | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [competitorStats, setCompetitorStats] = useState<CompetitorStats | null>(null);
   const [recentAchievements, setRecentAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
+  const [activeTab, setActiveTab] = useState<ProfileTab>(getInitialTab);
+  const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(false);
 
   // Fetch user stats, achievements, and user data
   useEffect(() => {
@@ -51,6 +78,23 @@ const ProfilePage: FC = () => {
         setStats(statsData);
         setRecentAchievements(achievementsData.slice(0, 6));
         setUserData(userDataResult);
+
+        // If user is a player with a linked competitor, fetch competitor stats
+        if (userDataResult.competitorId && userDataResult.role === 'player') {
+          try {
+            const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
+            const competitor = await competitorsRepo.fetchCompetitorById(userDataResult.competitorId);
+            setCompetitorStats({
+              rating: competitor.rating,
+              raceCount: competitor.raceCount || 0,
+              avgRank12: competitor.avgRank12 || 0,
+              rd: competitor.rd,
+            });
+          } catch (competitorErr) {
+            console.warn('Could not fetch competitor stats:', competitorErr);
+            // Non-blocking: competitor stats are optional
+          }
+        }
       } catch (err) {
         console.error('Error fetching profile data:', err);
         setError('Impossible de charger votre profil');
@@ -75,8 +119,26 @@ const ProfilePage: FC = () => {
       name: variant.baseCharacter.name,
       variantLabel: variant.label !== 'Default' ? variant.label : undefined,
       imageUrl,
+      variantId: variant.id,
     };
   };
+
+  // Handle character change
+  const handleChangeCharacter = useCallback(async (variantId: string) => {
+    if (!authToken) {
+      throw new Error('Non authentifié');
+    }
+
+    try {
+      const updatedUser = await UsersRepository.changeCharacter(variantId, authToken);
+      setUserData(updatedUser);
+      toast.success('Personnage changé avec succès !');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur lors du changement';
+      toast.error(message);
+      throw error;
+    }
+  }, [authToken]);
 
   // Get user display name
   const getUserName = () => {
@@ -156,10 +218,26 @@ const ProfilePage: FC = () => {
           userName={getUserName()}
           userImageUrl={clerkUser?.imageUrl}
           character={getCharacterInfo()}
+          onEditCharacter={userData?.role === 'player' ? () => setIsCharacterModalOpen(true) : undefined}
         />
 
+        {/* Character Selection Modal */}
+        {authToken && (
+          <CharacterSelectModal
+            isOpen={isCharacterModalOpen}
+            onClose={() => setIsCharacterModalOpen(false)}
+            onSelect={handleChangeCharacter}
+            currentVariantId={getCharacterInfo()?.variantId}
+            authToken={authToken}
+          />
+        )}
+
         {/* Tab Navigation */}
-        <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <ProfileTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          showRacesTab={userData?.role === 'player'}
+        />
 
         {/* Tab Content */}
         <div className="min-h-[400px]">
@@ -167,6 +245,7 @@ const ProfilePage: FC = () => {
             <OverviewTab
               stats={stats}
               recentAchievements={recentAchievements}
+              competitorStats={competitorStats}
             />
           )}
           {activeTab === 'stats' && (
@@ -178,6 +257,12 @@ const ProfilePage: FC = () => {
           {activeTab === 'achievements' && (
             <AchievementsTab
               stats={stats}
+              authToken={authToken || undefined}
+            />
+          )}
+          {activeTab === 'races' && userData?.competitorId && (
+            <RacesTab
+              competitorId={userData.competitorId}
               authToken={authToken || undefined}
             />
           )}

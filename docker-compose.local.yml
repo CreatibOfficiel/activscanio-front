@@ -1,6 +1,6 @@
 services:
   front:
-    container_name: activscanio-front
+    container_name: mushroombet-front
     build:
       context: .
       dockerfile: Dockerfile.dev

@@ -49,4 +49,31 @@ export class UsersRepository {
 
     return await response.json();
   }
+
+  /**
+   * Change the character variant for the current user
+   * @param characterVariantId - UUID of the new character variant
+   * @param authToken - JWT token from Clerk
+   * @returns Updated user data
+   */
+  static async changeCharacter(
+    characterVariantId: string,
+    authToken: string,
+  ): Promise<UserData> {
+    const response = await fetch(`${API_BASE_URL}/users/me/character`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ characterVariantId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to change character: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
 }
