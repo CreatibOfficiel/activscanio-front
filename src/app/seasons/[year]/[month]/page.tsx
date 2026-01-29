@@ -9,9 +9,8 @@ import {
   ArchivedBettorRanking,
   SeasonBettingWeek,
 } from '@/app/repositories/SeasonsRepository';
-import { Card, Badge, Button } from '@/app/components/ui';
+import { Card, Badge, Button, PageHeader } from '@/app/components/ui';
 import {
-  MdArrowBack,
   MdEmojiEvents,
   MdPerson,
   MdCalendarToday,
@@ -110,30 +109,17 @@ const SeasonDetailPage: FC = () => {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/seasons')}
-            className="mb-4"
-          >
-            <MdArrowBack className="mr-2" />
-            Retour
-          </Button>
-
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-title">
-                {getMonthName(season.month)} {season.year}
-              </h1>
-              {season.seasonName && (
-                <p className="text-regular text-neutral-400">{season.seasonName}</p>
-              )}
-            </div>
+        <PageHeader
+          variant="detail"
+          title={`${getMonthName(season.month)} ${season.year}`}
+          subtitle={season.seasonName || undefined}
+          backHref="/seasons"
+          rightAction={
             <Badge variant="primary" size="lg">
               Saison {season.month}
             </Badge>
-          </div>
+          }
+        />
 
           {/* Season stats summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -156,7 +142,6 @@ const SeasonDetailPage: FC = () => {
               </p>
             </Card>
           </div>
-        </div>
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto">

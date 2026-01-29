@@ -12,8 +12,17 @@ import {
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // Hide navigation during onboarding
-  if (pathname.startsWith("/onboarding")) {
+  // Hide navigation during onboarding and task flows (race creation, betting, competitor management)
+  const hiddenPaths = [
+    '/onboarding',
+    '/races/add',
+    '/races/score-setup',
+    '/races/summary',
+    '/betting/place-bet',
+    '/competitors/add',
+    '/competitors/edit',
+  ];
+  if (hiddenPaths.some(path => pathname.startsWith(path))) {
     return null;
   }
 

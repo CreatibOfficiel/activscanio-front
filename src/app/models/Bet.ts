@@ -13,10 +13,17 @@ export enum BetStatus {
   CANCELLED = 'cancelled',
 }
 
+export interface BetPickCompetitor {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface BetPick {
   id: string;
   betId: string;
   competitorId: string;
+  competitor?: BetPickCompetitor;
   position: BetPosition;
   oddAtBet: number;
   hasBoost: boolean;

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { AppContext } from "@/app/context/AppContext";
 import { RaceEvent } from "@/app/models/RaceEvent";
 import { Competitor } from "@/app/models/Competitor";
+import { formatCompetitorName } from "@/app/utils/formatters";
 
 interface Props {
   raceId: string;
@@ -85,7 +86,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
                       : "text-bold text-neutral-300"
                   }
                 >
-                  {comp.firstName} {comp.lastName[0]}.
+                  {formatCompetitorName(comp.firstName, comp.lastName)}
                 </p>
                 <p className="text-regular text-neutral-400">
                   Score: {res.score}, #{res.rank12}/12

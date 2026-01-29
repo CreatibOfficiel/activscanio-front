@@ -6,6 +6,7 @@ import {
   Competitor,
   getDisplayScore,
 } from "@/app/models/Competitor";
+import { formatCompetitorName } from "@/app/utils/formatters";
 import CompetitorDetailModal from "../competitor/CompetitorDetailModal";
 import PodiumCard from "./PodiumCard";
 
@@ -43,7 +44,7 @@ const ScrollablePodiumView: FC<Props> = ({ topThreeCompetitors }) => {
     <div className="flex flex-col gap-3 md:hidden">
       {topThreeCompetitors.map((competitor, idx) => {
         if (!competitor) return null;
-        const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
+        const shortName = formatCompetitorName(competitor.firstName, competitor.lastName);
         const baseName = competitor.characterVariant?.baseCharacter?.name;
         const variantLabel = competitor.characterVariant?.label;
 

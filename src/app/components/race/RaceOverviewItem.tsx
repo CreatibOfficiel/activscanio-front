@@ -4,6 +4,7 @@ import { FC, useContext, useEffect, useState } from "react";
 import { RaceEvent } from "../../models/RaceEvent";
 import { AppContext } from "../../context/AppContext";
 import { Competitor } from "../../models/Competitor";
+import { formatCompetitorName } from "@/app/utils/formatters";
 import RaceDetailsModal from "./RaceDetailsModal";
 
 interface Props {
@@ -64,7 +65,7 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
 
           // isWinner = if rank12 of this participant == bestRank
           const isWinner = bestRank !== undefined && res.rank12 === bestRank;
-          const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
+          const shortName = formatCompetitorName(competitor.firstName, competitor.lastName);
 
           return (
             <div

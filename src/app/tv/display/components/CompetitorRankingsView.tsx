@@ -3,6 +3,7 @@
 import { FC } from 'react';
 import { Card } from '@/app/components/ui';
 import { Competitor } from '@/app/models/Competitor';
+import { formatCompetitorName } from '@/app/utils/formatters';
 
 interface Props {
   rankings: Competitor[];
@@ -53,7 +54,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
                 )}
 
                 <h3 className="text-heading font-bold text-white mb-2">
-                  {competitor.firstName} {competitor.lastName}
+                  {formatCompetitorName(competitor.firstName, competitor.lastName)}
                 </h3>
 
                 <p className="text-title text-primary-500 font-bold mb-2">
@@ -86,7 +87,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
                     </div>
                     <div>
                       <p className="text-bold text-white">
-                        {competitor.firstName} {competitor.lastName}
+                        {formatCompetitorName(competitor.firstName, competitor.lastName)}
                       </p>
                       <p className="text-sub text-neutral-400">
                         {competitor.characterVariant ? (

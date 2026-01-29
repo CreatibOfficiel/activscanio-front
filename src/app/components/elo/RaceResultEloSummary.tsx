@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Competitor } from "@/app/models/Competitor";
 import { RaceResult } from "@/app/models/RaceResult";
 import { EloCalculator } from "@/app/utils/EloCalculator";
+import { formatCompetitorName } from "@/app/utils/formatters";
 import React from "react";
 
 /**
@@ -63,7 +64,7 @@ const RaceResultEloSummary: FC<Props> = ({ results, selectedCompetitors }) => {
             const projectedElo = updatedEloMap[comp.id] ?? currentElo;
             const diff = projectedElo - currentElo;
 
-            const shortName = `${comp.firstName} ${comp.lastName[0]}.`;
+            const shortName = formatCompetitorName(comp.firstName, comp.lastName);
 
             // Get expected and actual scores
             const expected = expectedScores[comp.id];

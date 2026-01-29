@@ -4,6 +4,7 @@ import { FC } from 'react';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
 import { Card, Badge } from '@/app/components/ui';
 import { MdBolt } from 'react-icons/md';
+import { formatCompetitorName } from '@/app/utils/formatters';
 
 interface CompetitorOddsCardProps {
   competitorOdds: CompetitorOdds;
@@ -26,6 +27,13 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   showBoostButton = false,
   disabled = false,
 }) => {
+  // Get competitor name using standardized format
+  const competitorName = formatCompetitorName(
+    competitorOdds.competitor?.firstName,
+    competitorOdds.competitor?.lastName,
+    competitorOdds.competitorName
+  );
+
   const positionColors = {
     first: 'border-gold-500 bg-gold-500/10',
     second: 'border-silver-500 bg-silver-500/10',
@@ -73,19 +81,19 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
       <div className="flex items-center gap-4">
         {/* Profile picture placeholder */}
         <div className="w-16 h-16 bg-neutral-700 rounded-full flex items-center justify-center text-2xl font-bold">
-          {competitorOdds.competitorName.charAt(0)}
+          {competitorName.charAt(0)}
         </div>
 
         <div className="flex-1">
-          <h3 className="text-bold text-white">{competitorOdds.competitorName}</h3>
+          <h3 className="text-bold text-white">{competitorName}</h3>
 
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sub text-neutral-400">
-              ELO: {Math.round(competitorOdds.metadata.elo)}
+              ELO: {Math.round(competitorOdds.metadata?.elo ?? 0)}
             </span>
             <span className="text-sub text-neutral-400">•</span>
             <span className="text-sub text-neutral-400">
-              Forme: {(competitorOdds.formFactor * 100).toFixed(0)}%
+              Forme: {((competitorOdds.formFactor ?? competitorOdds.metadata?.formFactor ?? 0) * 100).toFixed(0)}%
             </span>
           </div>
 
@@ -95,7 +103,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
               {competitorOdds.odd.toFixed(2)}x
             </span>
             <span className="text-sub text-neutral-500 ml-2">
-              ({(competitorOdds.probability * 100).toFixed(1)}%)
+              ({((competitorOdds.probability ?? competitorOdds.metadata?.probability ?? 0) * 100).toFixed(1)}%)
             </span>
           </div>
         </div>

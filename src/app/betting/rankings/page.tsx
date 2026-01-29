@@ -3,10 +3,10 @@
 import { FC, useEffect, useState, useCallback } from 'react';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { BettorRanking } from '@/app/models/CompetitorOdds';
-import { Card, Badge } from '@/app/components/ui';
+import { Card, Badge, PageHeader } from '@/app/components/ui';
 import { FlameIndicator } from '@/app/components/achievements';
 import { MONTH_NAMES } from '@/app/utils/constants';
-import { MdEmojiEvents, MdTrendingUp } from 'react-icons/md';
+import { MdTrendingUp, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
 const RankingsPage: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +41,34 @@ const RankingsPage: FC = () => {
   const topThree = rankings.slice(0, 3);
   const others = rankings.slice(3);
 
+  // Navigation between months
+  const goToPreviousMonth = () => {
+    if (selectedMonth === 1) {
+      setSelectedMonth(12);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    const now = new Date();
+    const isCurrentMonth = selectedMonth === now.getMonth() + 1 && selectedYear === now.getFullYear();
+    if (isCurrentMonth) return; // Can't go to future
+
+    if (selectedMonth === 12) {
+      setSelectedMonth(1);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
+  const isNextDisabled = () => {
+    const now = new Date();
+    return selectedMonth === now.getMonth() + 1 && selectedYear === now.getFullYear();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 flex items-center justify-center">
@@ -66,38 +94,40 @@ const RankingsPage: FC = () => {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-20">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <MdEmojiEvents className="text-4xl text-gold-500" />
-            <h1 className="text-title">Classement des Parieurs</h1>
+        <PageHeader
+          variant="detail"
+          title="Classement des Parieurs"
+          backHref="/betting"
+        />
+
+        {/* Month/Year Selector - Below header */}
+        <div className="flex items-center justify-center gap-2 mb-6 -mt-2">
+          <button
+            onClick={goToPreviousMonth}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+            aria-label="Mois précédent"
+          >
+            <MdChevronLeft className="w-6 h-6" />
+          </button>
+
+          <div className="flex items-center gap-2 px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-full min-w-[180px] justify-center">
+            <span className="text-white font-medium">
+              {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+            </span>
           </div>
 
-          {/* Month/Year selector */}
-          <div className="flex gap-2 justify-center">
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-regular focus:outline-none focus:border-primary-500"
-            >
-              {MONTH_NAMES.map((name, index) => (
-                <option key={index} value={index + 1}>
-                  {name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-regular focus:outline-none focus:border-primary-500"
-            >
-              {[2024, 2025, 2026].map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
+          <button
+            onClick={goToNextMonth}
+            disabled={isNextDisabled()}
+            className={`flex items-center justify-center w-10 h-10 rounded-full bg-neutral-800 border border-neutral-700 transition-colors ${
+              isNextDisabled()
+                ? 'text-neutral-600 cursor-not-allowed'
+                : 'text-neutral-400 hover:text-white hover:border-neutral-600'
+            }`}
+            aria-label="Mois suivant"
+          >
+            <MdChevronRight className="w-6 h-6" />
+          </button>
         </div>
 
         {rankings.length === 0 ? (

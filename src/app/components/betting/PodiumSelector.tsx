@@ -35,24 +35,40 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
     if (disabled) return;
 
     // Check if competitor is already selected in another position
-    const isAlreadySelected = Object.values(selection).includes(competitorId);
-    if (isAlreadySelected) return;
+    const existingPosition = Object.entries(selection).find(
+      ([, id]) => id === competitorId
+    )?.[0] as BetPosition | undefined;
 
-    const newSelection = {
-      ...selection,
-      [currentPosition]: competitorId,
-    };
+    // If already selected in the same position, do nothing
+    if (existingPosition === currentPosition) return;
 
-    setSelection(newSelection);
-
-    // Move to next position
-    if (currentPosition === BetPosition.FIRST) {
-      setCurrentPosition(BetPosition.SECOND);
-    } else if (currentPosition === BetPosition.SECOND) {
-      setCurrentPosition(BetPosition.THIRD);
+    // If already selected in another position, remove from that position first
+    const newSelection = { ...selection };
+    if (existingPosition) {
+      delete newSelection[existingPosition];
     }
 
-    onSelectionChange(newSelection, boostedCompetitorId);
+    // Check if we're replacing a competitor that had the boost
+    const replacedCompetitorId = selection[currentPosition];
+    let newBoostedId = boostedCompetitorId;
+    if (replacedCompetitorId && boostedCompetitorId === replacedCompetitorId) {
+      // The boosted competitor is being replaced, remove the boost
+      newBoostedId = undefined;
+      setBoostedCompetitorId(undefined);
+    }
+
+    // Set the new selection
+    newSelection[currentPosition] = competitorId;
+    setSelection(newSelection);
+
+    // Move to next empty position (or stay if all filled)
+    const positions = [BetPosition.FIRST, BetPosition.SECOND, BetPosition.THIRD];
+    const nextEmptyPosition = positions.find((pos) => !newSelection[pos]);
+    if (nextEmptyPosition) {
+      setCurrentPosition(nextEmptyPosition);
+    }
+
+    onSelectionChange(newSelection, newBoostedId);
   };
 
   const handleBoost = (competitorId: string) => {
@@ -104,7 +120,6 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
           boostedCompetitorId={boostedCompetitorId}
           canBoost={canBoost}
           disabled={disabled}
-          isComplete={isComplete}
           onSelectCompetitor={handleSelectCompetitor}
           onBoost={handleBoost}
         />

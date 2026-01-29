@@ -3,6 +3,7 @@
 import { FC } from "react";
 import Image from "next/image";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
+import { formatCompetitorName } from "@/app/utils/formatters";
 
 interface PodiumCardProps {
   competitor: Competitor | null;
@@ -21,7 +22,7 @@ const PodiumCard: FC<PodiumCardProps> = ({
 }) => {
   if (!competitor) return null;
 
-  const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
+  const shortName = formatCompetitorName(competitor.firstName, competitor.lastName);
   const gradientBg = getGradient(index);
 
   // Different height for 1st / 2nd+3rd

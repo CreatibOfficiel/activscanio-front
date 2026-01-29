@@ -13,7 +13,7 @@ import { useApp } from '@/app/context/AppContext';
 import { UpdateCompetitorPayload } from '@/app/models/Competitor';
 import { BaseCharacter } from '@/app/models/Character';
 import { editCompetitorSchema, EditCompetitorFormData } from '@/app/schemas';
-import { Input, Button } from '@/app/components/ui';
+import { Input, Button, PageHeader } from '@/app/components/ui';
 import {
   editCompetitorReducer,
   initialState,
@@ -188,7 +188,11 @@ const EditCompetitorPage: NextPage = () => {
 
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
-      <h1 className="text-title mb-4">Modifier le compétiteur</h1>
+      <PageHeader
+        variant="flow"
+        title="Modifier le compétiteur"
+        backHref="/races"
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input

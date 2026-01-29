@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
-import { MdPersonAdd, MdSearch, MdCameraAlt } from "react-icons/md";
+import { MdPersonAdd, MdSearch, MdCameraAlt, MdArrowBack, MdEdit } from "react-icons/md";
+import { Button } from "@/app/components/ui";
 import imageCompression from "browser-image-compression";
 
 const MIN_PLAYERS = 2;
@@ -29,6 +30,7 @@ const AddRaceContent = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [showInputMethodModal, setShowInputMethodModal] = useState(false);
 
   // Get the selected competitor IDs from the URL and filter out empty strings
   const initialSelectedIds = searchParams.get('ids')?.split(',').filter(id => id !== '') || [];
@@ -47,7 +49,7 @@ const AddRaceContent = () => {
     }
   };
 
-  /* ---------- Tri + filtre ---------- */
+  /* ---------- Sort + Filter ---------- */
 
   const sortedCompetitors = [...allCompetitors].sort((a, b) => {
     // Date of last race (most recent first)
@@ -82,7 +84,7 @@ const AddRaceContent = () => {
     return normalizeText(searchableText).includes(normalizeText(searchTerm));
   });
 
-  /* ---------- Sélection ---------- */
+  /* ---------- Selection ---------- */
 
   const toggleSelection = (competitor: Competitor) => {
     const isSelected = selectedCompetitorIds.includes(competitor.id);
@@ -107,12 +109,22 @@ const AddRaceContent = () => {
       selectedCompetitors.length >= MIN_PLAYERS &&
       selectedCompetitors.length <= MAX_PLAYERS
     ) {
-      // Navigate to the next page with scroll, using the local state
-      router.push(`/races/score-setup?ids=${selectedCompetitorIds.join(',')}`);
+      // Show modal to choose input method
+      setShowInputMethodModal(true);
     }
   };
 
-  /* ---------- Upload & analyse ---------- */
+  const handlePhotoChoice = () => {
+    setShowInputMethodModal(false);
+    triggerFileInput();
+  };
+
+  const handleManualChoice = () => {
+    setShowInputMethodModal(false);
+    router.push(`/races/score-setup?ids=${selectedCompetitorIds.join(',')}`);
+  };
+
+  /* ---------- Upload & Analysis ---------- */
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -169,24 +181,32 @@ const AddRaceContent = () => {
   /* ---------- Render ---------- */
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4 py-6 flex flex-col">
+    <div className="min-h-screen bg-neutral-900 text-neutral-100 flex flex-col">
       {errorMsg && (
         <div style={{ color: "red", margin: 8, fontSize: 12 }}>
           Erreur : {errorMsg}
         </div>
       )}
-      <div className="max-w-lg mx-auto w-full flex-1 flex flex-col">
-        <h1 className="text-2xl font-bold mb-1">Sélection des joueurs</h1>
-        <p className="text-sm text-neutral-400 mb-6">
-          Qui veut se la coller&nbsp;?
-        </p>
 
-        {isLoading ? (
-          <p className="text-neutral-300">Chargement…</p>
-        ) : (
-          <div className="flex-1 flex flex-col">
-            {/* Search */}
-            <div className="relative mb-4">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 bg-neutral-900 px-4 pt-6 pb-4">
+        <div className="max-w-lg mx-auto">
+          {/* Back button + title */}
+          <div className="flex items-center gap-3 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/races')}
+              ariaLabel="Retour"
+            >
+              <MdArrowBack size={26} />
+            </Button>
+            <h1 className="text-xl font-bold">Sélection des joueurs</h1>
+          </div>
+
+          {isLoading ? null : (
+            /* Search only - buttons moved to list bottom */
+            <div className="relative">
               <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
@@ -196,97 +216,137 @@ const AddRaceContent = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+          )}
 
-            {/* Buttons */}
-            <div className="flex gap-2 mb-6">
-              {/* Add player */}
-              <div
-                className="flex-1 flex items-center cursor-pointer bg-neutral-800 hover:bg-neutral-700 transition-colors p-3 rounded"
+          {/* Hidden file input for photo upload */}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoUpload}
+            ref={fileInputRef}
+          />
+        </div>
+      </div>
+
+      {/* Scrollable list */}
+      <div className="flex-1 overflow-y-auto px-4 pb-32">
+        <div className="max-w-lg mx-auto">
+          {isLoading ? (
+            <p className="text-neutral-300">Chargement…</p>
+          ) : (
+            <div className="flex flex-col">
+              {/* Players list */}
+              {filteredCompetitors.map((c) => (
+                <CheckableCompetitorItem
+                  key={c.id}
+                  competitor={c}
+                  isSelected={selectedCompetitorIds.includes(c.id)}
+                  toggleSelection={toggleSelection}
+                />
+              ))}
+
+              {/* Empty state message */}
+              {filteredCompetitors.length === 0 && searchTerm && (
+                <p className="text-neutral-400 text-sm py-4 text-center">
+                  Aucun joueur trouvé pour &quot;{searchTerm}&quot;
+                </p>
+              )}
+
+              {/* Add player button - styled as a list item */}
+              <button
+                className="flex items-center gap-3 py-3 px-2 text-left hover:bg-neutral-800/50 rounded-lg transition-colors"
                 onClick={() => {
-                  // Mettre à jour l'URL avec les données actuelles avant d'ajouter un joueur
                   const params = new URLSearchParams();
                   params.set('ids', selectedCompetitorIds.join(','));
                   router.push(`/competitors/add?${params.toString()}`);
                 }}
               >
-                <MdPersonAdd className="text-2xl text-primary-500 mr-2" />
-                <span className="text-base font-semibold">
-                  Ajouter un joueur
-                </span>
-              </div>
-
-              {/* Take photo */}
-              <div
-                className={`flex-1 flex items-center p-3 rounded transition-colors ${
-                  canTakePhoto
-                    ? "cursor-pointer bg-neutral-800 hover:bg-neutral-700"
-                    : "cursor-not-allowed bg-neutral-700 text-neutral-500"
-                }`}
-                onClick={triggerFileInput}
-              >
-                <MdCameraAlt
-                  className={`text-2xl mr-2 ${
-                    canTakePhoto ? "text-primary-500" : "text-neutral-500"
-                  }`}
-                />
-                <span className="text-base font-semibold">
-                  {isUploading ? "Analyse en cours…" : "Prendre une photo"}
-                </span>
-
-                {/* hidden input */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                  ref={fileInputRef}
-                />
-              </div>
+                <div className="w-10 h-10 rounded-full bg-neutral-800 border-2 border-dashed border-neutral-600 flex items-center justify-center">
+                  <MdPersonAdd size={20} className="text-neutral-400" />
+                </div>
+                <span className="text-neutral-300 font-medium">Ajouter un joueur</span>
+              </button>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* List of players */}
-            <div className="flex-1 overflow-y-auto mb-4">
-              <div className="flex flex-col">
-                {filteredCompetitors.map((c) => (
-                  <CheckableCompetitorItem
-                    key={c.id}
-                    competitor={c}
-                    isSelected={selectedCompetitorIds.includes(c.id)}
-                    toggleSelection={toggleSelection}
-                  />
-                ))}
-              </div>
-            </div>
+      {/* Fixed footer */}
+      <div className="fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-neutral-800 px-4 pt-3 pb-4">
+        <div className="max-w-lg mx-auto">
+          <p className="text-sm text-neutral-400 mb-3 text-center">
+            {selectedCompetitors.length} joueur
+            {selectedCompetitors.length > 1 ? "s" : ""} sélectionné
+            {selectedCompetitors.length > 1 ? "s" : ""}
+          </p>
 
-            {/* Sticky footer */}
-            <div className="sticky bottom-0 left-0 right-0 bg-neutral-900 pt-4 pb-16">
-              <p className="text-sm text-neutral-400 mb-4 text-center">
-                {selectedCompetitors.length} joueur
-                {selectedCompetitors.length > 1 ? "s" : ""} sélectionné
-                {selectedCompetitors.length > 1 ? "s" : ""}
-              </p>
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={onNext}
+            disabled={
+              selectedCompetitors.length < MIN_PLAYERS ||
+              selectedCompetitors.length > MAX_PLAYERS ||
+              isUploading
+            }
+          >
+            Continuer
+          </Button>
+        </div>
+      </div>
 
+      {/* Input method selection modal */}
+      {showInputMethodModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 animate-fadeIn"
+            onClick={() => setShowInputMethodModal(false)}
+          />
+
+          {/* Bottom Sheet */}
+          <div className="relative w-full max-w-lg bg-neutral-800 rounded-t-2xl p-6 pb-8 animate-slideUp">
+            <h2 className="text-lg font-bold text-neutral-100 mb-2">
+              Comment entrer les scores ?
+            </h2>
+            <p className="text-sm text-neutral-400 mb-6">
+              Choisis ta méthode préférée
+            </p>
+
+            <div className="flex flex-col gap-3">
+              {/* Photo option */}
               <button
-                onClick={onNext}
-                disabled={
-                  selectedCompetitors.length < MIN_PLAYERS ||
-                  selectedCompetitors.length > MAX_PLAYERS ||
-                  isUploading
-                }
-                className={`w-full h-12 rounded font-semibold ${
-                  selectedCompetitors.length >= MIN_PLAYERS &&
-                  selectedCompetitors.length <= MAX_PLAYERS &&
-                  !isUploading
-                    ? "bg-primary-500 text-neutral-900"
-                    : "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-                }`}
+                className="flex items-center gap-4 p-4 bg-neutral-700 rounded-xl hover:bg-neutral-600 active:bg-neutral-650 transition-colors text-left"
+                onClick={handlePhotoChoice}
               >
-                Continuer
+                <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+                  <MdCameraAlt size={24} className="text-primary-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-neutral-100">Prendre une photo</p>
+                  <p className="text-sm text-neutral-400">Analyse automatique des résultats</p>
+                </div>
+              </button>
+
+              {/* Manual entry option */}
+              <button
+                className="flex items-center gap-4 p-4 bg-neutral-700 rounded-xl hover:bg-neutral-600 active:bg-neutral-650 transition-colors text-left"
+                onClick={handleManualChoice}
+              >
+                <div className="w-12 h-12 rounded-full bg-neutral-600 flex items-center justify-center flex-shrink-0">
+                  <MdEdit size={24} className="text-neutral-300" />
+                </div>
+                <div>
+                  <p className="font-medium text-neutral-100">Saisie manuelle</p>
+                  <p className="text-sm text-neutral-400">Entrer les scores à la main</p>
+                </div>
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -4,6 +4,18 @@ import { CompetitorOdds, BettorRanking } from '../models/CompetitorOdds';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+export interface PaginationMeta {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
 export class BettingRepository {
   /**
    * Get current betting week
@@ -107,7 +119,7 @@ export class BettingRepository {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/betting/bets/my-bet?weekId=${week.id}`,
+        `${API_BASE_URL}/betting/bets/my-bets?weekId=${week.id}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -124,7 +136,13 @@ export class BettingRepository {
         throw new Error(`Failed to fetch bet: ${response.statusText}`);
       }
 
-      return await response.json();
+      // Handle empty response (no bet found)
+      const text = await response.text();
+      if (!text || text === 'null') {
+        return null;
+      }
+
+      return JSON.parse(text) as Bet;
     } catch (error) {
       console.error('Error fetching current bet:', error);
       throw error;
@@ -132,15 +150,17 @@ export class BettingRepository {
   }
 
   /**
-   * Get user's bet history
+   * Get user's bet history with pagination
    */
   static async getBetHistory(
     userId: string,
-    authToken: string
-  ): Promise<Bet[]> {
+    authToken: string,
+    limit = 10,
+    offset = 0
+  ): Promise<PaginatedResponse<Bet>> {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/betting/bets/my-bets`,
+        `${API_BASE_URL}/betting/bets/my-bets?limit=${limit}&offset=${offset}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -235,7 +255,19 @@ export class BettingRepository {
         throw new Error(`Failed to fetch boost availability: ${response.statusText}`);
       }
 
-      return await response.json();
+      // Backend returns { canUseBoost, lastUsed, resetsOn }
+      // Map to frontend expected format { available, lastUsedMonth, lastUsedYear }
+      const data = await response.json() as {
+        canUseBoost: boolean;
+        lastUsed: { month: number; year: number } | null;
+        resetsOn: string;
+      };
+
+      return {
+        available: data.canUseBoost,
+        lastUsedMonth: data.lastUsed?.month ?? null,
+        lastUsedYear: data.lastUsed?.year ?? null,
+      };
     } catch (error) {
       console.error('Error fetching boost availability:', error);
       throw error;

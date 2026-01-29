@@ -10,7 +10,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { normalizeText } from "@/app/utils/formatters";
 import { addCompetitorSchema, AddCompetitorFormData } from "@/app/schemas";
-import { Input, Button } from "@/app/components/ui";
+import { Input, Button, PageHeader } from "@/app/components/ui";
 
 const AddCompetitorPage: NextPage = () => {
   const router = useRouter();
@@ -50,8 +50,12 @@ const AddCompetitorPage: NextPage = () => {
 
   return (
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
-      <h1 className="text-title mb-4">Ajouter un·e compétiteur·trice</h1>
-      <p className="text-neutral-300 text-regular mb-4">Nouveau astronaute ?</p>
+      <PageHeader
+        variant="flow"
+        title="Ajouter un·e compétiteur·trice"
+        subtitle="Nouveau astronaute ?"
+        backHref="/races"
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input

@@ -8,8 +8,9 @@ import { MdLeaderboard, MdFlag, MdCasino, MdPerson } from 'react-icons/md';
 const Sidebar: FC = () => {
   const pathname = usePathname();
 
-  // Hide navigation during onboarding
-  if (pathname.startsWith('/onboarding')) {
+  // Hide navigation during onboarding and task flows (race creation)
+  const hiddenPaths = ['/onboarding', '/races/add', '/races/score-setup', '/races/summary'];
+  if (hiddenPaths.some(path => pathname.startsWith(path))) {
     return null;
   }
 

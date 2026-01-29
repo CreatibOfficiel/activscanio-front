@@ -126,77 +126,84 @@ const ScoreSetupPage: NextPage = () => {
           if (!competitor) return null;
 
           return (
-            <div key={field.id} className="flex items-center justify-between bg-neutral-800 p-4 rounded">
-              {/* Avatar + name */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden">
-                  <Image
-                    src={competitor.profilePictureUrl}
-                    alt={competitor.firstName}
-                    width={40}
-                    height={40}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-                <span className="text-base font-medium text-neutral-100">
-                  {competitor.firstName} {competitor.lastName}
-                </span>
+            <div key={field.id} className="bg-neutral-800 p-4 rounded">
+              {/* Labels row */}
+              <div className="flex justify-end gap-6 mb-1">
+                <p className="w-14 text-xs text-neutral-400 font-semibold uppercase text-center">
+                  Rang
+                </p>
+                <p className="w-14 text-xs text-neutral-400 font-semibold uppercase text-center">
+                  Score
+                </p>
               </div>
 
-              {/* Rank + Score */}
-              <div className="flex items-center gap-6">
-                {/* Rank */}
-                <div className="text-center">
-                  <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
-                    Rang
-                  </p>
-                  <input
-                    type="number"
-                    min={1}
-                    max={12}
-                    className={`w-14 h-10 bg-neutral-900 border rounded text-center
-                               text-neutral-100 focus:outline-none transition-colors
-                               ${errors.scores?.[index]?.rank
-                                 ? 'border-error-500 focus:border-error-500'
-                                 : 'border-neutral-700 focus:border-primary-500'}`}
-                    defaultValue={field.rank}
-                    onChange={(e) => {
-                      const value = e.target.value ? parseInt(e.target.value, 10) : 1;
-                      setValue(`scores.${index}.rank`, value);
-                    }}
-                  />
-                  {errors.scores?.[index]?.rank && (
-                    <p className="text-error-500 text-xs mt-1">
-                      {errors.scores[index]?.rank?.message}
-                    </p>
-                  )}
+              {/* Content row: Avatar + name aligned with inputs */}
+              <div className="flex items-center justify-between">
+                {/* Avatar + name */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <Image
+                      src={competitor.profilePictureUrl}
+                      alt={competitor.firstName}
+                      width={40}
+                      height={40}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <span className="text-base font-medium text-neutral-100 truncate max-w-[140px]">
+                    {competitor.firstName} {competitor.lastName.slice(0, 3)}.
+                  </span>
                 </div>
 
-                {/* Score */}
-                <div className="text-center">
-                  <p className="text-xs text-neutral-400 font-semibold mb-1 uppercase">
-                    Score
-                  </p>
-                  <input
-                    type="number"
-                    min={0}
-                    max={60}
-                    className={`w-14 h-10 bg-neutral-900 border rounded text-center
-                               text-neutral-100 focus:outline-none transition-colors
-                               ${errors.scores?.[index]?.score
-                                 ? 'border-error-500 focus:border-error-500'
-                                 : 'border-neutral-700 focus:border-primary-500'}`}
-                    defaultValue={field.score}
-                    onChange={(e) => {
-                      const value = e.target.value ? parseInt(e.target.value, 10) : 0;
-                      setValue(`scores.${index}.score`, value);
-                    }}
-                  />
-                  {errors.scores?.[index]?.score && (
-                    <p className="text-error-500 text-xs mt-1">
-                      {errors.scores[index]?.score?.message}
-                    </p>
-                  )}
+                {/* Inputs */}
+                <div className="flex items-center gap-6">
+                  {/* Rank input */}
+                  <div className="text-center">
+                    <input
+                      type="number"
+                      min={1}
+                      max={12}
+                      className={`w-14 h-10 bg-neutral-900 border rounded text-center
+                                 text-neutral-100 focus:outline-none transition-colors
+                                 ${errors.scores?.[index]?.rank
+                                   ? 'border-error-500 focus:border-error-500'
+                                   : 'border-neutral-700 focus:border-primary-500'}`}
+                      defaultValue={field.rank}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value, 10) : 1;
+                        setValue(`scores.${index}.rank`, value);
+                      }}
+                    />
+                    {errors.scores?.[index]?.rank && (
+                      <p className="text-error-500 text-xs mt-1">
+                        {errors.scores[index]?.rank?.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Score input */}
+                  <div className="text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      max={60}
+                      className={`w-14 h-10 bg-neutral-900 border rounded text-center
+                                 text-neutral-100 focus:outline-none transition-colors
+                                 ${errors.scores?.[index]?.score
+                                   ? 'border-error-500 focus:border-error-500'
+                                   : 'border-neutral-700 focus:border-primary-500'}`}
+                      defaultValue={field.score}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value, 10) : 0;
+                        setValue(`scores.${index}.score`, value);
+                      }}
+                    />
+                    {errors.scores?.[index]?.score && (
+                      <p className="text-error-500 text-xs mt-1">
+                        {errors.scores[index]?.score?.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -204,9 +211,9 @@ const ScoreSetupPage: NextPage = () => {
         })}
 
         {/* Global form errors */}
-        {errors.scores && typeof errors.scores.message === 'string' && (
+        {errors.scores?.root?.message && (
           <div className="bg-error-500/10 border border-error-500 rounded p-3">
-            <p className="text-error-500 text-sm">{errors.scores.message}</p>
+            <p className="text-error-500 text-sm">{errors.scores.root.message}</p>
           </div>
         )}
 

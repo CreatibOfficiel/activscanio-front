@@ -10,7 +10,7 @@ import { BettingWeek, BettingWeekStatus } from '@/app/models/BettingWeek';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
 import { BetPosition } from '@/app/models/Bet';
 import PodiumSelector from '@/app/components/betting/PodiumSelector';
-import { Card, Badge, Button } from '@/app/components/ui';
+import { Card, Badge, Button, PageHeader } from '@/app/components/ui';
 import { MdTrendingUp, MdInfo } from 'react-icons/md';
 import { toast } from 'sonner';
 
@@ -231,19 +231,23 @@ const PlaceBetPage: FC = () => {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-20">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-title text-center mb-2">Paris Sportifs</h1>
-          {currentWeek && (
-            <div className="flex items-center justify-center gap-2">
-              <Badge variant="primary" size="md">
-                Semaine {currentWeek.weekNumber}/{currentWeek.year}
-              </Badge>
-              <Badge variant="success" size="md">
-                Ouvert
-              </Badge>
-            </div>
-          )}
-        </div>
+        <PageHeader
+          variant="flow"
+          title="Placer un pari"
+          backHref="/betting"
+          rightAction={
+            currentWeek && (
+              <div className="flex items-center gap-2">
+                <Badge variant="primary" size="md">
+                  S{currentWeek.weekNumber}
+                </Badge>
+                <Badge variant="success" size="md">
+                  Ouvert
+                </Badge>
+              </div>
+            )
+          }
+        />
 
         {/* Info card */}
         <Card className="p-4 mb-6">
@@ -305,7 +309,7 @@ const PlaceBetPage: FC = () => {
 
         {/* Submit button */}
         {isSelectionComplete && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-800 border-t border-neutral-700">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-800 border-t border-neutral-700 z-50">
             <Button
               variant="primary"
               size="lg"

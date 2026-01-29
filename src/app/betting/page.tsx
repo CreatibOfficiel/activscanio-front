@@ -47,8 +47,8 @@ const BettingPage: FC = () => {
           setCurrentBet(bet);
 
           // Load bet history (get last 3)
-          const history = await BettingRepository.getBetHistory(user.id, token);
-          setRecentBets(history.slice(0, 3));
+          const historyResponse = await BettingRepository.getBetHistory(user.id, token, 3, 0);
+          setRecentBets(historyResponse.data);
 
           // Load user ranking for current month
           const now = new Date();
@@ -263,9 +263,9 @@ const BettingPage: FC = () => {
                 </div>
                 <p className="text-sub text-neutral-400 mb-1">Mon rang</p>
                 {userRanking ? (
-                  <p className="text-heading text-white">#{userRanking.rank}</p>
+                  <p className="text-statistic font-bold text-white">#{userRanking.rank}</p>
                 ) : (
-                  <p className="text-heading text-neutral-500">-</p>
+                  <p className="text-statistic font-bold text-neutral-500">-</p>
                 )}
               </div>
             </Card>
@@ -279,9 +279,9 @@ const BettingPage: FC = () => {
               </div>
               <p className="text-sub text-neutral-400 mb-1">Points ce mois</p>
               {userRanking ? (
-                <p className="text-heading text-white">{userRanking.totalPoints}</p>
+                <p className="text-statistic font-bold text-white">{userRanking.totalPoints}</p>
               ) : (
-                <p className="text-heading text-neutral-500">0</p>
+                <p className="text-statistic font-bold text-neutral-500">0</p>
               )}
             </div>
           </Card>

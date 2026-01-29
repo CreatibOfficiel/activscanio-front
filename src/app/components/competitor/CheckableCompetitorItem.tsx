@@ -2,6 +2,7 @@ import { FC } from "react";
 import Image from "next/image";
 import { Competitor } from "@/app/models/Competitor";
 import { MdCheck } from "react-icons/md";
+import { formatCompetitorName } from "@/app/utils/formatters";
 
 interface Props {
   competitor: Competitor;
@@ -14,7 +15,7 @@ const CheckableCompetitorItem: FC<Props> = ({
   isSelected,
   toggleSelection,
 }) => {
-  const shortName = `${competitor.firstName} ${competitor.lastName}`;
+  const shortName = formatCompetitorName(competitor.firstName, competitor.lastName);
 
   return (
     <div

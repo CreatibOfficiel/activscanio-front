@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { motion } from 'motion/react';
 import * as Tabs from '@radix-ui/react-tabs';
-import { MdArrowBack, MdPerson } from 'react-icons/md';
+import { MdPerson } from 'react-icons/md';
 import { LayoutGrid, GitBranch } from 'lucide-react';
+import { PageHeader } from '../components/ui';
 import {
   Achievement,
   AchievementCategory,
@@ -133,28 +134,14 @@ const AchievementsPage: FC = () => {
   return (
     <div className="min-h-screen bg-neutral-900 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header with back button */}
-        <div className="mb-6">
-          <Link
-            href="/profile?tab=achievements"
-            className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors mb-4"
-          >
-            <MdArrowBack className="w-5 h-5" />
-            <span className="text-sm">Retour au profil</span>
-          </Link>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                <span>🏆</span>
-                <span>Tous les Succès</span>
-              </h1>
-              <p className="text-neutral-400">
-                Explorez et suivez votre progression sur tous les achievements
-              </p>
-            </div>
-
-            {/* Quick link to profile */}
+        {/* Header */}
+        <PageHeader
+          variant="detail"
+          title="🏆 Tous les Succès"
+          subtitle="Explorez et suivez votre progression sur tous les achievements"
+          backHref="/profile?tab=achievements"
+          backLabel="Retour au profil"
+          rightAction={
             <Link
               href="/profile"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-600 transition-all"
@@ -162,8 +149,8 @@ const AchievementsPage: FC = () => {
               <MdPerson className="w-5 h-5" />
               <span className="text-sm font-medium">Mon Profil</span>
             </Link>
-          </div>
-        </div>
+          }
+        />
 
         {/* Progress Overview */}
         <motion.div

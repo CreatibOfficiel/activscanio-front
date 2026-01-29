@@ -19,6 +19,7 @@ import {
   RacesTab,
   CharacterSelectModal,
 } from '../components/profile';
+import { formatCompetitorName } from '../utils/formatters';
 
 // Type for competitor stats used in profile
 export interface CompetitorStats {
@@ -143,10 +144,10 @@ const ProfilePage: FC = () => {
   // Get user display name
   const getUserName = () => {
     if (userData?.competitor) {
-      return `${userData.competitor.firstName} ${userData.competitor.lastName}`;
+      return formatCompetitorName(userData.competitor.firstName, userData.competitor.lastName);
     }
     if (userData) {
-      return `${userData.firstName} ${userData.lastName}`;
+      return formatCompetitorName(userData.firstName, userData.lastName);
     }
     if (clerkUser) {
       return clerkUser.fullName || clerkUser.firstName || 'Utilisateur';

@@ -1,10 +1,17 @@
 export interface CompetitorOdds {
   competitorId: string;
-  competitorName: string;
+  /** @deprecated Use competitor.firstName/lastName instead */
+  competitorName?: string;
   odd: number;
-  probability: number;
-  formFactor: number;
-  isEligible: boolean;
+  probability?: number;
+  formFactor?: number;
+  isEligible?: boolean;
+  competitor?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    profilePictureUrl?: string;
+  };
   metadata: {
     elo: number;
     rd: number;

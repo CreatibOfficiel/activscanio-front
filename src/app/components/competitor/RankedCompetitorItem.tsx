@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import CompetitorDetailModal from "./CompetitorDetailModal";
 import EditCompetitorButton from "./EditCompetitorButton";
+import { formatCompetitorName } from "@/app/utils/formatters";
 
 interface Props {
   competitor: Competitor;
@@ -13,7 +14,7 @@ interface Props {
 const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
   const [showModal, setShowModal] = useState(false);
 
-  const shortName = `${competitor.firstName} ${competitor.lastName[0]}.`;
+  const shortName = formatCompetitorName(competitor.firstName, competitor.lastName);
   const baseName = competitor.characterVariant?.baseCharacter?.name ?? null;
   const variantLabel = competitor.characterVariant?.label ?? null;
 

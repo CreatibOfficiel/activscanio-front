@@ -48,3 +48,25 @@ export const formatOdds = (odds: number): string => {
 export const normalizeText = (text: string): string => {
   return text.trim();
 };
+
+/**
+ * Format a competitor name as "Prénom I." (first name + first initial of last name)
+ * Example: "Pierre Dupont" → "Pierre D."
+ */
+export const formatCompetitorName = (
+  firstName?: string | null,
+  lastName?: string | null,
+  fallback?: string
+): string => {
+  if (firstName && lastName) {
+    const initial = lastName.charAt(0).toUpperCase();
+    return `${firstName} ${initial}.`;
+  }
+  if (firstName) {
+    return firstName;
+  }
+  if (lastName) {
+    return lastName;
+  }
+  return fallback || 'Compétiteur';
+};
