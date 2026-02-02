@@ -502,4 +502,201 @@
   .animate-shake-unlock {
     animation: shake-unlock 0.5s ease-in-out;
   }
+
+  /* ===== LEADERBOARD ANIMATIONS ===== */
+
+  /* Podium rise animation */
+  @keyframes podium-rise {
+    0% {
+      transform: translateY(60px) scale(0.9);
+      opacity: 0;
+    }
+    60% {
+      transform: translateY(-8px) scale(1.02);
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-podium-rise {
+    animation: podium-rise 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+  }
+
+  /* Crown drop animation */
+  @keyframes crown-drop {
+    0% {
+      transform: translateY(-40px) rotate(-20deg) scale(0.5);
+      opacity: 0;
+    }
+    50% {
+      transform: translateY(8px) rotate(10deg) scale(1.1);
+    }
+    70% {
+      transform: translateY(-4px) rotate(-5deg) scale(1);
+    }
+    100% {
+      transform: translateY(0) rotate(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-crown-drop {
+    animation: crown-drop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: 0.4s;
+    opacity: 0;
+  }
+
+  /* Score pulse animation */
+  @keyframes score-pulse {
+    0%, 100% {
+      transform: scale(1);
+      text-shadow: none;
+    }
+    50% {
+      transform: scale(1.08);
+      text-shadow: 0 0 20px currentColor;
+    }
+  }
+
+  .animate-score-pulse {
+    animation: score-pulse 2s ease-in-out infinite;
+  }
+
+  /* Row slide in animation */
+  @keyframes row-slide-in {
+    0% {
+      transform: translateX(-40px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-row-slide-in {
+    animation: row-slide-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    opacity: 0;
+  }
+
+  /* TV view crossfade transition */
+  @keyframes view-crossfade-out {
+    0% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+  }
+
+  @keyframes view-crossfade-in {
+    0% {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-view-exit {
+    animation: view-crossfade-out 0.3s ease-in forwards;
+  }
+
+  .animate-view-enter {
+    animation: view-crossfade-in 0.3s ease-out forwards;
+  }
+
+  /* Progress bar fill animation */
+  @keyframes progress-bar-fill {
+    0% {
+      width: 0%;
+    }
+  }
+
+  .animate-progress-fill {
+    animation: progress-bar-fill 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  /* Rank count up animation */
+  @keyframes count-up {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-count-up {
+    animation: count-up 0.5s ease-out forwards;
+  }
+
+  /* TV glow effects */
+  .tv-glow-gold {
+    box-shadow: 0 0 60px rgba(235, 170, 30, 0.4),
+                0 0 30px rgba(235, 170, 30, 0.2);
+  }
+
+  .tv-glow-silver {
+    box-shadow: 0 0 50px rgba(156, 163, 175, 0.3),
+                0 0 25px rgba(156, 163, 175, 0.15);
+  }
+
+  .tv-glow-bronze {
+    box-shadow: 0 0 50px rgba(217, 119, 6, 0.3),
+                0 0 25px rgba(217, 119, 6, 0.15);
+  }
+
+  .tv-glow-primary {
+    box-shadow: 0 0 40px rgba(64, 228, 228, 0.3),
+                0 0 20px rgba(64, 228, 228, 0.15);
+  }
+
+  /* Trend colors */
+  .text-trend-up { color: #4ade80; }
+  .text-trend-down { color: #f87171; }
+  .text-trend-stable { color: #94a6b8; }
+
+  .bg-trend-up { background-color: rgba(74, 222, 128, 0.15); }
+  .bg-trend-down { background-color: rgba(248, 113, 113, 0.15); }
+  .bg-trend-stable { background-color: rgba(148, 166, 184, 0.1); }
+
+  /* TV-specific larger text utilities */
+  .text-tv-display {
+    font-size: clamp(2.5rem, 5vw + 1rem, 4rem);
+    font-weight: 800;
+    font-style: italic;
+  }
+
+  .text-tv-heading {
+    font-size: clamp(1.5rem, 3vw + 0.5rem, 2.5rem);
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  .text-tv-body {
+    font-size: clamp(1rem, 2vw + 0.25rem, 1.5rem);
+    font-weight: 500;
+  }
+
+  /* Extended stagger items for TV */
+  .stagger-item:nth-child(11) { animation-delay: 0.55s; }
+  .stagger-item:nth-child(12) { animation-delay: 0.60s; }
+  .stagger-item:nth-child(13) { animation-delay: 0.65s; }
+  .stagger-item:nth-child(14) { animation-delay: 0.70s; }
+  .stagger-item:nth-child(15) { animation-delay: 0.75s; }
+  .stagger-item:nth-child(16) { animation-delay: 0.80s; }
+  .stagger-item:nth-child(17) { animation-delay: 0.85s; }
+  .stagger-item:nth-child(18) { animation-delay: 0.90s; }
+  .stagger-item:nth-child(19) { animation-delay: 0.95s; }
+  .stagger-item:nth-child(20) { animation-delay: 1.00s; }
 }

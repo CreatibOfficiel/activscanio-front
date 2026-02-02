@@ -1,8 +1,9 @@
 "use client";
 
-import { FC } from 'react';
-import { Card } from '@/app/components/ui';
-import { BettorRanking } from '@/app/models/CompetitorOdds';
+import { FC } from "react";
+import TVPodium from "./TVPodium";
+import TVLeaderboardRow from "./TVLeaderboardRow";
+import { BettorRanking } from "@/app/models/CompetitorOdds";
 
 interface Props {
   rankings: {
@@ -17,91 +18,112 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
   if (!rankings || rankings.rankings.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-heading text-neutral-400">Aucun classement disponible pour le moment</p>
+        <p className="text-tv-heading text-neutral-400">
+          Aucun classement disponible pour le moment
+        </p>
       </div>
     );
   }
 
   const { month, year, rankings: rankedBettors } = rankings;
   const monthNames = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre",
   ];
 
   const top3 = rankedBettors.slice(0, 3);
-  const others = rankedBettors.slice(3, 20); // Afficher top 20 pour la TV
+  const others = rankedBettors.slice(3, 15);
+
+  // Calculate max score for progress bars
+  const maxScore = Math.max(...rankedBettors.map((b) => b.totalPoints));
+
+  // Convert to podium format
+  const podiumItems = top3.map((bettor) => ({
+    id: bettor.userId,
+    name: bettor.userName,
+    score: bettor.totalPoints,
+    scoreLabel: "pts",
+    subtitle: `${bettor.betsWon}/${bettor.betsPlaced} gagnés`,
+    rank: bettor.rank,
+  }));
+
+  // Convert to row format with trend simulation
+  const getTrend = (
+    bettor: BettorRanking
+  ): "up" | "down" | "stable" | undefined => {
+    // Simulate trends based on win rate
+    if (bettor.winRate > 0.5) return "up";
+    if (bettor.winRate < 0.3) return "down";
+    return "stable";
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Titre avec mois */}
-      <div className="text-center mb-8">
-        <p className="text-sub text-neutral-400">
+    <div className="space-y-12">
+      {/* Month subtitle */}
+      <div className="text-center">
+        <p className="text-tv-body text-neutral-400">
           {monthNames[month - 1]} {year}
         </p>
       </div>
 
       {/* Podium Top 3 */}
+      {top3.length >= 3 && <TVPodium items={podiumItems} />}
+
+      {/* Stats summary for top 3 */}
       {top3.length > 0 && (
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          {top3.map((bettor) => (
-            <Card
+        <div className="grid grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {top3.map((bettor, index) => (
+            <div
               key={bettor.userId}
-              className={`p-6 text-center ${
-                bettor.rank === 1
-                  ? 'border-yellow-500 bg-yellow-500/10'
-                  : bettor.rank === 2
-                  ? 'border-gray-400 bg-gray-400/10'
-                  : 'border-amber-700 bg-amber-700/10'
-              }`}
+              className={`text-center p-4 rounded-xl bg-neutral-800/30 animate-row-slide-in`}
+              style={{ animationDelay: `${(index + 3) * 100}ms` }}
             >
-              <div className="text-6xl mb-3">
-                {bettor.rank === 1 ? '🥇' : bettor.rank === 2 ? '🥈' : '🥉'}
-              </div>
-              <h3 className="text-heading font-bold text-white mb-2">
-                {bettor.userName}
-              </h3>
-              <p className="text-title text-primary-500 font-bold mb-2">
-                {bettor.totalPoints.toFixed(1)} pts
+              <p className="text-sm text-neutral-500 uppercase tracking-wide mb-1">
+                Taux de réussite
               </p>
-              <div className="text-sub text-neutral-400 space-y-1">
-                <p>{bettor.betsWon}/{bettor.betsPlaced} paris gagnés</p>
-                <p>{(bettor.winRate * 100).toFixed(0)}% de réussite</p>
-                {bettor.perfectBets > 0 && (
-                  <p className="text-primary-500">⭐ {bettor.perfectBets} podiums parfaits</p>
-                )}
-              </div>
-            </Card>
+              <p className="text-2xl font-bold text-primary-400">
+                {(bettor.winRate * 100).toFixed(0)}%
+              </p>
+              {bettor.perfectBets > 0 && (
+                <p className="text-sm text-primary-500 mt-2">
+                  {bettor.perfectBets} podium
+                  {bettor.perfectBets > 1 ? "s" : ""} parfait
+                  {bettor.perfectBets > 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
           ))}
         </div>
       )}
 
-      {/* Autres classés */}
+      {/* Other ranked bettors */}
       {others.length > 0 && (
-        <div className="space-y-3">
-          {others.map((bettor) => (
-            <Card key={bettor.userId} className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-heading font-bold text-neutral-400 w-12 text-center">
-                    #{bettor.rank}
-                  </div>
-                  <div>
-                    <p className="text-bold text-white">{bettor.userName}</p>
-                    <p className="text-sub text-neutral-400">
-                      {bettor.betsWon}/{bettor.betsPlaced} gagnés • {(bettor.winRate * 100).toFixed(0)}%
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-heading font-bold text-primary-500">
-                    {bettor.totalPoints.toFixed(1)} pts
-                  </p>
-                  {bettor.perfectBets > 0 && (
-                    <p className="text-sub text-primary-400">⭐ {bettor.perfectBets}</p>
-                  )}
-                </div>
-              </div>
-            </Card>
+        <div className="space-y-3 max-w-5xl mx-auto">
+          {others.map((bettor, index) => (
+            <TVLeaderboardRow
+              key={bettor.userId}
+              item={{
+                id: bettor.userId,
+                rank: bettor.rank,
+                name: bettor.userName,
+                score: bettor.totalPoints,
+                scoreLabel: "pts",
+                subtitle: `${bettor.betsWon}/${bettor.betsPlaced} gagnés • ${(bettor.winRate * 100).toFixed(0)}%`,
+                trend: getTrend(bettor),
+                maxScore: maxScore,
+              }}
+              animationDelay={index * 80}
+            />
           ))}
         </div>
       )}
