@@ -1,10 +1,13 @@
 import "./globals.css";
 import "./styles/animations.css";
 import { AppProvider } from "./context/AppProvider";
+import { SoundboardProvider } from "./context/SoundboardContext";
 import { BottomNav, Sidebar } from "./components/layout";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
 import { PWAUpdateBanner } from "./components/ui/PWAUpdateBanner";
 import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
+import OfflineIndicator from "./components/ui/OfflineIndicator";
+import { SoundboardModal } from "./components/soundboard";
 import SocketProvider from "./components/layout/SocketProvider";
 import { ReactNode } from "react";
 import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -49,7 +52,11 @@ export default function RootLayout({
       <body className="bg-neutral-900 text-neutral-100">
         <ClerkProvider>
           <AppProvider>
+            <SoundboardProvider>
             <OnboardingGuard>
+              {/* Offline Indicator */}
+              <OfflineIndicator />
+
               {/* PWA Update Banner */}
               <PWAUpdateBanner />
 
@@ -98,6 +105,8 @@ export default function RootLayout({
                 <BottomNav />
               </SignedIn>
             </OnboardingGuard>
+            <SoundboardModal />
+            </SoundboardProvider>
           </AppProvider>
         </ClerkProvider>
       </body>
