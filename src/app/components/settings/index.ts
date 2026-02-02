@@ -1,2 +1,2 @@
 export { NotificationSettings, useNotificationStatus } from './NotificationSettings';
-export { SettingsLink, SettingsInfo } from './SettingsLink';
+export { SettingsLink, SettingsButton, SettingsInfo } from './SettingsLink';

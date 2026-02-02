@@ -49,6 +49,53 @@ export const SettingsLink: FC<SettingsLinkProps> = ({
   );
 };
 
+interface SettingsButtonProps {
+  icon: ReactNode;
+  title: string;
+  subtitle?: string;
+  onClick: () => void;
+}
+
+export const SettingsButton: FC<SettingsButtonProps> = ({
+  icon,
+  title,
+  subtitle,
+  onClick,
+}) => {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-4 p-4 rounded-xl bg-neutral-800 border border-neutral-700 hover:border-neutral-600 hover:bg-neutral-750 active:bg-neutral-700 transition-colors min-h-[64px] text-left"
+    >
+      <span className="text-2xl flex-shrink-0" aria-hidden="true">
+        {icon}
+      </span>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-bold text-white">{title}</h3>
+        {subtitle && (
+          <p className="text-sub text-neutral-400 truncate">{subtitle}</p>
+        )}
+      </div>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={2}
+        stroke="currentColor"
+        className="w-5 h-5 text-neutral-500 flex-shrink-0"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.25 4.5l7.5 7.5-7.5 7.5"
+        />
+      </svg>
+    </button>
+  );
+};
+
 interface SettingsInfoProps {
   icon: ReactNode;
   title: string;

@@ -2,11 +2,13 @@
 
 import { FC } from 'react';
 import Link from 'next/link';
-import { SettingsLink, SettingsInfo } from '../../components/settings/SettingsLink';
+import { SettingsLink, SettingsButton, SettingsInfo } from '../../components/settings/SettingsLink';
 import { useNotificationStatus } from '../../components/settings/NotificationSettings';
+import { useSoundboard } from '../../context/SoundboardContext';
 
 const ProfileSettingsPage: FC = () => {
   const notificationStatus = useNotificationStatus();
+  const { state, open } = useSoundboard();
 
   return (
     <div className="min-h-screen bg-neutral-900">
@@ -52,6 +54,15 @@ const ProfileSettingsPage: FC = () => {
           title="Compte"
           subtitle="Profil et connexion"
         />
+
+        {state.isUnlocked && (
+          <SettingsButton
+            icon="🔊"
+            title="Soundboard"
+            subtitle="Easter egg débloqué !"
+            onClick={open}
+          />
+        )}
 
         <SettingsInfo
           icon="ℹ️"
