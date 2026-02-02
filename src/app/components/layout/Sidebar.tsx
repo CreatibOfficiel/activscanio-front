@@ -1,12 +1,49 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MdLeaderboard, MdFlag, MdCasino, MdPerson } from 'react-icons/md';
+import { toast } from 'sonner';
+import { useSoundboard } from '../../context/SoundboardContext';
+import { useEasterEgg } from '../../hooks/useEasterEgg';
 
 const Sidebar: FC = () => {
   const pathname = usePathname();
+  const { state, unlock, open } = useSoundboard();
+  const [isShaking, setIsShaking] = useState(false);
+
+  const handleUnlock = useCallback(() => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
+
+    unlock();
+    open();
+
+    toast.success('Tu as découvert un secret !', {
+      icon: '🎉',
+      duration: 4000,
+    });
+
+    // Haptic feedback if available
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 100]);
+    }
+  }, [unlock, open]);
+
+  const { handleTap } = useEasterEgg({
+    targetTaps: 7,
+    timeWindow: 3000,
+    onUnlock: handleUnlock,
+  });
+
+  const handleLogoClick = useCallback(() => {
+    if (state.isUnlocked) {
+      open();
+    } else {
+      handleTap();
+    }
+  }, [state.isUnlocked, open, handleTap]);
 
   // Hide navigation during onboarding and task flows (race creation)
   const hiddenPaths = ['/onboarding', '/races/add', '/races/score-setup', '/races/summary'];
@@ -37,10 +74,24 @@ const Sidebar: FC = () => {
       aria-label="Navigation principale"
     >
       <div className="flex flex-col flex-1 p-4">
-        {/* Logo/Title */}
-        <h1 className="text-heading text-primary-500 mb-8 px-4">
+        {/* Logo/Title - Easter Egg Trigger */}
+        <button
+          type="button"
+          onClick={handleLogoClick}
+          className={`
+            text-heading text-primary-500 mb-8 px-4 text-left
+            cursor-pointer select-none transition-transform
+            hover:text-primary-400
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded
+            ${isShaking ? 'animate-shake-unlock' : ''}
+          `}
+          aria-label={state.isUnlocked ? 'Ouvrir la soundboard' : 'MushroomBet'}
+        >
           MushroomBet
-        </h1>
+          {state.isUnlocked && (
+            <span className="ml-2 text-sm" aria-hidden="true">🔊</span>
+          )}
+        </button>
 
         {/* Navigation Links */}
         <nav className="flex-1 space-y-2">
