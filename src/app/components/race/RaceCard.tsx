@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useContext, useEffect, useState, useMemo } from "react";
+import { FC, useContext, useState, useMemo } from "react";
 import { MdSportsMotorsports } from "react-icons/md";
 import { RaceEvent } from "@/app/models/RaceEvent";
 import { Competitor } from "@/app/models/Competitor";

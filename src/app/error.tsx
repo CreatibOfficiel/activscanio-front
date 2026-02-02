@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -54,13 +55,13 @@ export default function Error({ error, reset }: ErrorProps) {
           Réessayer
         </button>
 
-        <a
+        <Link
           href="/"
           className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-700 hover:bg-neutral-600 text-white font-bold rounded-lg transition-colors duration-200"
         >
           <span>🏠</span>
           Retour au classement
-        </a>
+        </Link>
       </div>
 
       {/* Decorative Mushroom */}

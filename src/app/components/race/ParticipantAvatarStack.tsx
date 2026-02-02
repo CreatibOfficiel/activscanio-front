@@ -22,7 +22,7 @@ const ParticipantAvatarStack: FC<Props> = ({ participants, maxVisible = 3 }) => 
 
   // Build names list for visible participants
   const namesList = visibleParticipants
-    .map((p, idx) => {
+    .map((p) => {
       const name = formatCompetitorName(p.competitor.firstName, p.competitor.lastName);
       const rankLabel = `${p.rank12 === 2 ? "2e" : p.rank12 === 3 ? "3e" : `${p.rank12}e`}`;
       return `${name} ${rankLabel}`;
