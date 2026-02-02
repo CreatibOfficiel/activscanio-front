@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface Achievement {
@@ -28,9 +28,48 @@ interface Race {
 
 let socket: Socket | null = null;
 
+// Reconnection configuration
+const RECONNECTION_CONFIG = {
+  maxAttempts: 5,
+  baseDelay: 1000,
+  maxDelay: 30000,
+};
+
 export const useSocket = (userId?: string) => {
   const [isConnected, setIsConnected] = useState(false);
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
   const hasRegistered = useRef(false);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectAttempt >= RECONNECTION_CONFIG.maxAttempts) {
+      console.log('❌ Max reconnection attempts reached');
+      return;
+    }
+
+    // Exponential backoff with jitter
+    const delay = Math.min(
+      RECONNECTION_CONFIG.baseDelay * Math.pow(2, reconnectAttempt) + Math.random() * 1000,
+      RECONNECTION_CONFIG.maxDelay
+    );
+
+    console.log(`🔄 Scheduling reconnection attempt ${reconnectAttempt + 1} in ${Math.round(delay)}ms`);
+
+    clearReconnectTimeout();
+    reconnectTimeoutRef.current = setTimeout(() => {
+      if (socket && !socket.connected) {
+        socket.connect();
+        setReconnectAttempt(prev => prev + 1);
+      }
+    }, delay);
+  }, [reconnectAttempt, clearReconnectTimeout]);
 
   useEffect(() => {
     // Only create socket if it doesn't exist
@@ -40,17 +79,33 @@ export const useSocket = (userId?: string) => {
       socket = io(`${socketUrl}/events`, {
         withCredentials: true,
         transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: RECONNECTION_CONFIG.maxAttempts,
+        reconnectionDelay: RECONNECTION_CONFIG.baseDelay,
+        reconnectionDelayMax: RECONNECTION_CONFIG.maxDelay,
       });
 
       socket.on('connect', () => {
         console.log('✅ Socket connected:', socket?.id);
         setIsConnected(true);
+        setReconnectAttempt(0);
+        clearReconnectTimeout();
       });
 
-      socket.on('disconnect', () => {
-        console.log('❌ Socket disconnected');
+      socket.on('disconnect', (reason) => {
+        console.log('❌ Socket disconnected:', reason);
         setIsConnected(false);
         hasRegistered.current = false;
+
+        // Schedule manual reconnect for certain disconnect reasons
+        if (reason === 'io server disconnect' || reason === 'transport close') {
+          scheduleReconnect();
+        }
+      });
+
+      socket.on('connect_error', (error: Error) => {
+        console.error('Socket connection error:', error.message);
+        scheduleReconnect();
       });
 
       socket.on('error', (error: unknown) => {
@@ -70,12 +125,13 @@ export const useSocket = (userId?: string) => {
     }
 
     return () => {
+      clearReconnectTimeout();
       // Don't disconnect on unmount - keep socket alive
       // Socket will be closed when window is closed
     };
-  }, [userId, isConnected]);
+  }, [userId, isConnected, scheduleReconnect, clearReconnectTimeout]);
 
-  return { socket, isConnected };
+  return { socket, isConnected, reconnectAttempt };
 };
 
 /**
