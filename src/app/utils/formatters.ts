@@ -70,3 +70,42 @@ export const formatCompetitorName = (
   }
   return fallback || 'Compétiteur';
 };
+
+/**
+ * Format a date string to a relative time format in French
+ * Examples: "À l'instant", "Il y a 5 min", "Il y a 2h", "Hier", "Il y a 3 jours"
+ */
+export const formatRelativeDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 5) return "À l'instant";
+  if (diffMins < 60) return `Il y a ${diffMins} min`;
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  if (diffDays === 1) return "Hier";
+  if (diffDays < 7) return `Il y a ${diffDays} jours`;
+  return formatDate(dateStr);
+};
+
+/**
+ * Get a date label for grouping races (Aujourd'hui, Hier, Cette semaine, or date)
+ */
+export const getDateLabel = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  const now = new Date();
+
+  // Reset time to compare dates only
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const diffDays = Math.floor((nowOnly.getTime() - dateOnly.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return "Hier";
+  if (diffDays < 7) return "Cette semaine";
+  return formatDate(dateStr);
+};
