@@ -115,3 +115,54 @@ export const SettingsInfo: FC<SettingsInfoProps> = ({ icon, title, value }) => {
     </div>
   );
 };
+
+interface SettingsVersionTapProps {
+  icon: ReactNode;
+  title: string;
+  value: string;
+  onTap: () => void;
+  tapProgress: number; // 0-7 for visual feedback
+  isUnlocked: boolean;
+}
+
+export const SettingsVersionTap: FC<SettingsVersionTapProps> = ({
+  icon,
+  title,
+  value,
+  onTap,
+  tapProgress,
+  isUnlocked,
+}) => {
+  // Generate dots indicator based on progress
+  const progressDots = tapProgress > 0 && !isUnlocked
+    ? ' ' + '.'.repeat(Math.min(tapProgress, 6))
+    : '';
+
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      className={`
+        w-full flex items-center gap-4 p-4 rounded-xl bg-neutral-800/50 border border-neutral-700/50 min-h-[64px] text-left
+        transition-all duration-200
+        ${tapProgress > 0 && !isUnlocked ? 'border-primary-500/30 bg-primary-500/5' : ''}
+        ${isUnlocked ? 'border-green-500/30 bg-green-500/5' : ''}
+        active:scale-[0.98]
+      `}
+    >
+      <span className="text-2xl flex-shrink-0" aria-hidden="true">
+        {icon}
+      </span>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-bold text-white">{title}</h3>
+        <p className="text-sub text-neutral-400">
+          {value}
+          <span className="text-primary-400 font-mono">{progressDots}</span>
+        </p>
+      </div>
+      {isUnlocked && (
+        <span className="text-green-400 text-sm">Unlocked</span>
+      )}
+    </button>
+  );
+};

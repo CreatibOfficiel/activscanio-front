@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -9,48 +9,20 @@ import {
   MdCasino,
   MdPerson,
 } from "react-icons/md";
-import { toast } from "sonner";
 import { useSoundboard } from "../../context/SoundboardContext";
-import { useEasterEgg } from "../../hooks/useEasterEgg";
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { state, unlock, open } = useSoundboard();
-  const [isShaking, setIsShaking] = useState(false);
-
-  const handleUnlock = useCallback(() => {
-    setIsShaking(true);
-    setTimeout(() => setIsShaking(false), 500);
-
-    unlock();
-    open();
-
-    toast.success('Tu as découvert un secret !', {
-      icon: '🎉',
-      duration: 4000,
-    });
-
-    // Haptic feedback if available
-    if (navigator.vibrate) {
-      navigator.vibrate([100, 50, 100, 50, 100]);
-    }
-  }, [unlock, open]);
-
-  const { handleTap } = useEasterEgg({
-    targetTaps: 7,
-    timeWindow: 3000,
-    onUnlock: handleUnlock,
-  });
+  const { state, open } = useSoundboard();
 
   const handleLeaderboardClick = useCallback((e: React.MouseEvent) => {
+    // If unlocked, clicking on Classement opens the soundboard
     if (state.isUnlocked) {
       e.preventDefault();
       open();
-    } else {
-      handleTap();
-      // Don't prevent default - still navigate to classement
     }
-  }, [state.isUnlocked, open, handleTap]);
+    // Otherwise, normal navigation to classement
+  }, [state.isUnlocked, open]);
 
   // Hide navigation during onboarding and task flows (race creation, betting, competitor management)
   const hiddenPaths = [
@@ -103,7 +75,6 @@ export default function BottomNav() {
               transition-colors duration-200
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
               ${isActive ? "text-primary-500" : "text-neutral-300"}
-              ${isLeaderboard && isShaking ? "animate-shake-unlock" : ""}
             `}
             aria-current={isActive ? "page" : undefined}
             aria-label={item.label}

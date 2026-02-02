@@ -283,6 +283,36 @@
   animation: wiggle 0.5s ease-in-out;
 }
 
+/* Slide Up (Bottom Sheet / Toast from bottom) */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Fade In (Modal Overlay) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-in;
+}
+
 /* Stagger Children Animation (for lists) */
 .stagger-children > * {
   animation: fade-in-up 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);

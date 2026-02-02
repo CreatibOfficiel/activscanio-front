@@ -1,14 +1,64 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useCallback, useState, useRef } from 'react';
 import Link from 'next/link';
-import { SettingsLink, SettingsButton, SettingsInfo } from '../../components/settings/SettingsLink';
+import { toast } from 'sonner';
+import { SettingsLink, SettingsButton, SettingsVersionTap } from '../../components/settings/SettingsLink';
 import { useNotificationStatus } from '../../components/settings/NotificationSettings';
 import { useSoundboard } from '../../context/SoundboardContext';
+import { useEasterEgg } from '../../hooks/useEasterEgg';
 
 const ProfileSettingsPage: FC = () => {
   const notificationStatus = useNotificationStatus();
-  const { state, open } = useSoundboard();
+  const { state, unlock, open } = useSoundboard();
+  const [tapProgress, setTapProgress] = useState(0);
+  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleUnlock = useCallback(() => {
+    unlock();
+    open();
+
+    toast.success('Soundboard unlocked!', {
+      icon: '🎉',
+      description: 'Secoue ton tel pour l\'ouvrir !',
+      duration: 4000,
+    });
+
+    // Haptic feedback if available
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 100]);
+    }
+
+    setTapProgress(0);
+  }, [unlock, open]);
+
+  const { handleTap: easterEggTap } = useEasterEgg({
+    targetTaps: 7,
+    timeWindow: 3000,
+    onUnlock: handleUnlock,
+  });
+
+  const handleVersionTap = useCallback(() => {
+    if (state.isUnlocked) {
+      // Already unlocked, just open the soundboard
+      open();
+      return;
+    }
+
+    // Trigger easter egg tap
+    easterEggTap();
+
+    // Update visual progress
+    setTapProgress((prev) => Math.min(prev + 1, 7));
+
+    // Reset progress after timeout
+    if (tapTimeoutRef.current) {
+      clearTimeout(tapTimeoutRef.current);
+    }
+    tapTimeoutRef.current = setTimeout(() => {
+      setTapProgress(0);
+    }, 3000);
+  }, [state.isUnlocked, easterEggTap, open]);
 
   return (
     <div className="min-h-screen bg-neutral-900">
@@ -59,15 +109,18 @@ const ProfileSettingsPage: FC = () => {
           <SettingsButton
             icon="🔊"
             title="Soundboard"
-            subtitle="Easter egg débloqué !"
+            subtitle="Secoue ton tel ou tape ici !"
             onClick={open}
           />
         )}
 
-        <SettingsInfo
+        <SettingsVersionTap
           icon="ℹ️"
           title="À propos"
           value={`v1.0.0 · ${process.env.NODE_ENV === 'production' ? 'Production' : 'Dev'}`}
+          onTap={handleVersionTap}
+          tapProgress={tapProgress}
+          isUnlocked={state.isUnlocked}
         />
       </main>
     </div>

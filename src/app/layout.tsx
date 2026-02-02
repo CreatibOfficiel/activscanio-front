@@ -7,7 +7,7 @@ import { OnboardingGuard } from "./components/auth/OnboardingGuard";
 import { PWAUpdateBanner } from "./components/ui/PWAUpdateBanner";
 import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
 import OfflineIndicator from "./components/ui/OfflineIndicator";
-import { SoundboardModal } from "./components/soundboard";
+import { SoundboardModal, ShakeDetector } from "./components/soundboard";
 import SocketProvider from "./components/layout/SocketProvider";
 import { ReactNode } from "react";
 import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -106,6 +106,7 @@ export default function RootLayout({
               </SignedIn>
             </OnboardingGuard>
             <SoundboardModal />
+            <ShakeDetector />
             </SoundboardProvider>
           </AppProvider>
         </ClerkProvider>
