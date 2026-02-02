@@ -6,14 +6,15 @@ import {
   MdEmojiEvents,
   MdDirectionsCar,
   MdTrendingUp,
-  MdHistory,
 } from 'react-icons/md';
-import { Competitor } from '../../models/Competitor';
+import { Competitor, getFullName } from '../../models/Competitor';
 import { CompetitorsRepository } from '../../repositories/CompetitorsRepository';
 import { Skeleton } from '../ui';
 
 // Lazy load chart component for performance
 const EloProgressChart = lazy(() => import('../stats/EloProgressChart'));
+const RecentRacesSection = lazy(() => import('./RecentRacesSection'));
+const SeasonHistorySection = lazy(() => import('./SeasonHistorySection'));
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -32,14 +33,23 @@ const ChartSkeleton: FC<{ height?: string }> = ({ height = 'h-64' }) => (
   </div>
 );
 
+// Loading skeleton for sections
+const SectionSkeleton: FC<{ height?: string }> = ({ height = 'h-48' }) => (
+  <div className={`${height} bg-neutral-900 rounded-lg animate-pulse`}>
+    <div className="flex items-center justify-center h-full text-neutral-600">
+      Chargement...
+    </div>
+  </div>
+);
+
 /**
  * RacesTab Component
  *
  * Races tab displaying:
  * - Current ELO stats (rating, RD, race count, avg rank)
  * - ELO progression chart
- * - Season history (coming soon)
- * - Recent races (coming soon)
+ * - Recent races with performance indicators
+ * - Season history/palmarès
  */
 const RacesTab: FC<RacesTabProps> = ({
   competitorId,
@@ -182,35 +192,18 @@ const RacesTab: FC<RacesTabProps> = ({
         </Suspense>
       </div>
 
-      {/* Season History - Coming Soon */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <MdHistory className="text-blue-400" />
-          <span>Historique des Saisons</span>
-        </h3>
-        <div className="text-center py-8 text-neutral-400">
-          <MdHistory className="text-4xl mx-auto mb-2 text-neutral-600" />
-          <p>Historique des classements par saison</p>
-          <p className="text-sm text-neutral-500 mt-1">
-            Bientôt disponible
-          </p>
-        </div>
-      </div>
+      {/* Recent Races Section */}
+      <Suspense fallback={<SectionSkeleton height="h-72" />}>
+        <RecentRacesSection competitorId={competitorId} limit={5} />
+      </Suspense>
 
-      {/* Recent Races - Coming Soon */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <MdDirectionsCar className="text-blue-400" />
-          <span>Dernières Courses</span>
-        </h3>
-        <div className="text-center py-8 text-neutral-400">
-          <MdDirectionsCar className="text-4xl mx-auto mb-2 text-neutral-600" />
-          <p>Historique de vos courses récentes</p>
-          <p className="text-sm text-neutral-500 mt-1">
-            Bientôt disponible
-          </p>
-        </div>
-      </div>
+      {/* Season History / Palmarès */}
+      <Suspense fallback={<SectionSkeleton height="h-96" />}>
+        <SeasonHistorySection
+          competitorId={competitorId}
+          competitorName={getFullName(competitor)}
+        />
+      </Suspense>
     </div>
   );
 };
