@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { Download, FileText, FileJson } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ExportDataButtons() {
   const [isExporting, setIsExporting] = useState<string | null>(null);
+  const { getToken } = useAuth();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
   const handleExport = async (
@@ -15,6 +17,7 @@ export default function ExportDataButtons() {
     setIsExporting(`${type}-${format}`);
 
     try {
+      const token = await getToken();
       const endpoint =
         type === 'stats'
           ? '/export/stats/json'
@@ -24,7 +27,7 @@ export default function ExportDataButtons() {
 
       const response = await fetch(`${apiUrl}${endpoint}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('clerk_token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 

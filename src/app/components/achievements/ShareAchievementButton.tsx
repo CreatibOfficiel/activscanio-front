@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { Share2, Download, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -15,17 +16,19 @@ export default function ShareAchievementButton({
 }: ShareAchievementButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { getToken } = useAuth();
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
   const generateShareImage = async () => {
     setIsGenerating(true);
     try {
+      const token = await getToken();
       const response = await fetch(
         `${apiUrl}/share/achievement/${achievementId}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('clerk_token')}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );

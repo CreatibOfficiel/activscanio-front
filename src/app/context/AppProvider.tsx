@@ -16,7 +16,7 @@ import {
 import { CharactersRepository } from "../repositories/CharactersRepository";
 
 const baseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://azule.ascan.io/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
 
 const competitorsRepo = new CompetitorsRepository(baseUrl);
 const racesRepo = new RacesRepository(baseUrl);
