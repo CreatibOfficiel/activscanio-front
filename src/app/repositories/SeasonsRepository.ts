@@ -15,6 +15,7 @@ export interface SeasonArchive {
 
 export interface ArchivedCompetitorRanking {
   id: string;
+  competitorId: string;
   competitorName: string;
   rank: number;
   finalRating: number;

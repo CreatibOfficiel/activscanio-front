@@ -34,11 +34,16 @@ export class RacesRepository {
 
   // GET /competitors/:competitorId/recent-races
   async fetchRecentRacesOfCompetitor(
-    competitorId: string
+    competitorId: string,
+    limit?: number
   ): Promise<RecentRaceInfo[]> {
-    const res = await fetch(
+    const url = new URL(
       `${this.baseUrl}/competitors/${competitorId}/recent-races`
     );
+    if (limit !== undefined) {
+      url.searchParams.set('limit', limit.toString());
+    }
+    const res = await fetch(url.toString());
     if (res.ok) {
       return await res.json();
     } else {
