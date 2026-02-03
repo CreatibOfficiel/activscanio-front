@@ -105,6 +105,13 @@ const ProfileSettingsPage: FC = () => {
           subtitle="Profil et connexion"
         />
 
+        <SettingsLink
+          href="/profile/help"
+          icon="📚"
+          title="Centre d'aide"
+          subtitle="Comment ça marche, FAQ"
+        />
+
         {state.isUnlocked && (
           <SettingsButton
             icon="🔊"

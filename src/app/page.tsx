@@ -49,8 +49,14 @@ const sortByConservativeScore = (competitors: Competitor[]): Competitor[] => {
   });
 };
 
-// Simulate trend data (in a real app, this would come from the API)
-const generateTrends = (
+/**
+ * Calculate real trend data based on previousDayRank.
+ * Compares the previous day rank with current rank to determine direction.
+ *
+ * @param competitors - Sorted array of competitors (by conservativeScore DESC)
+ * @returns Map of competitor ID to trend data
+ */
+const calculateCompetitorTrends = (
   competitors: Competitor[]
 ): Map<string, { direction: TrendDirection; value?: number }> => {
   const trends = new Map<
@@ -58,23 +64,25 @@ const generateTrends = (
     { direction: TrendDirection; value?: number }
   >();
 
-  competitors.forEach((c) => {
-    // Simple simulation based on position and some randomness
-    const rand = Math.random();
-    let direction: TrendDirection;
-    let value: number | undefined;
+  competitors.forEach((competitor, index) => {
+    const currentRank = index + 1; // 1-indexed
+    const previousRank = competitor.previousDayRank;
 
-    if (rand < 0.4) {
-      direction = "up";
-      value = Math.floor(Math.random() * 3) + 1;
-    } else if (rand < 0.7) {
-      direction = "down";
-      value = Math.floor(Math.random() * 2) + 1;
+    if (previousRank != null) {
+      // Calculate rank change (positive = moved up, negative = moved down)
+      const change = previousRank - currentRank;
+
+      if (change > 0) {
+        trends.set(competitor.id, { direction: "up", value: change });
+      } else if (change < 0) {
+        trends.set(competitor.id, { direction: "down", value: Math.abs(change) });
+      } else {
+        trends.set(competitor.id, { direction: "stable" });
+      }
     } else {
-      direction = "stable";
+      // No previous rank data available (new competitor or first snapshot)
+      trends.set(competitor.id, { direction: "stable" });
     }
-
-    trends.set(c.id, { direction, value });
   });
 
   return trends;
@@ -103,7 +111,7 @@ export default function Home() {
   const { sortedCompetitors, topThree, others, trends } = useMemo(() => {
     const filtered = filterRecentCompetitors(allCompetitors, daysThreshold);
     const sorted = sortByConservativeScore(filtered);
-    const trendData = generateTrends(sorted);
+    const trendData = calculateCompetitorTrends(sorted);
 
     return {
       sortedCompetitors: sorted,
@@ -144,7 +152,7 @@ export default function Home() {
           {activePeriod === "all" && "Depuis le début"}
           {" • "}
           {sortedCompetitors.length} pilote
-          {sortedCompetitors.length !== 1 ? "s" : ""}
+          {sortedCompetitors.length > 1 ? "s" : ""}
         </p>
       </div>
 
