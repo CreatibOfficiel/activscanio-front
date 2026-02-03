@@ -7,5 +7,6 @@ export { default as Input } from './Input';
 export { default as Spinner } from './Spinner';
 export { default as Skeleton } from './Skeleton';
 export { default as Tooltip } from './Tooltip';
+export { default as InfoTooltip } from './InfoTooltip';
 export { default as PageHeader } from './PageHeader';
 export type { PageHeaderProps } from './PageHeader';
