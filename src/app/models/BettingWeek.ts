@@ -1,4 +1,5 @@
 export enum BettingWeekStatus {
+  CALIBRATION = 'calibration', // First week of month - no betting allowed
   OPEN = 'open',
   CLOSED = 'closed',
   FINALIZED = 'finalized',
@@ -12,6 +13,7 @@ export interface BettingWeek {
   startDate: string;
   endDate: string;
   status: BettingWeekStatus;
+  isCalibrationWeek?: boolean;
   podiumFirstId?: string;
   podiumSecondId?: string;
   podiumThirdId?: string;

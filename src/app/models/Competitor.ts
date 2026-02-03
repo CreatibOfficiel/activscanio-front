@@ -16,6 +16,23 @@ export interface Competitor {
   lastRaceDate?: string;
   conservativeScore?: number;
   provisional?: boolean;
+  /**
+   * Recent race positions (last 5 races).
+   * Format: [most_recent, ..., oldest]
+   * Example: [1, 4, 2, 3, 1] means last race was 1st place
+   */
+  recentPositions?: number[];
+  /**
+   * Form factor based on recent performance.
+   * Range: 0.7 (poor form) to 1.3 (excellent form)
+   * Default: 1.0 (neutral)
+   */
+  formFactor?: number;
+  /**
+   * Previous day rank for trend calculation.
+   * Used to show if competitor is rising/falling in rankings.
+   */
+  previousDayRank?: number | null;
 }
 
 // Competitor with availability status (for onboarding)
