@@ -124,15 +124,21 @@ const SeasonDetailPage: FC = () => {
           {/* Season stats summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <Card className="p-4">
-              <p className="text-sub text-neutral-400 mb-1">Compétiteurs</p>
+              <p className="text-sub text-neutral-400 mb-1">
+                {season.totalCompetitors === 1 ? "Pilote" : "Pilotes"}
+              </p>
               <p className="text-statistic text-white">{season.totalCompetitors}</p>
             </Card>
             <Card className="p-4">
-              <p className="text-sub text-neutral-400 mb-1">Courses</p>
+              <p className="text-sub text-neutral-400 mb-1">
+                {season.totalRaces === 1 ? "Course" : "Courses"}
+              </p>
               <p className="text-statistic text-white">{season.totalRaces}</p>
             </Card>
             <Card className="p-4">
-              <p className="text-sub text-neutral-400 mb-1">Paris</p>
+              <p className="text-sub text-neutral-400 mb-1">
+                {season.totalBets === 1 ? "Pari" : "Paris"}
+              </p>
               <p className="text-statistic text-white">{season.totalBets}</p>
             </Card>
             <Card className="p-4">

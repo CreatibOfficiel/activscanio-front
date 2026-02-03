@@ -1,6 +1,6 @@
 "use client";
 
-import React, { PropsWithChildren, useEffect, useState, useCallback } from "react";
+import React, { PropsWithChildren, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AppContext } from "./AppContext";
 import { Competitor, UpdateCompetitorPayload } from "../models/Competitor";
@@ -31,25 +31,13 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [raceEvents, setRaceEvents] = useState<RaceEvent[]>([]);
   const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
 
-  /* ───────── authenticated fetch helper ───────── */
-  const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
-    const token = await getToken();
-    return fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-  }, [getToken]);
-
   /* ───────── bootstrap ───────── */
   useEffect(() => {
     // Only load data when user is authenticated
     if (isLoaded && isSignedIn) {
       loadInitialData().catch(console.error);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn]);
 
   const loadInitialData = async (): Promise<

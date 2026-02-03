@@ -143,7 +143,7 @@ export default function Home() {
           {activePeriod === "month" && "Ce mois-ci"}
           {activePeriod === "all" && "Depuis le début"}
           {" • "}
-          {sortedCompetitors.length} coureur
+          {sortedCompetitors.length} pilote
           {sortedCompetitors.length !== 1 ? "s" : ""}
         </p>
       </div>

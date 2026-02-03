@@ -119,15 +119,15 @@ const SeasonsPage: FC = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sub text-neutral-300">
                     <MdPeople className="text-primary-500" />
-                    <span>{season.totalCompetitors} compétiteurs</span>
+                    <span>{season.totalCompetitors} pilote{season.totalCompetitors !== 1 && "s"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sub text-neutral-300">
                     <MdSportsMartialArts className="text-primary-500" />
-                    <span>{season.totalRaces} courses</span>
+                    <span>{season.totalRaces} course{season.totalRaces !== 1 && "s"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sub text-neutral-300">
                     <MdTrendingUp className="text-primary-500" />
-                    <span>{season.totalBets} paris placés</span>
+                    <span>{season.totalBets} pari{season.totalBets !== 1 && "s"} placé{season.totalBets !== 1 && "s"}</span>
                   </div>
                   <div className="border-t border-neutral-700 pt-3">
                     <div className="flex items-center justify-between">

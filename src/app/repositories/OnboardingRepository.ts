@@ -1,4 +1,4 @@
-import { Competitor, CompetitorWithAvailability } from '../models/Competitor';
+import { CompetitorWithAvailability } from '../models/Competitor';
 import { BaseCharacter, CharacterVariant, BaseCharacterWithAvailability } from '../models/Character';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';

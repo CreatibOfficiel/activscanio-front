@@ -45,19 +45,27 @@ export const ArchivedSeasonsView: FC<Props> = ({ seasons }) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sub text-neutral-400">Coureurs</p>
+                <p className="text-sub text-neutral-400">
+                  {season.totalCompetitors === 1 ? "Pilote" : "Pilotes"}
+                </p>
                 <p className="text-bold text-primary-500">{season.totalCompetitors}</p>
               </div>
               <div>
-                <p className="text-sub text-neutral-400">Parieurs</p>
+                <p className="text-sub text-neutral-400">
+                  {season.totalBettors === 1 ? "Parieur" : "Parieurs"}
+                </p>
                 <p className="text-bold text-primary-500">{season.totalBettors}</p>
               </div>
               <div>
-                <p className="text-sub text-neutral-400">Courses</p>
+                <p className="text-sub text-neutral-400">
+                  {season.totalRaces === 1 ? "Course" : "Courses"}
+                </p>
                 <p className="text-bold text-white">{season.totalRaces}</p>
               </div>
               <div>
-                <p className="text-sub text-neutral-400">Paris</p>
+                <p className="text-sub text-neutral-400">
+                  {season.totalBets === 1 ? "Pari" : "Paris"}
+                </p>
                 <p className="text-bold text-white">{season.totalBets}</p>
               </div>
             </div>

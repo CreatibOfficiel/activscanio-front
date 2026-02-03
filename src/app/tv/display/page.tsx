@@ -46,13 +46,13 @@ const viewOrder = [
 
 const viewLabels: Record<DisplayView, string> = {
   [DisplayView.BETTOR_RANKINGS]: "Parieurs",
-  [DisplayView.COMPETITOR_RANKINGS]: "Coureurs",
+  [DisplayView.COMPETITOR_RANKINGS]: "Pilotes",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons",
 };
 
 const viewTitles: Record<DisplayView, string> = {
   [DisplayView.BETTOR_RANKINGS]: "Classement des Parieurs",
-  [DisplayView.COMPETITOR_RANKINGS]: "Classement des Coureurs",
+  [DisplayView.COMPETITOR_RANKINGS]: "Classement des Pilotes",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons Archivées",
 };
 
