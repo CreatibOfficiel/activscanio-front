@@ -107,6 +107,31 @@ Pick boosté (cote 5.0) correct = 10 pts
 + Bonus parfait (×2) = 20 pts au total pour ce pick`,
   },
   {
+    id: 'best-odds-guaranteed',
+    icon: '🎯',
+    title: 'Best Odds Guaranteed',
+    summary:
+      'Tu obtiens toujours la meilleure cote entre le moment de ton pari et la clôture !',
+    points: [
+      'Si la cote monte après ton pari, tu gagnes au meilleur prix',
+      'Si la cote baisse, tu gardes ta cote initiale',
+      'Tu ne peux jamais être perdant par rapport au timing',
+      'Applicable à tous les paris automatiquement',
+    ],
+    technicalDetails: `Exemple :
+• Tu paries sur Alice 1ère à 2.5
+• La cote monte à 3.0 avant la clôture
+• Si Alice gagne, tu es payé à 3.0 (meilleure cote)
+
+Autre exemple :
+• Tu paries sur Bob 2ème à 4.0
+• La cote baisse à 3.2
+• Si Bob est 2ème, tu es payé à 4.0 (ta cote initiale)
+
+Le BOG est calculé automatiquement lors de la finalisation des paris.
+La cote utilisée est stockée pour chaque pick et visible dans l'historique.`,
+  },
+  {
     id: 'odds',
     icon: '📊',
     title: 'Calcul des cotes',
