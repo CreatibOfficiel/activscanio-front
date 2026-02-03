@@ -51,7 +51,15 @@ const PlaceBetPage: FC = () => {
 
       setCurrentWeek(week);
 
-      // Check if week is open
+      // Check if week is open for betting
+      if (week.status === BettingWeekStatus.CALIBRATION) {
+        setError(
+          "C'est la première semaine du mois : période de calibration ELO. Les paris ouvriront la semaine prochaine."
+        );
+        setIsLoading(false);
+        return;
+      }
+
       if (week.status !== BettingWeekStatus.OPEN) {
         setError('Les paris sont fermés pour cette semaine.');
         setIsLoading(false);
@@ -105,6 +113,21 @@ const PlaceBetPage: FC = () => {
     setError(null);
   };
 
+  // Helper to get the appropriate odd based on position
+  const getOddForPosition = (competitor: CompetitorOdds, position: BetPosition): number => {
+    if (position === BetPosition.FIRST && competitor.oddFirst !== undefined) {
+      return competitor.oddFirst;
+    }
+    if (position === BetPosition.SECOND && competitor.oddSecond !== undefined) {
+      return competitor.oddSecond;
+    }
+    if (position === BetPosition.THIRD && competitor.oddThird !== undefined) {
+      return competitor.oddThird;
+    }
+    // Fallback to legacy odd field
+    return competitor.odd;
+  };
+
   const calculatePotentialGain = (): number => {
     if (!selection[BetPosition.FIRST] || !selection[BetPosition.SECOND] || !selection[BetPosition.THIRD]) {
       return 0;
@@ -119,7 +142,7 @@ const PlaceBetPage: FC = () => {
       const competitor = odds.find((c) => c.competitorId === competitorId);
       if (!competitor) return;
 
-      let points = competitor.odd;
+      let points = getOddForPosition(competitor, position);
 
       // Apply boost
       if (boostedCompetitorId === competitorId) {
@@ -198,7 +221,13 @@ const PlaceBetPage: FC = () => {
     );
   }
 
-  if (error && (!currentWeek || currentWeek.status !== BettingWeekStatus.OPEN || existingBet)) {
+  // Show error if week is not open (calibration, closed) or user already has a bet
+  const isWeekNotBettable =
+    !currentWeek ||
+    currentWeek.status === BettingWeekStatus.CALIBRATION ||
+    currentWeek.status !== BettingWeekStatus.OPEN;
+
+  if (error && (isWeekNotBettable || existingBet)) {
     return (
       <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
         <Card variant="error" className="p-6 max-w-2xl mx-auto">
@@ -241,9 +270,19 @@ const PlaceBetPage: FC = () => {
                 <Badge variant="primary" size="md">
                   S{currentWeek.weekNumber}
                 </Badge>
-                <Badge variant="success" size="md">
-                  Ouvert
-                </Badge>
+                {currentWeek.status === BettingWeekStatus.CALIBRATION ? (
+                  <Badge variant="warning" size="md">
+                    Calibration
+                  </Badge>
+                ) : currentWeek.status === BettingWeekStatus.OPEN ? (
+                  <Badge variant="success" size="md">
+                    Ouvert
+                  </Badge>
+                ) : (
+                  <Badge variant="default" size="md">
+                    Fermé
+                  </Badge>
+                )}
               </div>
             )
           }
@@ -310,17 +349,18 @@ const PlaceBetPage: FC = () => {
         {/* Submit button */}
         {isSelectionComplete && (
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-800 border-t border-neutral-700 z-50">
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              loading={isSubmitting}
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="max-w-4xl mx-auto"
-            >
-              Valider mon pari
-            </Button>
+            <div className="max-w-4xl mx-auto">
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                loading={isSubmitting}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                Valider mon pari
+              </Button>
+            </div>
           </div>
         )}
       </div>

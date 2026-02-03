@@ -5,12 +5,16 @@ import { BetPosition } from '@/app/models/Bet';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
 import { Card, Badge } from '@/app/components/ui';
 import { formatCompetitorName } from '@/app/utils/formatters';
+import { MdBolt } from 'react-icons/md';
 
 interface PodiumSummaryProps {
   selection: Partial<Record<BetPosition, string>>;
   competitors: CompetitorOdds[];
   boostedCompetitorId?: string;
   canBoost: boolean;
+  compact?: boolean;
+  currentPosition?: BetPosition;
+  onChangePosition?: (position: BetPosition) => void;
 }
 
 const PodiumSummary: FC<PodiumSummaryProps> = ({
@@ -18,6 +22,9 @@ const PodiumSummary: FC<PodiumSummaryProps> = ({
   competitors,
   boostedCompetitorId,
   canBoost,
+  compact = false,
+  currentPosition,
+  onChangePosition,
 }) => {
   const positions = [BetPosition.FIRST, BetPosition.SECOND, BetPosition.THIRD];
 
@@ -29,7 +36,68 @@ const PodiumSummary: FC<PodiumSummaryProps> = ({
 
   const selectedCount = Object.keys(selection).length;
 
-  // Always show the summary card, even if nothing is selected
+  const getCompetitorShortName = (competitor: CompetitorOdds): string => {
+    const fullName = formatCompetitorName(
+      competitor.competitor?.firstName,
+      competitor.competitor?.lastName,
+      competitor.competitorName
+    );
+    // Truncate long names for compact view
+    if (fullName.length > 10) {
+      return fullName.slice(0, 9) + '…';
+    }
+    return fullName;
+  };
+
+  // Compact variant: horizontal pills for sticky header
+  if (compact) {
+    return (
+      <div className="flex gap-2">
+        {positions.map((position) => {
+          const competitorId = selection[position];
+          const competitor = competitorId
+            ? competitors.find((c) => c.competitorId === competitorId)
+            : null;
+          const config = positionConfig[position];
+          const isBoosted = competitorId && boostedCompetitorId === competitorId;
+          const isCurrent = currentPosition === position;
+
+          return (
+            <button
+              key={position}
+              onClick={() => onChangePosition?.(position)}
+              className={`
+                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm
+                transition-all flex-1 min-w-0 justify-center
+                ${isCurrent
+                  ? 'bg-primary-500/20 ring-2 ring-primary-500 ring-offset-1 ring-offset-neutral-900'
+                  : competitor
+                    ? 'bg-neutral-750 hover:bg-neutral-700'
+                    : 'bg-neutral-800 border border-dashed border-neutral-700 hover:border-neutral-600'
+                }
+              `}
+              aria-pressed={isCurrent}
+              aria-label={`Position ${config.label}${competitor ? `: ${getCompetitorShortName(competitor)}` : ': non sélectionné'}`}
+            >
+              <span className="text-sm" aria-hidden="true">{config.icon}</span>
+              {competitor ? (
+                <span className="text-white font-medium truncate">
+                  {getCompetitorShortName(competitor)}
+                </span>
+              ) : (
+                <span className="text-neutral-500">---</span>
+              )}
+              {isBoosted && (
+                <MdBolt className="text-yellow-500 text-sm flex-shrink-0" aria-label="Boost actif" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Full variant: card with vertical rows (original design)
   return (
     <Card className="p-4">
       <h3 className="text-bold text-white mb-3">Votre sélection</h3>

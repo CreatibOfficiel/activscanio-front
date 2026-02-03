@@ -1,45 +1,33 @@
 "use client";
 
-import { FC, useState, useMemo } from 'react';
+import { FC } from 'react';
 import { BetPosition } from '@/app/models/Bet';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
-import { Input } from '@/app/components/ui';
-import { MdSearch, MdClose } from 'react-icons/md';
 import CompetitorOddsCard from './CompetitorOddsCard';
 
 interface PodiumCompetitorListProps {
   competitors: CompetitorOdds[];
+  filteredCompetitors: CompetitorOdds[];
   selection: Partial<Record<BetPosition, string>>;
   boostedCompetitorId?: string;
   canBoost: boolean;
   disabled: boolean;
   onSelectCompetitor: (competitorId: string) => void;
   onBoost: (competitorId: string) => void;
+  searchQuery: string;
 }
 
 const PodiumCompetitorList: FC<PodiumCompetitorListProps> = ({
   competitors,
+  filteredCompetitors,
   selection,
   boostedCompetitorId,
   canBoost,
   disabled,
   onSelectCompetitor,
   onBoost,
+  searchQuery,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredCompetitors = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return competitors;
-    }
-    const query = searchQuery.toLowerCase().trim();
-    return competitors.filter((c) => {
-      const name = c.competitorName?.toLowerCase() || '';
-      const firstName = c.competitor?.firstName?.toLowerCase() || '';
-      const lastName = c.competitor?.lastName?.toLowerCase() || '';
-      return name.includes(query) || firstName.includes(query) || lastName.includes(query);
-    });
-  }, [competitors, searchQuery]);
   const isCompetitorSelected = (competitorId: string): boolean => {
     return Object.values(selection).includes(competitorId);
   };
@@ -61,42 +49,25 @@ const PodiumCompetitorList: FC<PodiumCompetitorListProps> = ({
 
   return (
     <div>
-      <h3 className="text-bold text-white mb-3">
-        Compétiteurs éligibles ({competitors.length})
-      </h3>
-
-      {/* Search bar */}
-      <div className="sticky top-0 bg-neutral-900 pb-3 z-10">
-        <div className="relative">
-          <Input
-            type="search"
-            placeholder="Rechercher un compétiteur..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            leftIcon={<MdSearch className="text-lg" />}
-            rightIcon={
-              searchQuery ? (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="text-neutral-400 hover:text-white transition-colors pointer-events-auto"
-                  aria-label="Effacer la recherche"
-                >
-                  <MdClose className="text-lg" />
-                </button>
-              ) : undefined
-            }
-            ariaLabel="Rechercher un compétiteur"
-          />
-        </div>
+      {/* Header with count */}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-bold text-white">
+          Compétiteurs éligibles ({competitors.length})
+        </h3>
         {searchQuery && (
-          <p className="text-sub text-neutral-400 mt-2">
+          <span className="text-xs text-neutral-400">
             {filteredCompetitors.length} résultat{filteredCompetitors.length !== 1 ? 's' : ''}
-          </p>
+          </span>
         )}
       </div>
 
-      <div className="space-y-3">
+      {/* Odds explanation */}
+      <p className="text-xs text-neutral-400 mb-4 px-1">
+        Cote = points gagnés si correct. Plus la cote est haute, plus le joueur est outsider.
+      </p>
+
+      {/* Competitor cards */}
+      <div className="space-y-2">
         {filteredCompetitors.map((competitor) => {
           const isSelected = isCompetitorSelected(competitor.competitorId);
           const position = getCompetitorPosition(competitor.competitorId);
@@ -117,6 +88,13 @@ const PodiumCompetitorList: FC<PodiumCompetitorListProps> = ({
           );
         })}
       </div>
+
+      {/* Empty search results */}
+      {searchQuery && filteredCompetitors.length === 0 && (
+        <div className="text-center py-8 text-neutral-500">
+          <p>Aucun compétiteur trouvé pour « {searchQuery} »</p>
+        </div>
+      )}
     </div>
   );
 };
