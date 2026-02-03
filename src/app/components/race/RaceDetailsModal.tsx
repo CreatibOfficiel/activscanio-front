@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useContext, useEffect, useState } from "react";
+import { FC, useContext, useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { AppContext } from "@/app/context/AppContext";
 import { RaceEvent } from "@/app/models/RaceEvent";
@@ -20,31 +20,62 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
   const [similarRaces, setSimilarRaces] = useState<RaceEvent[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    (async () => {
-      const event = await getRaceById(raceId);
-      setRaceEvent(event);
+    // Prevent multiple loads
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
 
-      const comps: Competitor[] = [];
-      event.results.forEach((r) => {
-        const found = allCompetitors.find((c) => c.id === r.competitorId);
-        if (found) comps.push(found);
-      });
-      setCompetitors(comps);
+    const loadData = async () => {
+      try {
+        const event = await getRaceById(raceId);
+        setRaceEvent(event);
 
-      const similars = await getSimilarRaces(raceId);
-      setSimilarRaces(similars);
+        const comps: Competitor[] = [];
+        event.results.forEach((r) => {
+          const found = allCompetitors.find((c) => c.id === r.competitorId);
+          if (found) comps.push(found);
+        });
+        setCompetitors(comps);
 
-      setIsLoaded(true);
-    })();
-  }, [raceId, getRaceById, allCompetitors, getSimilarRaces]);
+        const similars = await getSimilarRaces(raceId);
+        setSimilarRaces(similars);
 
-  if (!isLoaded || !raceEvent) {
+        setIsLoaded(true);
+      } catch (err) {
+        console.error("Error loading race details:", err);
+        setError(err instanceof Error ? err.message : "Erreur lors du chargement");
+        setIsLoaded(true);
+      }
+    };
+
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [raceId]);
+
+  if (!isLoaded) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-neutral-900 p-4 text-regular rounded">
           <p className="text-neutral-300">Chargement de la course...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !raceEvent) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-neutral-900 p-6 rounded max-w-sm w-full">
+          <p className="text-red-400 mb-4">{error || "Course introuvable"}</p>
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded transition-colors"
+          >
+            Fermer
+          </button>
         </div>
       </div>
     );
@@ -55,7 +86,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-y-auto z-50">
       <div className="bg-neutral-900 p-4 rounded max-w-xl w-full text-neutral-100">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-title">Feuille de course</h2>

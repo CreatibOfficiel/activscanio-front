@@ -7,6 +7,7 @@ import { UserStats } from '../../models/Achievement';
 import TimePeriodToggle, { TimePeriod } from '../stats/TimePeriodToggle';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import StatCard from '../ui/StatCard';
+import InfoTooltip from '../ui/InfoTooltip';
 import { StreakIndicator } from '../achievements';
 
 // Lazy load chart components for performance
@@ -113,7 +114,13 @@ const StatsTab: FC<StatsTabProps> = ({
         <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <MdCalendarMonth className="text-orange-400" />
-            <span>Série mensuelle</span>
+            <InfoTooltip
+              content="Nombre de semaines consécutives avec au moins 1 pick correct ce mois-ci."
+              position="bottom"
+              iconSize="xs"
+            >
+              <span>Série mensuelle</span>
+            </InfoTooltip>
           </h3>
           <StreakIndicator
             type="monthly"
@@ -203,6 +210,7 @@ const StatsTab: FC<StatsTabProps> = ({
             suffix=""
           />
           <span className="text-xs sm:text-sm text-neutral-400 mt-1 text-center leading-tight">Parfaits</span>
+          <span className="text-[10px] text-neutral-500">(3/3 corrects)</span>
         </div>
       </motion.div>
 

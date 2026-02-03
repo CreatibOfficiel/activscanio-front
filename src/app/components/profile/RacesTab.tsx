@@ -9,7 +9,7 @@ import {
 } from 'react-icons/md';
 import { Competitor, getFullName } from '../../models/Competitor';
 import { CompetitorsRepository } from '../../repositories/CompetitorsRepository';
-import { Skeleton } from '../ui';
+import { Skeleton, InfoTooltip } from '../ui';
 
 // Lazy load chart component for performance
 const EloProgressChart = lazy(() => import('../stats/EloProgressChart'));
@@ -130,7 +130,13 @@ const RacesTab: FC<RacesTabProps> = ({
       <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
           <MdSpeed className="text-blue-400" />
-          <span>Statistiques ELO</span>
+          <InfoTooltip
+            content="Le système ELO (Glicko-2) évalue votre niveau après chaque course. Plus vous gagnez contre des adversaires forts, plus vous montez !"
+            position="bottom"
+            iconSize="sm"
+          >
+            <span>Statistiques ELO</span>
+          </InfoTooltip>
         </h3>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -139,6 +145,7 @@ const RacesTab: FC<RacesTabProps> = ({
             value={Math.round(competitor.rating).toString()}
             icon={<MdSpeed className="text-blue-400" />}
             colorClass="text-blue-400"
+            subValue="Niveau estimé"
           />
           <RaceStatCard
             label="Courses"
@@ -155,7 +162,7 @@ const RacesTab: FC<RacesTabProps> = ({
           <RaceStatCard
             label="Fiabilité"
             value={confidence.label}
-            subValue={`RD: ${Math.round(competitor.rd)}`}
+            subValue={`RD: ${Math.round(competitor.rd)} (incertitude)`}
             icon={<MdTrendingUp className={confidence.color} />}
             colorClass={confidence.color}
           />
@@ -165,7 +172,13 @@ const RacesTab: FC<RacesTabProps> = ({
         {competitor.conservativeScore != null && (
           <div className="mt-4 pt-4 border-t border-neutral-700">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-neutral-400">Score Conservateur (ELO - 2×RD)</span>
+              <InfoTooltip
+                content="Le score conservateur (Rating - 2×RD) représente votre niveau minimum avec 95% de certitude. Plus vous jouez, plus votre RD diminue et ce score devient fiable."
+                position="top"
+                iconSize="xs"
+              >
+                <span className="text-neutral-400">Score Conservateur (ELO - 2×RD)</span>
+              </InfoTooltip>
               <span className="font-bold text-blue-400">
                 {Math.round(competitor.conservativeScore)}
               </span>
