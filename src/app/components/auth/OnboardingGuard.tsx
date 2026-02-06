@@ -1,73 +1,80 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { UsersRepository } from '@/app/repositories/UsersRepository';
 
-/**
- * OnboardingGuard Component
- * Checks if authenticated user has completed onboarding
- * Redirects to /onboarding if not completed
- * Allows certain paths to bypass the check (onboarding page itself, TV display)
- */
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { isLoaded, getToken } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      if (!isLoaded) return;
+  const checkOnboarding = useCallback(async () => {
+    if (!isLoaded) return;
 
-      // Skip check for non-onboarding public paths (TV display, auth pages)
-      const isPublicPath = ['/tv/display', '/sign-in', '/sign-up'].some(path => pathname.startsWith(path));
-      if (isPublicPath) {
+    setError(null);
+    setIsChecking(true);
+
+    const isPublicPath = ['/tv/display', '/sign-in', '/sign-up'].some(path => pathname.startsWith(path));
+    if (isPublicPath) {
+      setIsChecking(false);
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      if (!token) {
         setIsChecking(false);
         return;
       }
 
-      try {
-        const token = await getToken();
-        if (!token) {
-          // User not authenticated, let Clerk middleware handle it
-          setIsChecking(false);
-          return;
-        }
+      const userData = await UsersRepository.getMe(token);
+      const isOnboardingPath = pathname.startsWith('/onboarding');
 
-        const userData = await UsersRepository.getMe(token);
-        const isOnboardingPath = pathname.startsWith('/onboarding');
-
-        if (userData.hasCompletedOnboarding) {
-          // User has completed onboarding
-          if (isOnboardingPath) {
-            // Redirect away from onboarding page to dashboard
-            router.push('/');
-          } else {
-            // Allow access to the page
-            setIsChecking(false);
-          }
+      if (userData.hasCompletedOnboarding) {
+        if (isOnboardingPath) {
+          router.push('/');
         } else {
-          // User hasn't completed onboarding
-          if (isOnboardingPath) {
-            // Allow access to onboarding page
-            setIsChecking(false);
-          } else {
-            // Redirect to onboarding
-            router.push('/onboarding');
-          }
+          setIsChecking(false);
         }
-      } catch (error) {
-        console.error('Error checking onboarding status:', error);
-        setIsChecking(false);
+      } else {
+        if (isOnboardingPath) {
+          setIsChecking(false);
+        } else {
+          router.push('/onboarding');
+        }
       }
-    };
-
-    checkOnboarding();
+    } catch (err) {
+      console.error('Error checking onboarding status:', err);
+      setError('Impossible de contacter le serveur. Vérifie ta connexion.');
+      setIsChecking(false);
+    }
   }, [isLoaded, pathname, router, getToken]);
 
-  // Show loading state while checking onboarding status
+  useEffect(() => {
+    checkOnboarding();
+  }, [checkOnboarding]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
+        <div className="text-center text-neutral-100 max-w-sm mx-auto px-4">
+          <p className="text-lg font-semibold mb-2">Oups !</p>
+          <p className="text-neutral-400 mb-6">{error}</p>
+          <button
+            onClick={() => checkOnboarding()}
+            className="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isChecking) {
     return (
       <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
