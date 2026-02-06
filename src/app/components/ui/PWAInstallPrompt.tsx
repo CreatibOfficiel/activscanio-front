@@ -1,15 +1,9 @@
 'use client';
 
 import { useEffect, useRef, createElement } from 'react';
-import { usePathname } from 'next/navigation';
 
 export function PWAInstallPrompt() {
-  const pathname = usePathname();
   const componentLoaded = useRef(false);
-
-  if (pathname.startsWith('/onboarding')) {
-    return null;
-  }
 
   useEffect(() => {
     // Load the web component only on client side
@@ -23,10 +17,10 @@ export function PWAInstallPrompt() {
   // Use createElement to avoid TypeScript errors with custom elements
   return createElement('pwa-install', {
     'manifest-url': '/manifest.json',
-    name: 'Activscanio',
+    name: 'Mushroom Bet',
     description: 'Application de classement de courses avec système de paris',
     icon: '/icons/icon-512x512.png',
-    'install-description': 'Installez Activscanio sur votre appareil pour un accès rapide et une expérience optimale !',
+    'install-description': 'Installez Mushroom Bet sur votre appareil pour un accès rapide et une expérience optimale !',
     // Remember if user dismissed the prompt
     'use-local-storage': true,
     // Custom styling with app's primary color (cyan/teal)

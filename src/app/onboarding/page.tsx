@@ -443,8 +443,7 @@ const OnboardingPage: FC = () => {
         {step === OnboardingStep.COMPETITOR_SEARCH && (
           <div className="space-y-6 animate-slideUp">
             <Card className="p-6">
-              <h2 className="text-heading text-white mb-4 flex items-center gap-2">
-                <MdSearch className="text-xl text-primary-500" />
+              <h2 className="text-heading text-white mb-4">
                 {isBettorOnly ? 'Qui êtes-vous ?' : 'Trouver votre profil'}
               </h2>
               <p className="text-sub text-neutral-300 mb-4">
@@ -627,35 +626,37 @@ const OnboardingPage: FC = () => {
               )}
 
               {/* Actions */}
-              <div className="flex gap-2 border-t border-neutral-700 pt-4">
-                <Button
-                  variant="ghost"
-                  onClick={handleBackToRoleSelection}
-                  className="flex items-center gap-1"
-                >
-                  <MdArrowBack />
-                  Retour
-                </Button>
-                <div className="flex-1" />
-                <Button
-                  variant="secondary"
-                  onClick={handleCreateNewCompetitor}
-                  className="flex items-center gap-1"
-                >
-                  <MdPersonAdd className="text-xl" />
-                  Créer un profil
-                </Button>
+              <div className="flex flex-col gap-2 border-t border-neutral-700 pt-4">
                 {selectedCompetitor && (
                   <Button
                     variant="primary"
+                    fullWidth
                     onClick={() => handleSelectCompetitor(selectedCompetitor)}
                     loading={isSubmitting}
                     disabled={isSubmitting}
                   >
-                    <span className="sm:hidden">{isBettorOnly ? 'Terminer' : 'Continuer'}</span>
-                    <span className="hidden sm:inline">{isBettorOnly ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}</span>
+                    {isBettorOnly ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}
                   </Button>
                 )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={handleBackToRoleSelection}
+                    className="flex items-center gap-1"
+                  >
+                    <MdArrowBack />
+                    Retour
+                  </Button>
+                  <div className="flex-1" />
+                  <Button
+                    variant="secondary"
+                    onClick={handleCreateNewCompetitor}
+                    className="flex items-center gap-1"
+                  >
+                    <MdPersonAdd className="text-xl" />
+                    Créer un profil
+                  </Button>
+                </div>
               </div>
             </Card>
           </div>
