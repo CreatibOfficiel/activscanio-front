@@ -1,9 +1,15 @@
 'use client';
 
 import { useEffect, useRef, createElement } from 'react';
+import { usePathname } from 'next/navigation';
 
 export function PWAInstallPrompt() {
+  const pathname = usePathname();
   const componentLoaded = useRef(false);
+
+  if (pathname.startsWith('/onboarding')) {
+    return null;
+  }
 
   useEffect(() => {
     // Load the web component only on client side
