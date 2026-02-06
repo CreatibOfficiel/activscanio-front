@@ -21,7 +21,7 @@ export function usePWAUpdate(): PWAUpdateState {
       return;
     }
 
-    const wb = new Workbox('/sw.js', { scope: '/' });
+    const wb = new Workbox('/sw-custom.js', { scope: '/' });
 
     wb.addEventListener('waiting', () => {
       console.log('[PWA] Nouvelle version disponible');
