@@ -3,6 +3,7 @@ import "./styles/animations.css";
 import { AppProvider } from "./context/AppProvider";
 import { SoundboardProvider } from "./context/SoundboardContext";
 import { BottomNav, Sidebar } from "./components/layout";
+import MainContent from "./components/layout/MainContent";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
 import { PWAUpdateBanner } from "./components/ui/PWAUpdateBanner";
 import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
@@ -88,9 +89,9 @@ export default function RootLayout({
 
               {/* Main content with responsive margins - when signed in */}
               <SignedIn>
-                <main className="pb-20 lg:pb-0 lg:pl-64">
+                <MainContent>
                   {children}
-                </main>
+                </MainContent>
               </SignedIn>
 
               {/* Main content without margins - when signed out (sign-in/sign-up pages) */}
