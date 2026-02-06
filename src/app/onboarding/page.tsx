@@ -28,6 +28,7 @@ const OnboardingPage: FC = () => {
   const [step, setStep] = useState<OnboardingStep>(OnboardingStep.ROLE_SELECTION);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBettorOnly, setIsBettorOnly] = useState(false);
 
   // Search state for competitors
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,14 +177,37 @@ const OnboardingPage: FC = () => {
     setSelectedVariantId(variant.id);
   }, []);
 
-  // Select existing competitor and move to character selection
-  const handleSelectCompetitor = (competitor: CompetitorWithAvailability) => {
+  // Select existing competitor and move to next step
+  const handleSelectCompetitor = async (competitor: CompetitorWithAvailability) => {
     // Don't allow selection if competitor is already linked to another user
     if (!competitor.isAvailable) {
       return;
     }
     setSelectedCompetitor(competitor);
-    setStep(OnboardingStep.CHARACTER_SELECT);
+
+    if (isBettorOnly) {
+      // Bettor path: complete onboarding directly with competitor link
+      try {
+        setIsSubmitting(true);
+        const token = await getToken();
+        if (!token) throw new Error('Token non disponible');
+
+        await OnboardingRepository.completeOnboarding(
+          { isSpectator: true, existingCompetitorId: competitor.id },
+          token
+        );
+        toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses !');
+        router.push('/');
+      } catch (error) {
+        console.error('Error completing onboarding as bettor:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la création du profil';
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      setStep(OnboardingStep.CHARACTER_SELECT);
+    }
   };
 
   // Move to create competitor step
@@ -201,6 +225,7 @@ const OnboardingPage: FC = () => {
 
   const handleBackToRoleSelection = () => {
     setStep(OnboardingStep.ROLE_SELECTION);
+    setIsBettorOnly(false);
     setSelectedCompetitor(null);
     setNewCompetitorFirstName('');
     setNewCompetitorLastName('');
@@ -225,8 +250,8 @@ const OnboardingPage: FC = () => {
     return nameRegex.test(name.trim());
   };
 
-  // Move from create form to character selection
-  const handleProceedToCharacterSelect = () => {
+  // Move from create form to character selection (or complete for bettors)
+  const handleProceedToCharacterSelect = async () => {
     const firstName = newCompetitorFirstName.trim();
     const lastName = newCompetitorLastName.trim();
 
@@ -245,7 +270,36 @@ const OnboardingPage: FC = () => {
       return;
     }
 
-    setStep(OnboardingStep.CHARACTER_SELECT);
+    if (isBettorOnly) {
+      // Bettor path: complete onboarding directly with new competitor
+      try {
+        setIsSubmitting(true);
+        const token = await getToken();
+        if (!token) throw new Error('Token non disponible');
+
+        await OnboardingRepository.completeOnboarding(
+          {
+            isSpectator: true,
+            newCompetitor: {
+              firstName,
+              lastName,
+              profilePictureUrl: user?.imageUrl || '',
+            },
+          },
+          token
+        );
+        toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses !');
+        router.push('/');
+      } catch (error) {
+        console.error('Error completing onboarding as bettor:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la création du profil';
+        toast.error(errorMessage);
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      setStep(OnboardingStep.CHARACTER_SELECT);
+    }
   };
 
   // Complete onboarding
@@ -287,33 +341,16 @@ const OnboardingPage: FC = () => {
     }
   };
 
-  // Handle spectator selection (no competitor/character needed)
-  const handleSpectatorSelection = async () => {
-    try {
-      setIsSubmitting(true);
-      const token = await getToken();
-      if (!token) {
-        throw new Error('Token non disponible');
-      }
-
-      await OnboardingRepository.completeOnboarding(
-        { isSpectator: true },
-        token
-      );
-
-      toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses ! 🎉');
-      router.push('/');
-    } catch (error) {
-      console.error('Error completing onboarding as spectator:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la création du profil';
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // Get current step number for progress indicator
   const stepNumber = useMemo(() => {
+    if (isBettorOnly) {
+      switch (step) {
+        case OnboardingStep.ROLE_SELECTION: return 1;
+        case OnboardingStep.COMPETITOR_SEARCH:
+        case OnboardingStep.CREATE_COMPETITOR: return 2;
+        default: return 1;
+      }
+    }
     switch (step) {
       case OnboardingStep.ROLE_SELECTION: return 1;
       case OnboardingStep.COMPETITOR_SEARCH:
@@ -322,10 +359,10 @@ const OnboardingPage: FC = () => {
       case OnboardingStep.VARIANT_SELECT: return 4;
       default: return 1;
     }
-  }, [step]);
+  }, [step, isBettorOnly]);
 
   const availableVariantsCount = selectedBaseCharacter?.variants.filter(v => v.isAvailable).length ?? 0;
-  const totalSteps = selectedBaseCharacter && availableVariantsCount > 1 ? 4 : 3;
+  const totalSteps = isBettorOnly ? 2 : (selectedBaseCharacter && availableVariantsCount > 1 ? 4 : 3);
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
@@ -334,7 +371,9 @@ const OnboardingPage: FC = () => {
         <div className="mb-8 text-center">
           <h1 className="text-title mb-2">Bienvenue {user?.firstName} !</h1>
           <p className="text-regular text-neutral-300">
-            Créez votre profil de compétiteur pour participer aux courses
+            {isBettorOnly
+              ? 'Identifiez-vous pour commencer à parier'
+              : 'Créez votre profil de compétiteur pour participer aux courses'}
           </p>
 
           {/* Progress indicator */}
@@ -382,11 +421,10 @@ const OnboardingPage: FC = () => {
                 {/* Option Parieur */}
                 <Card
                   className="p-6 cursor-pointer hover:border-primary-500 hover:bg-primary-500/5 transition-all duration-200 group"
-                  onClick={handleSpectatorSelection}
+                  onClick={() => { setIsBettorOnly(true); setStep(OnboardingStep.COMPETITOR_SEARCH); }}
                   role="button"
                   tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSpectatorSelection()}
-                  aria-disabled={isSubmitting}
+                  onKeyPress={(e) => { if (e.key === 'Enter') { setIsBettorOnly(true); setStep(OnboardingStep.COMPETITOR_SEARCH); } }}
                 >
                   <div className="text-center">
                     <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🎲</div>
@@ -407,10 +445,12 @@ const OnboardingPage: FC = () => {
             <Card className="p-6">
               <h2 className="text-heading text-white mb-4 flex items-center gap-2">
                 <MdSearch className="text-xl text-primary-500" />
-                Trouver votre profil
+                {isBettorOnly ? 'Qui êtes-vous ?' : 'Trouver votre profil'}
               </h2>
               <p className="text-sub text-neutral-300 mb-4">
-                Sélectionnez votre profil dans la liste ci-dessous
+                {isBettorOnly
+                  ? 'Sélectionnez votre profil pour que les autres sachent qui parie'
+                  : 'Sélectionnez votre profil dans la liste ci-dessous'}
               </p>
 
               {/* Search filter */}
@@ -601,9 +641,11 @@ const OnboardingPage: FC = () => {
                   <Button
                     variant="primary"
                     onClick={() => handleSelectCompetitor(selectedCompetitor)}
+                    loading={isSubmitting}
+                    disabled={isSubmitting}
                   >
-                    <span className="sm:hidden">Continuer</span>
-                    <span className="hidden sm:inline">Continuer avec {selectedCompetitor.firstName}</span>
+                    <span className="sm:hidden">{isBettorOnly ? 'Terminer' : 'Continuer'}</span>
+                    <span className="hidden sm:inline">{isBettorOnly ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}</span>
                   </Button>
                 ) : (
                   <Button
@@ -673,9 +715,10 @@ const OnboardingPage: FC = () => {
                   <Button
                     variant="primary"
                     onClick={handleProceedToCharacterSelect}
-                    disabled={!newCompetitorFirstName.trim() || !newCompetitorLastName.trim()}
+                    loading={isSubmitting}
+                    disabled={!newCompetitorFirstName.trim() || !newCompetitorLastName.trim() || isSubmitting}
                   >
-                    Continuer
+                    {isBettorOnly ? 'Terminer' : 'Continuer'}
                   </Button>
                 </div>
               </div>
