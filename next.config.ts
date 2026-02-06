@@ -6,6 +6,7 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   register: true,
   sw: "sw-custom.js",
+  cacheStartUrl: false,
   workboxOptions: {
     disableDevLogs: true,
     skipWaiting: true,
