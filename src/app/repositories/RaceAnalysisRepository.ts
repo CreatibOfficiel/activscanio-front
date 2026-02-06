@@ -1,3 +1,5 @@
+import { apiFetch } from '../utils/api-fetch';
+
 export interface RaceAnalysisResult {
   results: Array<{
     competitorId: string;
@@ -18,7 +20,7 @@ export class RaceAnalysisRepository {
     formData.append("image", image);
     formData.append("competitorIds", competitorIds.join(","));
 
-    const response = await fetch(`${this.baseUrl}/race-analysis/upload`, {
+    const response = await apiFetch(`${this.baseUrl}/race-analysis/upload`, {
       method: "POST",
       body: formData,
     });

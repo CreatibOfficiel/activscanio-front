@@ -1,5 +1,6 @@
 import { CompetitorWithAvailability } from '../models/Competitor';
 import { BaseCharacter, CharacterVariant, BaseCharacterWithAvailability } from '../models/Character';
+import { apiFetch } from '../utils/api-fetch';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -20,7 +21,7 @@ export class OnboardingRepository {
    */
   static async searchCompetitors(query: string, authToken: string): Promise<CompetitorWithAvailability[]> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/onboarding/search?query=${encodeURIComponent(query)}`,
         {
           headers: {
@@ -49,7 +50,7 @@ export class OnboardingRepository {
     authToken: string
   ): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/onboarding/complete`, {
+      const response = await apiFetch(`${API_BASE_URL}/onboarding/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +78,7 @@ export class OnboardingRepository {
    */
   static async skipOnboarding(authToken: string): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/onboarding/skip`, {
+      const response = await apiFetch(`${API_BASE_URL}/onboarding/skip`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +102,7 @@ export class OnboardingRepository {
    */
   static async getAllCharacterVariants(authToken: string): Promise<CharacterVariant[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/character-variants`, {
+      const response = await apiFetch(`${API_BASE_URL}/character-variants`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
@@ -124,7 +125,7 @@ export class OnboardingRepository {
    */
   static async getAvailableBaseCharacters(authToken: string): Promise<BaseCharacter[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/base-characters/available`, {
+      const response = await apiFetch(`${API_BASE_URL}/base-characters/available`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
@@ -147,7 +148,7 @@ export class OnboardingRepository {
    */
   static async getAllBaseCharactersWithStatus(authToken: string): Promise<BaseCharacterWithAvailability[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/base-characters/all-with-status`, {
+      const response = await apiFetch(`${API_BASE_URL}/base-characters/all-with-status`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
@@ -170,7 +171,7 @@ export class OnboardingRepository {
    */
   static async getAvailableVariants(baseCharacterId: string, authToken: string): Promise<CharacterVariant[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/base-characters/${baseCharacterId}/available-variants`, {
+      const response = await apiFetch(`${API_BASE_URL}/base-characters/${baseCharacterId}/available-variants`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,

@@ -1,3 +1,5 @@
+import { apiFetch } from '../utils/api-fetch';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface UserData {
@@ -36,7 +38,7 @@ export class UsersRepository {
    * @returns User data with competitor and character information
    */
   static async getMe(authToken: string): Promise<UserData> {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/users/me`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
@@ -60,7 +62,7 @@ export class UsersRepository {
     characterVariantId: string,
     authToken: string,
   ): Promise<UserData> {
-    const response = await fetch(`${API_BASE_URL}/users/me/character`, {
+    const response = await apiFetch(`${API_BASE_URL}/users/me/character`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

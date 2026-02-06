@@ -2,6 +2,7 @@ import {
   Competitor,
   UpdateCompetitorPayload,
 } from "@/app/models/Competitor";
+import { apiFetch } from '../utils/api-fetch';
 
 export class CompetitorsRepository {
   constructor(private readonly baseUrl: string) {}
@@ -10,7 +11,7 @@ export class CompetitorsRepository {
 
   // GET /competitors
   async fetchCompetitors(): Promise<Competitor[]> {
-    const res = await fetch(`${this.baseUrl}/competitors`);
+    const res = await apiFetch(`${this.baseUrl}/competitors`);
     if (!res.ok) {
       throw new Error(`Error fetching competitors: ${res.statusText}`);
     }
@@ -21,7 +22,7 @@ export class CompetitorsRepository {
 
   // POST /competitors
   async createCompetitor(competitor: Competitor): Promise<Competitor> {
-    const res = await fetch(`${this.baseUrl}/competitors`, {
+    const res = await apiFetch(`${this.baseUrl}/competitors`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -48,7 +49,7 @@ export class CompetitorsRepository {
 
   // GET /competitors/:id
   async fetchCompetitorById(id: string): Promise<Competitor> {
-    const res = await fetch(`${this.baseUrl}/competitors/${id}`);
+    const res = await apiFetch(`${this.baseUrl}/competitors/${id}`);
     if (!res.ok) {
       throw new Error(`Error fetching competitor: ${await res.text()}`);
     }
@@ -62,7 +63,7 @@ export class CompetitorsRepository {
     id: string,
     payload: UpdateCompetitorPayload,
   ): Promise<Competitor> {
-    const res = await fetch(`${this.baseUrl}/competitors/${id}`, {
+    const res = await apiFetch(`${this.baseUrl}/competitors/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -83,7 +84,7 @@ export class CompetitorsRepository {
     competitorId: string,
     variantId: string,
   ): Promise<Competitor> {
-    const res = await fetch(
+    const res = await apiFetch(
       `${this.baseUrl}/competitors/${competitorId}/character-variant`,
       {
         method: "POST",
@@ -104,7 +105,7 @@ export class CompetitorsRepository {
   async unlinkCharacterFromCompetitor(
     competitorId: string,
   ): Promise<Competitor> {
-    const res = await fetch(
+    const res = await apiFetch(
       `${this.baseUrl}/competitors/${competitorId}/character-variant`,
       { method: "DELETE" },
     );

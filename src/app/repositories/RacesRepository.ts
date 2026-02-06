@@ -1,13 +1,14 @@
 import { RaceEvent } from "../models/RaceEvent";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
 import { RaceAnalysisResult } from "./RaceAnalysisRepository";
+import { apiFetch } from '../utils/api-fetch';
 
 export class RacesRepository {
   constructor(private baseUrl: string) {}
 
   // POST /races
   async createRace(race: RaceEvent): Promise<RaceEvent> {
-    const res = await fetch(`${this.baseUrl}/races`, {
+    const res = await apiFetch(`${this.baseUrl}/races`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(race),
@@ -22,7 +23,7 @@ export class RacesRepository {
 
   // GET /races?recent=true
   async fetchRecentRaces(): Promise<RaceEvent[]> {
-    const res = await fetch(`${this.baseUrl}/races?recent=true`);
+    const res = await apiFetch(`${this.baseUrl}/races?recent=true`);
     if (res.ok) {
       const data = await res.json();
       return data.map((jsonObj: RaceEvent) => jsonObj as RaceEvent);
@@ -43,7 +44,7 @@ export class RacesRepository {
     if (limit !== undefined) {
       url.searchParams.set('limit', limit.toString());
     }
-    const res = await fetch(url.toString());
+    const res = await apiFetch(url.toString());
     if (res.ok) {
       return await res.json();
     } else {
@@ -56,7 +57,7 @@ export class RacesRepository {
 
   // GET /races/:raceId/similar
   async fetchSimilarRaces(raceId: string): Promise<RaceEvent[]> {
-    const res = await fetch(`${this.baseUrl}/races/${raceId}/similar`);
+    const res = await apiFetch(`${this.baseUrl}/races/${raceId}/similar`);
     if (res.ok) {
       return await res.json();
     } else {
@@ -67,7 +68,7 @@ export class RacesRepository {
 
   // GET /races/:raceId
   async fetchRaceById(raceId: string): Promise<RaceEvent> {
-    const res = await fetch(`${this.baseUrl}/races/${raceId}`);
+    const res = await apiFetch(`${this.baseUrl}/races/${raceId}`);
     if (res.ok) {
       return await res.json();
     } else {
@@ -82,7 +83,7 @@ export class RacesRepository {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       method: "POST",
       body: formData,
     });

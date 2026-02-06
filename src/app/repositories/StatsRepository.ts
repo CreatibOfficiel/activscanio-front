@@ -3,6 +3,7 @@
  *
  * Handles API calls for advanced statistics and analytics
  */
+import { apiFetch } from '../utils/api-fetch';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -123,7 +124,7 @@ export class StatsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers });
+      const response = await apiFetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch stats history: ${response.statusText}`);
@@ -154,7 +155,7 @@ export class StatsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers });
+      const response = await apiFetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch comparison stats: ${response.statusText}`);
@@ -185,7 +186,7 @@ export class StatsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers });
+      const response = await apiFetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch advanced stats: ${response.statusText}`);
@@ -217,7 +218,7 @@ export class StatsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers });
+      const response = await apiFetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch XP history: ${response.statusText}`);
@@ -245,7 +246,7 @@ export class StatsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers });
+      const response = await apiFetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch level rewards: ${response.statusText}`);
@@ -276,7 +277,7 @@ export class StatsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers });
+      const response = await apiFetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch user level rewards: ${response.statusText}`);

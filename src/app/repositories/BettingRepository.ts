@@ -1,3 +1,4 @@
+import { apiFetch } from '../utils/api-fetch';
 import { Bet, CreateBetDto } from '../models/Bet';
 import { BettingWeek } from '../models/BettingWeek';
 import { CompetitorOdds, BettorRanking } from '../models/CompetitorOdds';
@@ -22,7 +23,7 @@ export class BettingRepository {
    */
   static async getCurrentWeek(): Promise<BettingWeek | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/betting/current-week`, {
+      const response = await apiFetch(`${API_BASE_URL}/betting/current-week`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -53,7 +54,7 @@ export class BettingRepository {
         return [];
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/betting/weeks/${week.id}/odds`,
         {
           headers: {
@@ -82,7 +83,7 @@ export class BettingRepository {
     authToken: string
   ): Promise<Bet> {
     try {
-      const response = await fetch(`${API_BASE_URL}/betting/bets`, {
+      const response = await apiFetch(`${API_BASE_URL}/betting/bets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ export class BettingRepository {
         return null;
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/betting/bets/my-bets?weekId=${week.id}`,
         {
           headers: {
@@ -159,7 +160,7 @@ export class BettingRepository {
     offset = 0
   ): Promise<PaginatedResponse<Bet>> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/betting/bets/my-bets?limit=${limit}&offset=${offset}`,
         {
           headers: {
@@ -193,7 +194,7 @@ export class BettingRepository {
     rankings: BettorRanking[];
   }> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/betting/rankings/monthly?month=${month}&year=${year}`,
         {
           headers: {
@@ -220,7 +221,7 @@ export class BettingRepository {
    */
   static async getAllWeeks(): Promise<BettingWeek[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/betting/weeks`, {
+      const response = await apiFetch(`${API_BASE_URL}/betting/weeks`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -244,7 +245,7 @@ export class BettingRepository {
     authToken: string
   ): Promise<{ available: boolean; lastUsedMonth: number | null; lastUsedYear: number | null }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/betting/boost-availability`, {
+      const response = await apiFetch(`${API_BASE_URL}/betting/boost-availability`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,

@@ -1,3 +1,5 @@
+import { apiFetch } from '../utils/api-fetch';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface SeasonArchive {
@@ -51,7 +53,7 @@ export class SeasonsRepository {
    */
   static async getAllSeasons(): Promise<SeasonArchive[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/seasons`, {
+      const response = await apiFetch(`${API_BASE_URL}/seasons`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -73,7 +75,7 @@ export class SeasonsRepository {
    */
   static async getSeason(year: number, month: number): Promise<SeasonArchive> {
     try {
-      const response = await fetch(`${API_BASE_URL}/seasons/${year}/${month}`, {
+      const response = await apiFetch(`${API_BASE_URL}/seasons/${year}/${month}`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -98,7 +100,7 @@ export class SeasonsRepository {
     month: number
   ): Promise<ArchivedCompetitorRanking[]> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/seasons/${year}/${month}/competitors`,
         {
           headers: {
@@ -126,7 +128,7 @@ export class SeasonsRepository {
     month: number
   ): Promise<ArchivedBettorRanking[]> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/seasons/${year}/${month}/bettors`,
         {
           headers: {
@@ -154,7 +156,7 @@ export class SeasonsRepository {
     month: number
   ): Promise<SeasonBettingWeek[]> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/seasons/${year}/${month}/weeks`,
         {
           headers: {

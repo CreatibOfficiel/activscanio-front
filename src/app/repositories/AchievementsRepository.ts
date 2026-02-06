@@ -6,6 +6,7 @@ import {
   EquipTitleDto,
   EquipTitleResponse,
 } from '../models/Achievement';
+import { apiFetch } from '../utils/api-fetch';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -44,7 +45,7 @@ export class AchievementsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(url, { headers });
+      const response = await apiFetch(url, { headers });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch achievements: ${response.statusText}`);
@@ -62,7 +63,7 @@ export class AchievementsRepository {
    */
   static async getMyAchievements(authToken: string): Promise<UserAchievement[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/achievements/me`, {
+      const response = await apiFetch(`${API_BASE_URL}/achievements/me`, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
@@ -99,7 +100,7 @@ export class AchievementsRepository {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/achievements/stats/${userId}`,
         { headers }
       );
@@ -130,7 +131,7 @@ export class AchievementsRepository {
     authToken: string
   ): Promise<EquipTitleResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/achievements/equip-title`, {
+      const response = await apiFetch(`${API_BASE_URL}/achievements/equip-title`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +159,7 @@ export class AchievementsRepository {
    */
   static async unequipTitle(authToken: string): Promise<{ message: string }> {
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/achievements/unequip-title`,
         {
           method: 'POST',
