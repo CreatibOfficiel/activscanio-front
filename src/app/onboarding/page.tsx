@@ -637,7 +637,15 @@ const OnboardingPage: FC = () => {
                   Retour
                 </Button>
                 <div className="flex-1" />
-                {selectedCompetitor ? (
+                <Button
+                  variant="secondary"
+                  onClick={handleCreateNewCompetitor}
+                  className="flex items-center gap-1"
+                >
+                  <MdPersonAdd className="text-xl" />
+                  Créer un profil
+                </Button>
+                {selectedCompetitor && (
                   <Button
                     variant="primary"
                     onClick={() => handleSelectCompetitor(selectedCompetitor)}
@@ -646,15 +654,6 @@ const OnboardingPage: FC = () => {
                   >
                     <span className="sm:hidden">{isBettorOnly ? 'Terminer' : 'Continuer'}</span>
                     <span className="hidden sm:inline">{isBettorOnly ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}</span>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    onClick={handleCreateNewCompetitor}
-                    className="flex items-center gap-1"
-                  >
-                    <MdPersonAdd className="text-xl" />
-                    Créer un profil
                   </Button>
                 )}
               </div>
