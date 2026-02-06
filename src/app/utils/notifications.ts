@@ -17,7 +17,17 @@ export function showInAppNotification(data: NotificationData) {
     duration: 5000,
     action: data.url ? {
       label: 'Voir',
-      onClick: () => window.location.href = data.url!,
+      onClick: () => {
+        // Validate URL is same-origin to prevent open redirect
+        try {
+          const target = new URL(data.url!, window.location.origin);
+          if (target.origin === window.location.origin) {
+            window.location.href = target.href;
+          }
+        } catch {
+          // Invalid URL, ignore
+        }
+      },
     } : undefined,
   };
 
