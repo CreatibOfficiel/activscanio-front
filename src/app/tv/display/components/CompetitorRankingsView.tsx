@@ -31,17 +31,22 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   const maxScore = Math.max(...sortedCompetitors.map((c) => c.rating));
 
   // Convert to podium format
-  const podiumItems = top3.map((competitor, index) => ({
-    id: competitor.id,
-    name: formatCompetitorName(competitor.firstName, competitor.lastName),
-    imageUrl: competitor.profilePictureUrl,
-    score: Math.round(competitor.rating),
-    scoreLabel: "ELO",
-    subtitle: competitor.characterVariant
-      ? `${competitor.characterVariant.baseCharacter.name}`
-      : `${competitor.raceCount || 0} courses`,
-    rank: index + 1,
-  }));
+  const podiumItems = top3.map((competitor, index) => {
+    const avgRank = competitor.avgRank12
+      ? `Pos. moy. ${competitor.avgRank12.toFixed(1)}`
+      : null;
+    const races = `${competitor.raceCount || 0} course${(competitor.raceCount || 0) !== 1 ? "s" : ""}`;
+
+    return {
+      id: competitor.id,
+      name: formatCompetitorName(competitor.firstName, competitor.lastName),
+      imageUrl: competitor.profilePictureUrl,
+      score: Math.round(competitor.rating),
+      scoreLabel: "ELO",
+      subtitle: avgRank ? `${avgRank} · ${races}` : races,
+      rank: index + 1,
+    };
+  });
 
   // Simulate trend based on raceCount and avgRank
   const getTrend = (
@@ -57,32 +62,6 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     <div className="space-y-12">
       {/* Podium Top 3 */}
       {top3.length >= 3 && <TVPodium items={podiumItems} />}
-
-      {/* Stats cards for top 3 */}
-      {top3.length > 0 && (
-        <div className="grid grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {top3.map((competitor, index) => (
-            <div
-              key={competitor.id}
-              className={`text-center p-4 rounded-xl bg-neutral-800/30 animate-row-slide-in`}
-              style={{ animationDelay: `${(index + 3) * 100}ms` }}
-            >
-              <p className="text-sm text-neutral-500 uppercase tracking-wide mb-1">
-                Position moyenne
-              </p>
-              <p className="text-2xl font-bold text-primary-400">
-                {competitor.avgRank12
-                  ? `${competitor.avgRank12.toFixed(1)}ème`
-                  : "N/A"}
-              </p>
-              <p className="text-sm text-neutral-500 mt-2">
-                {competitor.raceCount || 0} course
-                {(competitor.raceCount || 0) !== 1 ? "s" : ""}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Other ranked competitors */}
       {others.length > 0 && (
