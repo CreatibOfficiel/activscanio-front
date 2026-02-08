@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState, useCallback, Suspense } from "react";
+import { FC, useEffect, useState, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { BettingRepository } from "@/app/repositories/BettingRepository";
 import {
@@ -10,9 +10,10 @@ import {
 import { CompetitorsRepository } from "@/app/repositories/CompetitorsRepository";
 import { BettorRankingsView } from "./components/BettorRankingsView";
 import { CompetitorRankingsView } from "./components/CompetitorRankingsView";
+import { WeeklyOddsView } from "./components/WeeklyOddsView";
 import { ArchivedSeasonsView } from "./components/ArchivedSeasonsView";
 import TVProgressBar from "./components/TVProgressBar";
-import { BettorRanking } from "@/app/models/CompetitorOdds";
+import { BettorRanking, CompetitorOdds } from "@/app/models/CompetitorOdds";
 import { Competitor } from "@/app/models/Competitor";
 
 const API_BASE_URL =
@@ -21,6 +22,7 @@ const API_BASE_URL =
 enum DisplayView {
   BETTOR_RANKINGS = "bettors",
   COMPETITOR_RANKINGS = "competitors",
+  WEEKLY_ODDS = "odds",
   ARCHIVED_SEASONS = "seasons",
 }
 
@@ -36,23 +38,28 @@ interface TVDisplayData {
   } | null;
   competitorRankings: Competitor[];
   archivedSeasons: SeasonArchive[];
+  weeklyOdds: CompetitorOdds[] | null;
+  currentWeekDates: string | null;
 }
 
-const viewOrder = [
+const ALL_VIEWS = [
   DisplayView.BETTOR_RANKINGS,
   DisplayView.COMPETITOR_RANKINGS,
+  DisplayView.WEEKLY_ODDS,
   DisplayView.ARCHIVED_SEASONS,
 ];
 
 const viewLabels: Record<DisplayView, string> = {
   [DisplayView.BETTOR_RANKINGS]: "Parieurs",
   [DisplayView.COMPETITOR_RANKINGS]: "Pilotes",
+  [DisplayView.WEEKLY_ODDS]: "Cotes",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons",
 };
 
 const viewTitles: Record<DisplayView, string> = {
   [DisplayView.BETTOR_RANKINGS]: "Classement des Parieurs",
   [DisplayView.COMPETITOR_RANKINGS]: "Classement des Pilotes",
+  [DisplayView.WEEKLY_ODDS]: "Cotes de la Semaine",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons Archivées",
 };
 
@@ -72,11 +79,26 @@ const TVDisplayContent: FC = () => {
     bettorRankings: null,
     competitorRankings: [],
     archivedSeasons: [],
+    weeklyOdds: null,
+    currentWeekDates: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [rotationKey, setRotationKey] = useState(0);
+
+  // Compute active views (skip views with no data)
+  const activeViews = useMemo(() => {
+    return ALL_VIEWS.filter((view) => {
+      if (view === DisplayView.WEEKLY_ODDS) {
+        return (
+          data.weeklyOdds &&
+          data.weeklyOdds.filter((o) => o.isEligible !== false).length > 0
+        );
+      }
+      return true;
+    });
+  }, [data.weeklyOdds]);
 
   // Handle view transition
   const transitionToNextView = useCallback(() => {
@@ -84,9 +106,9 @@ const TVDisplayContent: FC = () => {
 
     setTimeout(() => {
       setCurrentView((prev) => {
-        const currentIndex = viewOrder.indexOf(prev);
-        const nextIndex = (currentIndex + 1) % viewOrder.length;
-        return viewOrder[nextIndex];
+        const currentIndex = activeViews.indexOf(prev);
+        const nextIndex = (currentIndex + 1) % activeViews.length;
+        return activeViews[nextIndex];
       });
 
       setTimeout(() => {
@@ -94,7 +116,7 @@ const TVDisplayContent: FC = () => {
         setRotationKey((k) => k + 1);
       }, 50);
     }, 300);
-  }, []);
+  }, [activeViews]);
 
   // Automatic rotation
   useEffect(() => {
@@ -114,18 +136,31 @@ const TVDisplayContent: FC = () => {
 
         const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
 
-        const [bettors, competitors, seasons] = await Promise.all([
+        const [bettors, competitors, seasons, currentWeek] = await Promise.all([
           BettingRepository.getMonthlyRankings(currentMonth, currentYear).catch(
             () => null
           ),
           competitorsRepo.fetchCompetitors().catch(() => []),
           SeasonsRepository.getAllSeasons().catch(() => []),
+          BettingRepository.getCurrentWeek().catch(() => null),
         ]);
+
+        let weeklyOdds: CompetitorOdds[] | null = null;
+        let currentWeekDates: string | null = null;
+        if (currentWeek) {
+          weeklyOdds = await BettingRepository.getWeekOdds(currentWeek.id).catch(() => null);
+          const start = new Date(currentWeek.startDate);
+          const end = new Date(currentWeek.endDate);
+          const fmt: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+          currentWeekDates = `Semaine du ${start.toLocaleDateString("fr-FR", fmt)} au ${end.toLocaleDateString("fr-FR", fmt)}`;
+        }
 
         setData({
           bettorRankings: bettors,
           competitorRankings: competitors,
           archivedSeasons: seasons,
+          weeklyOdds,
+          currentWeekDates,
         });
         setLastUpdate(new Date());
         setIsLoading(false);
@@ -166,7 +201,7 @@ const TVDisplayContent: FC = () => {
     );
   }
 
-  const currentIndex = viewOrder.indexOf(currentView);
+  const currentIndex = activeViews.indexOf(currentView);
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-8 lg:p-12 flex flex-col">
@@ -190,7 +225,7 @@ const TVDisplayContent: FC = () => {
         {/* View indicators */}
         <div className="flex items-center gap-6">
           <div className="flex gap-3">
-            {viewOrder.map((view) => (
+            {activeViews.map((view) => (
               <div key={view} className="flex flex-col items-center gap-1">
                 <div
                   className={`h-3 w-16 rounded-full transition-all duration-300 ${
@@ -230,6 +265,12 @@ const TVDisplayContent: FC = () => {
           {currentView === DisplayView.COMPETITOR_RANKINGS && (
             <CompetitorRankingsView rankings={data.competitorRankings} />
           )}
+          {currentView === DisplayView.WEEKLY_ODDS && (
+            <WeeklyOddsView
+              odds={data.weeklyOdds}
+              weekDates={data.currentWeekDates ?? undefined}
+            />
+          )}
           {currentView === DisplayView.ARCHIVED_SEASONS && (
             <ArchivedSeasonsView seasons={data.archivedSeasons} />
           )}
@@ -240,7 +281,7 @@ const TVDisplayContent: FC = () => {
       <footer className="mt-8 pt-6 border-t border-neutral-800">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-neutral-500">
-            Vue suivante: {viewLabels[viewOrder[(currentIndex + 1) % viewOrder.length]]}
+            Vue suivante: {viewLabels[activeViews[(currentIndex + 1) % activeViews.length]]}
           </span>
           <span className="text-sm text-neutral-500">
             Rotation: {rotationInterval / 1000}s
