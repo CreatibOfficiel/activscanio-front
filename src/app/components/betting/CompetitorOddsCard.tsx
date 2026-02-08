@@ -16,6 +16,7 @@ interface CompetitorOddsCardProps {
   showBoostButton?: boolean;
   disabled?: boolean;
   showEligibilityBadge?: boolean;
+  displayOdd?: number;
 }
 
 /**
@@ -100,6 +101,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   showBoostButton = false,
   disabled = false,
   showEligibilityBadge = true,
+  displayOdd: displayOddProp,
 }) => {
   // Check if competitor is ineligible
   const isIneligible = competitorOdds.isEligible === false;
@@ -155,7 +157,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
     return competitorOdds.odd;
   };
 
-  const displayOdd = getDisplayOdd();
+  const displayOdd = displayOddProp ?? getDisplayOdd();
 
   // Determine if card should be disabled due to ineligibility
   const effectiveDisabled = disabled || isIneligible;

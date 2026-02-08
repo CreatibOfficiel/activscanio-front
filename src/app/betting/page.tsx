@@ -19,6 +19,7 @@ import {
   MdTrendingUp,
   MdEmojiEvents
 } from 'react-icons/md';
+import WeekOddsPreview from '@/app/components/betting/WeekOddsPreview';
 
 const BettingPage: FC = () => {
   const { getToken } = useAuth();
@@ -251,6 +252,9 @@ const BettingPage: FC = () => {
             </div>
           </Card>
         )}
+
+        {/* Week Odds Preview */}
+        {currentWeek && <WeekOddsPreview weekId={currentWeek.id} />}
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-3">

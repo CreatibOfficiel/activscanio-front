@@ -45,6 +45,26 @@ export class BettingRepository {
   }
 
   /**
+   * Get odds for a specific week by ID
+   */
+  static async getWeekOdds(weekId: string): Promise<CompetitorOdds[]> {
+    const response = await apiFetch(
+      `${API_BASE_URL}/betting/weeks/${weekId}/odds`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch odds: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
    * Get odds for current week
    */
   static async getCurrentWeekOdds(): Promise<CompetitorOdds[]> {
