@@ -74,7 +74,8 @@ const SeasonDetailPage: FC = () => {
     return months[month - 1];
   };
 
-  const getRankBadgeVariant = (rank: number) => {
+  const getRankBadgeVariant = (rank: number | null) => {
+    if (rank === null) return 'default';
     if (rank === 1) return 'gold';
     if (rank === 2) return 'silver';
     if (rank === 3) return 'bronze';
@@ -191,7 +192,7 @@ const SeasonDetailPage: FC = () => {
                   >
                     <div className="flex items-center gap-4">
                       <Badge variant={getRankBadgeVariant(ranking.rank)} size="md">
-                        #{ranking.rank}
+                        {ranking.rank !== null ? `#${ranking.rank}` : 'Cal.'}
                       </Badge>
                       <div>
                         <p className="text-bold text-white">{ranking.competitorName}</p>
