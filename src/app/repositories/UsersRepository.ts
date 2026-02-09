@@ -23,6 +23,7 @@ export interface UserData {
         id: string;
         name: string;
         imageUrl?: string;
+        variants?: { id: string; label: string; imageUrl?: string }[];
       };
     };
   };

@@ -114,8 +114,9 @@ const ProfilePage: FC = () => {
     }
 
     const variant = userData.competitor.characterVariant;
-    // Use variant imageUrl, or fallback to baseCharacter imageUrl
-    const imageUrl = variant.imageUrl || variant.baseCharacter.imageUrl;
+    // Use variant imageUrl, fallback to baseCharacter imageUrl, then first variant imageUrl
+    const firstVariantImage = variant.baseCharacter.variants?.find(v => v.imageUrl)?.imageUrl;
+    const imageUrl = variant.imageUrl || variant.baseCharacter.imageUrl || firstVariantImage;
     return {
       name: variant.baseCharacter.name,
       variantLabel: variant.label !== 'Default' ? variant.label : undefined,
