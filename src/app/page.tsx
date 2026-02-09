@@ -108,15 +108,22 @@ export default function Home() {
     }
   }, [activePeriod]);
 
-  const { sortedCompetitors, topThree, others, trends } = useMemo(() => {
+  const { confirmed, calibrating, topThree, others, trends } = useMemo(() => {
     const filtered = filterRecentCompetitors(allCompetitors, daysThreshold);
     const sorted = sortByConservativeScore(filtered);
-    const trendData = calculateCompetitorTrends(sorted);
+
+    // Split confirmed vs calibrating (same logic as TV display)
+    const conf = sorted.filter((c) => !c.provisional);
+    const cal = sorted.filter((c) => c.provisional);
+
+    // Trends computed on confirmed only (real rank)
+    const trendData = calculateCompetitorTrends(conf);
 
     return {
-      sortedCompetitors: sorted,
-      topThree: sorted.slice(0, 3),
-      others: sorted.slice(3),
+      confirmed: conf,
+      calibrating: cal,
+      topThree: conf.slice(0, 3),
+      others: conf.slice(3),
       trends: trendData,
     };
   }, [allCompetitors, daysThreshold]);
@@ -151,8 +158,9 @@ export default function Home() {
           {activePeriod === "month" && "Ce mois-ci"}
           {activePeriod === "all" && "Depuis le début"}
           {" • "}
-          {sortedCompetitors.length} pilote
-          {sortedCompetitors.length > 1 ? "s" : ""}
+          {confirmed.length} pilote
+          {confirmed.length > 1 ? "s" : ""}
+          {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
         </p>
       </div>
 
@@ -209,6 +217,28 @@ export default function Home() {
               competitor={competitor}
               rank={index + 4}
               trend={trends.get(competitor.id)}
+              animationDelay={index * 50}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Calibrating competitors */}
+      {calibrating.length > 0 && (
+        <div className="mt-8 space-y-1">
+          <div className="flex items-center gap-3 mb-3 px-1">
+            <div className="h-px flex-1 bg-neutral-700" />
+            <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">
+              En calibrage
+            </h2>
+            <div className="h-px flex-1 bg-neutral-700" />
+          </div>
+
+          {calibrating.map((competitor, index) => (
+            <LeaderboardRow
+              key={competitor.id}
+              competitor={competitor}
+              rank={confirmed.length + index + 1}
               animationDelay={index * 50}
             />
           ))}
