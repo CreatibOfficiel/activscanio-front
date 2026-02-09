@@ -53,3 +53,10 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification fermée', event.notification.tag);
 });
+
+// Handle SKIP_WAITING message from the app to activate the new SW
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});

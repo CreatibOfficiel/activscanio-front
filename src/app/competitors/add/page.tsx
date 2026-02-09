@@ -82,7 +82,6 @@ const AddCompetitorPage: NextPage = () => {
             type="url"
             placeholder="https://example.com/image.jpg"
             error={errors.profilePictureUrl?.message}
-            required
             {...register("profilePictureUrl")}
           />
           {profilePictureUrl && !errors.profilePictureUrl && (

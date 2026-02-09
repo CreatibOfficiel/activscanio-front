@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Workbox } from 'workbox-window';
 
 interface PWAUpdateState {
@@ -10,7 +10,6 @@ interface PWAUpdateState {
 
 export function usePWAUpdate(): PWAUpdateState {
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [workbox, setWorkbox] = useState<Workbox | null>(null);
 
   useEffect(() => {
     if (
@@ -37,6 +36,11 @@ export function usePWAUpdate(): PWAUpdateState {
       .then((registration) => {
         console.log('[PWA] Service worker registered');
 
+        if (registration?.waiting) {
+          console.log('[PWA] SW already waiting');
+          setUpdateAvailable(true);
+        }
+
         const handleVisibilityChange = () => {
           if (!document.hidden && registration) {
             registration.update();
@@ -55,15 +59,18 @@ export function usePWAUpdate(): PWAUpdateState {
       .catch((error) => {
         console.error('[PWA] Registration failed:', error);
       });
-
-    setWorkbox(wb);
   }, []);
 
-  const updateServiceWorker = () => {
-    if (workbox) {
-      workbox.messageSwWaiting({ type: 'SKIP_WAITING' });
-    }
-  };
+  const updateServiceWorker = useCallback(() => {
+    navigator.serviceWorker?.getRegistration().then((registration) => {
+      if (registration?.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+        // No waiting SW found, force reload as last resort
+        window.location.reload();
+      }
+    });
+  }, []);
 
   return { updateAvailable, updateServiceWorker };
 }

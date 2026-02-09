@@ -60,6 +60,12 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification fermée', event.notification.tag);
 });
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 `;
 
 try {
@@ -77,6 +83,9 @@ try {
     console.log('✅ Custom push notification handlers already present in service worker');
     process.exit(0);
   }
+
+  // Remove auto skipWaiting — we handle it manually via SKIP_WAITING message
+  swContent = swContent.replace(/self\.skipWaiting\(\),?/g, '');
 
   // Append custom handlers
   swContent += CUSTOM_HANDLERS;
