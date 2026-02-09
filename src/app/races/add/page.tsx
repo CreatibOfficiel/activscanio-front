@@ -8,6 +8,7 @@ import { Competitor } from "@/app/models/Competitor";
 import CheckableCompetitorItem from "@/app/components/competitor/CheckableCompetitorItem";
 import { MdPersonAdd, MdSearch, MdCameraAlt, MdArrowBack, MdEdit } from "react-icons/md";
 import { Button } from "@/app/components/ui";
+import Spinner from "@/app/components/ui/Spinner";
 import imageCompression from "browser-image-compression";
 
 const MIN_PLAYERS = 2;
@@ -115,13 +116,16 @@ const AddRaceContent = () => {
   };
 
   const handlePhotoChoice = () => {
-    setShowInputMethodModal(false);
     triggerFileInput();
   };
 
   const handleManualChoice = () => {
     setShowInputMethodModal(false);
     router.push(`/races/score-setup?ids=${selectedCompetitorIds.join(',')}`);
+  };
+
+  const closeModal = () => {
+    if (!isUploading) setShowInputMethodModal(false);
   };
 
   /* ---------- Upload & Analysis ---------- */
@@ -136,15 +140,16 @@ const AddRaceContent = () => {
     }
   
     setIsUploading(true);
+    setShowInputMethodModal(true);
     try {
       const originalFile = files[0];
-  
+
       const options = {
         maxSizeMB: 1,
         maxWidthOrHeight: 1400,
         useWebWorker: true,
       };
-  
+
       const compressedFile = await imageCompression(originalFile, options);
       const { results } = await analyzeRaceImage(compressedFile, selectedCompetitorIds);
 
@@ -159,7 +164,7 @@ const AddRaceContent = () => {
       const params = new URLSearchParams();
       params.set('ids', selectedCompetitorIds.join(','));
       params.set('fromAnalysis', 'true');
-      
+
       // Add the scores and ranks
       results.forEach((r) => {
         params.set(`score_${r.competitorId}`, r.score.toString());
@@ -174,6 +179,7 @@ const AddRaceContent = () => {
       alert("Une erreur est survenue pendant l'analyse. Merci de réessayer.");
     } finally {
       setIsUploading(false);
+      setShowInputMethodModal(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -303,7 +309,7 @@ const AddRaceContent = () => {
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/60 animate-fadeIn"
-            onClick={() => setShowInputMethodModal(false)}
+            onClick={closeModal}
           />
 
           {/* Bottom Sheet */}
@@ -318,22 +324,40 @@ const AddRaceContent = () => {
             <div className="flex flex-col gap-3">
               {/* Photo option */}
               <button
-                className="flex items-center gap-4 p-4 bg-neutral-700 rounded-xl hover:bg-neutral-600 active:bg-neutral-650 transition-colors text-left"
+                className={`flex items-center gap-4 p-4 rounded-xl transition-colors text-left ${
+                  isUploading
+                    ? 'bg-neutral-700/50 cursor-not-allowed'
+                    : 'bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-650'
+                }`}
                 onClick={handlePhotoChoice}
+                disabled={isUploading}
               >
                 <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
-                  <MdCameraAlt size={24} className="text-primary-500" />
+                  {isUploading ? (
+                    <Spinner size="sm" color="white" />
+                  ) : (
+                    <MdCameraAlt size={24} className="text-primary-500" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-medium text-neutral-100">Prendre une photo</p>
-                  <p className="text-sm text-neutral-400">Analyse automatique des résultats</p>
+                  <p className="font-medium text-neutral-100">
+                    {isUploading ? 'Analyse en cours…' : 'Prendre une photo'}
+                  </p>
+                  <p className="text-sm text-neutral-400">
+                    {isUploading ? 'Cela peut prendre quelques secondes' : 'Analyse automatique des résultats'}
+                  </p>
                 </div>
               </button>
 
               {/* Manual entry option */}
               <button
-                className="flex items-center gap-4 p-4 bg-neutral-700 rounded-xl hover:bg-neutral-600 active:bg-neutral-650 transition-colors text-left"
+                className={`flex items-center gap-4 p-4 rounded-xl transition-colors text-left ${
+                  isUploading
+                    ? 'bg-neutral-700/50 cursor-not-allowed'
+                    : 'bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-650'
+                }`}
                 onClick={handleManualChoice}
+                disabled={isUploading}
               >
                 <div className="w-12 h-12 rounded-full bg-neutral-600 flex items-center justify-center flex-shrink-0">
                   <MdEdit size={24} className="text-neutral-300" />
