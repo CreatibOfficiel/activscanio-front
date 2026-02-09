@@ -19,6 +19,7 @@ export interface CharacterVariantWithAvailability {
   imageUrl: string;
   isAvailable: boolean;
   takenBy?: {
+    competitorId: string;
     firstName: string;
     profilePictureUrl?: string;
   };

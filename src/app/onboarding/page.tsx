@@ -141,23 +141,30 @@ const OnboardingPage: FC = () => {
     setFilteredCharacters(filtered);
   }, [debouncedCharacterSearch, baseCharacters]);
 
+  // Check if a variant is selectable (available OR belongs to the selected competitor)
+  const isVariantSelectable = useCallback((variant: CharacterVariantWithAvailability) => {
+    if (variant.isAvailable) return true;
+    if (selectedCompetitor && variant.takenBy?.competitorId === selectedCompetitor.id) return true;
+    return false;
+  }, [selectedCompetitor]);
+
   // Select base character and handle variants
   const handleSelectBaseCharacter = useCallback((character: BaseCharacterWithAvailability) => {
-    // Don't allow selection if no variants are available
-    if (!character.hasAvailableVariants) {
+    // Get variants selectable by this user (available + own)
+    const selectableVariants = character.variants.filter(isVariantSelectable);
+
+    // Don't allow selection if no variants are selectable
+    if (selectableVariants.length === 0) {
       return;
     }
 
     setSelectedBaseCharacter(character);
 
-    // Get only available variants
-    const availableVariants = character.variants.filter(v => v.isAvailable);
-
-    // If only one available variant, select it automatically and skip variant step
-    if (availableVariants.length === 1) {
-      setSelectedVariantId(availableVariants[0].id);
+    // If only one selectable variant, select it automatically and skip variant step
+    if (selectableVariants.length === 1) {
+      setSelectedVariantId(selectableVariants[0].id);
       // Don't change step, just show confirmation
-    } else if (availableVariants.length > 1) {
+    } else if (selectableVariants.length > 1) {
       // Save scroll position before navigating to variant selection
       if (characterListRef.current) {
         savedScrollPosition.current = characterListRef.current.scrollTop;
@@ -166,16 +173,16 @@ const OnboardingPage: FC = () => {
       setSelectedVariantId(null);
       setStep(OnboardingStep.VARIANT_SELECT);
     }
-  }, []);
+  }, [isVariantSelectable]);
 
   // Select variant
   const handleSelectVariant = useCallback((variant: CharacterVariantWithAvailability) => {
-    // Don't allow selection if variant is taken
-    if (!variant.isAvailable) {
+    // Don't allow selection if variant is taken by someone else
+    if (!isVariantSelectable(variant)) {
       return;
     }
     setSelectedVariantId(variant.id);
-  }, []);
+  }, [isVariantSelectable]);
 
   // Select existing competitor and move to next step
   const handleSelectCompetitor = async (competitor: CompetitorWithAvailability) => {
@@ -206,6 +213,16 @@ const OnboardingPage: FC = () => {
         setIsSubmitting(false);
       }
     } else {
+      // If competitor already has a character variant, pre-select it
+      if (competitor.characterVariant) {
+        const baseChar = baseCharacters.find(
+          (bc) => bc.id === competitor.characterVariant!.baseCharacter.id
+        );
+        if (baseChar) {
+          setSelectedBaseCharacter(baseChar);
+        }
+        setSelectedVariantId(competitor.characterVariant.id);
+      }
       setStep(OnboardingStep.CHARACTER_SELECT);
     }
   };
@@ -361,8 +378,8 @@ const OnboardingPage: FC = () => {
     }
   }, [step, isBettorOnly]);
 
-  const availableVariantsCount = selectedBaseCharacter?.variants.filter(v => v.isAvailable).length ?? 0;
-  const totalSteps = isBettorOnly ? 2 : (selectedBaseCharacter && availableVariantsCount > 1 ? 4 : 3);
+  const selectableVariantsCount = selectedBaseCharacter?.variants.filter(isVariantSelectable).length ?? 0;
+  const totalSteps = isBettorOnly ? 2 : (selectedBaseCharacter && selectableVariantsCount > 1 ? 4 : 3);
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
@@ -744,6 +761,15 @@ const OnboardingPage: FC = () => {
                 </div>
               </div>
 
+              {/* Info banner when competitor already has a character */}
+              {selectedCompetitor?.characterVariant && selectedVariantId && (
+                <div className="mb-4 p-3 bg-primary-500/10 border border-primary-500/30 rounded-lg">
+                  <p className="text-sub text-primary-300">
+                    Personnage actuel pré-sélectionné : <span className="text-bold text-primary-400">{selectedCompetitor.characterVariant.baseCharacter.name} - {selectedCompetitor.characterVariant.label}</span>. Vous pouvez le garder ou en choisir un autre.
+                  </p>
+                </div>
+              )}
+
               {/* Search filter for characters */}
               <div className="relative mb-4">
                 <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -774,9 +800,9 @@ const OnboardingPage: FC = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {filteredCharacters.map((character) => {
                       const isSelected = selectedBaseCharacter?.id === character.id;
-                      const availableVariants = character.variants.filter(v => v.isAvailable);
-                      const hasAvailable = character.hasAvailableVariants;
-                      const hasMultipleAvailableVariants = availableVariants.length > 1;
+                      const selectableVariants = character.variants.filter(isVariantSelectable);
+                      const hasAvailable = selectableVariants.length > 0;
+                      const hasMultipleAvailableVariants = selectableVariants.length > 1;
 
                       // Find first person who took a variant (for display when all taken)
                       const takenVariant = character.variants.find(v => !v.isAvailable && v.takenBy);
@@ -797,7 +823,7 @@ const OnboardingPage: FC = () => {
                           aria-disabled={!hasAvailable}
                           tabIndex={hasAvailable ? 0 : -1}
                           onKeyPress={(e) => e.key === 'Enter' && hasAvailable && handleSelectBaseCharacter(character)}
-                          aria-label={`${character.name}${!hasAvailable ? ' (indisponible)' : hasMultipleAvailableVariants ? ` (${availableVariants.length} couleurs disponibles)` : ''}`}
+                          aria-label={`${character.name}${!hasAvailable ? ' (indisponible)' : hasMultipleAvailableVariants ? ` (${selectableVariants.length} couleurs disponibles)` : ''}`}
                         >
                           <div className="text-center">
                             {/* Character image with taken badge */}
@@ -849,7 +875,7 @@ const OnboardingPage: FC = () => {
                             {hasAvailable && hasMultipleAvailableVariants && (
                               <p className="text-sub text-xs text-neutral-500 flex items-center justify-center gap-1">
                                 <MdColorLens className="text-xs" />
-                                {availableVariants.length} couleurs
+                                {selectableVariants.length} couleurs
                               </p>
                             )}
                             {isSelected && !hasMultipleAvailableVariants && (
@@ -920,46 +946,47 @@ const OnboardingPage: FC = () => {
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {selectedBaseCharacter.variants.map((variant) => {
                     const isSelected = selectedVariantId === variant.id;
-                    const isAvailable = variant.isAvailable;
+                    const selectable = isVariantSelectable(variant);
+                    const isOwnVariant = !variant.isAvailable && selectedCompetitor && variant.takenBy?.competitorId === selectedCompetitor.id;
 
                     return (
                       <Card
                         key={variant.id}
                         className={`p-3 transition-all duration-200 ${
-                          !isAvailable
+                          !selectable
                             ? 'opacity-60 cursor-not-allowed'
                             : 'cursor-pointer hover:border-primary-500 hover:bg-primary-500/5'
                         } ${
                           isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
                         }`}
-                        onClick={() => isAvailable && handleSelectVariant(variant)}
+                        onClick={() => selectable && handleSelectVariant(variant)}
                         role="option"
                         aria-selected={isSelected}
-                        aria-disabled={!isAvailable}
-                        tabIndex={isAvailable ? 0 : -1}
-                        onKeyPress={(e) => e.key === 'Enter' && isAvailable && handleSelectVariant(variant)}
-                        aria-label={`${selectedBaseCharacter.name} - ${variant.label}${!isAvailable ? ' (indisponible)' : ''}`}
+                        aria-disabled={!selectable}
+                        tabIndex={selectable ? 0 : -1}
+                        onKeyPress={(e) => e.key === 'Enter' && selectable && handleSelectVariant(variant)}
+                        aria-label={`${selectedBaseCharacter.name} - ${variant.label}${!selectable ? ' (indisponible)' : ''}${isOwnVariant ? ' (votre personnage actuel)' : ''}`}
                       >
                         <div className="text-center">
                           {/* Variant image with taken badge */}
                           <div className="relative w-14 h-14 mx-auto mb-2">
                             <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden ${
                               isSelected ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-800' : 'bg-neutral-700'
-                            } ${!isAvailable ? 'grayscale' : ''}`}>
+                            } ${!selectable ? 'grayscale' : ''}`}>
                               {variant.imageUrl ? (
                                 <Image
                                   src={variant.imageUrl}
                                   alt={`${selectedBaseCharacter.name} ${variant.label}`}
                                   width={56}
                                   height={56}
-                                  className={`w-full h-full object-contain ${!isAvailable ? 'opacity-50' : ''}`}
+                                  className={`w-full h-full object-contain ${!selectable ? 'opacity-50' : ''}`}
                                 />
                               ) : (
                                 <span className="text-2xl">🎨</span>
                               )}
                             </div>
-                            {/* Badge showing who took it */}
-                            {!isAvailable && variant.takenBy && (
+                            {/* Badge showing who took it (only for variants taken by others) */}
+                            {!selectable && variant.takenBy && (
                               <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-neutral-800 overflow-hidden bg-neutral-700">
                                 {variant.takenBy.profilePictureUrl ? (
                                   <img
@@ -976,17 +1003,23 @@ const OnboardingPage: FC = () => {
                             )}
                           </div>
                           <p className={`text-bold text-sm ${
-                            !isAvailable ? 'text-neutral-500' : isSelected ? 'text-primary-400' : 'text-white'
+                            !selectable ? 'text-neutral-500' : isSelected ? 'text-primary-400' : 'text-white'
                           }`}>
                             {variant.label}
                           </p>
-                          {/* Show who took it */}
-                          {!isAvailable && variant.takenBy && (
+                          {/* Show "Votre perso" for own variant */}
+                          {isOwnVariant && (
+                            <p className="text-sub text-xs text-primary-400 truncate">
+                              Votre perso
+                            </p>
+                          )}
+                          {/* Show who took it (only for variants taken by others) */}
+                          {!selectable && variant.takenBy && (
                             <p className="text-sub text-xs text-neutral-500 truncate">
                               {variant.takenBy.firstName}
                             </p>
                           )}
-                          {isSelected && isAvailable && (
+                          {isSelected && selectable && (
                             <div className="mt-1 flex items-center justify-center text-primary-400 text-sub text-xs gap-1">
                               <MdCheck className="text-xs" />
                               Choisi
