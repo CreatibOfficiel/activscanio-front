@@ -82,7 +82,9 @@ const TVPodium: FC<Props> = ({ items, title }) => {
         {/* Crown for 1st place */}
         {config.crown && (
           <div className="animate-crown-drop mb-2">
-            <span className="text-6xl drop-shadow-xl">👑</span>
+            <span className="text-6xl drop-shadow-xl">
+              {item.name.includes("Joran") ? "🤪" : "👑"}
+            </span>
           </div>
         )}
 

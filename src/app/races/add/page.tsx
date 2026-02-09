@@ -226,6 +226,7 @@ const AddRaceContent = () => {
 
           {/* Hidden file input for photo upload */}
           <input
+            id="race-photo-input"
             type="file"
             accept="image/*"
             className="hidden"
@@ -322,15 +323,14 @@ const AddRaceContent = () => {
             </p>
 
             <div className="flex flex-col gap-3">
-              {/* Photo option */}
-              <button
+              {/* Photo option - uses <label> to directly trigger file input for proper mobile behavior */}
+              <label
+                htmlFor={isUploading ? undefined : "race-photo-input"}
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors text-left ${
                   isUploading
                     ? 'bg-neutral-700/50 cursor-not-allowed'
-                    : 'bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-650'
+                    : 'bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-650 cursor-pointer'
                 }`}
-                onClick={handlePhotoChoice}
-                disabled={isUploading}
               >
                 <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
                   {isUploading ? (
@@ -347,7 +347,7 @@ const AddRaceContent = () => {
                     {isUploading ? 'Cela peut prendre quelques secondes' : 'Analyse automatique des résultats'}
                   </p>
                 </div>
-              </button>
+              </label>
 
               {/* Manual entry option */}
               <button

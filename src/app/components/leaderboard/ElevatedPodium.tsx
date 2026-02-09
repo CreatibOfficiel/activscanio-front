@@ -87,7 +87,9 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
         {/* Crown for 1st place */}
         {config.crown && (
           <div className="animate-crown-drop mb-1">
-            <span className="text-3xl drop-shadow-lg">👑</span>
+            <span className="text-3xl drop-shadow-lg">
+              {competitor.firstName === "Joran" ? "🤪" : "👑"}
+            </span>
           </div>
         )}
 
@@ -191,7 +193,9 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
             >
               {/* Crown for 1st */}
               {position === 1 && (
-                <span className="text-2xl animate-crown-bounce">👑</span>
+                <span className="text-2xl animate-crown-bounce">
+                  {competitor.firstName === "Joran" ? "🤪" : "👑"}
+                </span>
               )}
 
               {/* Avatar */}
