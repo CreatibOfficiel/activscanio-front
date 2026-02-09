@@ -263,12 +263,11 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
       </div>
 
       {/* Modal */}
-      {selectedCompetitor && (
-        <CompetitorDetailModal
-          competitor={selectedCompetitor}
-          onClose={() => setSelectedCompetitor(null)}
-        />
-      )}
+      <CompetitorDetailModal
+        competitor={selectedCompetitor ?? topThree[0]}
+        isOpen={selectedCompetitor !== null}
+        onClose={() => setSelectedCompetitor(null)}
+      />
     </>
   );
 };

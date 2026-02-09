@@ -151,12 +151,11 @@ const LeaderboardRow: FC<Props> = ({
         <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-gradient-to-r from-primary-500/5 to-transparent" />
       </div>
 
-      {showModal && (
-        <CompetitorDetailModal
-          competitor={competitor}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+      <CompetitorDetailModal
+        competitor={competitor}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
     </>
   );
 };

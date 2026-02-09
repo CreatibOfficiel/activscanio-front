@@ -76,12 +76,11 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
         </div>
       </div>
 
-      {showModal && (
-        <CompetitorDetailModal
-          competitor={competitor}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+      <CompetitorDetailModal
+        competitor={competitor}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
     </>
   );
 };

@@ -1,203 +1,555 @@
 "use client";
 
-import { FC, useContext, useEffect, useState } from "react";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { AppContext } from "@/app/context/AppContext";
-import { Competitor, getFullName } from "@/app/models/Competitor";
+import { Competitor } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
 import EditCompetitorButton from "./EditCompetitorButton";
+import Modal from "../ui/Modal";
+import Badge from "../ui/Badge";
+import Skeleton from "../ui/Skeleton";
+import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
 
 interface Props {
   competitor: Competitor;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-const CompetitorDetailModal: FC<Props> = ({ competitor, onClose }) => {
-  const { getRecentRacesOfCompetitor } = useContext(AppContext);
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+const formatRankFR = (rank: number) => {
+  if (rank <= 0) return "--";
+  return rank === 1 ? "1er" : `${rank}e`;
+};
+
+const rankBadgeVariant = (rank: number) => {
+  if (rank === 1) return "gold" as const;
+  if (rank === 2) return "silver" as const;
+  if (rank === 3) return "bronze" as const;
+  return "default" as const;
+};
+
+const formEmoji = (formFactor?: number) => {
+  if (!formFactor) return { emoji: "➡️", label: "Stable" };
+  if (formFactor > 1.15) return { emoji: "🔥", label: "En feu" };
+  if (formFactor < 0.85) return { emoji: "❄️", label: "En froid" };
+  return { emoji: "➡️", label: "Stable" };
+};
+
+const heroGradient = (formFactor?: number) => {
+  if (!formFactor) return "from-neutral-800 to-neutral-900";
+  if (formFactor > 1.15) return "from-orange-900/40 to-neutral-900";
+  if (formFactor < 0.85) return "from-blue-900/40 to-neutral-900";
+  return "from-neutral-800 to-neutral-900";
+};
+
+const consistencyLabel = (positions?: number[]) => {
+  if (!positions || positions.length < 3) return "Pas assez de données";
+  const mean = positions.reduce((a, b) => a + b, 0) / positions.length;
+  const variance =
+    positions.reduce((sum, p) => sum + (p - mean) ** 2, 0) / positions.length;
+  const stdDev = Math.sqrt(variance);
+  if (stdDev < 1.2) return "Très régulier";
+  if (stdDev < 2.5) return "Régulier";
+  return "Imprévisible";
+};
+
+/* ------------------------------------------------------------------ */
+/*  Skeleton                                                           */
+/* ------------------------------------------------------------------ */
+
+const DetailSkeleton: FC = () => (
+  <div className="space-y-6">
+    {/* Hero skeleton */}
+    <div className="flex flex-col items-center gap-3 py-6">
+      <Skeleton variant="circular" width={80} height={80} />
+      <Skeleton variant="text" width={140} height={20} />
+      <div className="flex gap-2">
+        <Skeleton variant="rounded" width={70} height={24} />
+        <Skeleton variant="rounded" width={70} height={24} />
+      </div>
+    </div>
+
+    {/* Stats tiles skeleton */}
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Skeleton key={i} variant="rounded" height={72} />
+      ))}
+    </div>
+
+    {/* Recent form skeleton */}
+    <div className="space-y-2">
+      <Skeleton variant="text" width={120} height={16} />
+      <div className="flex gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} variant="rounded" width={48} height={48} />
+        ))}
+      </div>
+    </div>
+
+    {/* Results skeleton */}
+    <div className="space-y-2">
+      <Skeleton variant="text" width={140} height={16} />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} variant="rounded" height={48} />
+      ))}
+    </div>
+  </div>
+);
+
+/* ------------------------------------------------------------------ */
+/*  Main component                                                     */
+/* ------------------------------------------------------------------ */
+
+const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
+  const { getRecentRacesOfCompetitor, allRaces, allCompetitors } =
+    useContext(AppContext);
 
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   /* ---------- load recent races ---------- */
   useEffect(() => {
+    if (!isOpen) return;
+    setIsLoaded(false);
     (async () => {
       const data = await getRecentRacesOfCompetitor(competitor.id);
       setRecentRaces(data);
       setIsLoaded(true);
     })();
-  }, [competitor.id, getRecentRacesOfCompetitor]);
+  }, [competitor.id, isOpen, getRecentRacesOfCompetitor]);
 
-  /* ---------- helpers ---------- */
-
-  const formatRankFR = (rank: number) => {
-    if (rank <= 0) return "--";
-    return rank === 1 ? "1er" : `${rank}e`;
-  };
-
+  /* ---------- derived data ---------- */
+  const shortName = formatCompetitorName(
+    competitor.firstName,
+    competitor.lastName
+  );
   const variant = competitor.characterVariant;
   const baseName = variant?.baseCharacter?.name;
   const variantLabel =
     variant && variant.label !== "Default" ? variant.label : null;
 
-  /* ---------- loading ---------- */
-  if (!isLoaded) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
-        <div className="bg-neutral-900 text-neutral-100 p-6 rounded-lg w-full max-w-md shadow-lg">
-          <p>Chargement…</p>
-        </div>
-      </div>
+  const form = formEmoji(competitor.formFactor);
+  const positions = competitor.recentPositions ?? [];
+  const totalRaces = competitor.totalLifetimeRaces ?? competitor.raceCount ?? 0;
+  const wins = positions.filter((p) => p === 1).length;
+
+  // Trend calculation
+  const currentRank = useMemo(() => {
+    const sorted = [...allCompetitors].sort(
+      (a, b) =>
+        (b.conservativeScore ?? b.rating) - (a.conservativeScore ?? a.rating)
     );
-  }
+    return sorted.findIndex((c) => c.id === competitor.id) + 1;
+  }, [allCompetitors, competitor.id]);
 
-  /* ---------- render ---------- */
+  const trend = useMemo(() => {
+    if (competitor.previousDayRank == null || currentRank === 0) return null;
+    const diff = competitor.previousDayRank - currentRank;
+    if (diff > 0) return { direction: "up" as const, value: diff };
+    if (diff < 0) return { direction: "down" as const, value: Math.abs(diff) };
+    return { direction: "stable" as const, value: 0 };
+  }, [competitor.previousDayRank, currentRank]);
+
+  // Rival calculation
+  const rival = useMemo(() => {
+    if (!allRaces.length || !allCompetitors.length) return null;
+
+    const lossCount: Record<string, number> = {};
+    const sharedCount: Record<string, number> = {};
+
+    for (const race of allRaces) {
+      const myResult = race.results.find(
+        (r) => r.competitorId === competitor.id
+      );
+      if (!myResult) continue;
+
+      for (const result of race.results) {
+        if (result.competitorId === competitor.id) continue;
+        const key = result.competitorId;
+        sharedCount[key] = (sharedCount[key] ?? 0) + 1;
+        if (result.rank12 < myResult.rank12) {
+          lossCount[key] = (lossCount[key] ?? 0) + 1;
+        }
+      }
+    }
+
+    let worstId: string | null = null;
+    let worstRatio = 0;
+
+    for (const [id, losses] of Object.entries(lossCount)) {
+      const shared = sharedCount[id] ?? 0;
+      if (shared < 3) continue;
+      const ratio = losses / shared;
+      if (ratio > worstRatio) {
+        worstRatio = ratio;
+        worstId = id;
+      }
+    }
+
+    if (!worstId) return null;
+    const rivalComp = allCompetitors.find((c) => c.id === worstId);
+    if (!rivalComp) return null;
+
+    return {
+      name: formatCompetitorName(rivalComp.firstName, rivalComp.lastName),
+      losses: lossCount[worstId],
+      shared: sharedCount[worstId],
+    };
+  }, [allRaces, allCompetitors, competitor.id]);
+
+  // Best score from recent races
+  const bestScore = useMemo(() => {
+    if (!recentRaces.length) return null;
+    const best = recentRaces.reduce((max, r) =>
+      r.score > max.score ? r : max
+    );
+    return { score: best.score, date: best.date };
+  }, [recentRaces]);
+
+  // Podium count
+  const podiumCount = positions.filter((p) => p <= 3).length;
+
+  // Max score for progress bar
+  const maxScore = 60;
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4 z-50">
-      <div className="relative bg-neutral-900 text-neutral-100 w-full max-w-md rounded-2xl p-6 shadow-xl">
-        {/* Close / Edit */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <EditCompetitorButton competitor={competitor} />
-          <button
-            onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-200 transition-colors text-3xl"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      showCloseButton={false}
+      size="xl"
+      className="!max-w-2xl"
+    >
+      {!isLoaded ? (
+        <DetailSkeleton />
+      ) : (
+        <div className="space-y-5">
+          {/* ---- HERO ---- */}
+          <div
+            className={`bg-gradient-to-b ${heroGradient(competitor.formFactor)} -m-4 sm:-m-6 mb-0 p-6 pb-5 rounded-t-2xl`}
           >
-            &times;
-          </button>
-        </div>
-
-        {/* Avatar + Name */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden mb-3">
-            <Image
-              src={competitor.profilePictureUrl}
-              alt={getFullName(competitor)}
-              width={96}
-              height={96}
-              className="object-cover w-full h-full"
-            />
-          </div>
-          <h2 className="text-2xl font-bold">
-            <span>{getFullName(competitor)}</span>
-          </h2>
-
-          {/* Character info */}
-          {variant && (
-            <div className="gap-2 mt-2 bg-neutral-800 px-3 py-2 rounded-lg">
-              <span className="text-sm text-neutral-300">
-                {baseName}
-                {variantLabel && ` – ${variantLabel}`}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="flex items-start justify-evenly text-center mb-6">
-          <div className="px-4">
-            <p className="text-2xl font-bold">{competitor.raceCount ?? 0}</p>
-            <p className="text-xs text-neutral-400 mt-1">Parties jouées</p>
-          </div>
-          <div className="w-px h-8 my-auto bg-neutral-700" />
-          <div className="px-4">
-            <p className="text-2xl font-bold">
-              {competitor.avgRank12?.toFixed(1) ?? "--"}
-            </p>
-            <p className="text-xs text-neutral-400 mt-1">Position moyenne</p>
-          </div>
-          <div className="w-px h-8 my-auto bg-neutral-700" />
-          <div className="px-4">
-            <p className="text-2xl font-bold">
-              {(competitor.conservativeScore ?? competitor.rating).toFixed(0)}
-            </p>
-            <p className="text-xs text-neutral-400 mt-1">Elo</p>
-          </div>
-        </div>
-
-        <hr className="mb-4 border-neutral-700" />
-
-        {/* Glicko-2 Stats */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Statistiques Glicko-2</h3>
-
-          {/* Score Reliability */}
-          <div className="mb-4">
-            <p className="text-sm text-neutral-400">
-              {(() => {
-                const scoreDiff =
-                  (competitor.conservativeScore ?? competitor.rating) -
-                  competitor.rating;
-                const margin = Math.max(10, competitor.rd * 0.1);
-                return scoreDiff < -margin
-                  ? "Votre niveau réel est probablement plus élevé que votre Elo actuel."
-                  : scoreDiff > margin
-                  ? "Votre niveau réel est probablement plus bas que votre Elo actuel."
-                  : "Votre niveau actuel est très fiable.";
-              })()}
-            </p>
-          </div>
-
-          {/* Rating Deviation (RD) */}
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm text-neutral-300">Incertitude (RD)</span>
-              <span className="text-sm font-medium">
-                {competitor.rd.toFixed(0)}
-              </span>
-            </div>
-            <p className="text-xs text-neutral-400">
-              {competitor.rd > 100
-                ? "Votre niveau est encore incertain. Plus vous jouerez, plus il sera précis."
-                : competitor.rd > 50
-                ? "Votre niveau se stabilise. Continuez à jouer régulièrement."
-                : "Votre niveau est très stable et précis."}
-            </p>
-          </div>
-
-          {/* Volatility */}
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm text-neutral-300">Volatilité</span>
-              <span className="text-sm font-medium">
-                {competitor.vol.toFixed(3)}
-              </span>
-            </div>
-            <p className="text-xs text-neutral-400">
-              {competitor.vol > 0.07
-                ? "Votre niveau varie beaucoup…"
-                : competitor.vol > 0.045
-                ? "Votre niveau est assez stable."
-                : "Votre niveau est très stable et prévisible."}
-            </p>
-          </div>
-        </div>
-
-        <hr className="mb-4 border-neutral-700" />
-
-        {/* Recent results */}
-        <h3 className="text-lg font-semibold mb-3">Résultats récents</h3>
-
-        {recentRaces.length === 0 ? (
-          <p className="text-neutral-500 text-sm">Aucune course récente</p>
-        ) : (
-          <div className="space-y-2">
-            {recentRaces.map((race) => (
-              <div
-                key={race.raceId}
-                className="flex items-center justify-between bg-neutral-800 p-3 rounded"
+            {/* Close / Edit buttons */}
+            <div className="flex justify-end gap-2 mb-3">
+              <EditCompetitorButton competitor={competitor} />
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/50 transition-colors"
+                aria-label="Fermer"
               >
-                <span className="text-sm text-neutral-200">
-                  {new Date(race.date).toLocaleDateString("fr-FR")}
-                </span>
-                <span className="text-sm text-neutral-400">
-                  {formatRankFR(race.rank12 ?? 0)} • Score: {race.score}
-                </span>
+                <span className="text-xl leading-none">&times;</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center">
+              {/* Avatar */}
+              <div
+                className={`w-20 h-20 rounded-full overflow-hidden ${
+                  currentRank <= 3
+                    ? "ring-4 ring-offset-2 ring-offset-neutral-900"
+                    : ""
+                } ${
+                  currentRank === 1
+                    ? "ring-yellow-500"
+                    : currentRank === 2
+                      ? "ring-gray-400"
+                      : currentRank === 3
+                        ? "ring-amber-600"
+                        : ""
+                }`}
+              >
+                <Image
+                  src={competitor.profilePictureUrl}
+                  alt={shortName}
+                  width={80}
+                  height={80}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+
+              {/* Name */}
+              <h2 className="text-xl font-bold text-neutral-100 mt-3">
+                {shortName}
+              </h2>
+
+              {/* Badges */}
+              <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
+                {/* Character badge */}
+                {variant && (
+                  <Badge variant="default" size="sm">
+                    {baseName}
+                    {variantLabel && ` – ${variantLabel}`}
+                  </Badge>
+                )}
+
+                {/* Form badge */}
+                <Badge
+                  variant={
+                    competitor.formFactor && competitor.formFactor > 1.15
+                      ? "warning"
+                      : "default"
+                  }
+                  size="sm"
+                >
+                  {form.emoji} {form.label}
+                </Badge>
+
+                {/* Trend badge */}
+                {trend && trend.direction !== "stable" && (
+                  <span
+                    className={`text-sm font-semibold ${
+                      trend.direction === "up"
+                        ? "text-green-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {trend.direction === "up" ? "↑" : "↓"}
+                    {trend.value}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ---- STATS TILES ---- */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                label: "Elo",
+                value: Math.round(
+                  competitor.conservativeScore ?? competitor.rating
+                ),
+              },
+              {
+                label: "Rang",
+                value: currentRank > 0 ? formatRankFR(currentRank) : "--",
+              },
+              {
+                label: "Courses",
+                value: totalRaces,
+              },
+              {
+                label: "Victoires",
+                value: wins,
+              },
+            ].map((tile, i) => (
+              <div
+                key={tile.label}
+                className="bg-neutral-800/60 rounded-xl p-3 text-center stagger-item"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <p className="text-2xl font-bold text-neutral-100">
+                  {tile.value}
+                </p>
+                <p className="text-xs text-neutral-400 mt-1">{tile.label}</p>
               </div>
             ))}
           </div>
-        )}
-      </div>
-    </div>
+
+          {/* ---- FORME RECENTE ---- */}
+          {positions.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+                Forme récente
+              </h3>
+              <div className="flex gap-2">
+                {positions.slice(0, 5).map((pos, i) => (
+                  <Badge
+                    key={i}
+                    variant={rankBadgeVariant(pos)}
+                    size="md"
+                    className="min-w-[40px]"
+                  >
+                    {pos <= 3
+                      ? ["🥇", "🥈", "🥉"][pos - 1]
+                      : formatRankFR(pos)}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-xs text-neutral-500 mt-1">
+                récente → ancienne
+              </p>
+            </div>
+          )}
+
+          {/* ---- STATS FUN ---- */}
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+              Stats
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Win streak */}
+              {(competitor.winStreak ?? 0) > 0 && (
+                <StatCard
+                  icon="🔥"
+                  title="Série en cours"
+                  value={`${competitor.winStreak} victoire${
+                    (competitor.winStreak ?? 0) > 1 ? "s" : ""
+                  } d'affilée`}
+                />
+              )}
+
+              {/* Rival */}
+              {rival && (
+                <StatCard
+                  icon="💀"
+                  title="Pire ennemi"
+                  value={`${rival.name} (bat ${rival.losses}/${rival.shared}x)`}
+                />
+              )}
+
+              {/* Best score */}
+              {bestScore && (
+                <StatCard
+                  icon="🎯"
+                  title="Meilleur score"
+                  value={`${bestScore.score} pts`}
+                />
+              )}
+
+              {/* Consistency */}
+              {positions.length >= 3 && (
+                <StatCard
+                  icon="📊"
+                  title="Constance"
+                  value={consistencyLabel(positions)}
+                />
+              )}
+
+              {/* Podiums */}
+              {positions.length > 0 && (
+                <StatCard
+                  icon="🏆"
+                  title="Podiums"
+                  value={`${podiumCount} top-3 sur ${positions.length} courses`}
+                />
+              )}
+
+              {/* Activity this month */}
+              {competitor.currentMonthRaceCount != null && (
+                <StatCard
+                  icon="📅"
+                  title="Activité ce mois"
+                  value={`${competitor.currentMonthRaceCount} course${
+                    competitor.currentMonthRaceCount > 1 ? "s" : ""
+                  }`}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* ---- RESULTATS RECENTS ---- */}
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+              Résultats récents
+            </h3>
+            {recentRaces.length === 0 ? (
+              <p className="text-neutral-500 text-sm">
+                Aucune course récente
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {recentRaces.map((race) => (
+                  <div
+                    key={race.raceId}
+                    className="flex items-center gap-3 bg-neutral-800/60 p-3 rounded-xl"
+                  >
+                    <span className="text-xs text-neutral-400 w-20 shrink-0">
+                      {formatRelativeDate(race.date)}
+                    </span>
+                    <Badge
+                      variant={rankBadgeVariant(race.rank12)}
+                      size="sm"
+                    >
+                      {race.rank12 <= 3
+                        ? ["🥇", "🥈", "🥉"][race.rank12 - 1]
+                        : formatRankFR(race.rank12)}
+                    </Badge>
+                    <div className="flex-grow">
+                      <div className="h-2 bg-neutral-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${(race.score / maxScore) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-sm font-semibold text-neutral-200 w-12 text-right shrink-0">
+                      {race.score} pts
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ---- GLICKO-2 COLLAPSIBLE ---- */}
+          <details className="group">
+            <summary className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-200 transition-colors flex items-center gap-2">
+              <span className="transition-transform group-open:rotate-90">
+                ▶
+              </span>
+              Stats détaillées (Glicko-2)
+            </summary>
+            <div className="mt-3 p-4 bg-neutral-800/40 rounded-xl space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-neutral-400">Rating</span>
+                <span className="text-neutral-200 font-medium">
+                  {competitor.rating.toFixed(0)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-neutral-400">RD (incertitude)</span>
+                <span className="text-neutral-200 font-medium">
+                  {competitor.rd.toFixed(0)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-neutral-400">Volatilité</span>
+                <span className="text-neutral-200 font-medium">
+                  {competitor.vol.toFixed(3)}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-500 pt-1 border-t border-neutral-700">
+                {competitor.rd > 100
+                  ? "Niveau encore incertain — plus de courses nécessaires."
+                  : competitor.rd > 50
+                    ? "Niveau se stabilise."
+                    : "Niveau très fiable."}
+              </p>
+            </div>
+          </details>
+        </div>
+      )}
+    </Modal>
   );
 };
+
+/* ------------------------------------------------------------------ */
+/*  StatCard sub-component                                             */
+/* ------------------------------------------------------------------ */
+
+const StatCard: FC<{ icon: string; title: string; value: string }> = ({
+  icon,
+  title,
+  value,
+}) => (
+  <div className="flex items-start gap-3 bg-neutral-800/40 rounded-xl p-3">
+    <span className="text-lg">{icon}</span>
+    <div className="min-w-0">
+      <p className="text-xs text-neutral-400">{title}</p>
+      <p className="text-sm text-neutral-200 font-medium truncate">{value}</p>
+    </div>
+  </div>
+);
 
 export default CompetitorDetailModal;

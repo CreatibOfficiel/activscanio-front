@@ -33,6 +33,9 @@ export interface Competitor {
    * Used to show if competitor is rising/falling in rankings.
    */
   previousDayRank?: number | null;
+  winStreak?: number;
+  totalLifetimeRaces?: number;
+  currentMonthRaceCount?: number;
 }
 
 // Competitor with availability status (for onboarding)

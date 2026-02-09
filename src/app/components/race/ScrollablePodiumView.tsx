@@ -128,12 +128,11 @@ const ScrollablePodiumView: FC<Props> = ({ topThreeCompetitors }) => {
       <MobileList />
       <DesktopPodium />
 
-      {detail && (
-        <CompetitorDetailModal
-          competitor={detail}
-          onClose={() => setDetail(null)}
-        />
-      )}
+      <CompetitorDetailModal
+        competitor={detail ?? topThreeCompetitors[0]}
+        isOpen={detail !== null}
+        onClose={() => setDetail(null)}
+      />
     </>
   );
 };
