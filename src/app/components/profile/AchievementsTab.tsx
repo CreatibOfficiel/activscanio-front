@@ -150,7 +150,7 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xs font-bold text-white drop-shadow">
-              {stats.achievementProgress.toFixed(0)}%
+              {(stats.achievementProgress ?? 0).toFixed(0)}%
             </span>
           </div>
         </div>

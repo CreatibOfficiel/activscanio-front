@@ -186,7 +186,7 @@ const OverviewTab: FC<OverviewTabProps> = ({
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-neutral-400">Progression globale</span>
             <span className="text-white font-medium">
-              {stats.unlockedAchievements}/{stats.totalAchievements} ({stats.achievementProgress.toFixed(0)}%)
+              {stats.unlockedAchievements}/{stats.totalAchievements} ({(stats.achievementProgress ?? 0).toFixed(0)}%)
             </span>
           </div>
           <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">

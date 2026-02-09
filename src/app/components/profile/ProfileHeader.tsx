@@ -216,7 +216,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
                 <span className="text-sm">📊</span>
                 <span className="text-sm font-semibold text-white">
-                  {stats.winRate.toFixed(0)}%
+                  {(stats.winRate ?? 0).toFixed(0)}%
                 </span>
                 <span className="text-xs text-white/70">win rate</span>
               </div>
