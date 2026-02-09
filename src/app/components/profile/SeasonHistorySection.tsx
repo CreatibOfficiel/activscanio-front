@@ -55,8 +55,9 @@ const getSeasonLabel = (month: number, year: number): string => {
 };
 
 const getRankBadge = (
-  rank: number
+  rank: number | null
 ): { label: string; bg: string; border: string; glow: string } | null => {
+  if (rank === null) return null;
   if (rank === 1) {
     return {
       label: 'Champion',
@@ -84,7 +85,8 @@ const getRankBadge = (
   return null;
 };
 
-const getRankIcon = (rank: number): string => {
+const getRankIcon = (rank: number | null): string => {
+  if (rank === null) return '';
   if (rank === 1) return '🥇';
   if (rank === 2) return '🥈';
   if (rank === 3) return '🥉';
@@ -92,8 +94,15 @@ const getRankIcon = (rank: number): string => {
 };
 
 const getRankStyle = (
-  rank: number
+  rank: number | null
 ): { border: string; bg: string; text: string } => {
+  if (rank === null) {
+    return {
+      border: 'border-l-4 border-l-neutral-500 border-dashed',
+      bg: 'bg-gradient-to-r from-neutral-500/5 to-transparent',
+      text: 'text-neutral-500',
+    };
+  }
   if (rank === 1) {
     return {
       border: 'border-l-4 border-l-yellow-500',
@@ -254,16 +263,22 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
     );
   }
 
-  // Calculate summary stats
+  // Calculate summary stats (exclude provisional seasons)
+  const rankedSeasons = seasonResults.filter(
+    (r) => r.ranking && !r.ranking.provisional && r.ranking.rank !== null
+  );
   const totalSeasons = seasonResults.length;
-  const championships = seasonResults.filter(
+  const championships = rankedSeasons.filter(
     (r) => r.ranking?.rank === 1
   ).length;
-  const podiums = seasonResults.filter((r) => r.ranking && r.ranking.rank <= 3)
-    .length;
+  const podiums = rankedSeasons.filter(
+    (r) => r.ranking && r.ranking.rank !== null && r.ranking.rank <= 3
+  ).length;
   const avgRank =
-    seasonResults.reduce((acc, r) => acc + (r.ranking?.rank || 0), 0) /
-    totalSeasons;
+    rankedSeasons.length > 0
+      ? rankedSeasons.reduce((acc, r) => acc + (r.ranking?.rank || 0), 0) /
+        rankedSeasons.length
+      : 0;
 
   return (
     <div
@@ -307,6 +322,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
         {seasonResults.map(({ season, ranking }) => {
           if (!ranking) return null;
 
+          const isProvisional = ranking.provisional || ranking.rank === null;
           const rankStyle = getRankStyle(ranking.rank);
           const badge = getRankBadge(ranking.rank);
 
@@ -316,7 +332,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
               variants={itemVariants}
               className={`p-4 rounded-lg bg-neutral-900 border border-neutral-700 ${rankStyle.border} ${rankStyle.bg} ${
                 badge?.glow ? `shadow-lg ${badge.glow}` : ''
-              }`}
+              } ${isProvisional ? 'opacity-70' : ''}`}
             >
               {/* Season Header */}
               <div className="flex items-center justify-between mb-3">
@@ -324,21 +340,33 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
                   <span className="text-white font-semibold">
                     {getSeasonLabel(season.month, season.year)}
                   </span>
-                  {badge && (
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs font-bold text-neutral-900 ${badge.bg}`}
-                    >
-                      {badge.label}
+                  {isProvisional ? (
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-neutral-700 text-neutral-400">
+                      En calibrage
                     </span>
+                  ) : (
+                    badge && (
+                      <span
+                        className={`px-2 py-0.5 rounded text-xs font-bold text-neutral-900 ${badge.bg}`}
+                      >
+                        {badge.label}
+                      </span>
+                    )
                   )}
                 </div>
                 <div className={`flex items-center gap-1 font-bold ${rankStyle.text}`}>
-                  {getRankIcon(ranking.rank) && (
-                    <span className="text-lg">{getRankIcon(ranking.rank)}</span>
+                  {isProvisional ? (
+                    <span className="text-sm text-neutral-500">—</span>
+                  ) : (
+                    <>
+                      {getRankIcon(ranking.rank) && (
+                        <span className="text-lg">{getRankIcon(ranking.rank)}</span>
+                      )}
+                      <span className="text-lg">
+                        {ranking.rank === 1 ? '1er' : `${ranking.rank}e`}
+                      </span>
+                    </>
                   )}
-                  <span className="text-lg">
-                    {ranking.rank === 1 ? '1er' : `${ranking.rank}e`}
-                  </span>
                 </div>
               </div>
 

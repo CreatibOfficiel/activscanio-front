@@ -19,7 +19,8 @@ export interface ArchivedCompetitorRanking {
   id: string;
   competitorId: string;
   competitorName: string;
-  rank: number;
+  rank: number | null;
+  provisional?: boolean;
   finalRating: number;
   finalRd: number;
   finalVol: number;
