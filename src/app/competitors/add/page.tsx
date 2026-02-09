@@ -34,7 +34,7 @@ const AddCompetitorPage: NextPage = () => {
         id: "",
         firstName: normalizeText(data.firstName),
         lastName: normalizeText(data.lastName),
-        profilePictureUrl: data.profilePictureUrl,
+        profilePictureUrl: data.profilePictureUrl || "",
         rating: 1500,
         rd: 350,
         vol: 0.06,

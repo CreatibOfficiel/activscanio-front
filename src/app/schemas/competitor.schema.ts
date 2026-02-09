@@ -35,8 +35,7 @@ export const addCompetitorSchema = z.object({
   ...nameFields,
   profilePictureUrl: z
     .union([z.literal(''), profilePictureUrlSchema])
-    .optional()
-    .transform((val) => val || undefined),
+    .optional(),
 });
 
 export type AddCompetitorFormData = z.infer<typeof addCompetitorSchema>;
