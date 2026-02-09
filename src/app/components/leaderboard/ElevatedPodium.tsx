@@ -111,22 +111,27 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
           </div>
         </div>
 
-        {/* Name */}
-        <span
-          className={`font-bold text-neutral-100 mt-2 truncate max-w-[100px] ${position === 1 ? "text-lg" : "text-base"}`}
-        >
-          {shortName}
-        </span>
-
-        {/* Trend indicator */}
-        {trend && (
-          <div className="mt-1">
+        {/* Name + trend inline */}
+        <div className="flex items-center gap-1.5 mt-2">
+          <span
+            className={`font-bold text-neutral-100 truncate max-w-[100px] ${position === 1 ? "text-lg" : "text-base"}`}
+          >
+            {shortName}
+          </span>
+          {trend && (
             <TrendIndicator
               direction={trend.direction}
               value={trend.value}
               size="sm"
             />
-          </div>
+          )}
+        </div>
+
+        {/* Provisional badge */}
+        {competitor.provisional && (
+          <span className="text-xs text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded mt-1">
+            {competitor.raceCount}/5
+          </span>
         )}
 
         {/* Podium base */}
@@ -206,6 +211,11 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
                   <span className={`text-lg font-bold ${config.textColor}`}>
                     {shortName}
                   </span>
+                  {competitor.provisional && (
+                    <span className="text-xs text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded">
+                      {competitor.raceCount}/5
+                    </span>
+                  )}
                   {trend && (
                     <TrendIndicator
                       direction={trend.direction}
