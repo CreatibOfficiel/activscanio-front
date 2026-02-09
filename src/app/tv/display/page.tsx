@@ -118,11 +118,25 @@ const TVDisplayContent: FC = () => {
     }, 300);
   }, [activeViews]);
 
-  // Automatic rotation
+  // Handle manual view selection (click on step indicator)
+  const goToView = useCallback((view: DisplayView) => {
+    if (view === currentView) return;
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      setCurrentView(view);
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setRotationKey((k) => k + 1);
+      }, 50);
+    }, 300);
+  }, [currentView]);
+
+  // Automatic rotation (resets when rotationKey changes, e.g. manual navigation)
   useEffect(() => {
     const interval = setInterval(transitionToNextView, rotationInterval);
     return () => clearInterval(interval);
-  }, [rotationInterval, transitionToNextView]);
+  }, [rotationInterval, transitionToNextView, rotationKey]);
 
   // Data loading
   useEffect(() => {
@@ -226,12 +240,16 @@ const TVDisplayContent: FC = () => {
         <div className="flex items-center gap-6">
           <div className="flex gap-3">
             {activeViews.map((view) => (
-              <div key={view} className="flex flex-col items-center gap-1">
+              <button
+                key={view}
+                onClick={() => goToView(view)}
+                className="flex flex-col items-center gap-1 cursor-pointer"
+              >
                 <div
                   className={`h-3 w-16 rounded-full transition-all duration-300 ${
                     currentView === view
                       ? "bg-primary-500 shadow-lg shadow-primary-500/30"
-                      : "bg-neutral-700"
+                      : "bg-neutral-700 hover:bg-neutral-600"
                   }`}
                   title={viewLabels[view]}
                 />
@@ -244,7 +262,7 @@ const TVDisplayContent: FC = () => {
                 >
                   {viewLabels[view]}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>

@@ -38,7 +38,8 @@ export class RacesRepository {
   // GET /competitors/:competitorId/recent-races
   async fetchRecentRacesOfCompetitor(
     competitorId: string,
-    limit?: number
+    limit?: number,
+    authToken?: string
   ): Promise<RecentRaceInfo[]> {
     const url = new URL(
       `${this.baseUrl}/competitors/${competitorId}/recent-races`
@@ -46,7 +47,11 @@ export class RacesRepository {
     if (limit !== undefined) {
       url.searchParams.set('limit', limit.toString());
     }
-    const res = await apiFetch(url.toString());
+    const headers: HeadersInit = {};
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    const res = await apiFetch(url.toString(), { headers });
     if (res.ok) {
       return await res.json();
     } else {
@@ -58,8 +63,12 @@ export class RacesRepository {
   }
 
   // GET /races/:raceId/similar
-  async fetchSimilarRaces(raceId: string): Promise<RaceEvent[]> {
-    const res = await apiFetch(`${this.baseUrl}/races/${raceId}/similar`);
+  async fetchSimilarRaces(raceId: string, authToken?: string): Promise<RaceEvent[]> {
+    const headers: HeadersInit = {};
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    const res = await apiFetch(`${this.baseUrl}/races/${raceId}/similar`, { headers });
     if (res.ok) {
       return await res.json();
     } else {
@@ -69,8 +78,12 @@ export class RacesRepository {
   }
 
   // GET /races/:raceId
-  async fetchRaceById(raceId: string): Promise<RaceEvent> {
-    const res = await apiFetch(`${this.baseUrl}/races/${raceId}`);
+  async fetchRaceById(raceId: string, authToken?: string): Promise<RaceEvent> {
+    const headers: HeadersInit = {};
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    const res = await apiFetch(`${this.baseUrl}/races/${raceId}`, { headers });
     if (res.ok) {
       return await res.json();
     } else {

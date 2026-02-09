@@ -154,13 +154,20 @@ export function AppProvider({ children }: PropsWithChildren) {
     return created;
   };
 
-  const getRaceById = (raceId: string) => racesRepo.fetchRaceById(raceId);
+  const getRaceById = async (raceId: string) => {
+    const token = await getToken();
+    return racesRepo.fetchRaceById(raceId, token!);
+  };
 
-  const getRecentRacesOfCompetitor = (competitorId: string) =>
-    racesRepo.fetchRecentRacesOfCompetitor(competitorId);
+  const getRecentRacesOfCompetitor = async (competitorId: string) => {
+    const token = await getToken();
+    return racesRepo.fetchRecentRacesOfCompetitor(competitorId, undefined, token!);
+  };
 
-  const getSimilarRaces = (raceId: string) =>
-    racesRepo.fetchSimilarRaces(raceId);
+  const getSimilarRaces = async (raceId: string) => {
+    const token = await getToken();
+    return racesRepo.fetchSimilarRaces(raceId, token!);
+  };
 
   /* ───────── image analyse ───────── */
   const analyzeRaceImage = async (

@@ -28,7 +28,9 @@ const OnboardingPage: FC = () => {
   const [step, setStep] = useState<OnboardingStep>(OnboardingStep.ROLE_SELECTION);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isBettorOnly, setIsBettorOnly] = useState(false);
+  const [wantsToPlay, setWantsToPlay] = useState(false);
+  const [wantsToBet, setWantsToBet] = useState(false);
+  const isBettorOnly = wantsToBet && !wantsToPlay;
 
   // Search state for competitors
   const [searchQuery, setSearchQuery] = useState('');
@@ -242,7 +244,8 @@ const OnboardingPage: FC = () => {
 
   const handleBackToRoleSelection = () => {
     setStep(OnboardingStep.ROLE_SELECTION);
-    setIsBettorOnly(false);
+    setWantsToPlay(false);
+    setWantsToBet(false);
     setSelectedCompetitor(null);
     setNewCompetitorFirstName('');
     setNewCompetitorLastName('');
@@ -414,44 +417,82 @@ const OnboardingPage: FC = () => {
             <Card className="p-6">
               <h2 className="text-heading text-white mb-4">Comment voulez-vous participer ?</h2>
               <p className="text-sub text-neutral-300 mb-6">
-                Choisissez votre mode de participation
+                Sélectionnez une ou plusieurs options
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 {/* Option Joueur */}
                 <Card
-                  className="p-6 cursor-pointer hover:border-primary-500 hover:bg-primary-500/5 transition-all duration-200 group"
-                  onClick={() => setStep(OnboardingStep.COMPETITOR_SEARCH)}
-                  role="button"
+                  className={`p-4 cursor-pointer transition-all duration-200 ${
+                    wantsToPlay
+                      ? 'border-primary-500 bg-primary-500/10'
+                      : 'hover:border-neutral-600 hover:bg-neutral-800'
+                  }`}
+                  onClick={() => setWantsToPlay(!wantsToPlay)}
+                  role="checkbox"
+                  aria-checked={wantsToPlay}
                   tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && setStep(OnboardingStep.COMPETITOR_SEARCH)}
+                  onKeyPress={(e) => e.key === 'Enter' && setWantsToPlay(!wantsToPlay)}
                 >
-                  <div className="text-center">
-                    <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🎮</div>
-                    <h3 className="text-bold text-white mb-2">Je joue</h3>
-                    <p className="text-sub text-neutral-400">
-                      Je participe aux courses et je peux aussi parier
-                    </p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl shrink-0">🎮</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-bold text-white">Je joue</h3>
+                      <p className="text-sub text-neutral-400">
+                        Participer aux courses
+                      </p>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
+                      wantsToPlay
+                        ? 'border-primary-500 bg-primary-500'
+                        : 'border-neutral-600'
+                    }`}>
+                      {wantsToPlay && <MdCheck className="text-white text-sm" />}
+                    </div>
                   </div>
                 </Card>
 
                 {/* Option Parieur */}
                 <Card
-                  className="p-6 cursor-pointer hover:border-primary-500 hover:bg-primary-500/5 transition-all duration-200 group"
-                  onClick={() => { setIsBettorOnly(true); setStep(OnboardingStep.COMPETITOR_SEARCH); }}
-                  role="button"
+                  className={`p-4 cursor-pointer transition-all duration-200 ${
+                    wantsToBet
+                      ? 'border-primary-500 bg-primary-500/10'
+                      : 'hover:border-neutral-600 hover:bg-neutral-800'
+                  }`}
+                  onClick={() => setWantsToBet(!wantsToBet)}
+                  role="checkbox"
+                  aria-checked={wantsToBet}
                   tabIndex={0}
-                  onKeyPress={(e) => { if (e.key === 'Enter') { setIsBettorOnly(true); setStep(OnboardingStep.COMPETITOR_SEARCH); } }}
+                  onKeyPress={(e) => e.key === 'Enter' && setWantsToBet(!wantsToBet)}
                 >
-                  <div className="text-center">
-                    <div className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-200">🎲</div>
-                    <h3 className="text-bold text-white mb-2">Je parie</h3>
-                    <p className="text-sub text-neutral-400">
-                      Je mise sur les résultats sans participer aux courses
-                    </p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl shrink-0">🎲</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-bold text-white">Je parie</h3>
+                      <p className="text-sub text-neutral-400">
+                        Miser sur les résultats
+                      </p>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
+                      wantsToBet
+                        ? 'border-primary-500 bg-primary-500'
+                        : 'border-neutral-600'
+                    }`}>
+                      {wantsToBet && <MdCheck className="text-white text-sm" />}
+                    </div>
                   </div>
                 </Card>
               </div>
+
+              <Button
+                variant="primary"
+                fullWidth
+                className="mt-6"
+                disabled={!wantsToPlay && !wantsToBet}
+                onClick={() => setStep(OnboardingStep.COMPETITOR_SEARCH)}
+              >
+                Continuer
+              </Button>
             </Card>
           </div>
         )}

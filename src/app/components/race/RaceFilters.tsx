@@ -28,6 +28,7 @@ const periodOptions: { value: PeriodFilter; label: string }[] = [
 
 const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
   const [showCompetitorDropdown, setShowCompetitorDropdown] = useState(false);
+  const [competitorSearch, setCompetitorSearch] = useState("");
 
   const handlePeriodChange = (period: PeriodFilter) => {
     onFilterChange({ ...filters, period });
@@ -36,7 +37,17 @@ const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
   const handleCompetitorChange = (competitorId: string | null) => {
     onFilterChange({ ...filters, competitorId });
     setShowCompetitorDropdown(false);
+    setCompetitorSearch("");
   };
+
+  const filteredCompetitors = competitors.filter((c) => {
+    if (!competitorSearch) return true;
+    const search = competitorSearch.toLowerCase();
+    return (
+      c.firstName?.toLowerCase().includes(search) ||
+      c.lastName?.toLowerCase().includes(search)
+    );
+  });
 
   const selectedCompetitor = filters.competitorId
     ? competitors.find((c) => c.id === filters.competitorId)
@@ -110,21 +121,35 @@ const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
           {/* Dropdown menu */}
           {showCompetitorDropdown && (
             <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-neutral-800 rounded-xl border border-neutral-700 shadow-xl max-h-64 overflow-y-auto">
+              {/* Search input */}
+              <div className="sticky top-0 bg-neutral-800 p-2 border-b border-neutral-700">
+                <input
+                  type="text"
+                  value={competitorSearch}
+                  onChange={(e) => setCompetitorSearch(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="w-full px-3 py-2 bg-neutral-900 text-neutral-200 text-sub rounded-lg border border-neutral-700 focus:border-primary-500 focus:outline-none placeholder:text-neutral-500"
+                  autoFocus
+                />
+              </div>
+
               {/* All option */}
-              <button
-                onClick={() => handleCompetitorChange(null)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left text-regular hover:bg-neutral-700/50 transition-colors ${
-                  !filters.competitorId ? "text-primary-500" : "text-neutral-300"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center">
-                  <MdFilterList className="text-neutral-400" />
-                </div>
-                <span>Tous les joueurs</span>
-              </button>
+              {!competitorSearch && (
+                <button
+                  onClick={() => handleCompetitorChange(null)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left text-regular hover:bg-neutral-700/50 transition-colors ${
+                    !filters.competitorId ? "text-primary-500" : "text-neutral-300"
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center">
+                    <MdFilterList className="text-neutral-400" />
+                  </div>
+                  <span>Tous les joueurs</span>
+                </button>
+              )}
 
               {/* Competitors list */}
-              {competitors.map((competitor) => (
+              {filteredCompetitors.map((competitor) => (
                 <button
                   key={competitor.id}
                   onClick={() => handleCompetitorChange(competitor.id)}
@@ -168,7 +193,7 @@ const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
       {showCompetitorDropdown && (
         <div
           className="fixed inset-0 z-40"
-          onClick={() => setShowCompetitorDropdown(false)}
+          onClick={() => { setShowCompetitorDropdown(false); setCompetitorSearch(""); }}
         />
       )}
     </div>
