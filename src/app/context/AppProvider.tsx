@@ -87,7 +87,8 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   /* ───────── competitor CRUD ───────── */
   const addCompetitor = async (newCompetitor: Competitor) => {
-    const created = await competitorsRepo.createCompetitor(newCompetitor);
+    const token = await getToken();
+    const created = await competitorsRepo.createCompetitor(newCompetitor, token!);
     setCompetitors((prev) => [...prev, created]);
     return created;
   };
@@ -102,7 +103,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     id: string,
     payload: UpdateCompetitorPayload
   ) => {
-    const updated = await competitorsRepo.updateCompetitor(id, payload);
+    const token = await getToken();
+    const updated = await competitorsRepo.updateCompetitor(id, payload, token!);
     setCompetitors((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
     );
@@ -113,9 +115,11 @@ export function AppProvider({ children }: PropsWithChildren) {
     competitorId: string,
     variantId: string
   ) => {
+    const token = await getToken();
     const updated = await competitorsRepo.linkCharacterToCompetitor(
       competitorId,
-      variantId
+      variantId,
+      token!,
     );
     setCompetitors((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
@@ -124,8 +128,10 @@ export function AppProvider({ children }: PropsWithChildren) {
   };
 
   const unlinkCharacterFromCompetitor = async (competitorId: string) => {
+    const token = await getToken();
     const updated = await competitorsRepo.unlinkCharacterFromCompetitor(
-      competitorId
+      competitorId,
+      token!,
     );
     setCompetitors((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
@@ -135,13 +141,14 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   /* ───────── races ───────── */
   const addRaceEvent = async (results: RaceResult[]) => {
+    const token = await getToken();
     const generatedId = Math.floor(Math.random() * 999_999).toString();
     const newEvent: RaceEvent = {
       id: generatedId,
       date: new Date().toISOString(),
       results,
     };
-    const created = await racesRepo.createRace(newEvent);
+    const created = await racesRepo.createRace(newEvent, token!);
     setRaceEvents((prev) => [created, ...prev]);
     await loadInitialData();
     return created;
@@ -156,11 +163,13 @@ export function AppProvider({ children }: PropsWithChildren) {
     racesRepo.fetchSimilarRaces(raceId);
 
   /* ───────── image analyse ───────── */
-  const analyzeRaceImage = (
+  const analyzeRaceImage = async (
     image: File,
     competitorIds: string[]
-  ): Promise<RaceAnalysisResult> =>
-    raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds);
+  ): Promise<RaceAnalysisResult> => {
+    const token = await getToken();
+    return raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds, token!);
+  };
 
   /* ───────── context value ───────── */
   return (

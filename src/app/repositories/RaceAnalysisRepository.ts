@@ -14,7 +14,8 @@ export class RaceAnalysisRepository {
   // POST /race-analysis/upload
   async uploadImageForAnalysis(
     image: File,
-    competitorIds: string[]
+    competitorIds: string[],
+    authToken: string,
   ): Promise<RaceAnalysisResult> {
     const formData = new FormData();
     formData.append("image", image);
@@ -22,6 +23,7 @@ export class RaceAnalysisRepository {
 
     const response = await apiFetch(`${this.baseUrl}/race-analysis/upload`, {
       method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
       body: formData,
     });
 

@@ -21,10 +21,13 @@ export class CompetitorsRepository {
   /* ───────── CREATE ───────── */
 
   // POST /competitors
-  async createCompetitor(competitor: Competitor): Promise<Competitor> {
+  async createCompetitor(competitor: Competitor, authToken: string): Promise<Competitor> {
     const res = await apiFetch(`${this.baseUrl}/competitors`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
       body: JSON.stringify({
         firstName: competitor.firstName,
         lastName: competitor.lastName,
@@ -62,10 +65,14 @@ export class CompetitorsRepository {
   async updateCompetitor(
     id: string,
     payload: UpdateCompetitorPayload,
+    authToken: string,
   ): Promise<Competitor> {
     const res = await apiFetch(`${this.baseUrl}/competitors/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
       body: JSON.stringify(payload),
     });
 
@@ -83,12 +90,16 @@ export class CompetitorsRepository {
   async linkCharacterToCompetitor(
     competitorId: string,
     variantId: string,
+    authToken: string,
   ): Promise<Competitor> {
     const res = await apiFetch(
       `${this.baseUrl}/competitors/${competitorId}/character-variant`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
         body: JSON.stringify({ characterVariantId: variantId }),
       },
     );
@@ -104,10 +115,16 @@ export class CompetitorsRepository {
   // DELETE /competitors/:id/character-variant
   async unlinkCharacterFromCompetitor(
     competitorId: string,
+    authToken: string,
   ): Promise<Competitor> {
     const res = await apiFetch(
       `${this.baseUrl}/competitors/${competitorId}/character-variant`,
-      { method: "DELETE" },
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
     );
 
     if (!res.ok) {

@@ -1,16 +1,18 @@
 import { RaceEvent } from "../models/RaceEvent";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
-import { RaceAnalysisResult } from "./RaceAnalysisRepository";
 import { apiFetch } from '../utils/api-fetch';
 
 export class RacesRepository {
   constructor(private baseUrl: string) {}
 
   // POST /races
-  async createRace(race: RaceEvent): Promise<RaceEvent> {
+  async createRace(race: RaceEvent, authToken: string): Promise<RaceEvent> {
     const res = await apiFetch(`${this.baseUrl}/races`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
       body: JSON.stringify(race),
     });
     if (res.ok) {
@@ -77,23 +79,4 @@ export class RacesRepository {
     }
   }
 
-  // POST /races/analyze-photo
-  async analyzePhoto(file: File): Promise<RaceAnalysisResult> {
-    const url = `${this.baseUrl}/races/analyze-photo`;
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await apiFetch(url, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Erreur lors de l’analyse de la photo (${response.statusText})`
-      );
-    }
-
-    return response.json();
-  }
 }

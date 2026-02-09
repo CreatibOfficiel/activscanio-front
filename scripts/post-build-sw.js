@@ -61,11 +61,6 @@ self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification fermée', event.notification.tag);
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
 `;
 
 try {
@@ -84,8 +79,12 @@ try {
     process.exit(0);
   }
 
-  // Remove auto skipWaiting — we handle it manually via SKIP_WAITING message
-  swContent = swContent.replace(/self\.skipWaiting\(\),?/g, '');
+  // Remove the broken start-url route that uses _async_to_generator
+  // The minified code has deeply nested braces, so we match until ),"GET")
+  swContent = swContent.replace(
+    /,e\.registerRoute\("\/",new e\.NetworkFirst\(\{cacheName:"start-url"[^]*?\}\),"GET"\)/,
+    ''
+  );
 
   // Append custom handlers
   swContent += CUSTOM_HANDLERS;
