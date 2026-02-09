@@ -21,8 +21,10 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     );
   }
 
-  // Sort by rating (Glicko-2) descending
-  const sortedCompetitors = [...rankings].sort((a, b) => b.rating - a.rating);
+  // Filter out provisional (calibrating) competitors, then sort by rating descending
+  const sortedCompetitors = [...rankings]
+    .filter((c) => !c.provisional)
+    .sort((a, b) => b.rating - a.rating);
 
   const top3 = sortedCompetitors.slice(0, 3);
   const others = sortedCompetitors.slice(3, 15);

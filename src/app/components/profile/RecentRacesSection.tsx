@@ -1,6 +1,7 @@
 'use client';
 
 import { FC, useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { motion } from 'motion/react';
 import { MdEmojiEvents, MdTrendingUp, MdTrendingDown, MdTrendingFlat } from 'react-icons/md';
 import { RecentRaceInfo } from '../../models/RecentRaceInfo';
@@ -150,6 +151,7 @@ const RecentRacesSection: FC<RecentRacesSectionProps> = ({
   limit = 5,
   className = '',
 }) => {
+  const { getToken } = useAuth();
   const [races, setRaces] = useState<RecentRaceInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -159,8 +161,9 @@ const RecentRacesSection: FC<RecentRacesSectionProps> = ({
       try {
         setLoading(true);
         setError(null);
+        const token = await getToken();
         const repo = new RacesRepository(API_BASE_URL);
-        const data = await repo.fetchRecentRacesOfCompetitor(competitorId, limit);
+        const data = await repo.fetchRecentRacesOfCompetitor(competitorId, limit, token ?? undefined);
         setRaces(data);
       } catch (err) {
         console.error('Error fetching recent races:', err);
@@ -171,7 +174,7 @@ const RecentRacesSection: FC<RecentRacesSectionProps> = ({
     };
 
     fetchRaces();
-  }, [competitorId, limit]);
+  }, [competitorId, limit, getToken]);
 
   const trend = useMemo(() => getTrendIndicator(races), [races]);
 
