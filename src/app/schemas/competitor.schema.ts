@@ -2,16 +2,7 @@ import { z } from 'zod';
 
 const profilePictureUrlSchema = z
   .string()
-  .url("L'URL de la photo n'est pas valide")
-  .refine(
-    (url) => {
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-      return validExtensions.some((ext) => url.toLowerCase().endsWith(ext));
-    },
-    {
-      message: "L'URL doit pointer vers une image valide (jpg, jpeg, png, gif, webp)",
-    }
-  );
+  .url("L'URL de la photo n'est pas valide");
 
 const nameFields = {
   firstName: z
