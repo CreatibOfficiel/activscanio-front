@@ -43,8 +43,8 @@ interface TVDisplayData {
 }
 
 const ALL_VIEWS = [
-  DisplayView.BETTOR_RANKINGS,
   DisplayView.COMPETITOR_RANKINGS,
+  DisplayView.BETTOR_RANKINGS,
   DisplayView.WEEKLY_ODDS,
   DisplayView.ARCHIVED_SEASONS,
 ];
@@ -73,7 +73,7 @@ const TVDisplayContent: FC = () => {
     ? parseInt(intervalParam, 10) * 1000
     : DEFAULT_ROTATION_INTERVAL;
 
-  const [currentView, setCurrentView] = useState(DisplayView.BETTOR_RANKINGS);
+  const [currentView, setCurrentView] = useState(DisplayView.COMPETITOR_RANKINGS);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [data, setData] = useState<TVDisplayData>({
     bettorRankings: null,
@@ -90,15 +90,36 @@ const TVDisplayContent: FC = () => {
   // Compute active views (skip views with no data)
   const activeViews = useMemo(() => {
     return ALL_VIEWS.filter((view) => {
-      if (view === DisplayView.WEEKLY_ODDS) {
-        return (
-          data.weeklyOdds &&
-          data.weeklyOdds.filter((o) => o.isEligible !== false).length > 0
-        );
+      switch (view) {
+        case DisplayView.BETTOR_RANKINGS:
+          return (
+            data.bettorRankings &&
+            data.bettorRankings.rankings.length > 0
+          );
+        case DisplayView.COMPETITOR_RANKINGS:
+          return (
+            data.competitorRankings.length > 0 &&
+            data.competitorRankings.some((c) => c.raceCount && c.raceCount > 0)
+          );
+        case DisplayView.WEEKLY_ODDS:
+          return (
+            data.weeklyOdds &&
+            data.weeklyOdds.filter((o) => o.isEligible !== false).length > 0
+          );
+        case DisplayView.ARCHIVED_SEASONS:
+          return data.archivedSeasons.length > 0;
+        default:
+          return true;
       }
-      return true;
     });
-  }, [data.weeklyOdds]);
+  }, [data.bettorRankings, data.competitorRankings, data.weeklyOdds, data.archivedSeasons]);
+
+  // If current view is no longer active (e.g. data disappeared after refresh), fallback
+  useEffect(() => {
+    if (activeViews.length > 0 && !activeViews.includes(currentView)) {
+      setCurrentView(activeViews[0]);
+    }
+  }, [activeViews, currentView]);
 
   // Handle view transition
   const transitionToNextView = useCallback(() => {
@@ -208,6 +229,21 @@ const TVDisplayContent: FC = () => {
         <div className="text-center text-neutral-100">
           <p className="text-tv-heading text-red-500 mb-4">{error}</p>
           <p className="text-tv-body text-neutral-400">
+            La page va se rafraîchir automatiquement...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeViews.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
+        <div className="text-center text-neutral-100">
+          <p className="text-tv-heading text-neutral-400">
+            Aucune donnée disponible pour le moment
+          </p>
+          <p className="text-tv-body text-neutral-500 mt-4">
             La page va se rafraîchir automatiquement...
           </p>
         </div>
