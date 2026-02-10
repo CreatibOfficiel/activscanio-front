@@ -65,6 +65,7 @@ const RaceSummaryPage: NextPage = () => {
 
   const handleValidate = async () => {
     await addRaceEvent(results);
+    sessionStorage.removeItem("raceImage");
     alert("Course ajoutée avec succès !");
     router.push("/");
   };

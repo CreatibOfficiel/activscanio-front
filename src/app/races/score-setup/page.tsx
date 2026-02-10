@@ -1,13 +1,13 @@
 "use client";
 
 import { NextPage } from "next";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppContext } from "@/app/context/AppContext";
 import Image from "next/image";
-import { MdArrowBack, MdOutlineCheckCircle } from "react-icons/md";
+import { MdArrowBack, MdOutlineCheckCircle, MdImage, MdExpandMore } from "react-icons/md";
 import { toast } from "sonner";
 import { scoreSetupSchema, ScoreSetupFormData } from "@/app/schemas";
 import { Button } from "@/app/components/ui";
@@ -83,6 +83,19 @@ const ScoreSetupPage: NextPage = () => {
     fields.some(f => f.competitorId === c.id)
   );
 
+  // Race image from sessionStorage
+  const [raceImageUrl, setRaceImageUrl] = useState<string | null>(null);
+  const [imageExpanded, setImageExpanded] = useState(isFromAnalysis);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("raceImage");
+      if (stored) setRaceImageUrl(stored);
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
       {/* Back button + title */}
@@ -110,6 +123,38 @@ const ScoreSetupPage: NextPage = () => {
             Les résultats des joueurs ont été&nbsp;pré-remplis grâce à
             l&apos;analyse&nbsp;d&apos;image. Vérifie-les et ajuste si nécessaire !
           </p>
+        </div>
+      )}
+
+      {/* Collapsible race image */}
+      {raceImageUrl && (
+        <div className="mb-6">
+          <button
+            type="button"
+            className="w-full flex items-center gap-2 p-3 rounded-lg bg-neutral-800 hover:bg-neutral-750 transition-colors"
+            onClick={() => setImageExpanded(!imageExpanded)}
+          >
+            <MdImage size={20} className="text-neutral-400" />
+            <span className="text-sm font-medium text-neutral-200 flex-1 text-left">
+              Photo de référence
+            </span>
+            <MdExpandMore
+              size={20}
+              className={`text-neutral-400 transition-transform ${
+                imageExpanded ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+          {imageExpanded && (
+            <div className="mt-2 rounded-lg overflow-hidden border border-neutral-700">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={raceImageUrl}
+                alt="Photo de la course"
+                className="w-full max-h-[300px] object-contain bg-neutral-950"
+              />
+            </div>
+          )}
         </div>
       )}
 
