@@ -2,6 +2,7 @@ import { FC } from "react";
 import { MdEdit } from "react-icons/md";
 import { useRouter } from "next/navigation";
 import { Competitor } from "@/app/models/Competitor";
+import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
 
 interface Props {
   competitor: Competitor;
@@ -10,6 +11,9 @@ interface Props {
 
 const EditCompetitorButton: FC<Props> = ({ competitor, className = "" }) => {
   const router = useRouter();
+  const { userData } = useCurrentUserData();
+
+  if (userData?.competitorId !== competitor.id) return null;
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();

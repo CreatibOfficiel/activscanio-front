@@ -18,6 +18,7 @@ import {
   editCompetitorReducer,
   initialState,
 } from '@/app/reducers/editCompetitorReducer';
+import { useCurrentUserData } from '@/app/hooks/useCurrentUserData';
 
 const EditCompetitorPage: NextPage = () => {
   const router = useRouter();
@@ -33,6 +34,7 @@ const EditCompetitorPage: NextPage = () => {
   } = useApp();
 
   const [state, dispatch] = useReducer(editCompetitorReducer, initialState);
+  const { userData, loading: userLoading } = useCurrentUserData();
 
   const {
     register,
@@ -163,7 +165,7 @@ const EditCompetitorPage: NextPage = () => {
 
   /* -------------- Render -------------- */
 
-  if (state.loading) {
+  if (state.loading || userLoading) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
         <p>Chargement…</p>
@@ -175,6 +177,23 @@ const EditCompetitorPage: NextPage = () => {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
         <p>Compétiteur introuvable.</p>
+        <Button
+          onClick={() => router.back()}
+          className="mt-4"
+          variant="primary"
+        >
+          Retour
+        </Button>
+      </div>
+    );
+  }
+
+  if (userData?.competitorId !== params.id) {
+    return (
+      <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
+        <p className="text-error-400">
+          Vous n&apos;avez pas la permission de modifier ce compétiteur.
+        </p>
         <Button
           onClick={() => router.back()}
           className="mt-4"
