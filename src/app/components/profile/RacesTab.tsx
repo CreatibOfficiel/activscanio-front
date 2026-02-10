@@ -9,7 +9,7 @@ import {
 } from 'react-icons/md';
 import { Competitor, getFullName } from '../../models/Competitor';
 import { CompetitorsRepository } from '../../repositories/CompetitorsRepository';
-import { Skeleton, InfoTooltip } from '../ui';
+import { Skeleton } from '../ui';
 
 // Lazy load chart component for performance
 const EloProgressChart = lazy(() => import('../stats/EloProgressChart'));
@@ -20,7 +20,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface RacesTabProps {
   competitorId: string;
-  authToken?: string;
+  getToken?: () => Promise<string | null>;
   className?: string;
 }
 
@@ -53,7 +53,7 @@ const SectionSkeleton: FC<{ height?: string }> = ({ height = 'h-48' }) => (
  */
 const RacesTab: FC<RacesTabProps> = ({
   competitorId,
-  authToken,
+  getToken,
   className = '',
 }) => {
   const [competitor, setCompetitor] = useState<Competitor | null>(null);
@@ -130,14 +130,9 @@ const RacesTab: FC<RacesTabProps> = ({
       <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
           <MdSpeed className="text-blue-400" />
-          <InfoTooltip
-            content="Le système ELO (Glicko-2) évalue votre niveau après chaque course. Plus vous gagnez contre des adversaires forts, plus vous montez !"
-            position="bottom"
-            iconSize="sm"
-          >
-            <span>Statistiques ELO</span>
-          </InfoTooltip>
+          <span>Statistiques ELO</span>
         </h3>
+        <p className="text-xs text-neutral-500 font-normal -mt-2 mb-4">Le système ELO (Glicko-2) évalue votre niveau après chaque course. Plus vous gagnez contre des adversaires forts, plus vous montez !</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <RaceStatCard
@@ -172,13 +167,7 @@ const RacesTab: FC<RacesTabProps> = ({
         {competitor.conservativeScore != null && (
           <div className="mt-4 pt-4 border-t border-neutral-700">
             <div className="flex items-center justify-between text-sm">
-              <InfoTooltip
-                content="Le score conservateur (Rating - 2×RD) représente votre niveau minimum avec 95% de certitude. Plus vous jouez, plus votre RD diminue et ce score devient fiable."
-                position="top"
-                iconSize="xs"
-              >
-                <span className="text-neutral-400">Score Conservateur (ELO - 2×RD)</span>
-              </InfoTooltip>
+              <span className="text-neutral-400">Score Conservateur (ELO - 2×RD)</span>
               <span className="font-bold text-blue-400">
                 {Math.round(competitor.conservativeScore)}
               </span>
@@ -200,7 +189,7 @@ const RacesTab: FC<RacesTabProps> = ({
           <EloProgressChart
             competitorId={competitorId}
             period="30d"
-            authToken={authToken}
+            getToken={getToken}
           />
         </Suspense>
       </div>

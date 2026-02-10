@@ -20,7 +20,7 @@ const CATEGORY_LABELS: Record<AchievementCategory, { label: string; icon: string
 
 interface AchievementsTabProps {
   stats: UserStats;
-  authToken?: string;
+  getToken?: () => Promise<string | null>;
   className?: string;
 }
 
@@ -35,7 +35,7 @@ interface AchievementsTabProps {
  */
 const AchievementsTab: FC<AchievementsTabProps> = ({
   stats,
-  authToken,
+  getToken,
   className = '',
 }) => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -48,7 +48,8 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
       try {
         setLoading(true);
         setError(null);
-        const data = await AchievementsRepository.getAchievements({}, authToken);
+        const token = await getToken?.();
+        const data = await AchievementsRepository.getAchievements({}, token ?? undefined);
         setAchievements(data);
       } catch (err) {
         console.error('Error fetching achievements:', err);
@@ -59,7 +60,7 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
     };
 
     fetchAchievements();
-  }, [authToken]);
+  }, [getToken]);
 
   // Get unlocked achievements for showcase
   const unlockedAchievements = achievements.filter((a) => a.isUnlocked);

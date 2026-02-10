@@ -7,7 +7,6 @@ import { UserStats } from '../../models/Achievement';
 import TimePeriodToggle, { TimePeriod } from '../stats/TimePeriodToggle';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import StatCard from '../ui/StatCard';
-import InfoTooltip from '../ui/InfoTooltip';
 import { StreakIndicator } from '../achievements';
 
 // Lazy load chart components for performance
@@ -18,7 +17,7 @@ const AdvancedStatsPanel = lazy(() => import('../stats/AdvancedStatsPanel'));
 
 interface StatsTabProps {
   stats: UserStats;
-  authToken?: string;
+  getToken?: () => Promise<string | null>;
   className?: string;
 }
 
@@ -44,7 +43,7 @@ const ChartSkeleton: FC<{ height?: string }> = ({ height = 'h-64' }) => (
  */
 const StatsTab: FC<StatsTabProps> = ({
   stats,
-  authToken,
+  getToken,
   className = '',
 }) => {
   const [period, setPeriod] = useState<TimePeriod>('all');
@@ -114,14 +113,9 @@ const StatsTab: FC<StatsTabProps> = ({
         <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <MdCalendarMonth className="text-orange-400" />
-            <InfoTooltip
-              content="Nombre de semaines consécutives avec au moins 1 pick correct ce mois-ci."
-              position="bottom"
-              iconSize="xs"
-            >
-              <span>Série mensuelle</span>
-            </InfoTooltip>
+            <span>Série mensuelle</span>
           </h3>
+          <p className="text-xs text-neutral-500 font-normal -mt-2 mb-4">Semaines consécutives avec au moins 1 pick correct ce mois-ci.</p>
           <StreakIndicator
             type="monthly"
             currentStreak={stats.currentMonthlyStreak}
@@ -290,7 +284,7 @@ const StatsTab: FC<StatsTabProps> = ({
           <XPProgressChart
             userId={stats.userId}
             period="30d"
-            authToken={authToken}
+            getToken={getToken}
             className=""
           />
         </Suspense>
@@ -306,7 +300,7 @@ const StatsTab: FC<StatsTabProps> = ({
           <WinRateChart
             userId={stats.userId}
             days={30}
-            authToken={authToken}
+            getToken={getToken}
             className=""
           />
         </Suspense>
@@ -321,7 +315,7 @@ const StatsTab: FC<StatsTabProps> = ({
         <Suspense fallback={<ChartSkeleton height="h-48" />}>
           <ComparisonCard
             userId={stats.userId}
-            authToken={authToken}
+            getToken={getToken}
             className=""
           />
         </Suspense>
@@ -336,7 +330,7 @@ const StatsTab: FC<StatsTabProps> = ({
         <Suspense fallback={<ChartSkeleton height="h-72" />}>
           <AdvancedStatsPanel
             userId={stats.userId}
-            authToken={authToken}
+            getToken={getToken}
             className=""
           />
         </Suspense>

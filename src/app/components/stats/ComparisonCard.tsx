@@ -7,7 +7,7 @@ import Skeleton from '@/app/components/ui/Skeleton';
 
 interface ComparisonCardProps {
   userId: string;
-  authToken?: string;
+  getToken?: () => Promise<string | null>;
   className?: string;
 }
 
@@ -59,7 +59,7 @@ const StatItem = React.memo(function StatItem({ label, userValue, avgValue, form
 
 const ComparisonCard = React.memo(function ComparisonCard({
   userId,
-  authToken,
+  getToken,
   className = '',
 }: ComparisonCardProps) {
   const [data, setData] = useState<ComparisonStats | null>(null);
@@ -71,7 +71,8 @@ const ComparisonCard = React.memo(function ComparisonCard({
       try {
         setLoading(true);
         setError(null);
-        const stats = await StatsRepository.getComparisonStats(userId, authToken);
+        const token = await getToken?.();
+        const stats = await StatsRepository.getComparisonStats(userId, token ?? undefined);
         setData(stats);
       } catch (err) {
         console.error('Error fetching comparison stats:', err);
@@ -82,7 +83,7 @@ const ComparisonCard = React.memo(function ComparisonCard({
     };
 
     fetchData();
-  }, [userId, authToken]);
+  }, [userId, getToken]);
 
   if (loading) {
     return (

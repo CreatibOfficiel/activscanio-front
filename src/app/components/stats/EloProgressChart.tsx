@@ -34,8 +34,8 @@ interface EloProgressChartProps {
   competitorId: string;
   /** Time period for the chart (default: '30d') */
   period?: '7d' | '30d' | '3m' | '1y';
-  /** Optional authentication token */
-  authToken?: string;
+  /** Function to get a fresh authentication token */
+  getToken?: () => Promise<string | null>;
   /** Additional CSS classes */
   className?: string;
 }
@@ -53,7 +53,7 @@ interface EloProgressChartProps {
 const EloProgressChart = React.memo(function EloProgressChart({
   competitorId,
   period = '30d',
-  authToken,
+  getToken,
   className = '',
 }: EloProgressChartProps) {
   const [data, setData] = useState<EloHistoryPoint[]>([]);
@@ -82,12 +82,14 @@ const EloProgressChart = React.memo(function EloProgressChart({
         setLoading(true);
         setError(null);
 
+        const token = await getToken?.();
+
         // Fetch ELO history from API
         const headers: HeadersInit = {
           'Content-Type': 'application/json',
         };
-        if (authToken) {
-          headers['Authorization'] = `Bearer ${authToken}`;
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
         }
 
         const response = await fetch(
@@ -116,7 +118,7 @@ const EloProgressChart = React.memo(function EloProgressChart({
     };
 
     fetchData();
-  }, [competitorId, days, authToken]);
+  }, [competitorId, days, getToken]);
 
   // Transform data for the chart
   const chartData = useMemo(() => {

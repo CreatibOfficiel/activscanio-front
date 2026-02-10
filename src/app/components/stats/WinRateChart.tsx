@@ -18,13 +18,13 @@ import Skeleton from '@/app/components/ui/Skeleton';
 interface WinRateChartProps {
   userId: string;
   days?: number;
-  authToken?: string;
+  getToken?: () => Promise<string | null>;
   className?: string;
 }
 
 const WinRateChart = React.memo(function WinRateChart({
   userId,
-  authToken,
+  getToken,
   className = '',
 }: WinRateChartProps) {
   const [data, setData] = useState<WinRateTrendPoint[]>([]);
@@ -36,7 +36,8 @@ const WinRateChart = React.memo(function WinRateChart({
       try {
         setLoading(true);
         setError(null);
-        const stats = await StatsRepository.getAdvancedStats(userId, authToken);
+        const token = await getToken?.();
+        const stats = await StatsRepository.getAdvancedStats(userId, token ?? undefined);
         setData(stats.winRateTrend);
       } catch (err) {
         console.error('Error fetching win rate trend:', err);
@@ -47,7 +48,7 @@ const WinRateChart = React.memo(function WinRateChart({
     };
 
     fetchData();
-  }, [userId, authToken]);
+  }, [userId, getToken]);
 
   // Memoized chart data calculation
   const chartData = useMemo(() => {

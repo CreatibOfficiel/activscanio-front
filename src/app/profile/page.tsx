@@ -2,8 +2,8 @@
 
 import { FC, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuth, useUser, useClerk } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { UserStats, UserAchievement } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
@@ -34,6 +34,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const ProfilePage: FC = () => {
   const { getToken } = useAuth();
   const { user: clerkUser } = useUser();
+  const { openUserProfile } = useClerk();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   // Get initial tab from URL query param
@@ -127,12 +129,13 @@ const ProfilePage: FC = () => {
 
   // Handle character change
   const handleChangeCharacter = useCallback(async (variantId: string) => {
-    if (!authToken) {
+    const freshToken = await getToken();
+    if (!freshToken) {
       throw new Error('Non authentifié');
     }
 
     try {
-      const updatedUser = await UsersRepository.changeCharacter(variantId, authToken);
+      const updatedUser = await UsersRepository.changeCharacter(variantId, freshToken);
       setUserData(updatedUser);
       toast.success('Personnage changé avec succès !');
     } catch (error) {
@@ -140,7 +143,7 @@ const ProfilePage: FC = () => {
       toast.error(message);
       throw error;
     }
-  }, [authToken]);
+  }, [getToken]);
 
   // Get user display name
   const getUserName = () => {
@@ -221,6 +224,11 @@ const ProfilePage: FC = () => {
           userImageUrl={clerkUser?.imageUrl}
           character={getCharacterInfo()}
           onEditCharacter={userData?.role === 'player' ? () => setIsCharacterModalOpen(true) : undefined}
+          onEditName={
+            userData?.role === 'player' && userData.competitorId
+              ? () => router.push(`/competitors/edit/${userData.competitorId}`)
+              : () => openUserProfile()
+          }
         />
 
         {/* Character Selection Modal */}
@@ -253,19 +261,19 @@ const ProfilePage: FC = () => {
           {activeTab === 'stats' && (
             <StatsTab
               stats={stats}
-              authToken={authToken || undefined}
+              getToken={getToken}
             />
           )}
           {activeTab === 'achievements' && (
             <AchievementsTab
               stats={stats}
-              authToken={authToken || undefined}
+              getToken={getToken}
             />
           )}
           {activeTab === 'races' && userData?.competitorId && (
             <RacesTab
               competitorId={userData.competitorId}
-              authToken={authToken || undefined}
+              getToken={getToken}
             />
           )}
         </div>

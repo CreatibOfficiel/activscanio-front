@@ -7,13 +7,13 @@ import Skeleton from '@/app/components/ui/Skeleton';
 
 interface AdvancedStatsPanelProps {
   userId: string;
-  authToken?: string;
+  getToken?: () => Promise<string | null>;
   className?: string;
 }
 
 const AdvancedStatsPanel = React.memo(function AdvancedStatsPanel({
   userId,
-  authToken,
+  getToken,
   className = '',
 }: AdvancedStatsPanelProps) {
   const [data, setData] = useState<AdvancedStats | null>(null);
@@ -25,7 +25,8 @@ const AdvancedStatsPanel = React.memo(function AdvancedStatsPanel({
       try {
         setLoading(true);
         setError(null);
-        const stats = await StatsRepository.getAdvancedStats(userId, authToken);
+        const token = await getToken?.();
+        const stats = await StatsRepository.getAdvancedStats(userId, token ?? undefined);
         setData(stats);
       } catch (err) {
         console.error('Error fetching advanced stats:', err);
@@ -36,7 +37,7 @@ const AdvancedStatsPanel = React.memo(function AdvancedStatsPanel({
     };
 
     fetchData();
-  }, [userId, authToken]);
+  }, [userId, getToken]);
 
   if (loading) {
     return (

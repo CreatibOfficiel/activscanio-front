@@ -22,8 +22,8 @@ interface XPProgressChartProps {
   userId: string;
   /** Time period for the chart (default: '30d') */
   period?: '7d' | '30d' | '3m' | '1y';
-  /** Optional authentication token */
-  authToken?: string;
+  /** Function to get a fresh authentication token */
+  getToken?: () => Promise<string | null>;
   /** Additional CSS classes */
   className?: string;
 }
@@ -41,7 +41,7 @@ interface XPProgressChartProps {
 const XPProgressChart = React.memo(function XPProgressChart({
   userId,
   period = '30d',
-  authToken,
+  getToken,
   className = '',
 }: XPProgressChartProps) {
   const [data, setData] = useState<DailyStats[]>([]);
@@ -53,7 +53,8 @@ const XPProgressChart = React.memo(function XPProgressChart({
       try {
         setLoading(true);
         setError(null);
-        const stats = await StatsRepository.getStatsHistory(userId, period, authToken);
+        const token = await getToken?.();
+        const stats = await StatsRepository.getStatsHistory(userId, period, token ?? undefined);
         setData(stats);
       } catch (err) {
         console.error('Error fetching XP progress:', err);
@@ -64,7 +65,7 @@ const XPProgressChart = React.memo(function XPProgressChart({
     };
 
     fetchData();
-  }, [userId, period, authToken]);
+  }, [userId, period, getToken]);
 
   // Calculate cumulative XP (memoized for performance)
   const chartData = useMemo(() => {
