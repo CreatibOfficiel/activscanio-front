@@ -52,9 +52,9 @@ const OnboardingPage: FC = () => {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const debouncedCharacterSearch = useDebounce(characterSearchQuery, 300);
 
-  // Ref to preserve scroll position when navigating between character and variant selection
-  const characterListRef = useRef<HTMLDivElement>(null);
-  const savedScrollPosition = useRef<number>(0);
+  // Ref and state for pre-selected character highlight
+  const preSelectedCharacterRef = useRef<HTMLDivElement>(null);
+  const [highlightPreSelected, setHighlightPreSelected] = useState(false);
 
   // Load base characters with availability status on mount
   useEffect(() => {
@@ -143,6 +143,23 @@ const OnboardingPage: FC = () => {
     setFilteredCharacters(filtered);
   }, [debouncedCharacterSearch, baseCharacters]);
 
+  // Auto-scroll to pre-selected character and highlight it
+  useEffect(() => {
+    if (step !== OnboardingStep.CHARACTER_SELECT) return;
+    if (!selectedCompetitor?.characterVariant || !selectedBaseCharacter) return;
+
+    const timer = setTimeout(() => {
+      preSelectedCharacterRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+      setHighlightPreSelected(true);
+      setTimeout(() => setHighlightPreSelected(false), 2000);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [step, selectedCompetitor?.characterVariant, selectedBaseCharacter]);
+
   // Check if a variant is selectable (available OR belongs to the selected competitor)
   const isVariantSelectable = useCallback((variant: CharacterVariantWithAvailability) => {
     if (variant.isAvailable) return true;
@@ -167,10 +184,6 @@ const OnboardingPage: FC = () => {
       setSelectedVariantId(selectableVariants[0].id);
       // Don't change step, just show confirmation
     } else if (selectableVariants.length > 1) {
-      // Save scroll position before navigating to variant selection
-      if (characterListRef.current) {
-        savedScrollPosition.current = characterListRef.current.scrollTop;
-      }
       // Multiple variants, go to variant selection
       setSelectedVariantId(null);
       setStep(OnboardingStep.VARIANT_SELECT);
@@ -256,12 +269,7 @@ const OnboardingPage: FC = () => {
   const handleBackToCharacterSelect = useCallback(() => {
     setStep(OnboardingStep.CHARACTER_SELECT);
     setSelectedVariantId(null);
-    // Restore scroll position after render
-    requestAnimationFrame(() => {
-      if (characterListRef.current) {
-        characterListRef.current.scrollTop = savedScrollPosition.current;
-      }
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   // Validate name format
@@ -385,7 +393,7 @@ const OnboardingPage: FC = () => {
   const totalSteps = isBettorOnly ? 2 : (selectedBaseCharacter && selectableVariantsCount > 1 ? 4 : 3);
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
+    <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-24">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -533,7 +541,7 @@ const OnboardingPage: FC = () => {
               {/* Competitors list */}
               {!isLoading && filteredCompetitors.length > 0 && (
                 <div
-                  className="space-y-2 mb-4 max-h-80 overflow-y-auto scrollbar-hide pr-1"
+                  className="space-y-2 mb-4"
                   role="list"
                   aria-label="Liste des compétiteurs"
                 >
@@ -683,39 +691,6 @@ const OnboardingPage: FC = () => {
                 </p>
               )}
 
-              {/* Actions */}
-              <div className="flex flex-col gap-2 border-t border-neutral-700 pt-4">
-                {selectedCompetitor && (
-                  <Button
-                    variant="primary"
-                    fullWidth
-                    onClick={() => handleSelectCompetitor(selectedCompetitor)}
-                    loading={isSubmitting}
-                    disabled={isSubmitting}
-                  >
-                    {isBettorOnly ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}
-                  </Button>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={handleBackToRoleSelection}
-                    className="flex items-center gap-1"
-                  >
-                    <MdArrowBack />
-                    Retour
-                  </Button>
-                  <div className="flex-1" />
-                  <Button
-                    variant="secondary"
-                    onClick={handleCreateNewCompetitor}
-                    className="flex items-center gap-1"
-                  >
-                    <MdPersonAdd className="text-xl" />
-                    Créer un profil
-                  </Button>
-                </div>
-              </div>
             </Card>
           </div>
         )}
@@ -764,21 +739,6 @@ const OnboardingPage: FC = () => {
                   />
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button variant="ghost" onClick={handleBackToSearch} className="flex items-center gap-1">
-                    <MdArrowBack />
-                    Retour
-                  </Button>
-                  <div className="flex-1" />
-                  <Button
-                    variant="primary"
-                    onClick={handleProceedToCharacterSelect}
-                    loading={isSubmitting}
-                    disabled={!newCompetitorFirstName.trim() || !newCompetitorLastName.trim() || isSubmitting}
-                  >
-                    {isBettorOnly ? 'Terminer' : 'Continuer'}
-                  </Button>
-                </div>
               </div>
             </Card>
           </div>
@@ -804,9 +764,10 @@ const OnboardingPage: FC = () => {
 
               {/* Info banner when competitor already has a character */}
               {selectedCompetitor?.characterVariant && selectedVariantId && (
-                <div className="mb-4 p-3 bg-primary-500/10 border border-primary-500/30 rounded-lg">
-                  <p className="text-sub text-primary-300">
-                    Personnage actuel pré-sélectionné : <span className="text-bold text-primary-400">{selectedCompetitor.characterVariant.baseCharacter.name} - {selectedCompetitor.characterVariant.label}</span>. Vous pouvez le garder ou en choisir un autre.
+                <div className="mb-4 p-3 bg-primary-500/15 border-2 border-primary-500/50 rounded-lg">
+                  <p className="text-regular text-primary-300 flex items-center gap-2">
+                    <MdCheck className="text-primary-400 shrink-0" />
+                    <span>Personnage actuel pré-sélectionné : <span className="text-bold text-primary-400">{selectedCompetitor.characterVariant.baseCharacter.name} - {selectedCompetitor.characterVariant.label}</span>. Vous pouvez le garder ou en choisir un autre.</span>
                   </p>
                 </div>
               )}
@@ -826,8 +787,6 @@ const OnboardingPage: FC = () => {
 
               {/* Character grid */}
               <div
-                ref={characterListRef}
-                className="max-h-96 overflow-y-auto scrollbar-hide pr-1"
                 role="listbox"
                 aria-label="Liste des personnages"
               >
@@ -844,19 +803,22 @@ const OnboardingPage: FC = () => {
                       const selectableVariants = character.variants.filter(isVariantSelectable);
                       const hasAvailable = selectableVariants.length > 0;
                       const hasMultipleAvailableVariants = selectableVariants.length > 1;
+                      const isPreSelected = selectedCompetitor?.characterVariant?.baseCharacter.id === character.id;
 
                       // Find first person who took a variant (for display when all taken)
                       const takenVariant = character.variants.find(v => !v.isAvailable && v.takenBy);
 
                       return (
+                        <div key={character.id} ref={isPreSelected ? preSelectedCharacterRef : undefined}>
                         <Card
-                          key={character.id}
                           className={`p-3 transition-all duration-200 ${
                             !hasAvailable
                               ? 'opacity-60 cursor-not-allowed'
                               : 'cursor-pointer hover:border-primary-500 hover:bg-primary-500/5'
                           } ${
                             isSelected ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500' : ''
+                          } ${
+                            isPreSelected && highlightPreSelected ? 'ring-2 ring-primary-400 animate-pulse-slow' : ''
                           }`}
                           onClick={() => hasAvailable && handleSelectBaseCharacter(character)}
                           role="option"
@@ -932,32 +894,13 @@ const OnboardingPage: FC = () => {
                             )}
                           </div>
                         </Card>
+                        </div>
                       );
                     })}
                   </div>
                 )}
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-2 border-t border-neutral-700 pt-4 mt-4">
-                <Button
-                  variant="ghost"
-                  onClick={selectedCompetitor ? handleBackToSearch : handleBackToSearch}
-                  className="flex items-center gap-1"
-                >
-                  <MdArrowBack />
-                  Retour
-                </Button>
-                <div className="flex-1" />
-                <Button
-                  variant="primary"
-                  onClick={handleComplete}
-                  loading={isSubmitting}
-                  disabled={!selectedVariantId || isSubmitting}
-                >
-                  Terminer
-                </Button>
-              </div>
             </Card>
           </div>
         )}
@@ -980,7 +923,6 @@ const OnboardingPage: FC = () => {
 
               {/* Variants grid */}
               <div
-                className="max-h-80 overflow-y-auto scrollbar-hide pr-1"
                 role="listbox"
                 aria-label="Liste des variantes"
               >
@@ -1073,8 +1015,96 @@ const OnboardingPage: FC = () => {
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-2 border-t border-neutral-700 pt-4 mt-4">
+            </Card>
+          </div>
+        )}
+      </div>
+
+      {/* Sticky bottom bar for action buttons (all steps except role selection) */}
+      {step !== OnboardingStep.ROLE_SELECTION && (
+        <div className="fixed bottom-0 left-0 right-0 bg-neutral-900/95 backdrop-blur-sm border-t border-neutral-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-50">
+          <div className="max-w-2xl mx-auto">
+            {/* Competitor Search actions */}
+            {step === OnboardingStep.COMPETITOR_SEARCH && (
+              <div className="flex flex-col gap-2">
+                {selectedCompetitor && (
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    onClick={() => handleSelectCompetitor(selectedCompetitor)}
+                    loading={isSubmitting}
+                    disabled={isSubmitting}
+                  >
+                    {isBettorOnly ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}
+                  </Button>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={handleBackToRoleSelection}
+                    className="flex items-center gap-1"
+                  >
+                    <MdArrowBack />
+                    Retour
+                  </Button>
+                  <div className="flex-1" />
+                  <Button
+                    variant="secondary"
+                    onClick={handleCreateNewCompetitor}
+                    className="flex items-center gap-1"
+                  >
+                    <MdPersonAdd className="text-xl" />
+                    Créer un profil
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Create Competitor actions */}
+            {step === OnboardingStep.CREATE_COMPETITOR && (
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={handleBackToSearch} className="flex items-center gap-1">
+                  <MdArrowBack />
+                  Retour
+                </Button>
+                <div className="flex-1" />
+                <Button
+                  variant="primary"
+                  onClick={handleProceedToCharacterSelect}
+                  loading={isSubmitting}
+                  disabled={!newCompetitorFirstName.trim() || !newCompetitorLastName.trim() || isSubmitting}
+                >
+                  {isBettorOnly ? 'Terminer' : 'Continuer'}
+                </Button>
+              </div>
+            )}
+
+            {/* Character Select actions */}
+            {step === OnboardingStep.CHARACTER_SELECT && (
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleBackToSearch}
+                  className="flex items-center gap-1"
+                >
+                  <MdArrowBack />
+                  Retour
+                </Button>
+                <div className="flex-1" />
+                <Button
+                  variant="primary"
+                  onClick={handleComplete}
+                  loading={isSubmitting}
+                  disabled={!selectedVariantId || isSubmitting}
+                >
+                  Terminer
+                </Button>
+              </div>
+            )}
+
+            {/* Variant Select actions */}
+            {step === OnboardingStep.VARIANT_SELECT && (
+              <div className="flex gap-2">
                 <Button
                   variant="ghost"
                   onClick={handleBackToCharacterSelect}
@@ -1093,10 +1123,10 @@ const OnboardingPage: FC = () => {
                   Terminer
                 </Button>
               </div>
-            </Card>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

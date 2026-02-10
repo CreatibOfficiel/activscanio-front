@@ -61,6 +61,7 @@ interface ProfileHeaderProps {
   character?: CharacterInfo | null;
   className?: string;
   onEditCharacter?: () => void;
+  onEditName?: () => void;
 }
 
 /**
@@ -80,6 +81,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
   character,
   className = '',
   onEditCharacter,
+  onEditName,
 }) => {
   const isPlayer = !!character;
   const colors = getCharacterColors(character?.name);
@@ -158,9 +160,21 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
           )}
 
           {/* User name */}
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-            {userName}
-          </h2>
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-3">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+              {userName}
+            </h2>
+            {onEditName && (
+              <button
+                type="button"
+                onClick={onEditName}
+                className="w-7 h-7 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                aria-label="Modifier le nom"
+              >
+                <MdEdit className="text-sm" />
+              </button>
+            )}
+          </div>
 
           {/* Level Badge + XP */}
           <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">

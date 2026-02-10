@@ -221,11 +221,13 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
                     </span>
                   )}
                   {trend && (
-                    <TrendIndicator
-                      direction={trend.direction}
-                      value={trend.value}
-                      size="sm"
-                    />
+                    <span className="bg-neutral-900/60 rounded-full">
+                      <TrendIndicator
+                        direction={trend.direction}
+                        value={trend.value}
+                        size="sm"
+                      />
+                    </span>
                   )}
                 </div>
                 <div className={`flex items-center gap-3 ${config.textColor} opacity-80`}>

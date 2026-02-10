@@ -1,8 +1,7 @@
 'use client';
 
 import { FC } from 'react';
-import { MdInfo, MdCheck } from 'react-icons/md';
-import Tooltip from '../ui/Tooltip';
+import { MdCheck } from 'react-icons/md';
 
 interface StreakIndicatorProps {
   type: 'monthly' | 'lifetime';
@@ -46,14 +45,6 @@ const MonthlyStreak: FC<MonthlyStreakProps> = ({ streak, totalWeeks, className =
   const progress = totalWeeks > 0 ? (activeWeeks / totalWeeks) * 100 : 0;
   const isPerfect = activeWeeks >= totalWeeks;
   const weeksRemaining = Math.max(0, totalWeeks - activeWeeks);
-
-  const tooltipContent = (
-    <span>
-      Nombre de semaines où vous avez parié ce mois-ci.
-      <br />
-      Pariez chaque semaine pour un mois parfait !
-    </span>
-  );
 
   const getMessage = () => {
     if (isPerfect) return 'Mois parfait !';
@@ -103,17 +94,9 @@ const MonthlyStreak: FC<MonthlyStreakProps> = ({ streak, totalWeeks, className =
           );
         })}
 
-        {/* Info tooltip */}
-        <Tooltip content={tooltipContent} position="top">
-          <button
-            type="button"
-            className="p-1.5 rounded-full text-neutral-500 hover:text-neutral-300 hover:bg-neutral-700/50 transition-colors"
-            aria-label="Informations sur la série mensuelle"
-          >
-            <MdInfo className="text-lg" />
-          </button>
-        </Tooltip>
       </div>
+
+      <p className="text-xs text-neutral-500 mt-2">Nombre de semaines où vous avez parié ce mois-ci. Pariez chaque semaine pour un mois parfait !</p>
 
       {/* Summary text */}
       <div className="space-y-2">
@@ -156,14 +139,6 @@ interface LifetimeStreakProps {
 }
 
 const LifetimeStreak: FC<LifetimeStreakProps> = ({ streak, className = '' }) => {
-  const tooltipContent = (
-    <span>
-      Votre plus longue série de semaines consécutives
-      <br />
-      avec au moins un pari.
-    </span>
-  );
-
   const getMessage = () => {
     if (streak === 0) return 'Placez des paris régulièrement pour établir un record !';
     if (streak < 4) return 'Bon début ! Continuez chaque semaine.';
@@ -185,17 +160,9 @@ const LifetimeStreak: FC<LifetimeStreakProps> = ({ streak, className = '' }) => 
           </span>
         </div>
 
-        {/* Info tooltip */}
-        <Tooltip content={tooltipContent} position="top">
-          <button
-            type="button"
-            className="p-1.5 rounded-full text-neutral-500 hover:text-neutral-300 hover:bg-neutral-700/50 transition-colors"
-            aria-label="Informations sur le record personnel"
-          >
-            <MdInfo className="text-lg" />
-          </button>
-        </Tooltip>
       </div>
+
+      <p className="text-xs text-neutral-500">Votre plus longue série de semaines consécutives avec au moins un pari.</p>
 
       {/* Full progress bar (record achieved) */}
       <div className="space-y-1">

@@ -12,7 +12,6 @@ import RaceDetailsModal from "./RaceDetailsModal";
 
 interface Props {
   race: RaceEvent;
-  index?: number;
 }
 
 interface ParticipantWithResult {
@@ -22,7 +21,7 @@ interface ParticipantWithResult {
   isWinner: boolean;
 }
 
-const RaceCard: FC<Props> = ({ race, index = 0 }) => {
+const RaceCard: FC<Props> = ({ race }) => {
   const { allCompetitors } = useContext(AppContext);
   const [showModal, setShowModal] = useState(false);
 
@@ -64,9 +63,8 @@ const RaceCard: FC<Props> = ({ race, index = 0 }) => {
   return (
     <>
       <div
-        className="bg-neutral-800 rounded-xl border border-neutral-700 hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/10 transition-all duration-200 cursor-pointer overflow-hidden card-glow-hover stagger-item"
+        className="bg-neutral-800 rounded-xl border border-neutral-700 hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/10 transition-all duration-200 cursor-pointer overflow-hidden card-glow-hover"
         onClick={() => setShowModal(true)}
-        style={{ animationDelay: `${index * 0.05}s` }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700/50">

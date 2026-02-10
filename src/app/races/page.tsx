@@ -131,7 +131,7 @@ const RacesPage: NextPage = () => {
 
   if (isLoading || !now) {
     return (
-      <div className="min-h-screen bg-neutral-900 pb-24">
+      <div className="min-h-screen bg-neutral-900 pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <div className="px-4 pt-6 pb-4">
           <h1 className="text-center text-title mb-6">Courses</h1>
           <div className="grid grid-cols-3 gap-3 mb-6">
@@ -154,7 +154,7 @@ const RacesPage: NextPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-900 pb-24">
+    <div className="min-h-screen bg-neutral-900 pb-[calc(6rem+env(safe-area-inset-bottom))]">
       {/* Stats Header */}
       <RacesStatsHeader stats={raceStats} />
 
@@ -214,13 +214,13 @@ const RacesPage: NextPage = () => {
         </div>
       ) : (
         // Race list grouped by date
-        <div className="pb-4">
+        <div className="pb-4" key={`${filters.period}-${filters.competitorId ?? 'all'}`}>
           {orderedDateLabels.map((dateLabel) => (
             <section key={dateLabel}>
               <DateSeparator label={dateLabel} count={racesByDate[dateLabel].length} />
               <div className="space-y-3 px-4">
-                {racesByDate[dateLabel].map((race, index) => (
-                  <RaceCard key={race.id} race={race} index={index} />
+                {racesByDate[dateLabel].map((race) => (
+                  <RaceCard key={race.id} race={race} />
                 ))}
               </div>
             </section>
