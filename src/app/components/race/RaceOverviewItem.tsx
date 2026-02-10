@@ -106,12 +106,11 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
         })}
       </div>
 
-      {showModal && (
-        <RaceDetailsModal
-          raceId={race.id}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+      <RaceDetailsModal
+        raceId={race.id}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
     </>
   );
 };

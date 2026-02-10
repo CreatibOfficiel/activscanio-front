@@ -101,12 +101,11 @@ const RaceCard: FC<Props> = ({ race }) => {
       </div>
 
       {/* Details modal */}
-      {showModal && (
-        <RaceDetailsModal
-          raceId={race.id}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+      <RaceDetailsModal
+        raceId={race.id}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
     </>
   );
 };

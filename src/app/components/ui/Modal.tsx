@@ -100,6 +100,7 @@ const Modal: FC<ModalProps> = ({
 
       return () => {
         document.removeEventListener('keydown', handleTabKey);
+        document.body.style.overflow = '';
       };
     } else {
       // Unlock scroll

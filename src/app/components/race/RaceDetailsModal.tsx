@@ -15,6 +15,7 @@ import Skeleton from "@/app/components/ui/Skeleton";
 
 interface Props {
   raceId: string;
+  isOpen: boolean;
   onClose: () => void;
 }
 
@@ -116,7 +117,7 @@ const RaceDetailsSkeleton: FC = () => (
 
 /* ---------- Main component ---------- */
 
-const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
+const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
   const { getRaceById, allCompetitors, getSimilarRaces } =
     useContext(AppContext);
 
@@ -150,8 +151,10 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
   );
 
   useEffect(() => {
-    loadRace(currentRaceId);
-  }, [currentRaceId, loadRace]);
+    if (isOpen) {
+      loadRace(currentRaceId);
+    }
+  }, [currentRaceId, isOpen, loadRace]);
 
   const handleSimilarRaceClick = (id: string) => {
     setCurrentRaceId(id);
@@ -167,7 +170,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, onClose }) => {
     : null;
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Feuille de course" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Feuille de course" size="lg">
       {isLoading ? (
         <RaceDetailsSkeleton />
       ) : error || !raceEvent ? (
