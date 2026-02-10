@@ -320,7 +320,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
           </div>
 
           {/* ---- STATS TILES ---- */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
             {[
               {
                 label: "Elo",
@@ -377,6 +377,16 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
               <p className="text-xs text-neutral-500 mt-1">
                 récente → ancienne
               </p>
+              {competitor.formFactor && competitor.formFactor > 1.15 && (
+                <p className="text-xs text-neutral-500 mt-2">
+                  🔥 <span className="text-orange-400/80">En feu</span> — performances récentes nettement au-dessus de la moyenne
+                </p>
+              )}
+              {competitor.formFactor && competitor.formFactor < 0.85 && (
+                <p className="text-xs text-neutral-500 mt-2">
+                  ❄️ <span className="text-blue-400/80">En froid</span> — performances récentes en dessous de la moyenne
+                </p>
+              )}
             </div>
           )}
 
