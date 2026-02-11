@@ -21,8 +21,6 @@ const StreakWarningBanner: FC<StreakWarningBannerProps> = ({
     ? isClosingSoon(bettingStreak.weekClosesAt)
     : false;
 
-  const isPlayCritical = playStreak.atRisk && playStreak.missedBusinessDays >= 2;
-
   return (
     <div className={`space-y-2 ${className}`}>
       {bettingStreak.atRisk && (
@@ -68,39 +66,21 @@ const StreakWarningBanner: FC<StreakWarningBannerProps> = ({
 
       {playStreak.atRisk && (
         <div
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
-            isPlayCritical
-              ? 'bg-red-500/10 border-red-500/30'
-              : 'bg-amber-500/10 border-amber-500/30'
-          }`}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-red-500/10 border-red-500/30"
         >
-          <span className="text-xl animate-pulse">
-            {isPlayCritical ? '🚨' : '⏳'}
-          </span>
+          <span className="text-xl animate-pulse">🚨</span>
           <div className="flex-1 min-w-0">
-            <p
-              className={`text-sm font-semibold ${
-                isPlayCritical ? 'text-red-400' : 'text-amber-400'
-              }`}
-            >
-              {isPlayCritical
-                ? 'DERNIERE CHANCE !'
-                : `Serie de ${playStreak.currentStreak}j de courses en danger !`}
+            <p className="text-sm font-semibold text-red-400">
+              Serie de {playStreak.currentStreak}j en danger !
             </p>
             <p className="text-xs text-neutral-400 truncate">
-              {isPlayCritical
-                ? `Dernier jour pour sauver ta serie de ${playStreak.currentStreak} jours.`
-                : 'Cours aujourd\'hui pour garder ta serie !'}
+              Dernier jour pour sauver ta serie. Fais une course !
             </p>
           </div>
           <span
-            className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${
-              isPlayCritical
-                ? 'bg-red-500/20 text-red-400'
-                : 'bg-amber-500/20 text-amber-400'
-            }`}
+            className="text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 bg-red-500/20 text-red-400"
           >
-            {isPlayCritical ? 'Urgent' : 'Courir'}
+            Jouer
           </span>
         </div>
       )}
