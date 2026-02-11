@@ -70,8 +70,7 @@ function getSimilarRaceSummary(
   competitors: Competitor[]
 ): string {
   const sorted = [...race.results].sort((a, b) => a.rank12 - b.rank12);
-  const top = sorted.slice(0, 2);
-  return top
+  return sorted
     .map((r) => {
       const comp = competitors.find((c) => c.id === r.competitorId);
       const name = comp
@@ -291,7 +290,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                         <p className="text-sm text-neutral-200">
                           {formatRelativeDate(sim.date)}
                         </p>
-                        <p className="text-xs text-neutral-400 truncate">
+                        <p className="text-xs text-neutral-400">
                           {getSimilarRaceSummary(sim, allCompetitors)}
                         </p>
                       </div>
