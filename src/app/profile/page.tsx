@@ -27,6 +27,8 @@ export interface CompetitorStats {
   raceCount: number;
   avgRank12: number;
   rd: number;
+  playStreak: number;
+  bestPlayStreak: number;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -92,6 +94,8 @@ const ProfilePage: FC = () => {
               raceCount: competitor.raceCount || 0,
               avgRank12: competitor.avgRank12 || 0,
               rd: competitor.rd,
+              playStreak: competitor.playStreak ?? 0,
+              bestPlayStreak: competitor.bestPlayStreak ?? 0,
             });
           } catch (competitorErr) {
             console.warn('Could not fetch competitor stats:', competitorErr);
@@ -223,6 +227,7 @@ const ProfilePage: FC = () => {
           userName={getUserName()}
           userImageUrl={clerkUser?.imageUrl}
           character={getCharacterInfo()}
+          competitorStats={competitorStats}
           onEditCharacter={userData?.role === 'player' ? () => setIsCharacterModalOpen(true) : undefined}
           onEditName={
             userData?.role === 'player' && userData.competitorId

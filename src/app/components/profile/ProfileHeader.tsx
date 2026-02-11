@@ -4,6 +4,7 @@ import { FC } from 'react';
 import Image from 'next/image';
 import { MdEdit } from 'react-icons/md';
 import { UserStats } from '../../models/Achievement';
+import { CompetitorStats } from '../../profile/page';
 
 // Character color mappings for gradient backgrounds
 const CHARACTER_COLORS: Record<string, { from: string; to: string }> = {
@@ -59,6 +60,7 @@ interface ProfileHeaderProps {
   userName: string;
   userImageUrl?: string;
   character?: CharacterInfo | null;
+  competitorStats?: CompetitorStats | null;
   className?: string;
   onEditCharacter?: () => void;
   onEditName?: () => void;
@@ -79,6 +81,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
   userName,
   userImageUrl,
   character,
+  competitorStats,
   className = '',
   onEditCharacter,
   onEditName,
@@ -214,14 +217,25 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
               </div>
             )}
 
-            {/* Current Streak */}
+            {/* Current Bet Streak */}
             {stats.currentMonthlyStreak > 0 && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
-                <span className="text-sm">🔥</span>
+                <span className="text-sm">🎲</span>
                 <span className="text-sm font-semibold text-white">
                   {stats.currentMonthlyStreak}
                 </span>
-                <span className="text-xs text-white/70">streak</span>
+                <span className="text-xs text-white/70">streak paris</span>
+              </div>
+            )}
+
+            {/* Current Play Streak (players only) */}
+            {isPlayer && (competitorStats?.playStreak ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-sm">
+                <span className="text-sm">🏎️</span>
+                <span className="text-sm font-semibold text-white">
+                  {competitorStats!.playStreak}j
+                </span>
+                <span className="text-xs text-white/70">streak courses</span>
               </div>
             )}
 

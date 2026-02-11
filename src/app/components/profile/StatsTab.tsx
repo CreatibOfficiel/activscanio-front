@@ -130,7 +130,7 @@ const StatsTab: FC<StatsTabProps> = ({
           </h3>
           <div className="flex items-center justify-center">
             <div className="text-center">
-              <div className="text-5xl mb-2">🔥</div>
+              <div className="text-5xl mb-2">🎲</div>
               <AnimatedNumber
                 value={stats.longestLifetimeStreak}
                 size="xl"

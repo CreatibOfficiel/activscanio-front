@@ -6,6 +6,8 @@ import {
   MdEmojiEvents,
   MdDirectionsCar,
   MdTrendingUp,
+  MdCalendarMonth,
+  MdStar,
 } from 'react-icons/md';
 import { Competitor, getFullName } from '../../models/Competitor';
 import { CompetitorsRepository } from '../../repositories/CompetitorsRepository';
@@ -126,6 +128,43 @@ const RacesTab: FC<RacesTabProps> = ({
       aria-labelledby="tab-races"
       className={`space-y-6 ${className}`}
     >
+      {/* Play Streaks Section */}
+      {((competitor.playStreak ?? 0) > 0 || (competitor.bestPlayStreak ?? 0) > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <MdCalendarMonth className="text-blue-400" />
+              <span>Streak de jeu</span>
+            </h3>
+            <div className="flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-5xl mb-2">🏎️</div>
+                <div className="text-4xl font-bold text-blue-400">
+                  {competitor.playStreak ?? 0}
+                </div>
+                <p className="text-sm text-neutral-400 mt-1">jours consécutifs</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <MdStar className="text-blue-400" />
+              <span>Record personnel</span>
+            </h3>
+            <div className="flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-5xl mb-2">🏆</div>
+                <div className="text-4xl font-bold text-blue-400">
+                  {competitor.bestPlayStreak ?? 0}
+                </div>
+                <p className="text-sm text-neutral-400 mt-1">jours consécutifs</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Current ELO Stats */}
       <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
