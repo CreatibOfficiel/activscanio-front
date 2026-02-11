@@ -14,7 +14,8 @@ export const competitorScoreSchema = z.object({
     .number()
     .int('Le score doit être un nombre entier')
     .min(0, 'Le score minimum est 0')
-    .max(60, 'Le score maximum est 60'),
+    .max(60, 'Le score maximum est 60')
+    .nullable(),
 });
 
 /**
@@ -28,7 +29,16 @@ export const scoreSetupSchema = z
     scores: z.array(competitorScoreSchema).min(2, 'Au moins 2 compétiteurs requis'),
   })
   .refine(
+    (data) => data.scores.every((s) => s.score !== null),
+    {
+      message: 'Tous les scores doivent être remplis',
+    }
+  )
+  .refine(
     (data) => {
+      // Skip rank/score check if any score is null (caught by previous refine)
+      if (data.scores.some((s) => s.score === null)) return true;
+
       // Sort by rank
       const sorted = [...data.scores].sort((a, b) => a.rank - b.rank);
 
@@ -44,7 +54,7 @@ export const scoreSetupSchema = z
           }
         } else if (current.rank < next.rank) {
           // Better rank (lower number) => score must be higher
-          if (current.score <= next.score) {
+          if ((current.score as number) <= (next.score as number)) {
             return false;
           }
         }

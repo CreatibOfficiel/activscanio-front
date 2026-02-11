@@ -14,10 +14,12 @@ import {
   MdPhotoLibrary,
   MdInfoOutline,
   MdWarning,
+  MdCheck,
 } from "react-icons/md";
 import { Button } from "@/app/components/ui";
 import Spinner from "@/app/components/ui/Spinner";
 import imageCompression from "browser-image-compression";
+import { set as idbSet, del as idbDel } from "idb-keyval";
 import { toast } from "sonner";
 
 const MIN_PLAYERS = 2;
@@ -184,11 +186,7 @@ const AddRaceContent = () => {
       });
       const dataUrl = await dataUrlPromise;
 
-      try {
-        sessionStorage.setItem("raceImage", dataUrl);
-      } catch {
-        // sessionStorage may be full — continue without storing
-      }
+      await idbSet("raceImage", dataUrl);
 
       // Send to API with ALL eligible competitor IDs
       const eligibleIds = eligibleForPhoto.map((c) => c.id);
@@ -253,7 +251,7 @@ const AddRaceContent = () => {
 
   const handleManualEntry = () => {
     // Clear any stored image since we're going manual
-    sessionStorage.removeItem("raceImage");
+    idbDel("raceImage");
     setStep("PLAYER_SELECTION");
   };
 
@@ -455,22 +453,51 @@ const AddRaceContent = () => {
             <p className="text-neutral-300">Chargement…</p>
           ) : (
             <div className="flex flex-col">
-              {/* Players list */}
-              {filteredCompetitors.map((c) => (
-                <CheckableCompetitorItem
-                  key={c.id}
-                  competitor={c}
-                  isSelected={selectedCompetitorIds.includes(c.id)}
-                  toggleSelection={toggleSelection}
-                />
-              ))}
+              {/* Detected players section */}
+              {detectedCompetitorIds.length > 0 && (
+                <>
+                  <p className="text-sm text-primary-400 mb-2 flex items-center gap-1">
+                    <MdCheck className="text-sm" />
+                    Joueurs détectés
+                  </p>
+                  {sortedCompetitors
+                    .filter((c) => detectedCompetitorIds.includes(c.id))
+                    .map((c) => (
+                      <CheckableCompetitorItem
+                        key={c.id}
+                        competitor={c}
+                        isSelected={selectedCompetitorIds.includes(c.id)}
+                        toggleSelection={toggleSelection}
+                      />
+                    ))}
+
+                  <div className="border-t border-neutral-700 my-3 pt-2">
+                    <p className="text-sm text-neutral-500">Autres joueurs</p>
+                  </div>
+                </>
+              )}
+
+              {/* Other players (filtered by search) */}
+              {filteredCompetitors
+                .filter((c) => !detectedCompetitorIds.includes(c.id))
+                .map((c) => (
+                  <CheckableCompetitorItem
+                    key={c.id}
+                    competitor={c}
+                    isSelected={selectedCompetitorIds.includes(c.id)}
+                    toggleSelection={toggleSelection}
+                  />
+                ))}
 
               {/* Empty state message */}
-              {filteredCompetitors.length === 0 && searchTerm && (
-                <p className="text-neutral-400 text-sm py-4 text-center">
-                  Aucun joueur trouvé pour &quot;{searchTerm}&quot;
-                </p>
-              )}
+              {filteredCompetitors.filter(
+                (c) => !detectedCompetitorIds.includes(c.id)
+              ).length === 0 &&
+                searchTerm && (
+                  <p className="text-neutral-400 text-sm py-4 text-center">
+                    Aucun joueur trouvé pour &quot;{searchTerm}&quot;
+                  </p>
+                )}
 
               {/* Add player button */}
               <button

@@ -14,6 +14,7 @@ import {
   RaceAnalysisResult,
 } from "../repositories/RaceAnalysisRepository";
 import { CharactersRepository } from "../repositories/CharactersRepository";
+import { del as idbDel } from "idb-keyval";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -149,6 +150,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       results,
     };
     const created = await racesRepo.createRace(newEvent, token!);
+    await idbDel("raceImage");
     setRaceEvents((prev) => [created, ...prev]);
     await loadInitialData();
     return created;

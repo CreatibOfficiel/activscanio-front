@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AppContext } from "@/app/context/AppContext";
 import Image from "next/image";
 import { MdArrowBack, MdOutlineCheckCircle, MdImage, MdExpandMore } from "react-icons/md";
+import { get as idbGet } from "idb-keyval";
 import { toast } from "sonner";
 import { scoreSetupSchema, ScoreSetupFormData } from "@/app/schemas";
 import { Button } from "@/app/components/ui";
@@ -51,7 +52,7 @@ const ScoreSetupPage: NextPage = () => {
       return {
         competitorId: competitor.id,
         rank: rank ? parseInt(rank, 10) : 1,
-        score: score ? parseInt(score, 10) : 0,
+        score: score ? parseInt(score, 10) : null,
       };
     });
 
@@ -68,7 +69,7 @@ const ScoreSetupPage: NextPage = () => {
       // Ajouter les scores et rangs
       data.scores.forEach(s => {
         params.set(`rank_${s.competitorId}`, s.rank.toString());
-        params.set(`score_${s.competitorId}`, s.score.toString());
+        params.set(`score_${s.competitorId}`, (s.score as number).toString());
       });
 
       router.push(`/races/summary?${params.toString()}`);
@@ -88,12 +89,9 @@ const ScoreSetupPage: NextPage = () => {
   const [imageExpanded, setImageExpanded] = useState(isFromAnalysis);
 
   useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem("raceImage");
+    idbGet<string>("raceImage").then((stored) => {
       if (stored) setRaceImageUrl(stored);
-    } catch {
-      // sessionStorage unavailable
-    }
+    });
   }, []);
 
   return (
@@ -214,6 +212,7 @@ const ScoreSetupPage: NextPage = () => {
                                    ? 'border-error-500 focus:border-error-500'
                                    : 'border-neutral-700 focus:border-primary-500'}`}
                       defaultValue={field.rank}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => {
                         const value = e.target.value ? parseInt(e.target.value, 10) : 1;
                         setValue(`scores.${index}.rank`, value);
@@ -237,9 +236,10 @@ const ScoreSetupPage: NextPage = () => {
                                  ${errors.scores?.[index]?.score
                                    ? 'border-error-500 focus:border-error-500'
                                    : 'border-neutral-700 focus:border-primary-500'}`}
-                      defaultValue={field.score}
+                      defaultValue={field.score ?? ""}
+                      onFocus={(e) => e.target.select()}
                       onChange={(e) => {
-                        const value = e.target.value ? parseInt(e.target.value, 10) : 0;
+                        const value = e.target.value === "" ? null : parseInt(e.target.value, 10);
                         setValue(`scores.${index}.score`, value);
                       }}
                     />
