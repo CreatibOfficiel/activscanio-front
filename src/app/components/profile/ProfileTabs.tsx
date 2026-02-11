@@ -12,7 +12,7 @@ interface Tab {
 
 const ALL_TABS: Tab[] = [
   { id: 'overview', label: 'Aperçu', icon: '📋' },
-  { id: 'stats', label: 'Paris', icon: '🎰' },
+  { id: 'stats', label: 'Paris', icon: '🎲' },
   { id: 'races', label: 'Courses', icon: '🏎️' },
   { id: 'achievements', label: 'Succès', icon: '🏆' },
 ];
