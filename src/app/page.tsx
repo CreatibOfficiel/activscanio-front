@@ -3,10 +3,14 @@
 import { useContext, useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
 import { AppContext } from "./context/AppContext";
 import { Competitor } from "./models/Competitor";
+import { StreakWarningStatus } from "./models/Achievement";
+import { AchievementsRepository } from "./repositories/AchievementsRepository";
 import { Button } from "./components/ui";
 import { MdFlag } from "react-icons/md";
+import { StreakWarningBanner } from "./components/achievements";
 import {
   ElevatedPodium,
   LeaderboardRow,
@@ -90,12 +94,30 @@ const calculateCompetitorTrends = (
 
 export default function Home() {
   const { isLoading, allCompetitors } = useContext(AppContext);
+  const { isSignedIn, getToken } = useAuth();
   const [now, setNow] = useState<Date | null>(null);
   const [activePeriod, setActivePeriod] = useState<Period>("week");
+  const [streakWarnings, setStreakWarnings] = useState<StreakWarningStatus | null>(null);
 
   useEffect(() => {
     setNow(new Date());
   }, []);
+
+  // Fetch streak warnings for signed-in users (non-blocking)
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const fetchWarnings = async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const warnings = await AchievementsRepository.getStreakWarnings(token);
+        setStreakWarnings(warnings);
+      } catch {
+        // Non-blocking — silently ignore
+      }
+    };
+    fetchWarnings();
+  }, [isSignedIn, getToken]);
 
   const daysThreshold = useMemo(() => {
     switch (activePeriod) {
@@ -169,6 +191,9 @@ export default function Home() {
           {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
         </p>
       </div>
+
+      {/* Streak Warning Banners */}
+      {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mb-4" />}
 
       {/* Podium or empty state */}
       {topThree.length > 0 ? (

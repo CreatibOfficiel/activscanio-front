@@ -2,6 +2,7 @@ import {
   Achievement,
   UserAchievement,
   UserStats,
+  StreakWarningStatus,
   AchievementQueryParams,
   EquipTitleDto,
   EquipTitleResponse,
@@ -150,6 +151,32 @@ export class AchievementsRepository {
       return await response.json();
     } catch (error) {
       console.error('Error equipping title:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get streak warning status for current user
+   */
+  static async getStreakWarnings(authToken: string): Promise<StreakWarningStatus> {
+    try {
+      const response = await apiFetch(
+        `${API_BASE_URL}/achievements/streak-warnings/me`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch streak warnings: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching streak warnings:', error);
       throw error;
     }
   }

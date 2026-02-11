@@ -128,6 +128,22 @@ export interface UserStats {
 }
 
 /**
+ * Streak warning status from the API
+ */
+export interface StreakWarningStatus {
+  bettingStreak: {
+    atRisk: boolean;
+    currentStreak: number;
+    weekClosesAt: string | null;
+  };
+  playStreak: {
+    atRisk: boolean;
+    currentStreak: number;
+    missedBusinessDays: number;
+  };
+}
+
+/**
  * Achievement query parameters
  */
 export interface AchievementQueryParams {

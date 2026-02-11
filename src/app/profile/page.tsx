@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth, useUser, useClerk } from '@clerk/nextjs';
 import { toast } from 'sonner';
-import { UserStats, UserAchievement } from '../models/Achievement';
+import { UserStats, UserAchievement, StreakWarningStatus } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
 import { UsersRepository, UserData } from '../repositories/UsersRepository';
 import { CompetitorsRepository } from '../repositories/CompetitorsRepository';
@@ -19,6 +19,7 @@ import {
   RacesTab,
   CharacterSelectModal,
 } from '../components/profile';
+import { StreakWarningBanner } from '../components/achievements';
 import { formatCompetitorName } from '../utils/formatters';
 
 // Type for competitor stats used in profile
@@ -53,6 +54,7 @@ const ProfilePage: FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [competitorStats, setCompetitorStats] = useState<CompetitorStats | null>(null);
   const [recentAchievements, setRecentAchievements] = useState<UserAchievement[]>([]);
+  const [streakWarnings, setStreakWarnings] = useState<StreakWarningStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
@@ -83,6 +85,11 @@ const ProfilePage: FC = () => {
         setStats(statsData);
         setRecentAchievements(achievementsData.slice(0, 6));
         setUserData(userDataResult);
+
+        // Fetch streak warnings (non-blocking)
+        AchievementsRepository.getStreakWarnings(token)
+          .then(setStreakWarnings)
+          .catch((err) => console.warn('Could not fetch streak warnings:', err));
 
         // If user is a player with a linked competitor, fetch competitor stats
         if (userDataResult.competitorId && userDataResult.role === 'player') {
@@ -228,6 +235,7 @@ const ProfilePage: FC = () => {
           userImageUrl={clerkUser?.imageUrl}
           character={getCharacterInfo()}
           competitorStats={competitorStats}
+          streakWarnings={streakWarnings ?? undefined}
           onEditCharacter={userData?.role === 'player' ? () => setIsCharacterModalOpen(true) : undefined}
           onEditName={
             userData?.role === 'player' && userData.competitorId
@@ -235,6 +243,9 @@ const ProfilePage: FC = () => {
               : () => openUserProfile()
           }
         />
+
+        {/* Streak Warning Banners */}
+        {streakWarnings && <StreakWarningBanner warnings={streakWarnings} />}
 
         {/* Character Selection Modal */}
         {authToken && (

@@ -3,7 +3,7 @@
 import { FC } from 'react';
 import Image from 'next/image';
 import { MdEdit } from 'react-icons/md';
-import { UserStats } from '../../models/Achievement';
+import { UserStats, StreakWarningStatus } from '../../models/Achievement';
 import { CompetitorStats } from '../../profile/page';
 
 // Character color mappings for gradient backgrounds
@@ -61,6 +61,7 @@ interface ProfileHeaderProps {
   userImageUrl?: string;
   character?: CharacterInfo | null;
   competitorStats?: CompetitorStats | null;
+  streakWarnings?: StreakWarningStatus;
   className?: string;
   onEditCharacter?: () => void;
   onEditName?: () => void;
@@ -82,6 +83,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
   userImageUrl,
   character,
   competitorStats,
+  streakWarnings,
   className = '',
   onEditCharacter,
   onEditName,
@@ -219,8 +221,16 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
 
             {/* Current Bet Streak */}
             {stats.currentMonthlyStreak > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
-                <span className="text-sm">🎲</span>
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm ${
+                  streakWarnings?.bettingStreak.atRisk
+                    ? 'ring-2 ring-amber-400 animate-pulse'
+                    : ''
+                }`}
+              >
+                <span className="text-sm">
+                  {streakWarnings?.bettingStreak.atRisk ? '⏳' : '🎲'}
+                </span>
                 <span className="text-sm font-semibold text-white">
                   {stats.currentMonthlyStreak}
                 </span>
@@ -230,8 +240,16 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
 
             {/* Current Play Streak (players only) */}
             {isPlayer && (competitorStats?.playStreak ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-sm">
-                <span className="text-sm">🏎️</span>
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-sm ${
+                  streakWarnings?.playStreak.atRisk
+                    ? 'ring-2 ring-amber-400 animate-pulse'
+                    : ''
+                }`}
+              >
+                <span className="text-sm">
+                  {streakWarnings?.playStreak.atRisk ? '⏳' : '🏎️'}
+                </span>
                 <span className="text-sm font-semibold text-white">
                   {competitorStats!.playStreak}j
                 </span>
