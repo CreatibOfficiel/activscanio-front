@@ -37,7 +37,13 @@ export class BettingRepository {
         throw new Error(`Failed to fetch current week: ${response.statusText}`);
       }
 
-      return await response.json();
+      // Handle empty response (no active week)
+      const text = await response.text();
+      if (!text || text === 'null') {
+        return null;
+      }
+
+      return JSON.parse(text) as BettingWeek;
     } catch (error) {
       console.error('Error fetching current week:', error);
       throw error;
