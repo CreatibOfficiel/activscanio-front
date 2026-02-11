@@ -116,8 +116,14 @@ export default function Home() {
     const conf = sorted.filter((c) => !c.provisional);
     const cal = sorted.filter((c) => c.provisional);
 
-    // Trends computed on confirmed only (real rank)
-    const trendData = calculateCompetitorTrends(conf);
+    // Trends must be computed on the FULL confirmed list (all periods)
+    // because previousDayRank is a global snapshot, not period-specific
+    const allWithRaces = allCompetitors.filter(
+      (c) => c.raceCount && c.raceCount > 0
+    );
+    const allSorted = sortByConservativeScore(allWithRaces);
+    const allConfirmed = allSorted.filter((c) => !c.provisional);
+    const trendData = calculateCompetitorTrends(allConfirmed);
 
     return {
       confirmed: conf,
