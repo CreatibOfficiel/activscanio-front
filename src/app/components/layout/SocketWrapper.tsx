@@ -20,7 +20,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
         `🎉 ${achievement.icon} ${achievement.name} (+${achievement.xpReward} XP)`,
         {
           duration: 5000,
-          description: 'Achievement Unlocked!',
+          description: 'Succès débloqué !',
         }
       );
     });
@@ -28,13 +28,13 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
     // Level up
     const unsubscribeLevelUp = subscribeToLevelUp((data) => {
       const rewardsText = data.rewards && data.rewards.length > 0
-        ? ` - ${data.rewards.length} new rewards!`
+        ? ` - ${data.rewards.length} nouvelles récompenses !`
         : '';
       toast.success(
-        `📈 Level ${data.newLevel} Reached!${rewardsText}`,
+        `📈 Niveau ${data.newLevel} atteint !${rewardsText}`,
         {
           duration: 6000,
-          description: 'Level Up!',
+          description: 'Niveau supérieur !',
         }
       );
     });
@@ -45,7 +45,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
         `😔 ${achievement.icon} ${achievement.name}`,
         {
           duration: 5000,
-          description: 'Achievement Lost - Keep playing to earn it back!',
+          description: 'Succès perdu - Continuez à jouer pour le récupérer !',
         }
       );
     });
@@ -56,18 +56,18 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
 
       if (pointsEarned > 0) {
         toast.success(
-          `🎯 Earned ${pointsEarned} points!`,
+          `🎯 ${pointsEarned} points gagnés !`,
           {
             duration: 4000,
-            description: 'Bet Finalized',
+            description: 'Pari finalisé',
           }
         );
       } else {
         toast.info(
-          '📊 Better luck next time!',
+          '📊 Plus de chance la prochaine fois !',
           {
             duration: 3000,
-            description: 'Bet Finalized',
+            description: 'Pari finalisé',
           }
         );
       }
@@ -76,14 +76,14 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
     // Perfect score celebration
     const unsubscribePerfectScore = subscribeToPerfectScore((data) => {
       toast.success(
-        '🏆 PERFECT SCORE! 60 POINTS! 🎉',
+        '🏆 SCORE PARFAIT ! 60 POINTS ! 🎉',
         {
           duration: 10000,
           description: data.imageUrl
-            ? 'Click to view your celebration image!'
-            : 'Congratulations on your perfect score!',
+            ? 'Cliquez pour voir votre image !'
+            : 'Félicitations pour votre score parfait !',
           action: data.imageUrl ? {
-            label: 'View Image',
+            label: 'Voir l\'image',
             onClick: () => window.open(data.imageUrl, '_blank'),
           } : undefined,
         }
@@ -93,10 +93,10 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
     // Race announcement (broadcast)
     const unsubscribeRace = subscribeToRaceAnnouncements((race) => {
       toast.info(
-        `🏁 ${race.title || 'New race available'}`,
+        `🏁 ${race.title || 'Nouvelle course disponible'}`,
         {
           duration: 5000,
-          description: 'Place your bets now!',
+          description: 'Placez vos paris maintenant !',
         }
       );
     });
@@ -104,10 +104,10 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
     // Race results (broadcast)
     const unsubscribeResults = subscribeToRaceResults(() => {
       toast.info(
-        '🏆 Race Results Available',
+        '🏆 Résultats de course disponibles',
         {
           duration: 4000,
-          description: 'Check out the latest results!',
+          description: 'Découvrez les derniers résultats !',
         }
       );
     });
