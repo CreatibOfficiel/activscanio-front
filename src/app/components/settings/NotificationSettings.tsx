@@ -23,7 +23,6 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
     subscribeToPush,
     unsubscribeFromPush,
     updatePreferences,
-    sendTestNotification,
   } = useNotifications();
 
   const [isSaving, setIsSaving] = useState(false);
@@ -97,15 +96,6 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
     }
   };
 
-  const handleTestNotification = async () => {
-    try {
-      await sendTestNotification();
-      toast.success('Notification de test envoyée !');
-    } catch {
-      toast.error('Erreur lors de l\'envoi du test');
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="animate-pulse text-neutral-400 p-4">
@@ -168,14 +158,6 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
           </p>
         )}
 
-        {preferences?.enablePush && (
-          <button
-            onClick={handleTestNotification}
-            className="text-sub text-primary-500 hover:text-primary-400 underline mt-3 min-h-[44px]"
-          >
-            Envoyer une notification de test
-          </button>
-        )}
       </div>
 
       {/* Notifications In-App */}

@@ -28,7 +28,7 @@ interface UseNotificationsReturn {
   subscribeToPush: () => Promise<boolean>;
   unsubscribeFromPush: () => Promise<boolean>;
   updatePreferences: (prefs: Partial<NotificationPreferences>) => Promise<void>;
-  sendTestNotification: () => Promise<void>;
+
 }
 
 export function useNotifications(): UseNotificationsReturn {
@@ -194,22 +194,6 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [getToken]);
 
-  const sendTestNotification = useCallback(async (): Promise<void> => {
-    try {
-      const token = await getToken();
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/notifications/test`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-    } catch (error) {
-      console.error('Failed to send test notification:', error);
-      throw error;
-    }
-  }, [getToken]);
-
   return {
     permission,
     preferences,
@@ -221,7 +205,6 @@ export function useNotifications(): UseNotificationsReturn {
     subscribeToPush,
     unsubscribeFromPush,
     updatePreferences,
-    sendTestNotification,
   };
 }
 
