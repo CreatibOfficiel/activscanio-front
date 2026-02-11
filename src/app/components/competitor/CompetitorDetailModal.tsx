@@ -37,20 +37,6 @@ const rankBadgeVariant = (rank: number) => {
   return "default" as const;
 };
 
-const formEmoji = (formFactor?: number) => {
-  if (!formFactor) return { emoji: "➡️", label: "Stable" };
-  if (formFactor > 1.15) return { emoji: "🔥", label: "En feu" };
-  if (formFactor < 0.85) return { emoji: "❄️", label: "En froid" };
-  return { emoji: "➡️", label: "Stable" };
-};
-
-const heroGradient = (formFactor?: number) => {
-  if (!formFactor) return "from-neutral-800 to-neutral-900";
-  if (formFactor > 1.15) return "from-orange-900/40 to-neutral-900";
-  if (formFactor < 0.85) return "from-blue-900/40 to-neutral-900";
-  return "from-neutral-800 to-neutral-900";
-};
-
 const consistencyLabel = (positions?: number[]) => {
   if (!positions || positions.length < 3) return "Pas assez de données";
   const mean = positions.reduce((a, b) => a + b, 0) / positions.length;
@@ -137,7 +123,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
   const variantLabel =
     variant && variant.label !== "Default" ? variant.label : null;
 
-  const form = formEmoji(competitor.formFactor);
   const positions = competitor.recentPositions ?? [];
   const totalRaces = competitor.totalLifetimeRaces ?? competitor.raceCount ?? 0;
   const wins = positions.filter((p) => p === 1).length;
@@ -235,7 +220,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
         <div className="space-y-5">
           {/* ---- HERO ---- */}
           <div
-            className={`bg-gradient-to-b ${heroGradient(competitor.formFactor)} -m-4 sm:-m-6 mb-0 p-6 pb-5 rounded-t-2xl`}
+            className="bg-gradient-to-b from-neutral-800 to-neutral-900 -m-4 sm:-m-6 mb-0 p-6 pb-5 rounded-t-2xl"
           >
             {/* Close / Edit buttons */}
             <div className="flex justify-end gap-2 mb-3">
@@ -289,18 +274,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
                     {variantLabel && ` – ${variantLabel}`}
                   </Badge>
                 )}
-
-                {/* Form badge */}
-                <Badge
-                  variant={
-                    competitor.formFactor && competitor.formFactor > 1.15
-                      ? "warning"
-                      : "default"
-                  }
-                  size="sm"
-                >
-                  {form.emoji} {form.label}
-                </Badge>
 
                 {/* Trend badge */}
                 {trend && trend.direction !== "stable" && (
@@ -377,16 +350,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
               <p className="text-xs text-neutral-500 mt-1">
                 récente → ancienne
               </p>
-              {competitor.formFactor && competitor.formFactor > 1.15 && (
-                <p className="text-xs text-neutral-500 mt-2">
-                  🔥 <span className="text-orange-400/80">En feu</span> — performances récentes nettement au-dessus de la moyenne
-                </p>
-              )}
-              {competitor.formFactor && competitor.formFactor < 0.85 && (
-                <p className="text-xs text-neutral-500 mt-2">
-                  ❄️ <span className="text-blue-400/80">En froid</span> — performances récentes en dessous de la moyenne
-                </p>
-              )}
             </div>
           )}
 
@@ -404,6 +367,15 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
                   value={`${competitor.winStreak} victoire${
                     (competitor.winStreak ?? 0) > 1 ? "s" : ""
                   } d'affilée`}
+                />
+              )}
+
+              {/* Play streak */}
+              {(competitor.playStreak ?? 0) > 0 && (
+                <StatCard
+                  icon="📆"
+                  title="Streak de jeu"
+                  value={`${competitor.playStreak}j consécutifs (record : ${competitor.bestPlayStreak}j)`}
                 />
               )}
 

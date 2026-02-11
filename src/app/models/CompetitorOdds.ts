@@ -17,7 +17,6 @@ export interface CompetitorOdds {
   oddSecond?: number;
   oddThird?: number;
   probability?: number;
-  formFactor?: number;
   isEligible?: boolean;
   ineligibilityReason?: IneligibilityReason;
   calibrationProgress?: number; // X out of 5

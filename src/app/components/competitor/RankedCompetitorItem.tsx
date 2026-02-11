@@ -52,6 +52,11 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
                     ` (${variantLabel})`}
                 </span>
               )}
+              {(competitor.playStreak ?? 0) >= 3 && (
+                <span className="text-xs text-orange-400">
+                  🔥 {competitor.playStreak}j
+                </span>
+              )}
               {competitor.provisional && competitor.raceCount && (
                 <span className="text-xs text-primary-400">
                   • En placement ({competitor.raceCount}/5)

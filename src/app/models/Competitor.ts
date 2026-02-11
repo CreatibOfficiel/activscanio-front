@@ -23,17 +23,18 @@ export interface Competitor {
    */
   recentPositions?: number[];
   /**
-   * Form factor based on recent performance.
-   * Range: 0.7 (poor form) to 1.3 (excellent form)
-   * Default: 1.0 (neutral)
+   * Lifetime average rank across all races (never resets).
+   * Used as baseline for relative form calculation.
    */
-  formFactor?: number;
+  lifetimeAvgRank?: number;
   /**
    * Previous day rank for trend calculation.
    * Used to show if competitor is rising/falling in rankings.
    */
   previousDayRank?: number | null;
   winStreak?: number;
+  playStreak?: number;
+  bestPlayStreak?: number;
   totalLifetimeRaces?: number;
   currentMonthRaceCount?: number;
 }
