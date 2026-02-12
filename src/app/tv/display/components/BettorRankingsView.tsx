@@ -57,14 +57,15 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
     rank: bettor.rank,
   }));
 
-  // Convert to row format with trend simulation
+  // Real trend based on previousWeekRank snapshot
   const getTrend = (
     bettor: BettorRanking
-  ): "up" | "down" | "stable" | undefined => {
-    // Simulate trends based on win rate
-    if (bettor.winRate > 0.5) return "up";
-    if (bettor.winRate < 0.3) return "down";
-    return "stable";
+  ): { direction: "up" | "down" | "stable" | undefined; value?: number } => {
+    if (bettor.previousWeekRank == null) return { direction: undefined };
+    const change = bettor.previousWeekRank - bettor.rank;
+    if (change > 0) return { direction: "up", value: change };
+    if (change < 0) return { direction: "down", value: Math.abs(change) };
+    return { direction: "stable" };
   };
 
   return (
@@ -109,22 +110,26 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
       {/* Other ranked bettors */}
       {others.length > 0 && (
         <div className="space-y-3 max-w-5xl mx-auto">
-          {others.map((bettor, index) => (
-            <TVLeaderboardRow
-              key={bettor.userId}
-              item={{
-                id: bettor.userId,
-                rank: bettor.rank,
-                name: bettor.userName,
-                score: bettor.totalPoints,
-                scoreLabel: "pts",
-                subtitle: `${bettor.betsWon}/${bettor.betsPlaced} gagnés • ${(bettor.winRate * 100).toFixed(0)}%`,
-                trend: getTrend(bettor),
-                maxScore: maxScore,
-              }}
-              animationDelay={index * 80}
-            />
-          ))}
+          {others.map((bettor, index) => {
+            const trend = getTrend(bettor);
+            return (
+              <TVLeaderboardRow
+                key={bettor.userId}
+                item={{
+                  id: bettor.userId,
+                  rank: bettor.rank,
+                  name: bettor.userName,
+                  score: bettor.totalPoints,
+                  scoreLabel: "pts",
+                  subtitle: `${bettor.betsWon}/${bettor.betsPlaced} gagnés • ${(bettor.winRate * 100).toFixed(0)}%`,
+                  trend: trend.direction,
+                  trendValue: trend.value,
+                  maxScore: maxScore,
+                }}
+                animationDelay={index * 80}
+              />
+            );
+          })}
         </div>
       )}
     </div>

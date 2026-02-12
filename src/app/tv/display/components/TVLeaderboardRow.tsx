@@ -128,7 +128,7 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0 }) => {
       </div>
 
       {/* Trend */}
-      <div className="w-20 flex justify-center">{getTrendIcon()}</div>
+      <div className="w-20 flex justify-center" title={item.trend ? `Tendance (vs précédent)` : undefined}>{getTrendIcon()}</div>
     </div>
   );
 };

@@ -24,7 +24,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   // Only competitors with at least one race
   const withRaces = [...rankings]
     .filter((c) => c.raceCount && c.raceCount > 0)
-    .sort((a, b) => b.rating - a.rating);
+    .sort((a, b) => (b.conservativeScore ?? 0) - (a.conservativeScore ?? 0));
 
   // Split confirmed (5+ races) vs calibrating
   const confirmed = withRaces.filter((c) => !c.provisional);
@@ -32,17 +32,19 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
 
   // Calculate max score for progress bars
   const maxScore = withRaces.length > 0
-    ? Math.max(...withRaces.map((c) => c.rating))
+    ? Math.max(...withRaces.map((c) => c.conservativeScore ?? 0))
     : 0;
 
-  // Simulate trend based on avgRank
+  // Real trend based on previousDayRank snapshot
   const getTrend = (
-    competitor: Competitor
-  ): "up" | "down" | "stable" | undefined => {
-    if (!competitor.avgRank12) return undefined;
-    if (competitor.avgRank12 <= 3) return "up";
-    if (competitor.avgRank12 >= 6) return "down";
-    return "stable";
+    competitor: Competitor,
+    currentRank: number
+  ): { direction: "up" | "down" | "stable" | undefined; value?: number } => {
+    if (competitor.previousDayRank == null) return { direction: undefined };
+    const change = competitor.previousDayRank - currentRank;
+    if (change > 0) return { direction: "up", value: change };
+    if (change < 0) return { direction: "down", value: Math.abs(change) };
+    return { direction: "stable" };
   };
 
   // Podium from confirmed players
@@ -59,7 +61,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
       id: competitor.id,
       name: formatCompetitorName(competitor.firstName, competitor.lastName),
       imageUrl: competitor.profilePictureUrl,
-      score: Math.round(competitor.rating),
+      score: Math.round(competitor.conservativeScore ?? 0),
       scoreLabel: "ELO",
       subtitle: avgRank ? `${avgRank} · ${races}` : races,
       rank: index + 1,
@@ -74,56 +76,66 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
       {/* Confirmed: list (if not enough for podium, show as rows) */}
       {top3.length > 0 && top3.length < 3 && (
         <div className="space-y-3 max-w-5xl mx-auto">
-          {confirmed.map((competitor, index) => (
-            <TVLeaderboardRow
-              key={competitor.id}
-              item={{
-                id: competitor.id,
-                rank: index + 1,
-                name: formatCompetitorName(
-                  competitor.firstName,
-                  competitor.lastName
-                ),
-                imageUrl: competitor.profilePictureUrl,
-                score: Math.round(competitor.rating),
-                scoreLabel: "ELO",
-                subtitle: competitor.characterVariant
-                  ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
-                  : `${competitor.raceCount || 0} courses`,
-                trend: getTrend(competitor),
-                maxScore,
-              }}
-              animationDelay={index * 80}
-            />
-          ))}
+          {confirmed.map((competitor, index) => {
+            const rank = index + 1;
+            const trend = getTrend(competitor, rank);
+            return (
+              <TVLeaderboardRow
+                key={competitor.id}
+                item={{
+                  id: competitor.id,
+                  rank,
+                  name: formatCompetitorName(
+                    competitor.firstName,
+                    competitor.lastName
+                  ),
+                  imageUrl: competitor.profilePictureUrl,
+                  score: Math.round(competitor.conservativeScore ?? 0),
+                  scoreLabel: "ELO",
+                  subtitle: competitor.characterVariant
+                    ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
+                    : `${competitor.raceCount || 0} courses`,
+                  trend: trend.direction,
+                  trendValue: trend.value,
+                  maxScore,
+                }}
+                animationDelay={index * 80}
+              />
+            );
+          })}
         </div>
       )}
 
       {/* Confirmed: others after podium */}
       {othersConfirmed.length > 0 && (
         <div className="space-y-3 max-w-5xl mx-auto">
-          {othersConfirmed.map((competitor, index) => (
-            <TVLeaderboardRow
-              key={competitor.id}
-              item={{
-                id: competitor.id,
-                rank: index + 4,
-                name: formatCompetitorName(
-                  competitor.firstName,
-                  competitor.lastName
-                ),
-                imageUrl: competitor.profilePictureUrl,
-                score: Math.round(competitor.rating),
-                scoreLabel: "ELO",
-                subtitle: competitor.characterVariant
-                  ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
-                  : `${competitor.raceCount || 0} courses`,
-                trend: getTrend(competitor),
-                maxScore,
-              }}
-              animationDelay={index * 80}
-            />
-          ))}
+          {othersConfirmed.map((competitor, index) => {
+            const rank = index + 4;
+            const trend = getTrend(competitor, rank);
+            return (
+              <TVLeaderboardRow
+                key={competitor.id}
+                item={{
+                  id: competitor.id,
+                  rank,
+                  name: formatCompetitorName(
+                    competitor.firstName,
+                    competitor.lastName
+                  ),
+                  imageUrl: competitor.profilePictureUrl,
+                  score: Math.round(competitor.conservativeScore ?? 0),
+                  scoreLabel: "ELO",
+                  subtitle: competitor.characterVariant
+                    ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
+                    : `${competitor.raceCount || 0} courses`,
+                  trend: trend.direction,
+                  trendValue: trend.value,
+                  maxScore,
+                }}
+                animationDelay={index * 80}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -147,26 +159,31 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
             <div className="h-px flex-1 bg-neutral-700" />
           </div>
           <div className="space-y-3">
-            {calibrating.map((competitor, index) => (
-              <TVLeaderboardRow
-                key={competitor.id}
-                item={{
-                  id: competitor.id,
-                  rank: confirmed.length + index + 1,
-                  name: formatCompetitorName(
-                    competitor.firstName,
-                    competitor.lastName
-                  ),
-                  imageUrl: competitor.profilePictureUrl,
-                  score: Math.round(competitor.rating),
-                  scoreLabel: "ELO",
-                  subtitle: `${competitor.raceCount || 0}/5 courses`,
-                  trend: getTrend(competitor),
-                  maxScore,
-                }}
-                animationDelay={index * 80}
-              />
-            ))}
+            {calibrating.map((competitor, index) => {
+              const rank = confirmed.length + index + 1;
+              const trend = getTrend(competitor, rank);
+              return (
+                <TVLeaderboardRow
+                  key={competitor.id}
+                  item={{
+                    id: competitor.id,
+                    rank,
+                    name: formatCompetitorName(
+                      competitor.firstName,
+                      competitor.lastName
+                    ),
+                    imageUrl: competitor.profilePictureUrl,
+                    score: Math.round(competitor.conservativeScore ?? 0),
+                    scoreLabel: "ELO",
+                    subtitle: `${competitor.raceCount || 0}/5 courses`,
+                    trend: trend.direction,
+                    trendValue: trend.value,
+                    maxScore,
+                  }}
+                  animationDelay={index * 80}
+                />
+              );
+            })}
           </div>
         </div>
       )}

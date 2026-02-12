@@ -62,7 +62,7 @@ const TrendIndicator: FC<Props> = ({
   return (
     <div
       className={`inline-flex items-center ${sizeClasses[size]} ${config.color} ${config.bgColor} px-1.5 py-0.5 rounded-full`}
-      title={config.label}
+      title={`${config.label} (vs hier)`}
     >
       <Icon className={iconSize[size]} />
       {showValue && value !== undefined && value !== 0 && (
