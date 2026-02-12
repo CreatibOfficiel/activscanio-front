@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState, useCallback, useMemo, Suspense } from "react";
+import { FC, useEffect, useState, useCallback, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { BettingRepository } from "@/app/repositories/BettingRepository";
 import {
@@ -13,6 +13,7 @@ import { CompetitorRankingsView } from "./components/CompetitorRankingsView";
 import { WeeklyOddsView } from "./components/WeeklyOddsView";
 import { ArchivedSeasonsView } from "./components/ArchivedSeasonsView";
 import TVProgressBar from "./components/TVProgressBar";
+import { useAutoScroll } from "@/app/hooks/useAutoScroll";
 import { BettorRanking, CompetitorOdds } from "@/app/models/CompetitorOdds";
 import { Competitor } from "@/app/models/Competitor";
 
@@ -86,6 +87,13 @@ const TVDisplayContent: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [rotationKey, setRotationKey] = useState(0);
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  useAutoScroll(mainRef, rotationKey, {
+    delay: 5000,
+    speed: 150,
+    enabled: !isTransitioning,
+  });
 
   // Compute active views (skip views with no data)
   const activeViews = useMemo(() => {
@@ -305,7 +313,7 @@ const TVDisplayContent: FC = () => {
       </header>
 
       {/* Main content */}
-      <main className="flex-grow">
+      <main ref={mainRef} className="flex-grow overflow-y-auto scrollbar-hide">
         <div
           className={`transition-all duration-300 ${
             isTransitioning
