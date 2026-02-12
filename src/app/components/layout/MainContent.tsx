@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 
-const fullScreenPaths = ['/onboarding', '/races/add', '/races/score-setup', '/races/summary'];
+const fullScreenPaths = ['/onboarding', '/races/add', '/races/score-setup', '/races/summary', '/tv'];
 
 export default function MainContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
