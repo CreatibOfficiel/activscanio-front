@@ -262,7 +262,7 @@ const TVDisplayContent: FC = () => {
   const currentIndex = activeViews.indexOf(currentView);
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100 p-8 lg:p-12 flex flex-col">
+    <div className="h-screen overflow-hidden bg-neutral-900 text-neutral-100 p-8 lg:p-12 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between mb-8">
         <div>

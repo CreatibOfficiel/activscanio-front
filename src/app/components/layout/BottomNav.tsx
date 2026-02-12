@@ -33,6 +33,7 @@ export default function BottomNav() {
     '/betting/place-bet',
     '/competitors/add',
     '/competitors/edit',
+    '/tv',
   ];
   if (hiddenPaths.some(path => pathname.startsWith(path))) {
     return null;

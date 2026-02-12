@@ -46,7 +46,7 @@ const Sidebar: FC = () => {
   }, [state.isUnlocked, open, handleTap]);
 
   // Hide navigation during onboarding and task flows (race creation)
-  const hiddenPaths = ['/onboarding', '/races/add', '/races/score-setup', '/races/summary'];
+  const hiddenPaths = ['/onboarding', '/races/add', '/races/score-setup', '/races/summary', '/tv'];
   if (hiddenPaths.some(path => pathname.startsWith(path))) {
     return null;
   }
