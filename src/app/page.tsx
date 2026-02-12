@@ -18,6 +18,7 @@ import {
   Period,
 } from "./components/leaderboard";
 import { TrendDirection } from "./components/leaderboard/TrendIndicator";
+import { computeRanksWithTies } from "./utils/rankings";
 
 const DAYS_THRESHOLD_WEEK = 7;
 const DAYS_THRESHOLD_MONTH = 30;
@@ -68,12 +69,17 @@ const calculateCompetitorTrends = (
     { direction: TrendDirection; value?: number }
   >();
 
-  competitors.forEach((competitor, index) => {
-    const currentRank = index + 1; // 1-indexed
+  const ranksMap = computeRanksWithTies(
+    competitors,
+    (c) => c.conservativeScore ?? 0,
+    (c) => c.id,
+  );
+
+  competitors.forEach((competitor) => {
+    const currentRank = ranksMap.get(competitor.id) ?? 0;
     const previousRank = competitor.previousDayRank;
 
     if (previousRank != null) {
-      // Calculate rank change (positive = moved up, negative = moved down)
       const change = previousRank - currentRank;
 
       if (change > 0) {
@@ -84,7 +90,6 @@ const calculateCompetitorTrends = (
         trends.set(competitor.id, { direction: "stable" });
       }
     } else {
-      // No previous rank data available (new competitor or first snapshot)
       trends.set(competitor.id, { direction: "stable" });
     }
   });
@@ -130,13 +135,28 @@ export default function Home() {
     }
   }, [activePeriod]);
 
-  const { confirmed, calibrating, topThree, others, trends } = useMemo(() => {
+  const { confirmed, calibrating, topThree, others, trends, confirmedRanks, calibratingRanks } = useMemo(() => {
     const filtered = filterRecentCompetitors(allCompetitors, daysThreshold);
     const sorted = sortByConservativeScore(filtered);
 
     // Split confirmed vs calibrating (same logic as TV display)
     const conf = sorted.filter((c) => !c.provisional);
     const cal = sorted.filter((c) => c.provisional);
+
+    // Compute ranks with ties for confirmed competitors
+    const confRanks = computeRanksWithTies(
+      conf,
+      (c) => c.conservativeScore ?? 0,
+      (c) => c.id,
+    );
+
+    // Compute ranks with ties for calibrating competitors (offset by confirmed count)
+    const calRanks = computeRanksWithTies(
+      cal,
+      (c) => c.conservativeScore ?? 0,
+      (c) => c.id,
+      conf.length,
+    );
 
     // Trends must be computed on the FULL confirmed list (all periods)
     // because previousDayRank is a global snapshot, not period-specific
@@ -153,6 +173,8 @@ export default function Home() {
       topThree: conf.slice(0, 3),
       others: conf.slice(3),
       trends: trendData,
+      confirmedRanks: confRanks,
+      calibratingRanks: calRanks,
     };
   }, [allCompetitors, daysThreshold]);
 
@@ -246,7 +268,7 @@ export default function Home() {
             <LeaderboardRow
               key={competitor.id}
               competitor={competitor}
-              rank={index + 4}
+              rank={confirmedRanks.get(competitor.id) ?? index + 4}
               trend={trends.get(competitor.id)}
               animationDelay={index * 50}
             />
@@ -269,7 +291,7 @@ export default function Home() {
             <LeaderboardRow
               key={competitor.id}
               competitor={competitor}
-              rank={confirmed.length + index + 1}
+              rank={calibratingRanks.get(competitor.id) ?? confirmed.length + index + 1}
               animationDelay={index * 50}
             />
           ))}

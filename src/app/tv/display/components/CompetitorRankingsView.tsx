@@ -5,6 +5,7 @@ import TVPodium from "./TVPodium";
 import TVLeaderboardRow from "./TVLeaderboardRow";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
+import { computeRanksWithTies } from "@/app/utils/rankings";
 
 interface Props {
   rankings: Competitor[];
@@ -35,6 +36,19 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     ? Math.max(...withRaces.map((c) => c.conservativeScore ?? 0))
     : 0;
 
+  // Compute ranks with ties
+  const confirmedRanks = computeRanksWithTies(
+    confirmed,
+    (c) => c.conservativeScore ?? 0,
+    (c) => c.id,
+  );
+  const calibratingRanks = computeRanksWithTies(
+    calibrating,
+    (c) => c.conservativeScore ?? 0,
+    (c) => c.id,
+    confirmed.length,
+  );
+
   // Real trend based on previousDayRank snapshot
   const getTrend = (
     competitor: Competitor,
@@ -51,7 +65,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   const top3 = confirmed.slice(0, 3);
   const othersConfirmed = confirmed.slice(3, 15);
 
-  const podiumItems = top3.map((competitor, index) => {
+  const podiumItems = top3.map((competitor) => {
     const avgRank = competitor.avgRank12
       ? `Pos. moy. ${competitor.avgRank12.toFixed(1)}`
       : null;
@@ -64,7 +78,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
       score: Math.round(competitor.conservativeScore ?? 0),
       scoreLabel: "ELO",
       subtitle: avgRank ? `${avgRank} · ${races}` : races,
-      rank: index + 1,
+      rank: confirmedRanks.get(competitor.id) ?? 1,
     };
   });
 
@@ -77,7 +91,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
       {top3.length > 0 && top3.length < 3 && (
         <div className="space-y-3 max-w-5xl mx-auto">
           {confirmed.map((competitor, index) => {
-            const rank = index + 1;
+            const rank = confirmedRanks.get(competitor.id) ?? index + 1;
             const trend = getTrend(competitor, rank);
             return (
               <TVLeaderboardRow
@@ -110,7 +124,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
       {othersConfirmed.length > 0 && (
         <div className="space-y-3 max-w-5xl mx-auto">
           {othersConfirmed.map((competitor, index) => {
-            const rank = index + 4;
+            const rank = confirmedRanks.get(competitor.id) ?? index + 4;
             const trend = getTrend(competitor, rank);
             return (
               <TVLeaderboardRow
@@ -160,7 +174,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
           </div>
           <div className="space-y-3">
             {calibrating.map((competitor, index) => {
-              const rank = confirmed.length + index + 1;
+              const rank = calibratingRanks.get(competitor.id) ?? confirmed.length + index + 1;
               const trend = getTrend(competitor, rank);
               return (
                 <TVLeaderboardRow
