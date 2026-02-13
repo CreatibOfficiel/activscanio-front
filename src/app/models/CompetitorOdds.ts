@@ -54,6 +54,7 @@ export interface BettorRanking {
   boostsUsed: number;
   winRate: number;
   currentMonthlyStreak: number;
+  currentWinStreak: number;
   /**
    * Previous week rank for trend calculation.
    * Used to show if bettor is rising/falling in rankings.

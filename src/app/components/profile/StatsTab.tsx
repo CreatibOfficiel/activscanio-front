@@ -2,7 +2,7 @@
 
 import { FC, lazy, Suspense, useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { MdCasino, MdStar, MdEmojiEvents, MdTrendingUp, MdRocketLaunch, MdCalendarMonth, MdCheckCircle, MdPercent, MdDiamond } from 'react-icons/md';
+import { MdCasino, MdStar, MdEmojiEvents, MdTrendingUp, MdRocketLaunch, MdCalendarMonth, MdCheckCircle, MdPercent, MdDiamond, MdMilitaryTech } from 'react-icons/md';
 import { UserStats } from '../../models/Achievement';
 import TimePeriodToggle, { TimePeriod } from '../stats/TimePeriodToggle';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
@@ -138,6 +138,33 @@ const StatsTab: FC<StatsTabProps> = ({
               />
               <p className="text-sm text-neutral-400 mt-1">semaines consécutives</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Win Streak Section */}
+      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
+        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <MdMilitaryTech className="text-green-400" />
+          <span>Série de victoires</span>
+        </h3>
+        <p className="text-xs text-neutral-500 font-normal -mt-2 mb-4">Semaines consécutives avec des points gagnés</p>
+        <div className="flex items-center justify-center gap-8">
+          <div className="text-center">
+            <AnimatedNumber
+              value={stats.currentWinStreak}
+              size="xl"
+              colorClass="text-green-400"
+            />
+            <p className="text-sm text-neutral-400 mt-1">en cours</p>
+          </div>
+          <div className="text-center">
+            <AnimatedNumber
+              value={stats.bestWinStreak}
+              size="xl"
+              colorClass="text-yellow-400"
+            />
+            <p className="text-sm text-neutral-400 mt-1">record</p>
           </div>
         </div>
       </div>

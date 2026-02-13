@@ -33,6 +33,7 @@ export interface Competitor {
    */
   previousDayRank?: number | null;
   winStreak?: number;
+  bestWinStreak?: number;
   playStreak?: number;
   bestPlayStreak?: number;
   totalLifetimeRaces?: number;

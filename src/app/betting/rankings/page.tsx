@@ -165,7 +165,12 @@ const RankingsPage: FC = () => {
                               {topThree[1].totalPoints.toFixed(1)}
                             </span>
                           </div>
-                          <FlameIndicator streak={topThree[1].currentMonthlyStreak} variant="compact" type="monthly" />
+                          <div className="flex items-center justify-center gap-1">
+                            <FlameIndicator streak={topThree[1].currentMonthlyStreak} variant="compact" type="monthly" />
+                            {topThree[1].currentWinStreak > 0 && (
+                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{topThree[1].currentWinStreak}W</span>
+                            )}
+                          </div>
                         </div>
                       </Card>
                       <div className="w-full h-24 bg-silver-500/20 rounded-t-lg mt-2"></div>
@@ -195,7 +200,12 @@ const RankingsPage: FC = () => {
                               {topThree[0].totalPoints.toFixed(1)}
                             </span>
                           </div>
-                          <FlameIndicator streak={topThree[0].currentMonthlyStreak} variant="compact" type="monthly" />
+                          <div className="flex items-center justify-center gap-1">
+                            <FlameIndicator streak={topThree[0].currentMonthlyStreak} variant="compact" type="monthly" />
+                            {topThree[0].currentWinStreak > 0 && (
+                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{topThree[0].currentWinStreak}W</span>
+                            )}
+                          </div>
                         </div>
                       </Card>
                       <div className="w-full h-32 bg-gold-500/20 rounded-t-lg mt-2"></div>
@@ -225,7 +235,12 @@ const RankingsPage: FC = () => {
                               {topThree[2].totalPoints.toFixed(1)}
                             </span>
                           </div>
-                          <FlameIndicator streak={topThree[2].currentMonthlyStreak} variant="compact" type="monthly" />
+                          <div className="flex items-center justify-center gap-1">
+                            <FlameIndicator streak={topThree[2].currentMonthlyStreak} variant="compact" type="monthly" />
+                            {topThree[2].currentWinStreak > 0 && (
+                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{topThree[2].currentWinStreak}W</span>
+                            )}
+                          </div>
                         </div>
                       </Card>
                       <div className="w-full h-16 bg-bronze-500/20 rounded-t-lg mt-2"></div>
@@ -261,11 +276,16 @@ const RankingsPage: FC = () => {
                         </div>
 
                         <div className="flex items-center gap-4">
-                          <FlameIndicator
-                            streak={ranking.currentMonthlyStreak}
-                            variant="compact"
-                            type="monthly"
-                          />
+                          <div className="flex items-center gap-1">
+                            <FlameIndicator
+                              streak={ranking.currentMonthlyStreak}
+                              variant="compact"
+                              type="monthly"
+                            />
+                            {ranking.currentWinStreak > 0 && (
+                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{ranking.currentWinStreak}W</span>
+                            )}
+                          </div>
                           <div className="text-right">
                             <div className="flex items-center gap-1 text-primary-500">
                               <MdTrendingUp />
