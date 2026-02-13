@@ -8,6 +8,8 @@ interface PWAUpdateState {
   updateServiceWorker: () => void;
 }
 
+const UPDATE_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
 export function usePWAUpdate(): PWAUpdateState {
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
@@ -28,9 +30,12 @@ export function usePWAUpdate(): PWAUpdateState {
     });
 
     wb.addEventListener('controlling', () => {
-      console.log('[PWA] Nouveau SW actif - reload');
-      window.location.reload();
+      console.log('[PWA] Nouveau SW actif');
+      // Ne pas forcer le reload - laisser le banner gerer
+      setUpdateAvailable(true);
     });
+
+    let lastUpdateCheck = 0;
 
     wb.register()
       .then((registration) => {
@@ -42,15 +47,14 @@ export function usePWAUpdate(): PWAUpdateState {
         }
 
         const handleVisibilityChange = () => {
-          if (!document.hidden && registration) {
+          const now = Date.now();
+          if (!document.hidden && registration && now - lastUpdateCheck > UPDATE_CHECK_INTERVAL) {
+            lastUpdateCheck = now;
             registration.update();
           }
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('focus', () => {
-          if (registration) registration.update();
-        });
 
         return () => {
           document.removeEventListener('visibilitychange', handleVisibilityChange);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { UsersRepository } from '@/app/repositories/UsersRepository';
@@ -12,20 +12,32 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const [isChecking, setIsChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+
+  const hasCheckedForPath = useRef<string | null>(null);
+
   const checkOnboarding = useCallback(async () => {
     if (!isLoaded) return;
+
+    // Ne pas re-checker si on a deja verifie pour ce pathname
+    if (hasCheckedForPath.current === pathname) {
+      setIsChecking(false);
+      return;
+    }
 
     setError(null);
     setIsChecking(true);
 
     const isPublicPath = ['/tv/display', '/sign-in', '/sign-up'].some(path => pathname.startsWith(path));
     if (isPublicPath) {
+      hasCheckedForPath.current = pathname;
       setIsChecking(false);
       return;
     }
 
     try {
-      const token = await getToken();
+      const token = await getTokenRef.current();
       if (!token) {
         setIsChecking(false);
         return;
@@ -38,10 +50,12 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
         if (isOnboardingPath) {
           router.push('/');
         } else {
+          hasCheckedForPath.current = pathname;
           setIsChecking(false);
         }
       } else {
         if (isOnboardingPath) {
+          hasCheckedForPath.current = pathname;
           setIsChecking(false);
         } else {
           router.push('/onboarding');
@@ -52,7 +66,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
       setError('Impossible de contacter le serveur. Vérifie ta connexion.');
       setIsChecking(false);
     }
-  }, [isLoaded, pathname, router, getToken]);
+  }, [isLoaded, pathname, router]);
 
   useEffect(() => {
     checkOnboarding();
@@ -65,7 +79,10 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
           <p className="text-lg font-semibold mb-2">Oups !</p>
           <p className="text-neutral-400 mb-6">{error}</p>
           <button
-            onClick={() => checkOnboarding()}
+            onClick={() => {
+              hasCheckedForPath.current = null;
+              checkOnboarding();
+            }}
             className="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
             Réessayer
