@@ -11,7 +11,8 @@ export function getBettingDeadline(weekStartDate: string): Date {
 }
 
 /**
- * Calculate the end of the current season (1st of next month, 00:00 UTC).
+ * Calculate the end of the current betting season (1st of next month, 00:00 UTC).
+ * Bettor rankings are accumulated monthly and reset on the 1st.
  * Handles December -> January rollover.
  */
 export function getSeasonEndDate(now?: Date): Date {
@@ -20,4 +21,17 @@ export function getSeasonEndDate(now?: Date): Date {
   const month = d.getUTCMonth(); // 0-indexed
   // Next month: if December (11), wrap to January of next year
   return new Date(Date.UTC(month === 11 ? year + 1 : year, (month + 1) % 12, 1, 0, 0, 0, 0));
+}
+
+/**
+ * Calculate the end of the current race season (last day of the month, 23:59:59 UTC).
+ * Competitor ELO rankings reset at the end of the month.
+ * Handles December -> January rollover.
+ */
+export function getRaceSeasonEndDate(now?: Date): Date {
+  const d = now ?? new Date();
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth(); // 0-indexed
+  // Day 0 of next month = last day of current month
+  return new Date(Date.UTC(month === 11 ? year + 1 : year, (month + 1) % 12, 0, 23, 59, 59, 999));
 }

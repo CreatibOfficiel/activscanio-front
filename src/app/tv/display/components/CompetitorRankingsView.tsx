@@ -1,17 +1,23 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import TVPodium from "./TVPodium";
 import TVLeaderboardRow from "./TVLeaderboardRow";
+import TVCountdown from "./TVCountdown";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import { computeRanksWithTies } from "@/app/utils/rankings";
+import { getRaceSeasonEndDate } from "../utils/deadlines";
 
 interface Props {
   rankings: Competitor[];
 }
 
+const SEASON_THRESHOLDS = { warningSeconds: 259200, criticalSeconds: 86400 }; // 3 days / 1 day
+
 export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
+  const raceSeasonEndDate = useMemo(() => getRaceSeasonEndDate(), []);
+
   if (!rankings || rankings.length === 0) {
     return (
       <div className="text-center py-16">
@@ -84,6 +90,16 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
 
   return (
     <div className="space-y-12">
+      {/* Season end countdown */}
+      <div className="flex justify-center">
+        <TVCountdown
+          label="Fin de saison"
+          targetDate={raceSeasonEndDate}
+          thresholds={SEASON_THRESHOLDS}
+          expiredLabel="Saison terminée"
+        />
+      </div>
+
       {/* Confirmed: Podium Top 3 */}
       {top3.length >= 3 && <TVPodium items={podiumItems} />}
 

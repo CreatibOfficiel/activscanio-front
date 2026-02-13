@@ -10,7 +10,7 @@ import { StreakWarningStatus } from "./models/Achievement";
 import { AchievementsRepository } from "./repositories/AchievementsRepository";
 import { Button, Countdown } from "./components/ui";
 import { MdFlag } from "react-icons/md";
-import { getSeasonEndDate } from "./tv/display/utils/deadlines";
+import { getRaceSeasonEndDate } from "./tv/display/utils/deadlines";
 import { StreakWarningBanner } from "./components/achievements";
 import {
   ElevatedPodium,
@@ -104,7 +104,7 @@ export default function Home() {
   const [now, setNow] = useState<Date | null>(null);
   const [activePeriod, setActivePeriod] = useState<Period>("week");
   const [streakWarnings, setStreakWarnings] = useState<StreakWarningStatus | null>(null);
-  const seasonEndDate = useMemo(() => getSeasonEndDate(), []);
+  const seasonEndDate = useMemo(() => getRaceSeasonEndDate(), []);
 
   useEffect(() => {
     setNow(new Date());
