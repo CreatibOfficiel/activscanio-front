@@ -160,13 +160,15 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
   };
 
   const sortedResults = raceEvent
-    ? [...raceEvent.results].sort((a, b) => a.rank12 - b.rank12)
+    ? [...raceEvent.results].sort((a, b) => {
+        if (a.rank12 !== b.rank12) return a.rank12 - b.rank12;
+        if (a.score !== b.score) return b.score - a.score;
+        return a.competitorId.localeCompare(b.competitorId);
+      })
     : [];
-  const winner = sortedResults[0] ?? null;
-  const others = sortedResults.slice(1);
-  const winnerComp = winner
-    ? allCompetitors.find((c) => c.id === winner.competitorId)
-    : null;
+  const bestRank = sortedResults[0]?.rank12;
+  const winners = sortedResults.filter((r) => r.rank12 === bestRank);
+  const others = sortedResults.filter((r) => r.rank12 !== bestRank);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Feuille de course" size="lg">
@@ -184,32 +186,35 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
           </p>
 
           {/* Winner hero */}
-          {winner && winnerComp && (
+          {winners.length > 0 && (
             <div className="flex flex-col items-center gap-2 py-4 rounded-xl bg-gradient-to-b from-gold-500/10 to-transparent">
-              <span className="text-2xl animate-crown-bounce">
-                {winnerComp.firstName === "Joran" ? "🤪" : "👑"}
-              </span>
-              <div className="relative">
-                <Image
-                  src={winnerComp.profilePictureUrl}
-                  alt={winnerComp.firstName}
-                  width={64}
-                  height={64}
-                  className="rounded-full object-cover ring-2 ring-gold-500"
-                />
+              <span className="text-2xl animate-crown-bounce">👑</span>
+              <div className="flex items-center justify-center gap-4">
+                {winners.map((w) => {
+                  const comp = allCompetitors.find((c) => c.id === w.competitorId);
+                  if (!comp) return null;
+                  return (
+                    <div key={comp.id} className="flex flex-col items-center gap-1">
+                      <Image
+                        src={comp.profilePictureUrl}
+                        alt={comp.firstName}
+                        width={64}
+                        height={64}
+                        className="rounded-full object-cover ring-2 ring-gold-500"
+                      />
+                      <p className="text-lg font-bold text-white">
+                        {formatCompetitorName(comp.firstName, comp.lastName)}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-              <p className="text-lg font-bold text-white">
-                {formatCompetitorName(
-                  winnerComp.firstName,
-                  winnerComp.lastName
-                )}
-              </p>
               <div className="flex items-center gap-2">
                 <Badge variant="gold" size="sm">
-                  1er
+                  {winners.length > 1 ? "1er ex-aequo" : "1er"}
                 </Badge>
                 <span className="text-sm text-neutral-300">
-                  · {winner.score} pts
+                  · {winners[0].score} pts
                 </span>
               </div>
             </div>

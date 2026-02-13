@@ -30,7 +30,11 @@ const RaceCard: FC<Props> = ({ race }) => {
     const results: ParticipantWithResult[] = [];
 
     // Sort results by rank
-    const sortedResults = [...race.results].sort((a, b) => a.rank12 - b.rank12);
+    const sortedResults = [...race.results].sort((a, b) => {
+      if (a.rank12 !== b.rank12) return a.rank12 - b.rank12;
+      if (a.score !== b.score) return b.score - a.score;
+      return a.competitorId.localeCompare(b.competitorId);
+    });
     const bestRank = sortedResults.length > 0 ? sortedResults[0].rank12 : undefined;
 
     sortedResults.forEach((res) => {
@@ -49,7 +53,7 @@ const RaceCard: FC<Props> = ({ race }) => {
   }, [race.results, allCompetitors]);
 
   // Get winner and other participants
-  const winner = participantsWithResults.find((p) => p.isWinner);
+  const winners = participantsWithResults.filter((p) => p.isWinner);
   const otherParticipants = participantsWithResults.filter((p) => !p.isWinner);
 
   // Don't render if no participants
@@ -80,13 +84,14 @@ const RaceCard: FC<Props> = ({ race }) => {
         </div>
 
         {/* Winner section */}
-        {winner && (
+        {winners.map((w) => (
           <WinnerHighlight
-            competitor={winner.competitor}
-            score={winner.score}
-            rank12={winner.rank12}
+            key={w.competitor.id}
+            competitor={w.competitor}
+            score={w.score}
+            rank12={w.rank12}
           />
-        )}
+        ))}
 
         {/* Other participants */}
         {otherParticipants.length > 0 && (
