@@ -262,6 +262,8 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
         competitor={selectedCompetitor ?? topThree[0]}
         isOpen={selectedCompetitor !== null}
         onClose={() => setSelectedCompetitor(null)}
+        rank={selectedCompetitor ? topThree.indexOf(selectedCompetitor) + 1 : undefined}
+        trend={selectedCompetitor ? trends?.get(selectedCompetitor.id) : undefined}
       />
     </>
   );

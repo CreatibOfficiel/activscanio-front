@@ -10,6 +10,7 @@ import Modal from "../ui/Modal";
 import Badge from "../ui/Badge";
 import Skeleton from "../ui/Skeleton";
 import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
+import { TrendDirection } from "../leaderboard/TrendIndicator";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -19,6 +20,8 @@ interface Props {
   competitor: Competitor;
   isOpen: boolean;
   onClose: () => void;
+  rank?: number;
+  trend?: { direction: TrendDirection; value?: number } | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -47,6 +50,9 @@ const consistencyLabel = (positions?: number[]) => {
   if (stdDev < 2.5) return "Régulier";
   return "Imprévisible";
 };
+
+const formatPositions = (positions: number[]) =>
+  positions.map((p) => `${p}${p === 1 ? "er" : "e"}`).join(", ");
 
 /* ------------------------------------------------------------------ */
 /*  Skeleton                                                           */
@@ -95,7 +101,7 @@ const DetailSkeleton: FC = () => (
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
+const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: rankProp, trend: trendProp }) => {
   const { getRecentRacesOfCompetitor, allRaces, allCompetitors } =
     useContext(AppContext);
 
@@ -127,22 +133,25 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
   const totalRaces = competitor.totalLifetimeRaces ?? competitor.raceCount ?? 0;
   const wins = positions.filter((p) => p === 1).length;
 
-  // Trend calculation
+  // Rank: prefer prop from parent (computed with ties), fallback to simple sort
   const currentRank = useMemo(() => {
+    if (rankProp !== undefined) return rankProp;
     const sorted = [...allCompetitors].sort(
       (a, b) =>
         (b.conservativeScore ?? b.rating) - (a.conservativeScore ?? a.rating)
     );
     return sorted.findIndex((c) => c.id === competitor.id) + 1;
-  }, [allCompetitors, competitor.id]);
+  }, [rankProp, allCompetitors, competitor.id]);
 
+  // Trend: prefer prop from parent, fallback to local calculation
   const trend = useMemo(() => {
+    if (trendProp !== undefined) return trendProp;
     if (competitor.previousDayRank == null || currentRank === 0) return null;
     const diff = competitor.previousDayRank - currentRank;
     if (diff > 0) return { direction: "up" as const, value: diff };
     if (diff < 0) return { direction: "down" as const, value: Math.abs(diff) };
     return { direction: "stable" as const, value: 0 };
-  }, [competitor.previousDayRank, currentRank]);
+  }, [trendProp, competitor.previousDayRank, currentRank]);
 
   // Rival calculation
   const rival = useMemo(() => {
@@ -366,7 +375,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
                   title="Série en cours"
                   value={`${competitor.winStreak} victoire${
                     (competitor.winStreak ?? 0) > 1 ? "s" : ""
-                  } d'affilée`}
+                  } d'affilée${(competitor.bestWinStreak ?? 0) > 0 ? ` (record : ${competitor.bestWinStreak}v)` : ""}`}
                 />
               )}
 
@@ -401,8 +410,9 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
               {positions.length >= 3 && (
                 <StatCard
                   icon="📊"
-                  title="Constance"
+                  title="Régularité"
                   value={consistencyLabel(positions)}
+                  subtitle={`Positions : ${formatPositions(positions)}`}
                 />
               )}
 
@@ -520,16 +530,18 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose }) => {
 /*  StatCard sub-component                                             */
 /* ------------------------------------------------------------------ */
 
-const StatCard: FC<{ icon: string; title: string; value: string }> = ({
+const StatCard: FC<{ icon: string; title: string; value: string; subtitle?: string }> = ({
   icon,
   title,
   value,
+  subtitle,
 }) => (
   <div className="flex items-start gap-3 bg-neutral-800/40 rounded-xl p-3">
     <span className="text-lg">{icon}</span>
     <div className="min-w-0">
       <p className="text-xs text-neutral-400">{title}</p>
       <p className="text-sm text-neutral-200 font-medium truncate">{value}</p>
+      {subtitle && <p className="text-xs text-neutral-500 mt-0.5">{subtitle}</p>}
     </div>
   </div>
 );

@@ -155,6 +155,8 @@ const LeaderboardRow: FC<Props> = ({
         competitor={competitor}
         isOpen={showModal}
         onClose={() => setShowModal(false)}
+        rank={rank}
+        trend={trend}
       />
     </>
   );
