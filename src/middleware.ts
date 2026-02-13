@@ -1,9 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-
-/**
- * Clerk authentication middleware for Next.js
- * Protects all routes except those listed as public
- */
+import { NextResponse } from "next/server";
 
 // Public routes (no auth required)
 const isPublicRoute = createRouteMatcher([
@@ -14,7 +10,23 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
+  if (isPublicRoute(request)) return;
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    // Detect redirect loop: if referer is from Clerk, we're looping
+    const referer = request.headers.get("referer") || "";
+    const isFromClerk =
+      referer.includes("clerk.") || referer.includes("accounts.dev");
+
+    if (isFromClerk) {
+      // Break the loop: redirect to local sign-in instead of back to Clerk
+      const signInUrl = new URL("/sign-in", request.url);
+      return NextResponse.redirect(signInUrl);
+    }
+
+    // Normal case: let Clerk handle the redirect
     await auth.protect();
   }
 });
