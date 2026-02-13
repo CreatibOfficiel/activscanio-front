@@ -119,8 +119,8 @@ const OverviewTab: FC<OverviewTabProps> = ({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard
-              label="Courses"
-              value={`${competitorStats.totalWins} gagnées / ${competitorStats.raceCount}`}
+              label="Victoires"
+              value={`${competitorStats.totalWins} / ${competitorStats.raceCount}`}
               icon={<MdDirectionsCar className="text-blue-400" />}
               variant="compact"
               animated
