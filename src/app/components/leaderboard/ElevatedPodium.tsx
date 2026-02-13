@@ -120,7 +120,7 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
           >
             {shortName}
           </span>
-          {trend && (
+          {trend && trend.direction !== "stable" && (
             <TrendIndicator
               direction={trend.direction}
               value={trend.value}
@@ -191,13 +191,6 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
               `}
               style={{ animationDelay: `${idx * 100}ms` }}
             >
-              {/* Crown for 1st */}
-              {position === 1 && (
-                <span className="text-2xl animate-crown-bounce">
-                  {competitor.firstName === "Joran" ? "🤪" : "👑"}
-                </span>
-              )}
-
               {/* Avatar */}
               <div className={`ring-2 ${config.ring} rounded-full`}>
                 <Image
@@ -220,7 +213,7 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
                       {competitor.raceCount}/5
                     </span>
                   )}
-                  {trend && (
+                  {trend && trend.direction !== "stable" && (
                     <span className="bg-neutral-900/60 rounded-full">
                       <TrendIndicator
                         direction={trend.direction}

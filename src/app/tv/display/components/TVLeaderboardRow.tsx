@@ -28,7 +28,7 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0 }) => {
     : 0;
 
   const getTrendIcon = () => {
-    if (!item.trend) return null;
+    if (!item.trend || item.trend === "stable") return null;
 
     const iconClass = "text-lg";
 
