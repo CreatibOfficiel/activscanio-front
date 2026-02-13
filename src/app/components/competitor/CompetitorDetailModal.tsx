@@ -134,7 +134,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
   const variantLabel =
     variant && variant.label !== "Default" ? variant.label : null;
 
-  const positions = competitor.recentPositions ?? [];
+  const positions = (competitor.recentPositions ?? []).map(Number);
   const totalRaces = competitor.totalLifetimeRaces ?? competitor.raceCount ?? 0;
   const wins = competitor.totalWins ?? positions.filter((p) => p === 1).length;
 

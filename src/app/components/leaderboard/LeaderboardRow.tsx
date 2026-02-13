@@ -131,7 +131,7 @@ const LeaderboardRow: FC<Props> = ({
             <div className="text-xs text-neutral-500 uppercase">ELO</div>
           </div>
 
-          {trend && trend.direction !== "stable" && (
+          {trend && (
             <TrendIndicator
               direction={trend.direction}
               value={trend.value}
