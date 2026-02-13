@@ -62,6 +62,21 @@ export class RacesRepository {
     }
   }
 
+  // GET /competitors/:competitorId/best-score
+  async fetchBestScore(competitorId: string): Promise<{ bestScore: number | null }> {
+    const res = await apiFetch(
+      `${this.baseUrl}/competitors/${competitorId}/best-score`
+    );
+    if (res.ok) {
+      return await res.json();
+    } else {
+      const errMsg = await res.text();
+      throw new Error(
+        `Error fetching best score for competitor ${competitorId}: ${errMsg}`
+      );
+    }
+  }
+
   // GET /races/:raceId/similar
   async fetchSimilarRaces(raceId: string, authToken?: string): Promise<RaceEvent[]> {
     const headers: HeadersInit = {};

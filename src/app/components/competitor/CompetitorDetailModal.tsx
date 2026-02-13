@@ -102,22 +102,27 @@ const DetailSkeleton: FC = () => (
 /* ------------------------------------------------------------------ */
 
 const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: rankProp, trend: trendProp }) => {
-  const { getRecentRacesOfCompetitor, allRaces, allCompetitors } =
+  const { getRecentRacesOfCompetitor, getBestScoreOfCompetitor, allRaces, allCompetitors } =
     useContext(AppContext);
 
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
+  const [bestScore, setBestScore] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  /* ---------- load recent races ---------- */
+  /* ---------- load recent races + best score ---------- */
   useEffect(() => {
     if (!isOpen) return;
     setIsLoaded(false);
     (async () => {
-      const data = await getRecentRacesOfCompetitor(competitor.id);
+      const [data, bestScoreRes] = await Promise.all([
+        getRecentRacesOfCompetitor(competitor.id),
+        getBestScoreOfCompetitor(competitor.id),
+      ]);
       setRecentRaces(data);
+      setBestScore(bestScoreRes.bestScore);
       setIsLoaded(true);
     })();
-  }, [competitor.id, isOpen, getRecentRacesOfCompetitor]);
+  }, [competitor.id, isOpen, getRecentRacesOfCompetitor, getBestScoreOfCompetitor]);
 
   /* ---------- derived data ---------- */
   const shortName = formatCompetitorName(
@@ -199,15 +204,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
       shared: sharedCount[worstId],
     };
   }, [allRaces, allCompetitors, competitor.id]);
-
-  // Best score from recent races
-  const bestScore = useMemo(() => {
-    if (!recentRaces.length) return null;
-    const best = recentRaces.reduce((max, r) =>
-      r.score > max.score ? r : max
-    );
-    return { score: best.score, date: best.date };
-  }, [recentRaces]);
 
   // Podium count
   const podiumCount = positions.filter((p) => p <= 3).length;
@@ -397,12 +393,12 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 />
               )}
 
-              {/* Best score */}
-              {bestScore && (
+              {/* Best score (all-time record) */}
+              {bestScore != null && (
                 <StatCard
                   icon="🎯"
-                  title="Meilleur score"
-                  value={`${bestScore.score} pts`}
+                  title="Record"
+                  value={`${bestScore} pts`}
                 />
               )}
 

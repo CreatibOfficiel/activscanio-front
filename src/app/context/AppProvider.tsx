@@ -166,6 +166,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     return racesRepo.fetchRecentRacesOfCompetitor(competitorId, undefined, token!);
   };
 
+  const getBestScoreOfCompetitor = async (competitorId: string) => {
+    return racesRepo.fetchBestScore(competitorId);
+  };
+
   const getSimilarRaces = async (raceId: string) => {
     const token = await getToken();
     return racesRepo.fetchSimilarRaces(raceId, token!);
@@ -200,6 +204,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         addRaceEvent,
         getRaceById,
         getRecentRacesOfCompetitor,
+        getBestScoreOfCompetitor,
         getSimilarRaces,
 
         analyzeRaceImage,

@@ -42,6 +42,9 @@ export interface AppContextType {
   getRecentRacesOfCompetitor: (
     competitorId: string
   ) => Promise<RecentRaceInfo[]>;
+  getBestScoreOfCompetitor: (
+    competitorId: string
+  ) => Promise<{ bestScore: number | null }>;
   getSimilarRaces: (raceId: string) => Promise<RaceEvent[]>;
 
   /* ---- image analyse ---- */
@@ -89,6 +92,7 @@ export const AppContext = createContext<AppContextType>({
     throw new Error("getRaceById not initialised");
   },
   getRecentRacesOfCompetitor: async () => [],
+  getBestScoreOfCompetitor: async () => ({ bestScore: null }),
   getSimilarRaces: async () => [],
 
   analyzeRaceImage: async () => {
