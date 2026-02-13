@@ -8,8 +8,9 @@ import { AppContext } from "./context/AppContext";
 import { Competitor } from "./models/Competitor";
 import { StreakWarningStatus } from "./models/Achievement";
 import { AchievementsRepository } from "./repositories/AchievementsRepository";
-import { Button } from "./components/ui";
+import { Button, Countdown } from "./components/ui";
 import { MdFlag } from "react-icons/md";
+import { getSeasonEndDate } from "./tv/display/utils/deadlines";
 import { StreakWarningBanner } from "./components/achievements";
 import {
   ElevatedPodium,
@@ -103,6 +104,7 @@ export default function Home() {
   const [now, setNow] = useState<Date | null>(null);
   const [activePeriod, setActivePeriod] = useState<Period>("week");
   const [streakWarnings, setStreakWarnings] = useState<StreakWarningStatus | null>(null);
+  const seasonEndDate = useMemo(() => getSeasonEndDate(), []);
 
   useEffect(() => {
     setNow(new Date());
@@ -213,6 +215,15 @@ export default function Home() {
           {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
         </p>
       </div>
+
+      {/* Season countdown */}
+      <Countdown
+        label="Fin de saison"
+        targetDate={seasonEndDate}
+        thresholds={{ warningSeconds: 259200, criticalSeconds: 86400 }}
+        expiredLabel="Saison terminée"
+        className="mx-4 mb-4"
+      />
 
       {/* Streak Warning Banners */}
       {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mb-4" />}

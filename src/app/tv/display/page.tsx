@@ -41,6 +41,8 @@ interface TVDisplayData {
   archivedSeasons: SeasonArchive[];
   weeklyOdds: CompetitorOdds[] | null;
   currentWeekDates: string | null;
+  currentWeekStartDate: string | null;
+  currentWeekStatus: string | null;
 }
 
 const ALL_VIEWS = [
@@ -82,6 +84,8 @@ const TVDisplayContent: FC = () => {
     archivedSeasons: [],
     weeklyOdds: null,
     currentWeekDates: null,
+    currentWeekStartDate: null,
+    currentWeekStatus: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -204,6 +208,8 @@ const TVDisplayContent: FC = () => {
           archivedSeasons: seasons,
           weeklyOdds,
           currentWeekDates,
+          currentWeekStartDate: currentWeek?.startDate ?? null,
+          currentWeekStatus: currentWeek?.status ?? null,
         });
         setLastUpdate(new Date());
         setIsLoading(false);
@@ -331,6 +337,8 @@ const TVDisplayContent: FC = () => {
             <WeeklyOddsView
               odds={data.weeklyOdds}
               weekDates={data.currentWeekDates ?? undefined}
+              weekStartDate={data.currentWeekStartDate ?? undefined}
+              weekStatus={data.currentWeekStatus ?? undefined}
             />
           )}
           {currentView === DisplayView.ARCHIVED_SEASONS && (

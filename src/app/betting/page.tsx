@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useEffect, useState, useCallback } from 'react';
+import { FC, useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth, useUser } from '@clerk/nextjs';
@@ -8,12 +8,12 @@ import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { BettingWeek, BettingWeekStatus } from '@/app/models/BettingWeek';
 import { Bet, BetStatus } from '@/app/models/Bet';
 import { BettorRanking } from '@/app/models/CompetitorOdds';
-import { Card, Badge, Button, Spinner } from '@/app/components/ui';
+import { Card, Badge, Button, Spinner, Countdown } from '@/app/components/ui';
+import { getBettingDeadline } from '@/app/tv/display/utils/deadlines';
 import {
   MdCasino,
   MdHistory,
   MdLeaderboard,
-  MdTimer,
   MdCheckCircle,
   MdPending,
   MdTrendingUp,
@@ -30,7 +30,6 @@ const BettingPage: FC = () => {
   const [currentBet, setCurrentBet] = useState<Bet | null>(null);
   const [recentBets, setRecentBets] = useState<Bet[]>([]);
   const [userRanking, setUserRanking] = useState<BettorRanking | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<string>('');
 
   const loadData = useCallback(async () => {
     try {
@@ -75,40 +74,10 @@ const BettingPage: FC = () => {
     loadData();
   }, [loadData]);
 
-  // Calculate time remaining until betting closes
-  useEffect(() => {
-    if (!currentWeek || currentWeek.status !== BettingWeekStatus.OPEN) {
-      setTimeRemaining('');
-      return;
-    }
-
-    const updateTimeRemaining = () => {
-      const now = new Date();
-      const end = new Date(currentWeek.endDate);
-      const diff = end.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        setTimeRemaining('Fermé');
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-      if (days > 0) {
-        setTimeRemaining(`${days}j ${hours}h`);
-      } else if (hours > 0) {
-        setTimeRemaining(`${hours}h ${minutes}min`);
-      } else {
-        setTimeRemaining(`${minutes}min`);
-      }
-    };
-
-    updateTimeRemaining();
-    const interval = setInterval(updateTimeRemaining, 60000);
-    return () => clearInterval(interval);
-  }, [currentWeek]);
+  const bettingDeadline = useMemo(
+    () => (currentWeek?.startDate ? getBettingDeadline(currentWeek.startDate) : null),
+    [currentWeek?.startDate]
+  );
 
   const getBetStatusIcon = (status: BetStatus) => {
     switch (status) {
@@ -197,11 +166,14 @@ const BettingPage: FC = () => {
                   <p className="text-sm text-primary-100 opacity-80">Semaine en cours</p>
                   <p className="text-bold text-white">{formatWeekDates(currentWeek)}</p>
                 </div>
-                {currentWeek.status === BettingWeekStatus.OPEN && timeRemaining && (
-                  <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
-                    <MdTimer className="text-white" />
-                    <span className="text-sm text-white font-medium">{timeRemaining}</span>
-                  </div>
+                {currentWeek.status === BettingWeekStatus.OPEN && bettingDeadline && (
+                  <Countdown
+                    label=""
+                    targetDate={bettingDeadline}
+                    thresholds={{ warningSeconds: 86400, criticalSeconds: 7200 }}
+                    expiredLabel="Fermé"
+                    compact
+                  />
                 )}
                 {currentWeek.status !== BettingWeekStatus.OPEN && (
                   <Badge variant="default">Fermé</Badge>
@@ -251,6 +223,16 @@ const BettingPage: FC = () => {
               )}
             </div>
           </Card>
+        )}
+
+        {/* Betting deadline countdown */}
+        {currentWeek && currentWeek.status === BettingWeekStatus.OPEN && bettingDeadline && (
+          <Countdown
+            label="Fin des paris"
+            targetDate={bettingDeadline}
+            thresholds={{ warningSeconds: 86400, criticalSeconds: 7200 }}
+            expiredLabel="Paris fermés"
+          />
         )}
 
         {/* Week Odds Preview */}

@@ -2,6 +2,7 @@
 
 import { NextPage } from "next";
 import { useContext, useEffect, useState, useMemo } from "react";
+import { getSeasonEndDate } from "../tv/display/utils/deadlines";
 import Link from "next/link";
 import Image from "next/image";
 import { AppContext } from "../context/AppContext";
@@ -12,7 +13,7 @@ import RacesStatsHeader from "../components/race/RacesStatsHeader";
 import RaceFilters, { FilterState, PeriodFilter } from "../components/race/RaceFilters";
 import DateSeparator from "../components/race/DateSeparator";
 import SkeletonRaceCard from "../components/race/SkeletonRaceCard";
-import { Button } from "../components/ui";
+import { Button, Countdown } from "../components/ui";
 import { MdAdd, MdFlag } from "react-icons/md";
 import { useRaceStats } from "../hooks/useRaceStats";
 
@@ -82,6 +83,7 @@ const RacesPage: NextPage = () => {
     period: "all",
     competitorId: null,
   });
+  const seasonEndDate = useMemo(() => getSeasonEndDate(), []);
 
   useEffect(() => {
     setNow(new Date());
@@ -157,6 +159,16 @@ const RacesPage: NextPage = () => {
     <div className="min-h-screen bg-neutral-900 pb-[calc(6rem+env(safe-area-inset-bottom))]">
       {/* Stats Header */}
       <RacesStatsHeader stats={raceStats} />
+
+      {/* Season countdown */}
+      <div className="px-4 pb-3">
+        <Countdown
+          label="Fin de saison"
+          targetDate={seasonEndDate}
+          thresholds={{ warningSeconds: 259200, criticalSeconds: 86400 }}
+          expiredLabel="Saison terminée"
+        />
+      </div>
 
       {/* Filters */}
       <RaceFilters

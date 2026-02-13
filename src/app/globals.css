@@ -699,4 +699,36 @@
   .stagger-item:nth-child(18) { animation-delay: 0.90s; }
   .stagger-item:nth-child(19) { animation-delay: 0.95s; }
   .stagger-item:nth-child(20) { animation-delay: 1.00s; }
+
+  /* ===== COUNTDOWN TIMER ===== */
+
+  .countdown-glow-normal {
+    filter: drop-shadow(0 0 8px rgba(64, 228, 228, 0.4))
+            drop-shadow(0 0 20px rgba(64, 228, 228, 0.15));
+  }
+
+  .countdown-glow-warning {
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5))
+            drop-shadow(0 0 20px rgba(245, 158, 11, 0.2));
+  }
+
+  .countdown-glow-critical {
+    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6))
+            drop-shadow(0 0 24px rgba(239, 68, 68, 0.3));
+  }
+
+  @keyframes countdown-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.02);
+      opacity: 0.9;
+    }
+  }
+
+  .animate-countdown-pulse {
+    animation: countdown-pulse 1.5s ease-in-out infinite;
+  }
 }

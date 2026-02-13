@@ -1,9 +1,13 @@
 "use client";
 
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import TVPodium from "./TVPodium";
 import TVLeaderboardRow from "./TVLeaderboardRow";
+import TVCountdown from "./TVCountdown";
 import { BettorRanking } from "@/app/models/CompetitorOdds";
+import { getSeasonEndDate } from "../utils/deadlines";
+
+const SEASON_THRESHOLDS = { warningSeconds: 259200, criticalSeconds: 86400 }; // 3 days / 1 day
 
 interface Props {
   rankings: {
@@ -15,6 +19,8 @@ interface Props {
 }
 
 export const BettorRankingsView: FC<Props> = ({ rankings }) => {
+  const seasonEndDate = useMemo(() => getSeasonEndDate(), []);
+
   if (!rankings || rankings.rankings.length === 0) {
     return (
       <div className="text-center py-16">
@@ -75,6 +81,16 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
         <p className="text-tv-body text-neutral-400">
           {monthNames[month - 1]} {year}
         </p>
+      </div>
+
+      {/* Season end countdown */}
+      <div className="flex justify-center">
+        <TVCountdown
+          label="Fin de saison"
+          targetDate={seasonEndDate}
+          thresholds={SEASON_THRESHOLDS}
+          expiredLabel="Saison terminée"
+        />
       </div>
 
       {/* Podium Top 3 */}

@@ -10,3 +10,4 @@ export { default as Tooltip } from './Tooltip';
 export { default as InfoTooltip } from './InfoTooltip';
 export { default as PageHeader } from './PageHeader';
 export type { PageHeaderProps } from './PageHeader';
+export { default as Countdown } from './Countdown';
