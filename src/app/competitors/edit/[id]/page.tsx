@@ -6,12 +6,10 @@ import { useEffect, useReducer } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
-import { MdLinkOff } from 'react-icons/md';
 import { toast } from 'sonner';
 
 import { useApp } from '@/app/context/AppContext';
 import { UpdateCompetitorPayload } from '@/app/models/Competitor';
-import { BaseCharacter } from '@/app/models/Character';
 import { editCompetitorSchema, EditCompetitorFormData } from '@/app/schemas';
 import { Input, Button, PageHeader } from '@/app/components/ui';
 import {
@@ -27,10 +25,6 @@ const EditCompetitorPage: NextPage = () => {
   const {
     getCompetitorById,
     updateCompetitor,
-    linkCharacterToCompetitor,
-    unlinkCharacterFromCompetitor,
-    getAvailableBaseCharacters,
-    getAvailableVariantsForBaseCharacter,
   } = useApp();
 
   const [state, dispatch] = useReducer(editCompetitorReducer, initialState);
@@ -48,9 +42,6 @@ const EditCompetitorPage: NextPage = () => {
   });
 
   const profilePictureUrl = watch('profilePictureUrl');
-  const currentVariant = state.competitor?.characterVariant ?? null;
-
-  const isFormComplete = isValid && (currentVariant || state.selectedVariant);
 
   /* -------------- Initial load -------------- */
 
@@ -68,13 +59,6 @@ const EditCompetitorPage: NextPage = () => {
         setValue('firstName', competitor.firstName);
         setValue('lastName', competitor.lastName);
         setValue('profilePictureUrl', competitor.profilePictureUrl);
-
-        if (!competitor.characterVariant) {
-          dispatch({ type: 'SET_LOADING_BC', payload: true });
-          const availableChars = await getAvailableBaseCharacters();
-          dispatch({ type: 'SET_AVAILABLE_BC', payload: availableChars });
-          dispatch({ type: 'SET_LOADING_BC', payload: false });
-        }
       } catch (err) {
         toast.error(
           'Erreur de chargement du compétiteur' +
@@ -84,55 +68,7 @@ const EditCompetitorPage: NextPage = () => {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     })();
-  }, [params.id, getCompetitorById, getAvailableBaseCharacters, setValue]);
-
-  /* -------------- Character selection -------------- */
-
-  const handleSelectBC = async (bc: BaseCharacter) => {
-    if (state.selectedBC?.id === bc.id) {
-      dispatch({ type: 'RESET_CHARACTER_SELECTION' });
-      return;
-    }
-
-    dispatch({ type: 'SET_SELECTED_BC', payload: bc });
-    dispatch({ type: 'SET_LOADING_VARIANTS', payload: true });
-
-    try {
-      const vars = await getAvailableVariantsForBaseCharacter(bc.id);
-      dispatch({ type: 'SET_VARIANTS', payload: vars });
-      dispatch({
-        type: 'SET_SELECTED_VARIANT',
-        payload: vars.length === 1 ? vars[0] : null,
-      });
-    } catch {
-      toast.error('Impossible de récupérer les variantes');
-    } finally {
-      dispatch({ type: 'SET_LOADING_VARIANTS', payload: false });
-    }
-  };
-
-  /* -------------- Unlink character -------------- */
-
-  const handleUnlink = async () => {
-    if (!state.competitor) return;
-
-    dispatch({ type: 'SET_UNLINKING', payload: true });
-
-    try {
-      const updated = await unlinkCharacterFromCompetitor(state.competitor.id);
-      dispatch({ type: 'SET_COMPETITOR', payload: updated });
-      dispatch({ type: 'RESET_CHARACTER_SELECTION' });
-
-      dispatch({ type: 'SET_LOADING_BC', payload: true });
-      const availableChars = await getAvailableBaseCharacters();
-      dispatch({ type: 'SET_AVAILABLE_BC', payload: availableChars });
-      dispatch({ type: 'SET_LOADING_BC', payload: false });
-    } catch {
-      toast.error('Erreur lors du déliage');
-    } finally {
-      dispatch({ type: 'SET_UNLINKING', payload: false });
-    }
-  };
+  }, [params.id, getCompetitorById, setValue]);
 
   /* -------------- Submit -------------- */
 
@@ -147,13 +83,6 @@ const EditCompetitorPage: NextPage = () => {
       };
 
       await updateCompetitor(state.competitor.id, payload);
-
-      if (!currentVariant && state.selectedVariant) {
-        await linkCharacterToCompetitor(
-          state.competitor.id,
-          state.selectedVariant.id
-        );
-      }
 
       toast.success('Compétiteur mis à jour !');
       router.back();
@@ -259,91 +188,6 @@ const EditCompetitorPage: NextPage = () => {
           )}
         </div>
 
-        {currentVariant && (
-          <div className="mt-4 p-3 bg-neutral-800 rounded">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-neutral-300 font-semibold">
-                  Personnage lié
-                </h3>
-                <p className="text-neutral-200">
-                  {currentVariant.baseCharacter.name}
-                  {currentVariant.label &&
-                    currentVariant.label !== 'Default' &&
-                    ` – ${currentVariant.label}`}
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="error"
-                size="sm"
-                onClick={handleUnlink}
-                disabled={state.unlinking}
-                loading={state.unlinking}
-                leftIcon={<MdLinkOff className="text-lg" />}
-              >
-                Délier
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {!currentVariant && (
-          <>
-            <div className="mt-4">
-              <label className="block mb-2 text-neutral-300">Personnage</label>
-              {state.loadingBC ? (
-                <p className="text-neutral-500">Chargement…</p>
-              ) : state.availableBC.length === 0 ? (
-                <p className="text-neutral-500">Aucun disponible</p>
-              ) : (
-                <div className="grid grid-cols-5 gap-2">
-                  {state.availableBC.map((bc) => (
-                    <div
-                      key={bc.id}
-                      onClick={() => handleSelectBC(bc)}
-                      className={`p-2 rounded cursor-pointer ${
-                        state.selectedBC?.id === bc.id
-                          ? 'bg-primary-500 text-neutral-900'
-                          : 'bg-neutral-800 hover:bg-neutral-700'
-                      }`}
-                    >
-                      {bc.name}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {state.selectedBC && state.variantsOfSelected.length > 1 && (
-              <div>
-                <label className="block mb-1 text-neutral-300">Variantes</label>
-                {state.loadingVariants ? (
-                  <p className="text-neutral-500">Chargement…</p>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {state.variantsOfSelected.map((v) => (
-                      <div
-                        key={v.id}
-                        onClick={() =>
-                          dispatch({ type: 'SET_SELECTED_VARIANT', payload: v })
-                        }
-                        className={`p-2 rounded cursor-pointer ${
-                          state.selectedVariant?.id === v.id
-                            ? 'bg-primary-500 text-neutral-900'
-                            : 'bg-neutral-800 hover:bg-neutral-700'
-                        }`}
-                      >
-                        {v.label}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-
         <div className="mt-6 flex gap-2">
           <Button
             type="button"
@@ -357,7 +201,7 @@ const EditCompetitorPage: NextPage = () => {
             type="submit"
             variant="primary"
             fullWidth
-            disabled={!isFormComplete || isSubmitting}
+            disabled={!isValid || isSubmitting}
             loading={isSubmitting}
           >
             Enregistrer
