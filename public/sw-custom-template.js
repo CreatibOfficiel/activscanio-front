@@ -6,7 +6,7 @@ importScripts('/workbox-0c822247.js');
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {};
 
-  const title = data.title || 'Activscanio';
+  const title = data.title || 'Mushroom Bet';
   const options = {
     body: data.body || '',
     icon: data.icon || '/icons/icon-192x192.png',

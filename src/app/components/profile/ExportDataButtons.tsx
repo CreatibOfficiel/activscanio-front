@@ -43,13 +43,13 @@ export default function ExportDataButtons() {
         blob = new Blob([JSON.stringify(data, null, 2)], {
           type: 'application/json',
         });
-        filename = `activscanio-${type}-${Date.now()}.json`;
+        filename = `mushroom-bet-${type}-${Date.now()}.json`;
       } else {
         blob = await response.blob();
         const contentDisposition = response.headers.get('Content-Disposition');
         filename = contentDisposition
           ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-          : `activscanio-${type}-${Date.now()}.csv`;
+          : `mushroom-bet-${type}-${Date.now()}.csv`;
       }
 
       // Download the file
@@ -77,7 +77,7 @@ export default function ExportDataButtons() {
       </div>
 
       <p className="text-neutral-400 mb-6">
-        Download your ActivScanIO data in CSV or JSON format
+        Download your Mushroom Bet data in CSV or JSON format
       </p>
 
       <div className="space-y-3">

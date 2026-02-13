@@ -68,7 +68,7 @@ export default function ShareAchievementButton({
 
     // In a real implementation, you'd upload the image to a public URL
     // For now, we'll use a generic share message
-    const shareText = `I just unlocked the "${achievementName}" achievement on ActivScanIO! 🎉`;
+    const shareText = `I just unlocked the "${achievementName}" achievement on Mushroom Bet! 🎉`;
     const shareUrl = window.location.origin;
 
     let shareLink = '';
