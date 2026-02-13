@@ -102,7 +102,7 @@ const HelpPage: FC = () => {
             Une question ? Une suggestion ?
           </p>
           <a
-            href="mailto:feedback@mushroom-bet.app"
+            href="mailto:thibaud@auguste.io"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-white text-sm font-medium transition-colors"
           >
             <span>📬</span>
