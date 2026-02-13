@@ -131,7 +131,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
 
   const positions = competitor.recentPositions ?? [];
   const totalRaces = competitor.totalLifetimeRaces ?? competitor.raceCount ?? 0;
-  const wins = positions.filter((p) => p === 1).length;
+  const wins = competitor.totalWins ?? positions.filter((p) => p === 1).length;
 
   // Rank: prefer prop from parent (computed with ties), fallback to simple sort
   const currentRank = useMemo(() => {
