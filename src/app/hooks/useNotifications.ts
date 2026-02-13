@@ -114,10 +114,14 @@ export function useNotifications(): UseNotificationsReturn {
 
       if (!subscription) {
         const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!vapidPublicKey) {
+          console.error('NEXT_PUBLIC_VAPID_PUBLIC_KEY is not configured');
+          return false;
+        }
 
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey!),
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
         });
       }
 
