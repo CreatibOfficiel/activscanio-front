@@ -12,6 +12,7 @@ import {
 import Modal from "@/app/components/ui/Modal";
 import Badge from "@/app/components/ui/Badge";
 import Skeleton from "@/app/components/ui/Skeleton";
+import EloDeltaBadge from "@/app/components/race/EloDeltaBadge";
 
 interface Props {
   raceId: string;
@@ -181,9 +182,12 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
       ) : (
         <div className="space-y-6">
           {/* Date */}
-          <p className="text-sm text-neutral-400 text-center">
-            {formatRaceDateTime(raceEvent.date)}
-          </p>
+          <div className="text-center">
+            <p className="text-sm text-neutral-400">
+              {formatRaceDateTime(raceEvent.date)}
+            </p>
+            <div className="w-12 h-px bg-primary-500/30 mx-auto mt-2" />
+          </div>
 
           {/* Winner hero */}
           {winners.length > 0 && (
@@ -209,20 +213,23 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                   );
                 })}
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="gold" size="sm">
-                  {winners.length > 1 ? "1er ex-aequo" : "1er"}
-                </Badge>
-                <span className="text-sm text-neutral-300">
-                  · {winners[0].score} pts
-                </span>
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="gold" size="sm">
+                    {winners.length > 1 ? "1er ex-aequo" : "1er"}
+                  </Badge>
+                  <span className="text-sm text-neutral-300">
+                    · {winners[0].score} pts
+                  </span>
+                </div>
+                <EloDeltaBadge delta={winners[0].ratingDelta} size="md" />
               </div>
             </div>
           )}
 
           {/* Other participants */}
           {others.length > 0 && (
-            <div className="space-y-2">
+            <div className="divide-y divide-neutral-700/30">
               {others.map((res) => {
                 const comp = allCompetitors.find(
                   (c) => c.id === res.competitorId
@@ -236,7 +243,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                 return (
                   <div
                     key={comp.id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-700/30 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-700/30 transition-colors"
                   >
                     <Badge variant={variant} size="sm" className="w-7 text-center">
                       {res.rank12}
@@ -262,6 +269,10 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                       <span className="text-xs text-neutral-400 w-8 text-right tabular-nums">
                         {res.score} pts
                       </span>
+                    </div>
+                    {/* ELO delta */}
+                    <div className="w-16 shrink-0 flex justify-end">
+                      <EloDeltaBadge delta={res.ratingDelta} />
                     </div>
                   </div>
                 );
