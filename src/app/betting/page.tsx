@@ -225,16 +225,6 @@ const BettingPage: FC = () => {
           </Card>
         )}
 
-        {/* Betting deadline countdown */}
-        {currentWeek && currentWeek.status === BettingWeekStatus.OPEN && bettingDeadline && (
-          <Countdown
-            label="Fin des paris"
-            targetDate={bettingDeadline}
-            thresholds={{ warningSeconds: 86400, criticalSeconds: 7200 }}
-            expiredLabel="Paris fermés"
-          />
-        )}
-
         {/* Week Odds Preview */}
         {currentWeek && <WeekOddsPreview weekId={currentWeek.id} />}
 
