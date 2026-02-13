@@ -142,7 +142,7 @@ const OverviewTab: FC<OverviewTabProps> = ({
             />
             <StatCard
               label="Série de victoires"
-              value={`${competitorStats.winStreak} / ${competitorStats.bestWinStreak}`}
+              value={`${competitorStats.winStreak} (Record ${competitorStats.bestWinStreak})`}
               icon={<MdLocalFireDepartment className="text-orange-400" />}
               colorClass="text-orange-400"
               variant="compact"
