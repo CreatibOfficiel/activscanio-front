@@ -9,7 +9,7 @@ import {
   MdCheckCircle,
   MdDirectionsCar,
   MdSpeed,
-  MdTrendingUp,
+  MdLocalFireDepartment,
 } from 'react-icons/md';
 import { UserStats, UserAchievement } from '../../models/Achievement';
 import { AchievementGrid } from '../achievements';
@@ -17,10 +17,12 @@ import StatCard from '../ui/StatCard';
 
 // Type for competitor stats
 interface CompetitorStats {
-  rating: number;
+  conservativeScore: number;
   raceCount: number;
   avgRank12: number;
-  rd: number;
+  totalWins: number;
+  winStreak: number;
+  bestWinStreak: number;
 }
 
 interface OverviewTabProps {
@@ -118,7 +120,7 @@ const OverviewTab: FC<OverviewTabProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatCard
               label="Courses"
-              value={competitorStats.raceCount}
+              value={`${competitorStats.totalWins} gagnées / ${competitorStats.raceCount}`}
               icon={<MdDirectionsCar className="text-blue-400" />}
               variant="compact"
               animated
@@ -132,17 +134,17 @@ const OverviewTab: FC<OverviewTabProps> = ({
             />
             <StatCard
               label="ELO"
-              value={Math.round(competitorStats.rating)}
+              value={Math.round(competitorStats.conservativeScore)}
               icon={<MdSpeed className="text-blue-400" />}
               colorClass="text-blue-400"
               variant="compact"
               animated
             />
             <StatCard
-              label="RD"
-              value={Math.round(competitorStats.rd)}
-              icon={<MdTrendingUp className="text-neutral-400" />}
-              colorClass="text-neutral-400"
+              label="Série"
+              value={`${competitorStats.winStreak} / ${competitorStats.bestWinStreak}`}
+              icon={<MdLocalFireDepartment className="text-orange-400" />}
+              colorClass="text-orange-400"
               variant="compact"
               animated
             />

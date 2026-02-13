@@ -24,10 +24,12 @@ import { formatCompetitorName } from '../utils/formatters';
 
 // Type for competitor stats used in profile
 export interface CompetitorStats {
-  rating: number;
+  conservativeScore: number;
   raceCount: number;
   avgRank12: number;
-  rd: number;
+  totalWins: number;
+  winStreak: number;
+  bestWinStreak: number;
   playStreak: number;
   bestPlayStreak: number;
 }
@@ -97,10 +99,12 @@ const ProfilePage: FC = () => {
             const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
             const competitor = await competitorsRepo.fetchCompetitorById(userDataResult.competitorId);
             setCompetitorStats({
-              rating: competitor.rating,
+              conservativeScore: competitor.conservativeScore ?? Math.round(competitor.rating - 2 * competitor.rd),
               raceCount: competitor.raceCount || 0,
               avgRank12: competitor.avgRank12 || 0,
-              rd: competitor.rd,
+              totalWins: competitor.totalWins || 0,
+              winStreak: competitor.winStreak || 0,
+              bestWinStreak: competitor.bestWinStreak || 0,
               playStreak: competitor.playStreak ?? 0,
               bestPlayStreak: competitor.bestPlayStreak ?? 0,
             });
