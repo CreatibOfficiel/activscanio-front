@@ -1,5 +1,5 @@
 import { apiFetch } from '../utils/api-fetch';
-import { Bet, CreateBetDto } from '../models/Bet';
+import { Bet, BetStatus, CreateBetDto } from '../models/Bet';
 import { BettingWeek } from '../models/BettingWeek';
 import { CompetitorOdds, BettorRanking } from '../models/CompetitorOdds';
 
@@ -260,6 +260,42 @@ export class BettingRepository {
       return await response.json();
     } catch (error) {
       console.error('Error fetching weeks:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get community bets (all users, public endpoint)
+   */
+  static async getCommunityBets(
+    limit = 10,
+    offset = 0,
+    userId?: string,
+    status?: BetStatus
+  ): Promise<PaginatedResponse<Bet>> {
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      params.set('offset', String(offset));
+      if (userId) params.set('userId', userId);
+      if (status) params.set('status', status);
+
+      const response = await apiFetch(
+        `${API_BASE_URL}/betting/bets/community?${params.toString()}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch community bets: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching community bets:', error);
       throw error;
     }
   }

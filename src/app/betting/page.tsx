@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { BettingWeek, BettingWeekStatus } from '@/app/models/BettingWeek';
-import { Bet, BetStatus } from '@/app/models/Bet';
+import { Bet } from '@/app/models/Bet';
 import { BettorRanking } from '@/app/models/CompetitorOdds';
 import { Card, Badge, Button, Spinner, Countdown } from '@/app/components/ui';
 import { getBettingDeadline } from '@/app/tv/display/utils/deadlines';
@@ -15,11 +15,11 @@ import {
   MdHistory,
   MdLeaderboard,
   MdCheckCircle,
-  MdPending,
   MdTrendingUp,
   MdEmojiEvents
 } from 'react-icons/md';
 import WeekOddsPreview from '@/app/components/betting/WeekOddsPreview';
+import CommunityBetCard from '@/app/components/betting/CommunityBetCard';
 
 const BettingPage: FC = () => {
   const { getToken } = useAuth();
@@ -30,14 +30,19 @@ const BettingPage: FC = () => {
   const [currentBet, setCurrentBet] = useState<Bet | null>(null);
   const [recentBets, setRecentBets] = useState<Bet[]>([]);
   const [userRanking, setUserRanking] = useState<BettorRanking | null>(null);
+  const [internalUserId, setInternalUserId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
 
-      // Load current week
-      const week = await BettingRepository.getCurrentWeek();
+      // Load current week + community bets (public, no auth needed)
+      const [week, communityResponse] = await Promise.all([
+        BettingRepository.getCurrentWeek(),
+        BettingRepository.getCommunityBets(3, 0),
+      ]);
       setCurrentWeek(week);
+      setRecentBets(communityResponse.data);
 
       if (user) {
         const token = await getToken();
@@ -45,10 +50,7 @@ const BettingPage: FC = () => {
           // Load current bet
           const bet = await BettingRepository.getCurrentBet(user.id, token);
           setCurrentBet(bet);
-
-          // Load bet history (get last 3)
-          const historyResponse = await BettingRepository.getBetHistory(user.id, token, 3, 0);
-          setRecentBets(historyResponse.data);
+          if (bet) setInternalUserId(bet.userId);
 
           // Load user ranking for current month
           const now = new Date();
@@ -78,19 +80,6 @@ const BettingPage: FC = () => {
     () => (currentWeek?.startDate ? getBettingDeadline(currentWeek.startDate) : null),
     [currentWeek?.startDate]
   );
-
-  const getBetStatusIcon = (status: BetStatus) => {
-    switch (status) {
-      case BetStatus.WON:
-        return <MdCheckCircle className="text-green-400" />;
-      case BetStatus.LOST:
-        return <MdCheckCircle className="text-red-400" />;
-      case BetStatus.CANCELLED:
-        return <MdPending className="text-neutral-400" />;
-      default:
-        return <MdPending className="text-yellow-400" />;
-    }
-  };
 
   const formatWeekDates = (week: BettingWeek) => {
     const start = new Date(week.startDate);
@@ -263,7 +252,7 @@ const BettingPage: FC = () => {
           </Card>
         </div>
 
-        {/* Recent Bets */}
+        {/* Recent Community Bets */}
         {recentBets.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -274,35 +263,12 @@ const BettingPage: FC = () => {
             </div>
             <div className="space-y-2">
               {recentBets.map((bet) => (
-                <Card key={bet.id} className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getBetStatusIcon(bet.status)}
-                      <div>
-                        <p className="text-sm text-white">
-                          Pari du {new Date(bet.placedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                        </p>
-                        <p className="text-xs text-neutral-400">
-                          {bet.picks.length} pronostics
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {bet.status === BetStatus.WON && (
-                        <p className="text-sm text-green-400 font-medium">+{bet.pointsEarned || 0} pts</p>
-                      )}
-                      {bet.status === BetStatus.LOST && (
-                        <p className="text-sm text-red-400 font-medium">0 pts</p>
-                      )}
-                      {bet.status === BetStatus.PENDING && (
-                        <Badge variant="warning" size="sm">En attente</Badge>
-                      )}
-                      {bet.status === BetStatus.CANCELLED && (
-                        <Badge variant="default" size="sm">Annulé</Badge>
-                      )}
-                    </div>
-                  </div>
-                </Card>
+                <CommunityBetCard
+                  key={bet.id}
+                  bet={bet}
+                  isCurrentUser={!!internalUserId && bet.userId === internalUserId}
+                  variant="compact"
+                />
               ))}
             </div>
           </div>

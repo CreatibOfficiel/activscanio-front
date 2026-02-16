@@ -31,6 +31,23 @@ export interface BetPick {
   pointsEarned?: number;
 }
 
+export interface BetUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profilePictureUrl?: string;
+  level?: number;
+  currentTitle?: string | null;
+}
+
+export interface BetBettingWeek {
+  startDate: string;
+  endDate: string;
+  weekNumber: number;
+  year: number;
+  status: string;
+}
+
 export interface Bet {
   id: string;
   userId: string;
@@ -40,6 +57,8 @@ export interface Bet {
   status: BetStatus;
   pointsEarned?: number;
   picks: BetPick[];
+  user?: BetUser;
+  bettingWeek?: BetBettingWeek;
   achievementsUnlocked?: Array<{
     id: string;
     key: string;
