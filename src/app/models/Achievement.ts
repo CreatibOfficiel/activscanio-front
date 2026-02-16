@@ -13,8 +13,8 @@ export enum AchievementCategory {
  * Distinguishes between betting achievements and racing achievements
  */
 export enum AchievementDomain {
-  BETTING = 'betting',
-  RACING = 'racing',
+  BETTING = 'BETTING',
+  RACING = 'RACING',
 }
 
 /**

@@ -11,6 +11,7 @@ import { PageHeader } from '../components/ui';
 import {
   Achievement,
   AchievementCategory,
+  AchievementDomain,
   AchievementRarity,
 } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
@@ -35,6 +36,7 @@ const rarityMeta: Record<AchievementRarity, { label: string; color: string; bg: 
 
 // Filter types
 type FilterStatus = 'all' | 'unlocked' | 'locked';
+type FilterDomain = AchievementDomain | 'all';
 type FilterCategory = AchievementCategory | 'all';
 type FilterRarity = AchievementRarity | 'all';
 
@@ -46,6 +48,7 @@ const AchievementsPage: FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Filters using Radix Tabs state
+  const [selectedDomain, setSelectedDomain] = useState<FilterDomain>('all');
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
   const [selectedRarity, setSelectedRarity] = useState<FilterRarity>('all');
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>('all');
@@ -76,13 +79,14 @@ const AchievementsPage: FC = () => {
   // Filter achievements client-side
   const filteredAchievements = useMemo(() => {
     return achievements.filter((a) => {
+      if (selectedDomain !== 'all' && (a.domain || AchievementDomain.BETTING) !== selectedDomain) return false;
       if (selectedCategory !== 'all' && a.category !== selectedCategory) return false;
       if (selectedRarity !== 'all' && a.rarity !== selectedRarity) return false;
       if (selectedStatus === 'unlocked' && !a.isUnlocked) return false;
       if (selectedStatus === 'locked' && a.isUnlocked) return false;
       return true;
     });
-  }, [achievements, selectedCategory, selectedRarity, selectedStatus]);
+  }, [achievements, selectedDomain, selectedCategory, selectedRarity, selectedStatus]);
 
   // Stats
   const stats = useMemo(() => {
@@ -205,6 +209,34 @@ const AchievementsPage: FC = () => {
           className="mb-6 p-4 rounded-xl bg-neutral-800 border border-neutral-700"
         >
           <div className="flex flex-col gap-4">
+            {/* Row 0: Domain filter */}
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-medium text-neutral-400">Domaine:</span>
+              <Tabs.Root
+                value={selectedDomain}
+                onValueChange={(value) => setSelectedDomain(value as FilterDomain)}
+              >
+                <Tabs.List className="inline-flex p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
+                  {([
+                    { value: 'all' as FilterDomain, label: 'Tous', icon: '📋' },
+                    { value: AchievementDomain.BETTING as FilterDomain, label: 'Paris', icon: '🎰' },
+                    { value: AchievementDomain.RACING as FilterDomain, label: 'Courses', icon: '🏁' },
+                  ]).map(({ value, label, icon }) => (
+                    <Tabs.Trigger
+                      key={value}
+                      value={value}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+                        data-[state=active]:bg-primary-500 data-[state=active]:text-neutral-900
+                        data-[state=inactive]:text-neutral-400 data-[state=inactive]:hover:text-neutral-300"
+                    >
+                      <span>{icon}</span>
+                      <span>{label}</span>
+                    </Tabs.Trigger>
+                  ))}
+                </Tabs.List>
+              </Tabs.Root>
+            </div>
+
             {/* Row 1: Status filter */}
             <div className="flex flex-wrap items-center gap-4">
               <span className="text-sm font-medium text-neutral-400">Statut:</span>
@@ -359,6 +391,7 @@ const AchievementsPage: FC = () => {
                 </p>
                 <button
                   onClick={() => {
+                    setSelectedDomain('all');
                     setSelectedCategory('all');
                     setSelectedRarity('all');
                     setSelectedStatus('all');
@@ -434,6 +467,7 @@ const AchievementsPage: FC = () => {
                 </p>
                 <button
                   onClick={() => {
+                    setSelectedDomain('all');
                     setSelectedCategory('all');
                     setSelectedRarity('all');
                     setSelectedStatus('all');
@@ -467,6 +501,11 @@ const AchievementsPage: FC = () => {
                     participation_chain: '📅 Chaîne Régularité - Participation',
                     points_monthly_chain: '🎲 Chaîne Audace - Points Mensuels',
                     win_streak_chain: '🏅 Chaîne Classement - Séries de Victoires',
+                    race_wins_chain: '🏁 Courses - Victoires',
+                    race_participation_chain: '🏎️ Courses - Participation',
+                    elo_chain: '📈 Courses - Rating ELO',
+                    race_win_streak_chain: '🔥 Courses - Séries de Victoires',
+                    race_play_streak_chain: '📅 Courses - Assiduité',
                   };
 
                   return (
