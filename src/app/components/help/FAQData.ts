@@ -136,37 +136,41 @@ La cote utilisée est stockée pour chaque pick et visible dans l'historique.`,
     icon: '📊',
     title: 'Calcul des cotes',
     summary:
-      "Les cotes reflètent la probabilité estimée qu'un joueur finisse à une position précise. Elles sont dynamiques et évoluent après chaque course !",
+      "Les cotes sont disponibles dès le lundi matin et évoluent après chaque course. Elles utilisent un modèle statistique (Plackett-Luce) et une simulation Monte Carlo pour estimer la probabilité de chaque joueur à chaque position du podium.",
     points: [
-      "Cote différente pour chaque position : 1er > 2ème > 3ème",
-      "Être 1er est plus difficile, donc la cote est plus élevée",
-      "Cotes dynamiques : recalculées après chaque course",
-      "Cote verrouillée : votre pari garde la cote au moment où vous pariez",
-      "Les premiers à parier prennent plus de risques, mais peuvent avoir de meilleures cotes !",
-      "Joueurs en calibration (< 5 courses) ou inactifs non pariables",
+      "Cotes disponibles dès l'ouverture de la semaine (pas besoin d'attendre des courses)",
+      "Cote différente pour chaque position : 1er, 2ème, 3ème",
+      "Cotes dynamiques : recalculées automatiquement après chaque course",
+      "Cote verrouillée : votre pari garde la cote au moment où vous pariez (+ Best Odds Guaranteed)",
+      "Les favoris (ELO élevé, RD bas) ont les cotes les plus basses",
+      "Les outsiders (ELO bas ou incertitude élevée) ont les cotes les plus hautes",
+      "Joueurs en calibration (< 5 courses) ou inactifs (< 2 courses en 30j) non pariables",
     ],
-    technicalDetails: `Éligibilité pour être pariable :
-1. Calibration : minimum 5 courses à vie (jamais reset)
-2. Activité récente : minimum 2 courses dans les 14 derniers jours
-3. Activité hebdo : minimum 1 course cette semaine
+    technicalDetails: `Algorithme Plackett-Luce + Monte Carlo :
 
-Cotes dynamiques :
-• Recalculées après chaque course ajoutée
-• Reflètent l'état actuel du classement
-• Votre pari garde la cote au moment où vous l'avez placé
-• Les cotes peuvent baisser si un joueur performe bien
+1. Force Plackett-Luce :
+   • mu = (rating - 1500) / 173.72  (échelle logistique)
+   • phi = RD / 173.72
+   • g(phi) = 1 / sqrt(1 + 3×phi² / pi²)  (atténuation Glicko-2)
+   • alpha = exp(mu × g(phi))
+   → Plus le rating est élevé et le RD bas, plus alpha est grand
 
-Cotes par position :
-• Cote 1er = probabilité d'être exactement 1er
-• Cote 2ème = probabilité d'être exactement 2ème
-• Cote 3ème = probabilité d'être exactement 3ème
+2. Probabilité de victoire (softmax) :
+   • P_win(i) = alpha_i / somme(alpha_j)
 
-Facteurs de position (si sur le podium) :
-• Joueur fort : plus de chances d'être 1er (45/32/23%)
-• Joueur moyen : répartition équilibrée (33/35/32%)
-• Joueur faible : plus de chances d'être 3ème (22/33/45%)
+3. Simulation Monte Carlo (50 000 runs) :
+   • Pour chaque simulation, on tire un podium aléatoire
+   • Tirage proportionnel à alpha (sans remise)
+   • P(1er), P(2ème), P(3ème) = fréquence observée / 50 000
 
-Formule : Cote = base / (probabilité × facteur_position)`,
+4. Conversion en cotes décimales :
+   • Cote = 1 / probabilité
+   • Bornée entre 1.1x et 50x
+
+Quand les cotes changent :
+• Lundi 00:05 : cotes initiales (basées sur l'historique ELO)
+• Après chaque course : recalcul automatique (ELO mis à jour)
+• Dimanche 20:00 : dernier recalcul avant finalisation`,
   },
   {
     id: 'elo-ranking',
@@ -211,10 +215,10 @@ Score conservateur = Rating - 2×RD
       "Pour être pariable, un joueur doit être actif et avoir suffisamment d'historique. Cela évite les « snipers » qui arrivent ponctuellement.",
     points: [
       "Calibration : 5 courses minimum à vie pour être pariable",
-      "Activité : 2 courses minimum dans les 14 derniers jours",
-      "Semaine : au moins 1 course cette semaine",
+      "Activité : 2 courses minimum dans les 30 derniers jours",
       "Badge « En calibration (X/5) » affiché pour nouveaux joueurs",
       "Badge « Inactif » pour joueurs sans activité récente",
+      "Pas besoin d'avoir couru cette semaine : les cotes se basent sur tout l'historique",
     ],
     technicalDetails: `Règles d'éligibilité (toutes requises) :
 
@@ -223,16 +227,12 @@ Score conservateur = Rating - 2×RD
    • Ce compteur ne reset JAMAIS
    • But : éviter de parier sur des joueurs sans historique
 
-2. Présence récente (fenêtre glissante)
-   • Minimum 2 courses dans les 14 derniers jours
+2. Présence récente (fenêtre glissante de 30 jours)
+   • Minimum 2 courses dans les 30 derniers jours
    • Fenêtre calculée à partir d'aujourd'hui
    • But : éviter les « snipers » qui débarquent après une longue absence
 
-3. Activité hebdomadaire
-   • Minimum 1 course dans la semaine de paris en cours
-   • But : seuls les joueurs actifs cette semaine sont au podium
-
-Ordre de vérification : Calibration → Activité → Semaine
+Ordre de vérification : Calibration → Activité
 Premier échec = raison affichée dans l'interface`,
   },
   {
