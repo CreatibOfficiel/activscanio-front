@@ -161,13 +161,13 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   return (
     <Card
       variant={cardVariant}
-      className={`p-3 relative ${cardClass} ${effectiveDisabled ? 'opacity-50' : ''}`}
+      className={`p-3 relative overflow-visible ${cardClass} ${effectiveDisabled ? 'opacity-50' : ''}`}
       onClick={!effectiveDisabled ? onSelect : undefined}
       hover={!effectiveDisabled && !isSelected}
     >
       {/* Position indicator - top left */}
       {position && (
-        <div className="absolute top-2 left-2">
+        <div className="absolute -top-3 left-3 z-10">
           <Badge
             variant={position === 'first' ? 'gold' : position === 'second' ? 'silver' : 'bronze'}
             size="sm"
@@ -179,7 +179,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
 
       {/* Ineligibility badge - top left (when no position) */}
       {!position && ineligibilityBadge && (
-        <div className="absolute top-2 left-2">
+        <div className="absolute -top-3 left-3 z-10">
           <Badge variant={ineligibilityBadge.variant} size="sm">
             {ineligibilityBadge.icon}
             {ineligibilityBadge.label}
@@ -189,7 +189,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
 
       {/* Boost indicator - top right */}
       {isBoosted && (
-        <div className="absolute top-2 right-2">
+        <div className="absolute -top-3 right-3 z-10">
           <Badge variant="warning" size="sm">
             <MdBolt className="inline mr-1" />
             x2
@@ -199,7 +199,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
 
       {/* Form badge - top right (when no boost) */}
       {!isBoosted && formBadge && (
-        <div className="absolute top-2 right-2">
+        <div className="absolute -top-3 right-3 z-10">
           <Badge variant={formBadge.variant} size="sm">
             {formBadge.icon}
             {formBadge.label}
@@ -207,7 +207,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
         </div>
       )}
 
-      <div className={`flex items-center gap-3 ${position || ineligibilityBadge || formBadge || isBoosted ? 'pt-7' : ''}`}>
+      <div className="flex items-center gap-3">
         {/* Profile picture placeholder - reduced from 64px to 40px */}
         <div className="w-10 h-10 bg-neutral-700 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0">
           {competitorName.charAt(0)}

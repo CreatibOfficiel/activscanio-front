@@ -1,9 +1,12 @@
 "use client";
 
-import { FC, useEffect, useState } from 'react';
+import { FC, useContext, useEffect, useState } from 'react';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { CompetitorOdds } from '@/app/models/CompetitorOdds';
+import { Competitor } from '@/app/models/Competitor';
+import { AppContext } from '@/app/context/AppContext';
 import CompetitorOddsCard from './CompetitorOddsCard';
+import CompetitorDetailModal from '../competitor/CompetitorDetailModal';
 
 interface WeekOddsPreviewProps {
   weekId: string;
@@ -12,10 +15,17 @@ interface WeekOddsPreviewProps {
 const DEFAULT_VISIBLE = 5;
 
 const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
+  const { allCompetitors } = useContext(AppContext);
   const [odds, setOdds] = useState<CompetitorOdds[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [selectedCompetitor, setSelectedCompetitor] = useState<Competitor | null>(null);
+
+  const openDetail = (co: CompetitorOdds) => {
+    const full = allCompetitors.find(c => c.id === co.competitorId);
+    if (full) setSelectedCompetitor(full);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +86,7 @@ const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
 
       {!isLoading && odds.length > 0 && (
         <>
-          <div className="space-y-2">
+          <div className="space-y-4">
             {visibleOdds.map((competitorOdds) => (
               <CompetitorOddsCard
                 key={competitorOdds.competitorId}
@@ -87,6 +97,7 @@ const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
                 showBoostButton={false}
                 disabled={false}
                 showAllOdds={true}
+                onSelect={() => openDetail(competitorOdds)}
               />
             ))}
           </div>
@@ -100,6 +111,14 @@ const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
             </button>
           )}
         </>
+      )}
+
+      {selectedCompetitor && (
+        <CompetitorDetailModal
+          competitor={selectedCompetitor}
+          isOpen={true}
+          onClose={() => setSelectedCompetitor(null)}
+        />
       )}
     </section>
   );
