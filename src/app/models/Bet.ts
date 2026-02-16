@@ -55,6 +55,7 @@ export interface Bet {
 }
 
 export interface CreateBetDto {
+  bettingWeekId: string;
   picks: {
     competitorId: string;
     position: BetPosition;

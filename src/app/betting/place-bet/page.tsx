@@ -178,6 +178,7 @@ const PlaceBetPage: FC = () => {
       await BettingRepository.placeBet(
         user.id,
         {
+          bettingWeekId: currentWeek!.id,
           picks: [
             {
               competitorId: selection[BetPosition.FIRST]!,
