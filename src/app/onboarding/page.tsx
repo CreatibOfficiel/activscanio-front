@@ -20,16 +20,53 @@ enum OnboardingStep {
   CREATE_COMPETITOR = 'create',
 }
 
+const ONBOARDING_STORAGE_KEY = 'onboarding-progress';
+
+interface OnboardingProgress {
+  step: OnboardingStep;
+  wantsToPlay: boolean;
+  wantsToBet: boolean;
+  selectedCompetitorId?: string;
+  selectedCompetitorFirstName?: string;
+  selectedCompetitorLastName?: string;
+  newCompetitorFirstName?: string;
+  newCompetitorLastName?: string;
+  selectedBaseCharacterId?: string;
+  selectedVariantId?: string | null;
+}
+
+function saveOnboardingProgress(progress: OnboardingProgress): void {
+  try {
+    sessionStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(progress));
+  } catch { /* ignore */ }
+}
+
+function loadOnboardingProgress(): OnboardingProgress | null {
+  try {
+    const stored = sessionStorage.getItem(ONBOARDING_STORAGE_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as OnboardingProgress;
+    if (!Object.values(OnboardingStep).includes(parsed.step)) return null;
+    return parsed;
+  } catch { return null; }
+}
+
+function clearOnboardingProgress(): void {
+  try { sessionStorage.removeItem(ONBOARDING_STORAGE_KEY); } catch { /* ignore */ }
+}
+
 const OnboardingPage: FC = () => {
   const router = useRouter();
   const { getToken } = useAuth();
   const { user } = useUser();
 
-  const [step, setStep] = useState<OnboardingStep>(OnboardingStep.ROLE_SELECTION);
+  const savedProgress = useMemo(() => loadOnboardingProgress(), []);
+
+  const [step, setStep] = useState<OnboardingStep>(savedProgress?.step ?? OnboardingStep.ROLE_SELECTION);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [wantsToPlay, setWantsToPlay] = useState(false);
-  const [wantsToBet, setWantsToBet] = useState(false);
+  const [wantsToPlay, setWantsToPlay] = useState(savedProgress?.wantsToPlay ?? false);
+  const [wantsToBet, setWantsToBet] = useState(savedProgress?.wantsToBet ?? false);
   const isBettorOnly = wantsToBet && !wantsToPlay;
 
   // Search state for competitors
@@ -37,24 +74,51 @@ const OnboardingPage: FC = () => {
   const [allCompetitors, setAllCompetitors] = useState<CompetitorWithAvailability[]>([]);
   const [filteredCompetitors, setFilteredCompetitors] = useState<CompetitorWithAvailability[]>([]);
   const [suggestedCompetitor, setSuggestedCompetitor] = useState<CompetitorWithAvailability | null>(null);
-  const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorWithAvailability | null>(null);
+  const [selectedCompetitor, setSelectedCompetitor] = useState<CompetitorWithAvailability | null>(() => {
+    if (savedProgress?.selectedCompetitorId && savedProgress.selectedCompetitorFirstName) {
+      return {
+        id: savedProgress.selectedCompetitorId,
+        firstName: savedProgress.selectedCompetitorFirstName,
+        lastName: savedProgress.selectedCompetitorLastName ?? '',
+        profilePictureUrl: '',
+        isAvailable: true,
+      } as CompetitorWithAvailability;
+    }
+    return null;
+  });
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Create competitor state
-  const [newCompetitorFirstName, setNewCompetitorFirstName] = useState('');
-  const [newCompetitorLastName, setNewCompetitorLastName] = useState('');
+  const [newCompetitorFirstName, setNewCompetitorFirstName] = useState(savedProgress?.newCompetitorFirstName ?? '');
+  const [newCompetitorLastName, setNewCompetitorLastName] = useState(savedProgress?.newCompetitorLastName ?? '');
 
   // Character selection state
   const [baseCharacters, setBaseCharacters] = useState<BaseCharacterWithAvailability[]>([]);
   const [filteredCharacters, setFilteredCharacters] = useState<BaseCharacterWithAvailability[]>([]);
   const [characterSearchQuery, setCharacterSearchQuery] = useState('');
   const [selectedBaseCharacter, setSelectedBaseCharacter] = useState<BaseCharacterWithAvailability | null>(null);
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(savedProgress?.selectedVariantId ?? null);
   const debouncedCharacterSearch = useDebounce(characterSearchQuery, 300);
 
   // Ref and state for pre-selected character highlight
   const preSelectedCharacterRef = useRef<HTMLDivElement>(null);
   const [highlightPreSelected, setHighlightPreSelected] = useState(false);
+
+  // Persist onboarding progress to sessionStorage
+  useEffect(() => {
+    saveOnboardingProgress({
+      step,
+      wantsToPlay,
+      wantsToBet,
+      selectedCompetitorId: selectedCompetitor?.id,
+      selectedCompetitorFirstName: selectedCompetitor?.firstName,
+      selectedCompetitorLastName: selectedCompetitor?.lastName,
+      newCompetitorFirstName: newCompetitorFirstName || undefined,
+      newCompetitorLastName: newCompetitorLastName || undefined,
+      selectedBaseCharacterId: selectedBaseCharacter?.id,
+      selectedVariantId,
+    });
+  }, [step, wantsToPlay, wantsToBet, selectedCompetitor, newCompetitorFirstName, newCompetitorLastName, selectedBaseCharacter, selectedVariantId]);
 
   // Load base characters with availability status on mount
   useEffect(() => {
@@ -66,6 +130,14 @@ const OnboardingPage: FC = () => {
         const characters = await OnboardingRepository.getAllBaseCharactersWithStatus(token);
         setBaseCharacters(characters);
         setFilteredCharacters(characters);
+
+        // Restore selected base character from saved progress
+        if (savedProgress?.selectedBaseCharacterId) {
+          const savedChar = characters.find((c) => c.id === savedProgress.selectedBaseCharacterId);
+          if (savedChar) {
+            setSelectedBaseCharacter(savedChar);
+          }
+        }
       } catch (error) {
         console.error('Error loading base characters:', error);
         toast.error('Erreur lors du chargement des personnages');
@@ -73,7 +145,7 @@ const OnboardingPage: FC = () => {
     };
 
     loadBaseCharacters();
-  }, [getToken]);
+  }, [getToken, savedProgress]);
 
   // Load all competitors when entering search step
   useEffect(() => {
@@ -99,6 +171,18 @@ const OnboardingPage: FC = () => {
             setSuggestedCompetitor(match);
             setSelectedCompetitor(match);
             toast.success(`${match.firstName} ${match.lastName} pré-sélectionné !`);
+          } else if (savedProgress?.selectedCompetitorId) {
+            // Restore saved competitor selection from sessionStorage
+            const savedComp = results.find((c) => c.id === savedProgress.selectedCompetitorId);
+            if (savedComp) {
+              setSelectedCompetitor(savedComp);
+            }
+          }
+        } else if (savedProgress?.selectedCompetitorId) {
+          // Restore saved competitor selection from sessionStorage
+          const savedComp = results.find((c) => c.id === savedProgress.selectedCompetitorId);
+          if (savedComp) {
+            setSelectedCompetitor(savedComp);
           }
         }
       } catch (error) {
@@ -218,6 +302,7 @@ const OnboardingPage: FC = () => {
           { isSpectator: true, existingCompetitorId: competitor.id },
           token
         );
+        clearOnboardingProgress();
         toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses !');
         router.push('/');
       } catch (error) {
@@ -316,6 +401,7 @@ const OnboardingPage: FC = () => {
           },
           token
         );
+        clearOnboardingProgress();
         toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses !');
         router.push('/');
       } catch (error) {
@@ -358,6 +444,7 @@ const OnboardingPage: FC = () => {
       };
 
       await OnboardingRepository.completeOnboarding(dto, token);
+      clearOnboardingProgress();
       toast.success('Profil créé avec succès ! Bienvenue dans la compétition ! 🎉');
       router.push('/');
     } catch (error) {
@@ -450,7 +537,7 @@ const OnboardingPage: FC = () => {
                         Participer aux courses
                       </p>
                     </div>
-                    <div className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
+                    <div className={`w-6 h-6 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
                       wantsToPlay
                         ? 'border-primary-500 bg-primary-500'
                         : 'border-neutral-600'
@@ -481,7 +568,7 @@ const OnboardingPage: FC = () => {
                         Miser sur les résultats
                       </p>
                     </div>
-                    <div className={`w-6 h-6 rounded-full border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
+                    <div className={`w-6 h-6 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
                       wantsToBet
                         ? 'border-primary-500 bg-primary-500'
                         : 'border-neutral-600'
