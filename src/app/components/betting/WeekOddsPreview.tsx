@@ -57,7 +57,7 @@ const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
     <section>
       <h2 className="text-bold text-white mb-1">Cotes de la semaine</h2>
       <p className="text-xs text-neutral-400 mb-3">
-        Cote = points gagnes si le competiteur finit 1er. Plus la cote est haute, plus c&apos;est un outsider.
+        Cotes = points gagnes si le competiteur finit a cette position du podium.
       </p>
 
       {isLoading && (
@@ -86,7 +86,7 @@ const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
                 position={null}
                 showBoostButton={false}
                 disabled={false}
-                displayOdd={competitorOdds.oddFirst}
+                showAllOdds={true}
               />
             ))}
           </div>

@@ -17,6 +17,7 @@ interface CompetitorOddsCardProps {
   disabled?: boolean;
   showEligibilityBadge?: boolean;
   displayOdd?: number;
+  showAllOdds?: boolean;
 }
 
 /**
@@ -57,12 +58,12 @@ const getFormBadge = (
   avgRank12?: number
 ): { label: string; icon: ReactNode; variant: 'success' | 'error' } | null => {
   // Need both values to compare
-  if (!recentPositions || recentPositions.length === 0 || avgRank12 === undefined || avgRank12 === 0) {
+  if (!recentPositions || recentPositions.length < 3 || !avgRank12) {
     return null;
   }
 
   // Calculate recent average rank
-  const recentAvgRank = recentPositions.reduce((sum, pos) => sum + pos, 0) / recentPositions.length;
+  const recentAvgRank = recentPositions.reduce((sum, pos) => sum + Number(pos), 0) / recentPositions.length;
 
   // Compare to historical average (lower rank = better performance)
   if (recentAvgRank < avgRank12 - 0.5) {
@@ -96,6 +97,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   disabled = false,
   showEligibilityBadge = true,
   displayOdd: displayOddProp,
+  showAllOdds = false,
 }) => {
   // Check if competitor is ineligible
   const isIneligible = competitorOdds.isEligible === false;
@@ -205,7 +207,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
         </div>
       )}
 
-      <div className={`flex items-center gap-3 ${position || ineligibilityBadge || formBadge || isBoosted ? 'pt-6' : ''}`}>
+      <div className={`flex items-center gap-3 ${position || ineligibilityBadge || formBadge || isBoosted ? 'pt-7' : ''}`}>
         {/* Profile picture placeholder - reduced from 64px to 40px */}
         <div className="w-10 h-10 bg-neutral-700 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0">
           {competitorName.charAt(0)}
@@ -225,9 +227,26 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
 
         {/* Odds display - featured on the right */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xl font-bold text-primary-500">
-            {displayOdd.toFixed(2)}x
-          </span>
+          {showAllOdds && !position ? (
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="text-center min-w-[3rem]">
+                <div className="text-[10px] text-yellow-500 font-medium">1er</div>
+                <div className="text-sm font-bold text-white">{competitorOdds.oddFirst?.toFixed(2)}</div>
+              </div>
+              <div className="text-center min-w-[3rem]">
+                <div className="text-[10px] text-neutral-400 font-medium">2eme</div>
+                <div className="text-sm font-bold text-white">{competitorOdds.oddSecond?.toFixed(2)}</div>
+              </div>
+              <div className="text-center min-w-[3rem]">
+                <div className="text-[10px] text-amber-600 font-medium">3eme</div>
+                <div className="text-sm font-bold text-white">{competitorOdds.oddThird?.toFixed(2)}</div>
+              </div>
+            </div>
+          ) : (
+            <span className="text-xl font-bold text-primary-500">
+              {displayOdd.toFixed(2)}x
+            </span>
+          )}
 
           {/* Boost button */}
           {showBoostButton && isSelected && !isBoosted && (
