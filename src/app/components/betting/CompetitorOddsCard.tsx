@@ -117,13 +117,13 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
     if (position === 'first' && competitorOdds.oddFirst !== undefined) {
       return competitorOdds.oddFirst;
     }
-    if (position === 'second' && competitorOdds.oddSecond !== undefined) {
+    if (position === 'second') {
       return competitorOdds.oddSecond;
     }
-    if (position === 'third' && competitorOdds.oddThird !== undefined) {
+    if (position === 'third') {
       return competitorOdds.oddThird;
     }
-    return competitorOdds.odd;
+    return competitorOdds.oddFirst;
   };
 
   const displayOdd = displayOddProp ?? getDisplayOdd();

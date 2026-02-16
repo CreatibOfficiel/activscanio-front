@@ -36,7 +36,7 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
   // Filter competitors based on search
   // Sort by odds ascending (favorites first), then filter by search
   const sortedCompetitors = useMemo(() => {
-    return [...competitors].sort((a, b) => (a.oddFirst ?? a.odd) - (b.oddFirst ?? b.odd));
+    return [...competitors].sort((a, b) => a.oddFirst - b.oddFirst);
   }, [competitors]);
 
   const filteredCompetitors = useMemo(() => {

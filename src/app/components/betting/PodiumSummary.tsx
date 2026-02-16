@@ -47,10 +47,9 @@ const PodiumSummary: FC<PodiumSummaryProps> = ({
   };
 
   const getOddForPosition = (competitor: CompetitorOdds, position: BetPosition): number => {
-    if (position === BetPosition.FIRST && competitor.oddFirst !== undefined) return competitor.oddFirst;
-    if (position === BetPosition.SECOND && competitor.oddSecond !== undefined) return competitor.oddSecond;
-    if (position === BetPosition.THIRD && competitor.oddThird !== undefined) return competitor.oddThird;
-    return competitor.odd;
+    if (position === BetPosition.FIRST) return competitor.oddFirst;
+    if (position === BetPosition.SECOND) return competitor.oddSecond;
+    return competitor.oddThird;
   };
 
   return (

@@ -113,19 +113,10 @@ const PlaceBetPage: FC = () => {
     setError(null);
   };
 
-  // Helper to get the appropriate odd based on position
   const getOddForPosition = (competitor: CompetitorOdds, position: BetPosition): number => {
-    if (position === BetPosition.FIRST && competitor.oddFirst !== undefined) {
-      return competitor.oddFirst;
-    }
-    if (position === BetPosition.SECOND && competitor.oddSecond !== undefined) {
-      return competitor.oddSecond;
-    }
-    if (position === BetPosition.THIRD && competitor.oddThird !== undefined) {
-      return competitor.oddThird;
-    }
-    // Fallback to legacy odd field
-    return competitor.odd;
+    if (position === BetPosition.FIRST) return competitor.oddFirst;
+    if (position === BetPosition.SECOND) return competitor.oddSecond;
+    return competitor.oddThird;
   };
 
   const calculatePotentialGain = (): number => {
@@ -271,7 +262,7 @@ const PlaceBetPage: FC = () => {
             currentWeek && (
               <div className="flex items-center gap-2">
                 <Badge variant="primary" size="md">
-                  S{currentWeek.seasonWeekNumber ?? currentWeek.weekNumber}
+                  S{currentWeek.seasonWeekNumber}
                 </Badge>
                 {currentWeek.status === BettingWeekStatus.CALIBRATION ? (
                   <Badge variant="warning" size="md">

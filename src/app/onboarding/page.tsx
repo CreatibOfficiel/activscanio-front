@@ -162,11 +162,20 @@ const OnboardingPage: FC = () => {
         setAllCompetitors(results);
         setFilteredCompetitors(results);
 
-        // Pre-select competitor matching user's first name (only if available)
+        // Pre-select competitor matching user's name (only if available)
+        // Use both first + last name when multiple competitors share the same first name
         if (user?.firstName) {
-          const match = results.find(
+          const firstNameMatches = results.filter(
             (c) => c.firstName.toLowerCase() === user.firstName?.toLowerCase() && c.isAvailable
           );
+          let match: CompetitorWithAvailability | undefined;
+          if (firstNameMatches.length === 1) {
+            match = firstNameMatches[0];
+          } else if (firstNameMatches.length > 1 && user.lastName) {
+            match = firstNameMatches.find(
+              (c) => c.lastName.toLowerCase() === user.lastName?.toLowerCase()
+            );
+          }
           if (match) {
             setSuggestedCompetitor(match);
             setSelectedCompetitor(match);
@@ -194,7 +203,7 @@ const OnboardingPage: FC = () => {
     };
 
     loadAllCompetitors();
-  }, [step, getToken, user?.firstName, allCompetitors.length]);
+  }, [step, getToken, user?.firstName, user?.lastName, allCompetitors.length]);
 
   // Filter competitors locally based on search query
   useEffect(() => {

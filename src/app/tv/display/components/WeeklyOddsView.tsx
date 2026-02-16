@@ -40,7 +40,7 @@ export const WeeklyOddsView: FC<WeeklyOddsViewProps> = ({
   // Filter eligible only, sort by oddFirst ascending (favorites first)
   const sortedOdds = [...odds]
     .filter((o) => o.isEligible !== false)
-    .sort((a, b) => (a.oddFirst ?? a.odd) - (b.oddFirst ?? b.odd));
+    .sort((a, b) => (a.oddFirst) - (b.oddFirst));
 
   if (sortedOdds.length === 0) {
     return (
@@ -54,7 +54,7 @@ export const WeeklyOddsView: FC<WeeklyOddsViewProps> = ({
 
   const top3 = sortedOdds.slice(0, 3);
   const others = sortedOdds.slice(3, 15);
-  const maxOdd = Math.max(...sortedOdds.map((o) => o.oddFirst ?? o.odd));
+  const maxOdd = Math.max(...sortedOdds.map((o) => o.oddFirst));
 
   const podiumItems = top3.map((o, i) => ({
     id: o.competitorId,
@@ -64,7 +64,7 @@ export const WeeklyOddsView: FC<WeeklyOddsViewProps> = ({
       o.competitorName
     ),
     imageUrl: o.competitor?.profilePictureUrl,
-    score: o.oddFirst ?? o.odd,
+    score: o.oddFirst,
     scoreLabel: "x",
     subtitle: `ELO ${Math.round(o.metadata?.elo ?? 0)}`,
     rank: i + 1,
@@ -114,7 +114,7 @@ export const WeeklyOddsView: FC<WeeklyOddsViewProps> = ({
                   o.competitorName
                 ),
                 imageUrl: o.competitor?.profilePictureUrl,
-                score: o.oddFirst ?? o.odd,
+                score: o.oddFirst,
                 scoreLabel: "x",
                 subtitle: `ELO ${Math.round(o.metadata?.elo ?? 0)}`,
                 maxScore: maxOdd,

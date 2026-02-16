@@ -41,7 +41,7 @@ const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
             const aEligible = a.isEligible !== false;
             const bEligible = b.isEligible !== false;
             if (aEligible !== bEligible) return aEligible ? -1 : 1;
-            return (a.oddFirst ?? a.odd) - (b.oddFirst ?? b.odd);
+            return a.oddFirst - b.oddFirst;
           });
           setOdds(sorted);
         }

@@ -10,11 +10,9 @@ export interface CompetitorOdds {
   competitorId: string;
   /** @deprecated Use competitor.firstName/lastName instead */
   competitorName?: string;
-  /** @deprecated Use oddFirst, oddSecond, oddThird instead */
-  odd: number;
-  oddFirst?: number;
-  oddSecond?: number;
-  oddThird?: number;
+  oddFirst: number;
+  oddSecond: number;
+  oddThird: number;
   probability?: number;
   isEligible?: boolean;
   ineligibilityReason?: IneligibilityReason;

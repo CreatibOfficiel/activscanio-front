@@ -266,7 +266,7 @@ const SeasonDetailPage: FC = () => {
                   <Card key={week.id} className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-bold text-white">
-                        Semaine {week.seasonWeekNumber ?? week.weekNumber}
+                        Semaine {week.seasonWeekNumber}
                       </h3>
                       <Badge
                         variant={week.status === 'finalized' ? 'success' : 'default'}
