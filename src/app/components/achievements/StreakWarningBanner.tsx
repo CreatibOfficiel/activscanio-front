@@ -89,7 +89,7 @@ const StreakWarningBanner: FC<StreakWarningBannerProps> = ({
 };
 
 /**
- * Check if the betting week closes within 24 hours (Thursday = urgent).
+ * Check if the betting week closes within 24 hours (Monday deadline).
  */
 function isClosingSoon(weekClosesAt: string): boolean {
   const closes = new Date(weekClosesAt);

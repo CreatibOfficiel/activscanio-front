@@ -1,12 +1,12 @@
 /**
- * Calculate the betting deadline (Thursday 23:59 UTC) from a week's start date.
- * The startDate is the Monday of the betting week, so deadline = startDate + 3 days + 23h59m59s.
+ * Calculate the betting deadline (Tuesday 00:00 UTC = Monday midnight) from a week's start date.
+ * The startDate is the Monday of the betting week, so deadline = startDate + 1 day at 00:00.
  */
 export function getBettingDeadline(weekStartDate: string): Date {
   const start = new Date(weekStartDate);
   const deadline = new Date(start);
-  deadline.setUTCDate(deadline.getUTCDate() + 3); // Monday -> Thursday
-  deadline.setUTCHours(23, 59, 59, 999);
+  deadline.setUTCDate(deadline.getUTCDate() + 1); // Monday -> Tuesday
+  deadline.setUTCHours(0, 0, 0, 0);
   return deadline;
 }
 

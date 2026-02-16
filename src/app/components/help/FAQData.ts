@@ -40,16 +40,16 @@ export const faqSections: FAQSection[] = [
     points: [
       "Nouvelle semaine de paris chaque lundi à minuit",
       "1ère semaine du mois = Calibration (pas de paris, ELO se stabilise)",
-      "2ème semaine et + = Paris ouverts du lundi 00h00 au jeudi 23h59",
-      "Vendredi, samedi, dimanche = Surprise ! Les courses continuent mais les paris sont fermés",
+      "2ème semaine et + = Paris ouverts le lundi, de 00h00 a minuit",
+      "Mardi au dimanche = Surprise ! Les courses continuent mais les paris sont fermes",
       "Les résultats et points sont calculés le dimanche à 20h",
       "Archive mensuelle le 1er de chaque mois avec soft reset ELO",
     ],
     technicalDetails: `Cycle hebdomadaire automatique :
 • Semaines ISO (lundi = jour 1)
 • CALIBRATION : 1ère semaine du mois (pas de paris)
-• OPEN : du lundi 00:00 au jeudi 23:59
-• CLOSED : jeudi 23:59 → dimanche 20:00 (3 jours d'incertitude)
+• OPEN : lundi 00:00 → mardi 00:00 UTC (lundi minuit)
+• CLOSED : mardi 00:00 → dimanche 20:00 (6 jours d'incertitude)
 • FINALIZED : dimanche 20:00+ (résultats disponibles)
 
 Soft Reset mensuel (1er du mois) :

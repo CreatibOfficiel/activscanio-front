@@ -71,8 +71,8 @@ const HelpPage: FC = () => {
           <div className="p-4 rounded-xl bg-neutral-800 border border-neutral-700">
             <div className="text-2xl mb-2">💡</div>
             <p className="text-sm text-neutral-300">
-              Pariez <span className="text-primary-400 font-semibold">du lundi au jeudi</span> avant
-              23h59 pour participer !
+              Pariez <span className="text-primary-400 font-semibold">le lundi</span> avant
+              minuit pour participer !
             </p>
           </div>
           <div className="p-4 rounded-xl bg-neutral-800 border border-neutral-700">
