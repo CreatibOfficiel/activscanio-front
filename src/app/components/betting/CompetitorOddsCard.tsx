@@ -41,12 +41,6 @@ const getIneligibilityBadge = (
         icon: <MdSnooze className="inline mr-1" />,
         variant: 'default',
       };
-    case 'no_races_this_week':
-      return {
-        label: 'Pas de course cette semaine',
-        icon: <MdSnooze className="inline mr-1" />,
-        variant: 'default',
-      };
     default:
       return null;
   }

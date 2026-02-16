@@ -3,8 +3,7 @@
  */
 export type IneligibilityReason =
   | 'calibrating' // Less than 5 total lifetime races
-  | 'inactive' // Less than 2 races in last 14 days
-  | 'no_races_this_week' // No races in current betting week
+  | 'inactive' // Less than 2 races in 30-day rolling window
   | null; // Eligible
 
 export interface CompetitorOdds {

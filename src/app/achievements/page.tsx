@@ -14,7 +14,7 @@ import {
   AchievementRarity,
 } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
-import { AchievementGrid, CollapsibleCategorySection } from '../components/achievements';
+import { AchievementCard, AchievementGrid, CollapsibleCategorySection } from '../components/achievements';
 import AchievementChain from '../components/achievements/AchievementChain';
 
 // Category metadata for display
@@ -380,15 +380,9 @@ const AchievementsPage: FC = () => {
                     key={achievement.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    className="h-full"
                   >
-                    <div className="h-full">
-                      {/* Using AchievementCard from the grid */}
-                      <AchievementGrid
-                        achievements={[achievement]}
-                        loading={false}
-                        emptyMessage=""
-                      />
-                    </div>
+                    <AchievementCard achievement={achievement} />
                   </motion.div>
                 ))}
               </motion.div>
