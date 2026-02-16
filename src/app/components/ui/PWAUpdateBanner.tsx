@@ -47,13 +47,13 @@ export function PWAUpdateBanner() {
           {/* Actions */}
           <button
             onClick={() => updateServiceWorker()}
-            className="px-3 py-1.5 bg-primary-500 text-neutral-900 rounded-lg font-semibold text-xs whitespace-nowrap hover:bg-primary-500/90 transition-colors"
+            className="px-3 py-1.5 bg-primary-500 text-neutral-900 rounded-lg font-semibold text-xs whitespace-nowrap hover:bg-primary-500/90 transition-colors cursor-pointer"
           >
             Mettre à jour
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="p-1.5 text-neutral-400 hover:text-white transition-colors flex-shrink-0"
+            className="p-1.5 text-neutral-400 hover:text-white transition-colors flex-shrink-0 cursor-pointer"
             aria-label="Fermer"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
