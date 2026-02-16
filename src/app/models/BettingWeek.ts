@@ -8,6 +8,7 @@ export enum BettingWeekStatus {
 export interface BettingWeek {
   id: string;
   weekNumber: number;
+  seasonWeekNumber?: number;
   year: number;
   month: number;
   startDate: string;

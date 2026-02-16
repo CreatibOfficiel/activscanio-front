@@ -5,7 +5,6 @@ import { CompetitorOdds } from '@/app/models/CompetitorOdds';
 import { BetPosition } from '@/app/models/Bet';
 import { Input } from '@/app/components/ui';
 import { MdSearch, MdClose } from 'react-icons/md';
-import PodiumHeader from './PodiumHeader';
 import PodiumSummary from './PodiumSummary';
 import PodiumCompetitorList from './PodiumCompetitorList';
 import PodiumEmptyState from './PodiumEmptyState';
@@ -35,18 +34,23 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter competitors based on search
+  // Sort by odds ascending (favorites first), then filter by search
+  const sortedCompetitors = useMemo(() => {
+    return [...competitors].sort((a, b) => (a.oddFirst ?? a.odd) - (b.oddFirst ?? b.odd));
+  }, [competitors]);
+
   const filteredCompetitors = useMemo(() => {
     if (!searchQuery.trim()) {
-      return competitors;
+      return sortedCompetitors;
     }
     const query = searchQuery.toLowerCase().trim();
-    return competitors.filter((c) => {
+    return sortedCompetitors.filter((c) => {
       const name = c.competitorName?.toLowerCase() || '';
       const firstName = c.competitor?.firstName?.toLowerCase() || '';
       const lastName = c.competitor?.lastName?.toLowerCase() || '';
       return name.includes(query) || firstName.includes(query) || lastName.includes(query);
     });
-  }, [competitors, searchQuery]);
+  }, [sortedCompetitors, searchQuery]);
 
   const handleSelectCompetitor = (competitorId: string) => {
     if (disabled) return;
@@ -107,40 +111,44 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
     setCurrentPosition(position);
   };
 
-  const selectedCount = Object.keys(selection).length;
+  const selectedCount = Object.values(selection).filter(Boolean).length;
   const isComplete = selectedCount === 3;
   const canBoost = isComplete && !boostedCompetitorId && boostAvailable;
 
+  // Dynamic status text
+  const getStatusText = (): string => {
+    if (selectedCount === 0) return 'Choisissez le 1er du podium';
+    if (selectedCount === 1) return '1/3 — Choisissez le 2ème';
+    if (selectedCount === 2) return '2/3 — Choisissez le 3ème';
+    if (isComplete && canBoost) return 'Podium complet ! Boost x2 disponible';
+    return 'Podium complet !';
+  };
+
   return (
     <div className="space-y-4">
-      {/* PodiumHeader - scrolls away */}
-      <PodiumHeader
-        selectedCount={selectedCount}
-        isComplete={isComplete}
-        currentPosition={currentPosition}
-        selection={selection}
-        disabled={disabled}
-        onChangePosition={handleChangePosition}
-        onReset={handleReset}
-      />
+      {/* Sticky header: context line + pills + search */}
+      <div className="sticky top-0 z-20 backdrop-blur-sm bg-neutral-900/95 -mx-4 px-4 py-3 border-b border-neutral-800">
+        {/* Context line */}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sub text-neutral-400" role="status" aria-live="polite">
+            {getStatusText()}
+          </span>
+          {selectedCount > 0 && (
+            <button
+              onClick={handleReset}
+              disabled={disabled}
+              className="text-sub text-neutral-500 hover:text-white transition-colors disabled:opacity-50"
+            >
+              Réinitialiser
+            </button>
+          )}
+        </div>
 
-      {/* Full PodiumSummary - scrolls away */}
-      <PodiumSummary
-        selection={selection}
-        competitors={competitors}
-        boostedCompetitorId={boostedCompetitorId}
-        canBoost={canBoost}
-      />
-
-      {/* Sticky header: compact summary + search */}
-      <div className="sticky top-0 z-20 bg-neutral-900 -mx-4 px-4 py-3 border-b border-neutral-800">
         {/* Compact summary pills */}
         <PodiumSummary
           selection={selection}
           competitors={competitors}
           boostedCompetitorId={boostedCompetitorId}
-          canBoost={canBoost}
-          compact
           currentPosition={currentPosition}
           onChangePosition={handleChangePosition}
         />

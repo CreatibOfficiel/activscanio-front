@@ -2,7 +2,7 @@
 
 import { FC, ReactNode, useMemo } from 'react';
 import { CompetitorOdds, IneligibilityReason } from '@/app/models/CompetitorOdds';
-import { Card, Badge } from '@/app/components/ui';
+import { Card } from '@/app/components/ui';
 import { MdBolt, MdSchedule, MdSnooze, MdTrendingUp, MdTrendingDown } from 'react-icons/md';
 import { formatCompetitorName } from '@/app/utils/formatters';
 
@@ -20,71 +20,64 @@ interface CompetitorOddsCardProps {
   showAllOdds?: boolean;
 }
 
-/**
- * Get display info for ineligibility reason
- */
-const getIneligibilityBadge = (
+const getIneligibilityInfo = (
   reason: IneligibilityReason,
   calibrationProgress?: number
-): { label: string; icon: ReactNode; variant: 'warning' | 'default' } | null => {
+): { label: string; icon: ReactNode; className: string } | null => {
   if (!reason) return null;
 
   switch (reason) {
     case 'calibrating':
       return {
-        label: `En calibration (${calibrationProgress ?? 0}/5)`,
-        icon: <MdSchedule className="inline mr-1" />,
-        variant: 'warning',
+        label: `Calibration ${calibrationProgress ?? 0}/5`,
+        icon: <MdSchedule className="text-xs" />,
+        className: 'text-yellow-500 bg-yellow-500/10',
       };
     case 'inactive':
       return {
         label: 'Inactif',
-        icon: <MdSnooze className="inline mr-1" />,
-        variant: 'default',
+        icon: <MdSnooze className="text-xs" />,
+        className: 'text-neutral-400 bg-neutral-700',
       };
     default:
       return null;
   }
 };
 
-/**
- * Get form badge based on relative performance
- * Compare recent average rank (last 5 races) to historical average (avgRank12)
- * - recentAvgRank < avgRank12 - 0.5 = "En forme" (performing better than usual)
- * - recentAvgRank > avgRank12 + 0.5 = "En difficulte" (performing worse than usual)
- */
-const getFormBadge = (
+const getFormInfo = (
   recentPositions?: number[],
   avgRank12?: number
-): { label: string; icon: ReactNode; variant: 'success' | 'error' } | null => {
-  // Need both values to compare
+): { label: string; icon: ReactNode; className: string } | null => {
   if (!recentPositions || recentPositions.length < 3 || !avgRank12) {
     return null;
   }
 
-  // Calculate recent average rank
   const recentAvgRank = recentPositions.reduce((sum, pos) => sum + Number(pos), 0) / recentPositions.length;
 
-  // Compare to historical average (lower rank = better performance)
   if (recentAvgRank < avgRank12 - 0.5) {
     return {
       label: 'En forme',
-      icon: <MdTrendingUp className="inline mr-1" />,
-      variant: 'success',
+      icon: <MdTrendingUp className="text-xs" />,
+      className: 'text-success-500 bg-success-500/10',
     };
   }
 
   if (recentAvgRank > avgRank12 + 0.5) {
     return {
-      label: 'En difficulte',
-      icon: <MdTrendingDown className="inline mr-1" />,
-      variant: 'error',
+      label: 'En baisse',
+      icon: <MdTrendingDown className="text-xs" />,
+      className: 'text-error-500 bg-error-500/10',
     };
   }
 
   return null;
 };
 
+const positionEmojis: Record<string, string> = {
+  first: '🥇',
+  second: '🥈',
+  third: '🥉',
+};
 
 const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   competitorOdds,
@@ -99,46 +92,27 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   displayOdd: displayOddProp,
   showAllOdds = false,
 }) => {
-  // Check if competitor is ineligible
   const isIneligible = competitorOdds.isEligible === false;
-  const ineligibilityBadge = showEligibilityBadge
-    ? getIneligibilityBadge(
+  const ineligibilityInfo = showEligibilityBadge
+    ? getIneligibilityInfo(
         competitorOdds.ineligibilityReason ?? null,
         competitorOdds.calibrationProgress
       )
     : null;
 
-  // Get form badge (relative to player's own average)
   const recentPositions = competitorOdds.competitor?.recentPositions;
   const avgRank12 = competitorOdds.competitor?.avgRank12;
-  const formBadge = useMemo(
-    () => getFormBadge(recentPositions, avgRank12),
+  const formInfo = useMemo(
+    () => getFormInfo(recentPositions, avgRank12),
     [recentPositions, avgRank12]
   );
 
-  // Get competitor name using standardized format
   const competitorName = formatCompetitorName(
     competitorOdds.competitor?.firstName,
     competitorOdds.competitor?.lastName,
     competitorOdds.competitorName
   );
 
-  const positionColors = {
-    first: 'border-gold-500 bg-gold-500/10',
-    second: 'border-silver-500 bg-silver-500/10',
-    third: 'border-bronze-500 bg-bronze-500/10',
-  };
-
-  const positionLabels = {
-    first: '1er',
-    second: '2ème',
-    third: '3ème',
-  };
-
-  const cardVariant = isSelected && position ? 'primary' : 'default';
-  const cardClass = position ? positionColors[position] : '';
-
-  // Get the appropriate odd based on position
   const getDisplayOdd = (): number => {
     if (position === 'first' && competitorOdds.oddFirst !== undefined) {
       return competitorOdds.oddFirst;
@@ -149,86 +123,78 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
     if (position === 'third' && competitorOdds.oddThird !== undefined) {
       return competitorOdds.oddThird;
     }
-    // Fallback to legacy odd field
     return competitorOdds.odd;
   };
 
   const displayOdd = displayOddProp ?? getDisplayOdd();
-
-  // Determine if card should be disabled due to ineligibility
   const effectiveDisabled = disabled || isIneligible;
+
+  // Card border styling based on selection state
+  const cardClass = isSelected && position
+    ? 'ring-1 ring-primary-500/40 bg-primary-500/5'
+    : '';
 
   return (
     <Card
-      variant={cardVariant}
-      className={`p-3 relative overflow-visible ${cardClass} ${effectiveDisabled ? 'opacity-50' : ''}`}
+      variant="default"
+      className={`p-3 ${cardClass} ${effectiveDisabled ? 'opacity-50' : ''}`}
       onClick={!effectiveDisabled ? onSelect : undefined}
       hover={!effectiveDisabled && !isSelected}
     >
-      {/* Position indicator - top left */}
-      {position && (
-        <div className="absolute -top-3 left-3 z-10">
-          <Badge
-            variant={position === 'first' ? 'gold' : position === 'second' ? 'silver' : 'bronze'}
-            size="sm"
-          >
-            {positionLabels[position]}
-          </Badge>
-        </div>
-      )}
-
-      {/* Ineligibility badge - top left (when no position) */}
-      {!position && ineligibilityBadge && (
-        <div className="absolute -top-3 left-3 z-10">
-          <Badge variant={ineligibilityBadge.variant} size="sm">
-            {ineligibilityBadge.icon}
-            {ineligibilityBadge.label}
-          </Badge>
-        </div>
-      )}
-
-      {/* Boost indicator - top right */}
-      {isBoosted && (
-        <div className="absolute -top-3 right-3 z-10">
-          <Badge variant="warning" size="sm">
-            <MdBolt className="inline mr-1" />
-            x2
-          </Badge>
-        </div>
-      )}
-
-      {/* Form badge - top right (when no boost) */}
-      {!isBoosted && formBadge && (
-        <div className="absolute -top-3 right-3 z-10">
-          <Badge variant={formBadge.variant} size="sm">
-            {formBadge.icon}
-            {formBadge.label}
-          </Badge>
-        </div>
-      )}
-
       <div className="flex items-center gap-3">
-        {/* Profile picture placeholder - reduced from 64px to 40px */}
-        <div className="w-10 h-10 bg-neutral-700 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0">
-          {competitorName.charAt(0)}
+        {/* Avatar with position emoji overlay */}
+        <div className="relative w-10 h-10 flex-shrink-0">
+          <div className="w-10 h-10 bg-neutral-700 rounded-full flex items-center justify-center text-base font-bold">
+            {competitorName.charAt(0)}
+          </div>
+          {position && (
+            <span className="absolute -bottom-1 -right-1 text-sm leading-none" aria-label={`Position ${position}`}>
+              {positionEmojis[position]}
+            </span>
+          )}
         </div>
 
+        {/* Name + metadata row */}
         <div className="flex-1 min-w-0">
-          {/* Name - more prominent */}
-          <h3 className="text-base font-semibold text-white truncate">{competitorName}</h3>
+          {/* Name line */}
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-base font-semibold text-white truncate">{competitorName}</h3>
+            {isBoosted && (
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-bold text-yellow-500 bg-yellow-500/10">
+                <MdBolt className="text-xs" />
+                x2
+              </span>
+            )}
+          </div>
 
-          {/* Stats - smaller and muted */}
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          {/* Metadata line: ELO + inline pills */}
+          <div className="flex items-center gap-1.5 mt-0.5">
             <span className="text-xs text-neutral-500">
               ELO {Math.round(competitorOdds.metadata?.elo ?? 0)}
             </span>
+
+            {/* Form indicator (inline pill) */}
+            {formInfo && (
+              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium ${formInfo.className}`}>
+                {formInfo.icon}
+                {formInfo.label}
+              </span>
+            )}
+
+            {/* Ineligibility indicator (inline pill) */}
+            {!position && ineligibilityInfo && (
+              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium ${ineligibilityInfo.className}`}>
+                {ineligibilityInfo.icon}
+                {ineligibilityInfo.label}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Odds display - featured on the right */}
+        {/* Right side: Odds + Boost */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {showAllOdds && !position ? (
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-3">
               <div className="text-center min-w-[3rem]">
                 <div className="text-[10px] text-yellow-500 font-medium">1er</div>
                 <div className="text-sm font-bold text-white">{competitorOdds.oddFirst?.toFixed(2)}</div>

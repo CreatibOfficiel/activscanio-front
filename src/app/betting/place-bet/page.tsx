@@ -254,6 +254,7 @@ const PlaceBetPage: FC = () => {
   }
 
   const potentialGain = calculatePotentialGain();
+  const selectedCount = Object.values(selection).filter(Boolean).length;
   const isSelectionComplete = selection[BetPosition.FIRST] && selection[BetPosition.SECOND] && selection[BetPosition.THIRD];
 
   return (
@@ -264,11 +265,12 @@ const PlaceBetPage: FC = () => {
           variant="flow"
           title="Placer un pari"
           backHref="/betting"
+          progress={{ current: selectedCount, total: 3 }}
           rightAction={
             currentWeek && (
               <div className="flex items-center gap-2">
                 <Badge variant="primary" size="md">
-                  S{currentWeek.weekNumber}
+                  S{currentWeek.seasonWeekNumber ?? currentWeek.weekNumber}
                 </Badge>
                 {currentWeek.status === BettingWeekStatus.CALIBRATION ? (
                   <Badge variant="warning" size="md">

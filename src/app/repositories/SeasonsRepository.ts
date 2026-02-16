@@ -40,6 +40,7 @@ export interface ArchivedBettorRanking {
 export interface SeasonBettingWeek {
   id: string;
   weekNumber: number;
+  seasonWeekNumber?: number;
   year: number;
   month: number;
   startDate: string;
