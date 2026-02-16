@@ -16,6 +16,8 @@ export function PWAUpdateBanner() {
         if (prev <= 1) {
           clearInterval(interval);
           updateServiceWorker();
+          // Fallback: si le SW ne déclenche pas le reload après 3s, forcer
+          setTimeout(() => window.location.reload(), 3000);
           return 0;
         }
         return prev - 1;
@@ -40,7 +42,11 @@ export function PWAUpdateBanner() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white truncate">Nouvelle version disponible</p>
-              <p className="text-xs text-neutral-400">{countdown}s</p>
+              <p className="text-xs text-neutral-400">
+                {countdown > 0
+                  ? `Rafraîchissement auto dans ${countdown}s`
+                  : 'Rafraîchissement en cours...'}
+              </p>
             </div>
           </div>
 

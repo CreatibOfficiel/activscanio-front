@@ -30,9 +30,8 @@ export function usePWAUpdate(): PWAUpdateState {
     });
 
     wb.addEventListener('controlling', () => {
-      console.log('[PWA] Nouveau SW actif');
-      // Ne pas forcer le reload - laisser le banner gerer
-      setUpdateAvailable(true);
+      console.log('[PWA] Nouveau SW actif, rechargement...');
+      window.location.reload();
     });
 
     let lastUpdateCheck = 0;
@@ -66,6 +65,11 @@ export function usePWAUpdate(): PWAUpdateState {
   }, []);
 
   const updateServiceWorker = useCallback(() => {
+    // Listen for the new SW to take control, then reload
+    navigator.serviceWorker?.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+
     navigator.serviceWorker?.getRegistration().then((registration) => {
       if (registration?.waiting) {
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
