@@ -15,35 +15,9 @@ import { StreakWarningBanner } from "./components/achievements";
 import {
   ElevatedPodium,
   LeaderboardRow,
-  PeriodTabs,
-  Period,
 } from "./components/leaderboard";
 import { TrendDirection } from "./components/leaderboard/TrendIndicator";
 import { computeRanksWithTies } from "./utils/rankings";
-
-const DAYS_THRESHOLD_WEEK = 7;
-const DAYS_THRESHOLD_MONTH = 30;
-
-const filterRecentCompetitors = (
-  competitors: Competitor[],
-  daysAgo: number | null
-): Competitor[] => {
-  if (daysAgo === null) {
-    // All-time: return all with at least one race
-    return competitors.filter((c) => c.raceCount && c.raceCount > 0);
-  }
-
-  const threshold = new Date();
-  threshold.setDate(threshold.getDate() - daysAgo);
-
-  return competitors.filter(
-    (c) =>
-      c.raceCount &&
-      c.raceCount > 0 &&
-      c.lastRaceDate &&
-      new Date(c.lastRaceDate) > threshold
-  );
-};
 
 const sortByConservativeScore = (competitors: Competitor[]): Competitor[] => {
   return [...competitors].sort((a, b) => {
@@ -102,7 +76,6 @@ export default function Home() {
   const { isLoading, allCompetitors } = useContext(AppContext);
   const { isSignedIn, getToken } = useAuth();
   const [now, setNow] = useState<Date | null>(null);
-  const [activePeriod, setActivePeriod] = useState<Period>("week");
   const [streakWarnings, setStreakWarnings] = useState<StreakWarningStatus | null>(null);
   const seasonEndDate = useMemo(() => getRaceSeasonEndDate(), []);
 
@@ -126,20 +99,9 @@ export default function Home() {
     fetchWarnings();
   }, [isSignedIn, getToken]);
 
-  const daysThreshold = useMemo(() => {
-    switch (activePeriod) {
-      case "week":
-        return DAYS_THRESHOLD_WEEK;
-      case "month":
-        return DAYS_THRESHOLD_MONTH;
-      case "all":
-        return null;
-    }
-  }, [activePeriod]);
-
   const { confirmed, calibrating, topThree, others, trends, confirmedRanks, calibratingRanks } = useMemo(() => {
-    const filtered = filterRecentCompetitors(allCompetitors, daysThreshold);
-    const sorted = sortByConservativeScore(filtered);
+    const allWithRaces = allCompetitors.filter((c) => c.raceCount && c.raceCount > 0);
+    const sorted = sortByConservativeScore(allWithRaces);
 
     // Split confirmed vs calibrating (same logic as TV display)
     const conf = sorted.filter((c) => !c.provisional);
@@ -160,14 +122,7 @@ export default function Home() {
       conf.length,
     );
 
-    // Trends must be computed on the FULL confirmed list (all periods)
-    // because previousDayRank is a global snapshot, not period-specific
-    const allWithRaces = allCompetitors.filter(
-      (c) => c.raceCount && c.raceCount > 0
-    );
-    const allSorted = sortByConservativeScore(allWithRaces);
-    const allConfirmed = allSorted.filter((c) => !c.provisional);
-    const trendData = calculateCompetitorTrends(allConfirmed);
+    const trendData = calculateCompetitorTrends(conf);
 
     return {
       confirmed: conf,
@@ -178,7 +133,7 @@ export default function Home() {
       confirmedRanks: confRanks,
       calibratingRanks: calRanks,
     };
-  }, [allCompetitors, daysThreshold]);
+  }, [allCompetitors]);
 
   if (isLoading || !now) {
     return (
@@ -195,21 +150,9 @@ export default function Home() {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-24">
       {/* Header */}
       <div className="flex flex-col items-center mb-6">
-        <h1 className="text-title mb-4">Classement</h1>
+        <h1 className="text-title mb-2">Classement</h1>
 
-        {/* Period tabs */}
-        <PeriodTabs
-          activePeriod={activePeriod}
-          onChange={setActivePeriod}
-          className="mb-2"
-        />
-
-        {/* Period subtitle */}
         <p className="text-sm text-neutral-500">
-          {activePeriod === "week" && "Cette semaine"}
-          {activePeriod === "month" && "Ce mois-ci"}
-          {activePeriod === "all" && "Depuis le début"}
-          {" • "}
           {confirmed.length} pilote
           {confirmed.length > 1 ? "s" : ""}
           {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
@@ -250,13 +193,7 @@ export default function Home() {
               Le podium vous attend !
             </h2>
             <p className="text-regular text-neutral-400 mb-6">
-              {activePeriod === "week" &&
-                "Aucune course n'a encore été disputée cette semaine."}
-              {activePeriod === "month" &&
-                "Aucune course n'a encore été disputée ce mois-ci."}
-              {activePeriod === "all" &&
-                "Aucune course n'a encore été enregistrée."}
-              {" Ajoutez votre première course pour voir le classement !"}
+              Aucune course n&apos;a encore été enregistrée. Ajoutez votre première course pour voir le classement !
             </p>
 
             <Link href="/races/add">
