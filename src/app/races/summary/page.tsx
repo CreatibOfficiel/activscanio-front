@@ -8,6 +8,7 @@ import { Competitor } from "@/app/models/Competitor";
 import { RaceResult } from "@/app/models/RaceResult";
 import RaceResultEloSummary from "@/app/components/elo/RaceResultEloSummary";
 import { MdArrowBack } from "react-icons/md";
+import { toast } from "sonner";
 
 const parseCompetitorIds = (idsParam: string | null): string[] => {
   return idsParam ? idsParam.split(",") : [];
@@ -66,7 +67,7 @@ const RaceSummaryPage: NextPage = () => {
   const handleValidate = async () => {
     await addRaceEvent(results);
     sessionStorage.removeItem("raceImage");
-    alert("Course ajoutée avec succès !");
+    toast.success("Course ajoutée avec succès !");
     router.push("/");
   };
 
