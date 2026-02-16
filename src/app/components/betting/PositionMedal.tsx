@@ -16,13 +16,13 @@ const medalConfig = {
   },
   [BetPosition.SECOND]: {
     emoji: '\u{1F948}',
-    label: '2\u00e8me',
+    label: '2ème',
     bgColor: 'bg-gradient-to-br from-gray-300 to-gray-500',
     shadowColor: 'shadow-gray-400/30',
   },
   [BetPosition.THIRD]: {
     emoji: '\u{1F949}',
-    label: '3\u00e8me',
+    label: '3ème',
     bgColor: 'bg-gradient-to-br from-orange-400 to-orange-700',
     shadowColor: 'shadow-orange-500/30',
   },

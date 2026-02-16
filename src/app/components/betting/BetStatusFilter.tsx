@@ -14,7 +14,7 @@ interface BetStatusFilterProps {
 
 const statusFilters: { label: string; value: BetStatus | null; color: string; activeColor: string }[] = [
   { label: 'Tous', value: null, color: 'text-neutral-400 border-neutral-600', activeColor: 'text-white bg-neutral-700 border-neutral-500' },
-  { label: 'Gagn\u00e9s', value: BetStatus.WON, color: 'text-green-400/70 border-green-500/30', activeColor: 'text-green-400 bg-green-500/20 border-green-500/50' },
+  { label: 'Gagnés', value: BetStatus.WON, color: 'text-green-400/70 border-green-500/30', activeColor: 'text-green-400 bg-green-500/20 border-green-500/50' },
   { label: 'Perdus', value: BetStatus.LOST, color: 'text-red-400/70 border-red-500/30', activeColor: 'text-red-400 bg-red-500/20 border-red-500/50' },
   { label: 'En attente', value: BetStatus.PENDING, color: 'text-amber-400/70 border-amber-500/30', activeColor: 'text-amber-400 bg-amber-500/20 border-amber-500/50' },
 ];

@@ -44,7 +44,7 @@ function getStatusBadge(status: BetStatus, pointsEarned?: number) {
         </span>
       );
     case BetStatus.CANCELLED:
-      return <Badge variant="default" size="sm">Annul\u00e9</Badge>;
+      return <Badge variant="default" size="sm">Annulé</Badge>;
     default:
       return <Badge variant="warning" size="sm">En attente</Badge>;
   }
@@ -72,7 +72,7 @@ const CompactCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser }) => {
             <p className="text-sm text-white font-medium truncate">{displayName}</p>
             <p className="text-xs text-neutral-400">
               {formatRelativeDate(bet.placedAt)}
-              {' \u00b7 '}
+              {' · '}
               {picksHidden
                 ? `${bet.picks.length} pronostics`
                 : bet.picks
@@ -163,7 +163,7 @@ const FullCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser }) => {
         <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-800 border border-neutral-700">
           <MdLock className="w-5 h-5 text-neutral-500 flex-shrink-0" />
           <p className="text-sm text-neutral-400">
-            {bet.picks.length} pronostics — en attente des r\u00e9sultats
+            {bet.picks.length} pronostics — en attente des résultats
           </p>
         </div>
       ) : (

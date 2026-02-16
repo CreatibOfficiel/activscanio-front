@@ -79,7 +79,7 @@ const HistoryPage: FC = () => {
       } else {
         // My bets tab — authenticated
         if (!user) {
-          throw new Error('Utilisateur non connect\u00e9');
+          throw new Error('Utilisateur non connecté');
         }
         const token = await getToken();
         if (!token) {
@@ -117,7 +117,7 @@ const HistoryPage: FC = () => {
   // Initial load + reload on tab/filter change
   useEffect(() => {
     if (activeTab === 'mine' && !user) {
-      setError('Vous devez \u00eatre connect\u00e9 pour voir vos paris.');
+      setError('Vous devez être connecté pour voir vos paris.');
       setIsLoading(false);
       return;
     }
@@ -179,7 +179,7 @@ const HistoryPage: FC = () => {
           <PageHeader
             variant="detail"
             title="Historique des paris"
-            subtitle="Communaut\u00e9"
+            subtitle="Communauté"
             backHref="/betting"
           />
           <Card variant="error" className="p-6">
@@ -205,7 +205,7 @@ const HistoryPage: FC = () => {
         <PageHeader
           variant="detail"
           title="Historique des paris"
-          subtitle={activeTab === 'all' ? 'Paris de la communaut\u00e9' : 'Vos paris pass\u00e9s et performances'}
+          subtitle={activeTab === 'all' ? 'Paris de la communauté' : 'Vos paris passés et performances'}
           backHref="/betting"
         />
 
@@ -228,7 +228,7 @@ const HistoryPage: FC = () => {
             </div>
             <div className="bg-neutral-800 rounded-xl p-3 text-center border border-success-500/30">
               <div className="text-xl sm:text-2xl font-bold text-success-500">{stats.won}</div>
-              <div className="text-xs text-neutral-400">Gagn\u00e9s</div>
+              <div className="text-xs text-neutral-400">Gagnés</div>
             </div>
             <div className="bg-neutral-800 rounded-xl p-3 text-center border border-primary-500/30">
               <div className="text-xl sm:text-2xl font-bold text-primary-500">
@@ -256,12 +256,12 @@ const HistoryPage: FC = () => {
           <Card className="p-8 text-center">
             <div className="text-6xl mb-4">{activeTab === 'all' ? '\u{1F465}' : '\u{1F3B0}'}</div>
             <h3 className="text-xl font-bold text-white mb-2">
-              {activeTab === 'all' ? 'Aucun pari pour le moment' : 'Vous n\u2019avez pas encore pari\u00e9'}
+              {activeTab === 'all' ? 'Aucun pari pour le moment' : "Vous n'avez pas encore parié"}
             </h3>
             <p className="text-neutral-400 mb-6">
               {activeTab === 'all'
-                ? 'Soyez le premier \u00e0 parier cette semaine !'
-                : 'Commencez \u00e0 parier pour voir votre historique ici'}
+                ? 'Soyez le premier à parier cette semaine !'
+                : 'Commencez à parier pour voir votre historique ici'}
             </p>
             <Button
               variant="primary"
@@ -287,7 +287,7 @@ const HistoryPage: FC = () => {
                   <div className="mt-2 ml-4 pl-4 border-l-2 border-neutral-700">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-semibold text-primary-400">
-                        Achievements d\u00e9bloqu\u00e9s
+                        Achievements débloqués
                       </span>
                     </div>
                     <div className="space-y-2">
@@ -323,7 +323,7 @@ const HistoryPage: FC = () => {
               <div className="text-center py-4 text-neutral-500 text-sm">
                 {activeTab === 'all'
                   ? `${meta.total} paris au total`
-                  : `Fin de l\u2019historique (${meta.total} paris)`}
+                  : `Fin de l'historique (${meta.total} paris)`}
               </div>
             )}
           </div>
