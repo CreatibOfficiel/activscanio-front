@@ -178,7 +178,7 @@ const SeasonDetailPage: FC = () => {
         {/* Content */}
         {activeTab === TabType.COMPETITORS && (
           <Card className="p-6">
-            <h2 className="text-heading text-white mb-4">Classement des Pilotes</h2>
+            <h2 className="text-heading text-white mb-4">Classement des pilotes</h2>
             {competitorRankings.length === 0 ? (
               <p className="text-regular text-neutral-400 text-center py-8">
                 Aucun classement disponible
@@ -218,7 +218,7 @@ const SeasonDetailPage: FC = () => {
 
         {activeTab === TabType.BETTORS && (
           <Card className="p-6">
-            <h2 className="text-heading text-white mb-4">Classement des Parieurs</h2>
+            <h2 className="text-heading text-white mb-4">Classement des parieurs</h2>
             {bettorRankings.length === 0 ? (
               <p className="text-regular text-neutral-400 text-center py-8">
                 Aucun classement disponible

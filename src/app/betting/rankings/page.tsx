@@ -96,7 +96,7 @@ const RankingsPage: FC = () => {
         {/* Header */}
         <PageHeader
           variant="detail"
-          title="Classement des Parieurs"
+          title="Classement des parieurs"
           backHref="/betting"
         />
 

@@ -60,10 +60,10 @@ const viewLabels: Record<DisplayView, string> = {
 };
 
 const viewTitles: Record<DisplayView, string> = {
-  [DisplayView.BETTOR_RANKINGS]: "Classement des Parieurs",
-  [DisplayView.COMPETITOR_RANKINGS]: "Classement des Pilotes",
-  [DisplayView.WEEKLY_ODDS]: "Cotes de la Semaine",
-  [DisplayView.ARCHIVED_SEASONS]: "Saisons Archivées",
+  [DisplayView.BETTOR_RANKINGS]: "Classement des parieurs",
+  [DisplayView.COMPETITOR_RANKINGS]: "Classement des pilotes",
+  [DisplayView.WEEKLY_ODDS]: "Cotes de la semaine",
+  [DisplayView.ARCHIVED_SEASONS]: "Saisons archivées",
 };
 
 // Inner component that uses useSearchParams
