@@ -14,13 +14,16 @@ interface CountdownProps {
   className?: string;
 }
 
-const urgencyStyles: Record<Urgency, { bg: string; border: string; text: string; accent: string; dot: string }> = {
+const urgencyStyles: Record<Urgency, { bg: string; border: string; text: string; accent: string; dot: string; compactBg: string; compactBorder: string; compactText: string }> = {
   normal: {
     bg: "bg-primary-500/5",
     border: "border-primary-500/20",
     text: "text-primary-400",
     accent: "text-primary-500",
     dot: "bg-primary-500",
+    compactBg: "bg-white/15",
+    compactBorder: "border-white/25",
+    compactText: "text-white",
   },
   warning: {
     bg: "bg-amber-500/5",
@@ -28,6 +31,9 @@ const urgencyStyles: Record<Urgency, { bg: string; border: string; text: string;
     text: "text-amber-400",
     accent: "text-amber-500",
     dot: "bg-amber-500",
+    compactBg: "bg-amber-900/50",
+    compactBorder: "border-amber-500/40",
+    compactText: "text-amber-200",
   },
   critical: {
     bg: "bg-red-500/5",
@@ -35,6 +41,9 @@ const urgencyStyles: Record<Urgency, { bg: string; border: string; text: string;
     text: "text-red-400",
     accent: "text-red-500",
     dot: "bg-red-500",
+    compactBg: "bg-red-900/50",
+    compactBorder: "border-red-500/40",
+    compactText: "text-red-200",
   },
 };
 
@@ -79,13 +88,13 @@ const Countdown: FC<CountdownProps> = ({
   }
 
   if (compact) {
-    // Inline pill style — used inside headers/cards
+    // Inline pill style — used inside headers/cards (uses compactBg/compactText for contrast on colored backgrounds)
     return (
       <div
-        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${styles.bg} border ${styles.border} ${pulseClass} ${className}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${styles.compactBg} border ${styles.compactBorder} backdrop-blur-sm ${pulseClass} ${className}`}
       >
-        {showIcon && <MdTimer className={`text-sm ${styles.text}`} />}
-        <span className={`text-sm font-medium tabular-nums ${styles.text}`} style={{ fontVariantNumeric: "tabular-nums" }}>
+        {showIcon && <MdTimer className={`text-sm ${styles.compactText}`} />}
+        <span className={`text-sm font-medium tabular-nums ${styles.compactText}`} style={{ fontVariantNumeric: "tabular-nums" }}>
           {time.days > 0 && `${time.days}j `}
           {String(time.hours).padStart(2, "0")}:{String(time.minutes).padStart(2, "0")}:{String(time.seconds).padStart(2, "0")}
         </span>
