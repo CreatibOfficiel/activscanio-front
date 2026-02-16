@@ -11,6 +11,7 @@ interface CommunityBetCardProps {
   bet: Bet;
   isCurrentUser: boolean;
   variant: 'compact' | 'full';
+  currentUserHasBet?: boolean;
 }
 
 const positionOrder = {
@@ -50,10 +51,10 @@ function getStatusBadge(status: BetStatus, pointsEarned?: number) {
   }
 }
 
-const CompactCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser }) => {
+const CompactCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHasBet }) => {
   const displayName = getUserDisplayName(bet, isCurrentUser);
   const avatarName = bet.user ? `${bet.user.firstName} ${bet.user.lastName}` : 'Joueur';
-  const picksHidden = !isCurrentUser && bet.status === BetStatus.PENDING;
+  const picksHidden = !isCurrentUser && bet.status === BetStatus.PENDING && !currentUserHasBet;
 
   return (
     <Card
@@ -94,10 +95,10 @@ const CompactCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser }) => {
   );
 };
 
-const FullCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser }) => {
+const FullCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHasBet }) => {
   const displayName = getUserDisplayName(bet, isCurrentUser);
   const avatarName = bet.user ? `${bet.user.firstName} ${bet.user.lastName}` : 'Joueur';
-  const picksHidden = !isCurrentUser && bet.status === BetStatus.PENDING;
+  const picksHidden = !isCurrentUser && bet.status === BetStatus.PENDING && !currentUserHasBet;
   const isPerfectPodium =
     bet.isFinalized && bet.picks.every((pick) => pick.isCorrect === true);
 
@@ -163,7 +164,7 @@ const FullCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser }) => {
         <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-800 border border-neutral-700">
           <MdLock className="w-5 h-5 text-neutral-500 flex-shrink-0" />
           <p className="text-sm text-neutral-400">
-            {bet.picks.length} pronostics — en attente des résultats
+            Pariez pour découvrir les pronostics
           </p>
         </div>
       ) : (

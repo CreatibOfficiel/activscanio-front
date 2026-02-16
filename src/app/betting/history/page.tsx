@@ -3,8 +3,10 @@
 import { FC, useEffect, useState, useCallback, useRef } from 'react';
 
 export const dynamic = 'force-dynamic';
+import Link from 'next/link';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import { MdLock } from 'react-icons/md';
 import { BettingRepository, PaginationMeta } from '@/app/repositories/BettingRepository';
 import { Bet, BetStatus } from '@/app/models/Bet';
 import { Card, Button, Spinner, PageHeader } from '@/app/components/ui';
@@ -30,6 +32,7 @@ const HistoryPage: FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'mine'>('all');
   const [activeStatus, setActiveStatus] = useState<BetStatus | null>(null);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
+  const [hasCurrentBet, setHasCurrentBet] = useState(false);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +46,7 @@ const HistoryPage: FC = () => {
         const bet = await BettingRepository.getCurrentBet(user.id, token);
         if (bet) {
           setInternalUserId(bet.userId);
+          setHasCurrentBet(true);
           return;
         }
         // Fallback: load first personal bet
@@ -219,6 +223,25 @@ const HistoryPage: FC = () => {
           />
         </div>
 
+        {/* Banner: invite to bet to unlock picks */}
+        {activeTab === 'all' && user && !hasCurrentBet && (
+          <Link href="/betting/place-bet">
+            <Card className="p-4 mb-6 border-primary-500/50 hover:border-primary-500 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary-500/10 flex-shrink-0">
+                  <MdLock className="text-xl text-primary-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    Placez votre pari pour découvrir les pronostics des autres joueurs
+                  </p>
+                  <p className="text-xs text-primary-400 mt-0.5">Parier maintenant →</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+        )}
+
         {/* Stats summary — only on "mine" tab */}
         {activeTab === 'mine' && bets.length > 0 && (
           <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-6">
@@ -280,6 +303,7 @@ const HistoryPage: FC = () => {
                   bet={bet}
                   isCurrentUser={!!internalUserId && bet.userId === internalUserId}
                   variant="full"
+                  currentUserHasBet={hasCurrentBet}
                 />
 
                 {/* Achievement Timeline — only on "mine" tab for own bets */}

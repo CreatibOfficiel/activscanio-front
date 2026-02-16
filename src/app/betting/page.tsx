@@ -268,6 +268,7 @@ const BettingPage: FC = () => {
                   bet={bet}
                   isCurrentUser={!!internalUserId && bet.userId === internalUserId}
                   variant="compact"
+                  currentUserHasBet={!!currentBet}
                 />
               ))}
             </div>
