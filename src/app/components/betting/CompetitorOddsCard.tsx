@@ -18,7 +18,36 @@ interface CompetitorOddsCardProps {
   showEligibilityBadge?: boolean;
   displayOdd?: number;
   showAllOdds?: boolean;
+  variant?: 'default' | 'tv';
+  animationDelay?: number;
 }
+
+const sizeConfig = {
+  default: {
+    padding: 'p-3',
+    avatar: 'w-10 h-10',
+    avatarText: 'text-base',
+    name: 'text-base',
+    elo: 'text-xs',
+    badge: 'text-[11px]',
+    oddsHeader: 'text-[10px]',
+    oddsValue: 'text-sm',
+    oddsMinWidth: 'min-w-[3rem]',
+    oddsGap: 'gap-3',
+  },
+  tv: {
+    padding: 'p-5',
+    avatar: 'w-14 h-14',
+    avatarText: 'text-xl',
+    name: 'text-xl',
+    elo: 'text-sm',
+    badge: 'text-xs',
+    oddsHeader: 'text-xs',
+    oddsValue: 'text-lg',
+    oddsMinWidth: 'min-w-[4rem]',
+    oddsGap: 'gap-5',
+  },
+} as const;
 
 const getIneligibilityInfo = (
   reason: IneligibilityReason,
@@ -91,7 +120,10 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   showEligibilityBadge = true,
   displayOdd: displayOddProp,
   showAllOdds = false,
+  variant = 'default',
+  animationDelay,
 }) => {
+  const sizes = sizeConfig[variant];
   const isIneligible = competitorOdds.isEligible === false;
   const ineligibilityInfo = showEligibilityBadge
     ? getIneligibilityInfo(
@@ -134,17 +166,17 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
     ? 'ring-1 ring-primary-500/40 bg-primary-500/5'
     : '';
 
-  return (
+  const cardContent = (
     <Card
       variant="default"
-      className={`p-3 ${cardClass} ${effectiveDisabled ? 'opacity-50' : ''}`}
+      className={`${sizes.padding} ${cardClass} ${effectiveDisabled ? 'opacity-50' : ''}`}
       onClick={!effectiveDisabled ? onSelect : undefined}
       hover={!effectiveDisabled && !isSelected}
     >
       <div className="flex items-center gap-3">
         {/* Avatar with position emoji overlay */}
-        <div className="relative w-10 h-10 flex-shrink-0">
-          <div className="w-10 h-10 bg-neutral-700 rounded-full flex items-center justify-center text-base font-bold">
+        <div className={`relative ${sizes.avatar} flex-shrink-0`}>
+          <div className={`${sizes.avatar} bg-neutral-700 rounded-full flex items-center justify-center ${sizes.avatarText} font-bold`}>
             {competitorName.charAt(0)}
           </div>
           {position && (
@@ -158,9 +190,9 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
         <div className="flex-1 min-w-0">
           {/* Name line */}
           <div className="flex items-center gap-1.5">
-            <h3 className="text-base font-semibold text-white truncate">{competitorName}</h3>
+            <h3 className={`${sizes.name} font-semibold text-white truncate`}>{competitorName}</h3>
             {isBoosted && (
-              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-bold text-yellow-500 bg-yellow-500/10">
+              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded ${sizes.badge} font-bold text-yellow-500 bg-yellow-500/10`}>
                 <MdBolt className="text-xs" />
                 x2
               </span>
@@ -169,13 +201,13 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
 
           {/* Metadata line: ELO + inline pills */}
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-xs text-neutral-500">
+            <span className={`${sizes.elo} text-neutral-500`}>
               ELO {Math.round(competitorOdds.metadata?.elo ?? 0)}
             </span>
 
             {/* Form indicator (inline pill) */}
             {formInfo && (
-              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium ${formInfo.className}`}>
+              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded ${sizes.badge} font-medium ${formInfo.className}`}>
                 {formInfo.icon}
                 {formInfo.label}
               </span>
@@ -183,7 +215,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
 
             {/* Ineligibility indicator (inline pill) */}
             {!position && ineligibilityInfo && (
-              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium ${ineligibilityInfo.className}`}>
+              <span className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded ${sizes.badge} font-medium ${ineligibilityInfo.className}`}>
                 {ineligibilityInfo.icon}
                 {ineligibilityInfo.label}
               </span>
@@ -194,18 +226,18 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
         {/* Right side: Odds + Boost */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {showAllOdds && !position ? (
-            <div className="flex items-center gap-3">
-              <div className="text-center min-w-[3rem]">
-                <div className="text-[10px] text-yellow-500 font-medium">1er</div>
-                <div className="text-sm font-bold text-white">{competitorOdds.oddFirst?.toFixed(2)}</div>
+            <div className={`flex items-center ${sizes.oddsGap}`}>
+              <div className={`text-center ${sizes.oddsMinWidth}`}>
+                <div className={`${sizes.oddsHeader} text-yellow-500 font-medium`}>1er</div>
+                <div className={`${sizes.oddsValue} font-bold text-white`}>{competitorOdds.oddFirst?.toFixed(2)}</div>
               </div>
-              <div className="text-center min-w-[3rem]">
-                <div className="text-[10px] text-neutral-400 font-medium">2eme</div>
-                <div className="text-sm font-bold text-white">{competitorOdds.oddSecond?.toFixed(2)}</div>
+              <div className={`text-center ${sizes.oddsMinWidth}`}>
+                <div className={`${sizes.oddsHeader} text-neutral-400 font-medium`}>2eme</div>
+                <div className={`${sizes.oddsValue} font-bold text-white`}>{competitorOdds.oddSecond?.toFixed(2)}</div>
               </div>
-              <div className="text-center min-w-[3rem]">
-                <div className="text-[10px] text-amber-600 font-medium">3eme</div>
-                <div className="text-sm font-bold text-white">{competitorOdds.oddThird?.toFixed(2)}</div>
+              <div className={`text-center ${sizes.oddsMinWidth}`}>
+                <div className={`${sizes.oddsHeader} text-amber-600 font-medium`}>3eme</div>
+                <div className={`${sizes.oddsValue} font-bold text-white`}>{competitorOdds.oddThird?.toFixed(2)}</div>
               </div>
             </div>
           ) : (
@@ -231,6 +263,16 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
       </div>
     </Card>
   );
+
+  if (variant === 'tv' && animationDelay !== undefined) {
+    return (
+      <div className="animate-row-slide-in" style={{ animationDelay: `${animationDelay}ms` }}>
+        {cardContent}
+      </div>
+    );
+  }
+
+  return cardContent;
 };
 
 export default CompetitorOddsCard;
