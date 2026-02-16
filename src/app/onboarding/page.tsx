@@ -196,7 +196,7 @@ const OnboardingPage: FC = () => {
         }
       } catch (error) {
         console.error('Error loading competitors:', error);
-        toast.error('Erreur lors du chargement des compétiteurs');
+        toast.error('Erreur lors du chargement des pilotes');
       } finally {
         setIsLoading(false);
       }
@@ -497,7 +497,7 @@ const OnboardingPage: FC = () => {
           <p className="text-regular text-neutral-300">
             {isBettorOnly
               ? 'Identifiez-vous pour commencer à parier'
-              : 'Créez votre profil de compétiteur pour participer aux courses'}
+              : 'Créez votre profil de pilote pour participer aux courses'}
           </p>
 
           {/* Progress indicator */}
@@ -623,7 +623,7 @@ const OnboardingPage: FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
-                  aria-label="Filtrer les compétiteurs par nom"
+                  aria-label="Filtrer les pilotes par nom"
                 />
               </div>
 
@@ -639,7 +639,7 @@ const OnboardingPage: FC = () => {
                 <div
                   className="space-y-2 mb-4"
                   role="list"
-                  aria-label="Liste des compétiteurs"
+                  aria-label="Liste des pilotes"
                 >
                   {/* Suggested competitor at top (based on first name match) */}
                   {suggestedCompetitor && (
@@ -699,7 +699,7 @@ const OnboardingPage: FC = () => {
                         </div>
                       </Card>
                       <div className="border-t border-neutral-700 my-3 pt-2">
-                        <p className="text-sub text-neutral-500">Autres compétiteurs</p>
+                        <p className="text-sub text-neutral-500">Autres pilotes</p>
                       </div>
                     </>
                   )}
@@ -783,7 +783,7 @@ const OnboardingPage: FC = () => {
               {/* No results */}
               {!isLoading && filteredCompetitors.length === 0 && allCompetitors.length > 0 && (
                 <p className="text-center text-neutral-400 py-4">
-                  Aucun compétiteur trouvé pour &quot;{searchQuery}&quot;
+                  Aucun pilote trouvé pour &quot;{searchQuery}&quot;
                 </p>
               )}
 
@@ -811,7 +811,7 @@ const OnboardingPage: FC = () => {
                     placeholder="Mario"
                     value={newCompetitorFirstName}
                     onChange={(e) => setNewCompetitorFirstName(e.target.value)}
-                    aria-label="Prénom du compétiteur"
+                    aria-label="Prénom du pilote"
                     aria-required="true"
                     minLength={2}
                     maxLength={50}
@@ -828,7 +828,7 @@ const OnboardingPage: FC = () => {
                     placeholder="Bros"
                     value={newCompetitorLastName}
                     onChange={(e) => setNewCompetitorLastName(e.target.value)}
-                    aria-label="Nom du compétiteur"
+                    aria-label="Nom du pilote"
                     aria-required="true"
                     minLength={2}
                     maxLength={50}

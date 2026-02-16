@@ -61,7 +61,7 @@ const EditCompetitorPage: NextPage = () => {
         setValue('profilePictureUrl', competitor.profilePictureUrl);
       } catch (err) {
         toast.error(
-          'Erreur de chargement du compétiteur' +
+          'Erreur de chargement du pilote' +
             (err instanceof Error ? `: ${err.message}` : '')
         );
       } finally {
@@ -84,7 +84,7 @@ const EditCompetitorPage: NextPage = () => {
 
       await updateCompetitor(state.competitor.id, payload);
 
-      toast.success('Compétiteur mis à jour !');
+      toast.success('Pilote mis à jour !');
       router.back();
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
@@ -105,7 +105,7 @@ const EditCompetitorPage: NextPage = () => {
   if (!state.competitor) {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
-        <p>Compétiteur introuvable.</p>
+        <p>Pilote introuvable.</p>
         <Button
           onClick={() => router.back()}
           className="mt-4"
@@ -121,7 +121,7 @@ const EditCompetitorPage: NextPage = () => {
     return (
       <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen">
         <p className="text-error-400">
-          Vous n&apos;avez pas la permission de modifier ce compétiteur.
+          Vous n&apos;avez pas la permission de modifier ce pilote.
         </p>
         <Button
           onClick={() => router.back()}
@@ -138,7 +138,7 @@ const EditCompetitorPage: NextPage = () => {
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
       <PageHeader
         variant="flow"
-        title="Modifier le compétiteur"
+        title="Modifier le pilote"
         backHref="/races"
       />
 

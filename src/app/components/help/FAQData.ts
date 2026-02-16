@@ -240,12 +240,12 @@ Premier échec = raison affichée dans l'interface`,
     icon: '🔥',
     title: 'Forme & Séries',
     summary:
-      "La forme est calculée pour les parieurs (vos paris) ET pour les compétiteurs (leurs courses). Enchaînez les victoires pour maintenir une série !",
+      "La forme est calculée pour les parieurs (vos paris) ET pour les pilotes (leurs courses). Enchaînez les victoires pour maintenir une série !",
     points: [
       "Forme du parieur : calculée sur vos 5 derniers paris",
-      "Forme du compétiteur : comparaison à sa propre moyenne historique",
-      "Badge « En forme 🔥 » si un compétiteur joue mieux que d'habitude",
-      "Badge « En difficulté 📉 » si un compétiteur joue moins bien que d'habitude",
+      "Forme du pilote : comparaison à sa propre moyenne historique",
+      "Badge « En forme 🔥 » si un pilote joue mieux que d'habitude",
+      "Badge « En difficulté 📉 » si un pilote joue moins bien que d'habitude",
       "Les longues séries débloquent des succès spéciaux",
     ],
     technicalDetails: `Forme du parieur :
@@ -254,7 +254,7 @@ Premier échec = raison affichée dans l'interface`,
 • Parfait = 3/3 picks corrects
 • Streak : victoires consécutives
 
-Forme du compétiteur (logique relative) :
+Forme du pilote (logique relative) :
 • Comparaison : moyenne des 5 dernières courses vs moyenne historique
 • Badge « En forme » si moyenne récente < moyenne historique - 0.5
 • Badge « En difficulté » si moyenne récente > moyenne historique + 0.5

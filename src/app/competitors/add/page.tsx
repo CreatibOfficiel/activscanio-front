@@ -40,10 +40,10 @@ const AddCompetitorPage: NextPage = () => {
         vol: 0.06,
       });
 
-      toast.success("Compétiteur ajouté avec succès !");
+      toast.success("Pilote ajouté avec succès !");
       router.back();
     } catch (error) {
-      toast.error("Erreur lors de l'ajout du compétiteur");
+      toast.error("Erreur lors de l'ajout du pilote");
       console.error(error);
     }
   };
@@ -52,7 +52,7 @@ const AddCompetitorPage: NextPage = () => {
     <div className="p-4 bg-neutral-900 text-neutral-100 min-h-screen pb-20">
       <PageHeader
         variant="flow"
-        title="Ajouter un·e compétiteur·trice"
+        title="Ajouter un·e pilote"
         subtitle="Nouveau astronaute ?"
         backHref="/races"
       />

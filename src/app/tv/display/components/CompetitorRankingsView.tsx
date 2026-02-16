@@ -22,7 +22,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     return (
       <div className="text-center py-16">
         <p className="text-tv-heading text-neutral-400">
-          Aucun compétiteur trouvé
+          Aucun pilote trouvé
         </p>
       </div>
     );

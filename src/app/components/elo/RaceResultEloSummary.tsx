@@ -48,7 +48,7 @@ const RaceResultEloSummary: FC<Props> = ({ results, selectedCompetitors }) => {
   return (
     <div className="space-y-4 w-full">
       <p className="text-sm text-neutral-400 mb-6">
-        Voici les résultats de la course avec les variations d&apos;Elo pour chaque compétiteur.
+        Voici les résultats de la course avec les variations d&apos;Elo pour chaque pilote.
       </p>
       <table className="w-full border-separate border-spacing-y-2">
         <tbody className="w-full">

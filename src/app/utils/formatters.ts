@@ -68,7 +68,7 @@ export const formatCompetitorName = (
   if (lastName) {
     return lastName;
   }
-  return fallback || 'Compétiteur';
+  return fallback || 'Pilote';
 };
 
 /**

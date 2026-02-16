@@ -289,8 +289,8 @@ const PlaceBetPage: FC = () => {
             <div>
               <h3 className="text-bold text-white mb-2">Comment ça marche ?</h3>
               <ul className="text-sub text-neutral-300 space-y-1 list-disc list-inside">
-                <li>Choisissez 3 compétiteurs pour le podium (1er, 2ème, 3ème)</li>
-                <li>Optionnel : Appliquez un boost x2 sur un compétiteur</li>
+                <li>Choisissez 3 pilotes pour le podium (1er, 2ème, 3ème)</li>
+                <li>Optionnel : Appliquez un boost x2 sur un pilote</li>
                 <li>Gagnez des points pour chaque prédiction correcte</li>
                 <li>Bonus x2 si vous prédisez le podium complet !</li>
               </ul>

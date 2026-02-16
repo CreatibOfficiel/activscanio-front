@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const placeBetSchema = z.object({
   competitorId: z
     .string()
-    .min(1, 'Veuillez sélectionner un compétiteur'),
+    .min(1, 'Veuillez sélectionner un pilote'),
   amount: z
     .number()
     .positive('Le montant doit être supérieur à 0')

@@ -157,7 +157,7 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
         <div className="mt-3">
           <Input
             type="search"
-            placeholder="Rechercher un compétiteur..."
+            placeholder="Rechercher un pilote..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             leftIcon={<MdSearch className="text-lg" />}
@@ -173,7 +173,7 @@ const PodiumSelector: FC<PodiumSelectorProps> = ({
                 </button>
               ) : undefined
             }
-            ariaLabel="Rechercher un compétiteur"
+            ariaLabel="Rechercher un pilote"
           />
         </div>
       </div>

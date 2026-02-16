@@ -18,12 +18,12 @@ export interface AppContextType {
   allRaces: RaceEvent[];
   baseCharacters: BaseCharacter[];
 
-  /* ---- chargement ---- */
+  /* ---- loading ---- */
   loadInitialData: () => Promise<
     [Competitor[], RaceEvent[], BaseCharacter[]]
   >;
 
-  /* ---- compétiteurs ---- */
+  /* ---- competitors ---- */
   addCompetitor: (newCompetitor: Competitor) => Promise<Competitor>;
   getCompetitorById: (id: string) => Promise<Competitor>;
   updateCompetitor: (
@@ -36,7 +36,7 @@ export interface AppContextType {
   ) => Promise<Competitor>;
   unlinkCharacterFromCompetitor: (competitorId: string) => Promise<Competitor>;
 
-  /* ---- courses ---- */
+  /* ---- races ---- */
   addRaceEvent: (results: RaceResult[]) => Promise<RaceEvent>;
   getRaceById: (raceId: string) => Promise<RaceEvent>;
   getRecentRacesOfCompetitor: (
@@ -47,13 +47,13 @@ export interface AppContextType {
   ) => Promise<{ bestScore: number | null }>;
   getSimilarRaces: (raceId: string) => Promise<RaceEvent[]>;
 
-  /* ---- image analyse ---- */
+  /* ---- image analysis ---- */
   analyzeRaceImage: (
     image: File,
     competitorIds: string[]
   ) => Promise<RaceAnalysisResult>;
 
-  /* ---- personnages ---- */
+  /* ---- characters ---- */
   getCharacterVariants: (
     baseCharacterId: string
   ) => Promise<CharacterVariant[]>;

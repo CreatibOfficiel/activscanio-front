@@ -52,7 +52,7 @@ const PodiumCompetitorList: FC<PodiumCompetitorListProps> = ({
       {/* Header with count */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-bold text-white">
-          Compétiteurs éligibles ({competitors.length})
+          Pilotes éligibles ({competitors.length})
         </h3>
         {searchQuery && (
           <span className="text-xs text-neutral-400">
@@ -92,7 +92,7 @@ const PodiumCompetitorList: FC<PodiumCompetitorListProps> = ({
       {/* Empty search results */}
       {searchQuery && filteredCompetitors.length === 0 && (
         <div className="text-center py-8 text-neutral-500">
-          <p>Aucun compétiteur trouvé pour « {searchQuery} »</p>
+          <p>Aucun pilote trouvé pour « {searchQuery} »</p>
         </div>
       )}
     </div>

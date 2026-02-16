@@ -157,7 +157,7 @@ const SeasonDetailPage: FC = () => {
             onClick={() => setActiveTab(TabType.COMPETITORS)}
           >
             <MdEmojiEvents className="mr-2" />
-            Classement Compétiteurs ({competitorRankings.length})
+            Classement Pilotes ({competitorRankings.length})
           </Button>
           <Button
             variant={activeTab === TabType.BETTORS ? 'primary' : 'secondary'}
@@ -178,7 +178,7 @@ const SeasonDetailPage: FC = () => {
         {/* Content */}
         {activeTab === TabType.COMPETITORS && (
           <Card className="p-6">
-            <h2 className="text-heading text-white mb-4">Classement des Compétiteurs</h2>
+            <h2 className="text-heading text-white mb-4">Classement des Pilotes</h2>
             {competitorRankings.length === 0 ? (
               <p className="text-regular text-neutral-400 text-center py-8">
                 Aucun classement disponible

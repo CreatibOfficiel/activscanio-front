@@ -26,7 +26,7 @@ export const competitorScoreSchema = z.object({
  */
 export const scoreSetupSchema = z
   .object({
-    scores: z.array(competitorScoreSchema).min(2, 'Au moins 2 compétiteurs requis'),
+    scores: z.array(competitorScoreSchema).min(2, 'Au moins 2 pilotes requis'),
   })
   .refine(
     (data) => data.scores.every((s) => s.score !== null),

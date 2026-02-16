@@ -150,7 +150,7 @@ export default function Home() {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-24">
       {/* Header */}
       <div className="flex flex-col items-center mb-6">
-        <h1 className="text-title mb-2">Classement</h1>
+        <h1 className="text-title mb-2">Classement des pilotes</h1>
 
         <p className="text-sm text-neutral-500">
           {confirmed.length} pilote
