@@ -18,7 +18,7 @@ export default clerkMiddleware(async (auth, request) => {
     // Detect redirect loop: if referer is from Clerk, we're looping
     const referer = request.headers.get("referer") || "";
     const isFromClerk =
-      referer.includes("clerk.") || referer.includes("accounts.dev");
+      referer.includes("clerk.") || referer.includes("accounts.");
 
     if (isFromClerk) {
       // Break the loop: redirect to local sign-in instead of back to Clerk
