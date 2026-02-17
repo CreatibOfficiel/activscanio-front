@@ -76,6 +76,22 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
   };
 
+  /* ───────── lightweight refresh ───────── */
+  const refreshCompetitors = async (): Promise<void> => {
+    try {
+      const token = await getToken();
+      const headers: HeadersInit = token
+        ? { Authorization: `Bearer ${token}` }
+        : {};
+      const res = await fetch(`${baseUrl}/competitors`, { headers });
+      if (!res.ok) throw new Error('Failed to fetch competitors');
+      const data = await res.json();
+      setCompetitors(data);
+    } catch (err) {
+      console.error('refreshCompetitors failed:', err);
+    }
+  };
+
   /* ───────── characters helpers ───────── */
   const getCharacterVariants = (baseCharacterId: string) =>
     charactersRepo.fetchCharacterVariants(baseCharacterId);
@@ -194,6 +210,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         baseCharacters,
 
         loadInitialData,
+        refreshCompetitors,
 
         addCompetitor,
         getCompetitorById,

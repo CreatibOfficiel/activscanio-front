@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults } from '@/app/hooks/useSocket';
+import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated } from '@/app/hooks/useSocket';
+import { useApp } from '@/app/context/AppContext';
 import { toast } from 'sonner';
 
 interface SocketWrapperProps {
@@ -10,6 +11,7 @@ interface SocketWrapperProps {
 
 export default function SocketWrapper({ userId }: SocketWrapperProps) {
   const { socket, isConnected } = useSocket(userId);
+  const { refreshCompetitors } = useApp();
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -99,6 +101,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
           description: 'Placez vos paris maintenant !',
         }
       );
+      refreshCompetitors();
     });
 
     // Race results (broadcast)
@@ -110,6 +113,12 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
           description: 'Découvrez les derniers résultats !',
         }
       );
+      refreshCompetitors();
+    });
+
+    // Competitor updated (broadcast)
+    const unsubscribeCompetitor = subscribeToCompetitorUpdated(() => {
+      refreshCompetitors();
     });
 
     // Cleanup all subscriptions on unmount
@@ -121,6 +130,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribePerfectScore?.();
       unsubscribeRace?.();
       unsubscribeResults?.();
+      unsubscribeCompetitor?.();
     };
   }, [socket, isConnected]);
 

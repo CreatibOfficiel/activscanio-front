@@ -240,6 +240,21 @@ export const subscribeToRaceResults = (
 };
 
 /**
+ * Subscribe to competitor updated events (broadcast)
+ */
+export const subscribeToCompetitorUpdated = (
+  callback: (data: unknown) => void,
+): (() => void) | undefined => {
+  if (!socket) return;
+
+  socket.on('competitor:updated', callback);
+
+  return () => {
+    socket?.off('competitor:updated', callback);
+  };
+};
+
+/**
  * Subscribe to rankings updated events (broadcast)
  */
 export const subscribeToRankingsUpdated = (

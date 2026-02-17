@@ -22,6 +22,7 @@ export interface AppContextType {
   loadInitialData: () => Promise<
     [Competitor[], RaceEvent[], BaseCharacter[]]
   >;
+  refreshCompetitors: () => Promise<void>;
 
   /* ---- competitors ---- */
   addCompetitor: (newCompetitor: Competitor) => Promise<Competitor>;
@@ -70,6 +71,7 @@ export const AppContext = createContext<AppContextType>({
   baseCharacters: [],
 
   loadInitialData: async () => [[], [], []],
+  refreshCompetitors: async () => {},
 
   addCompetitor: async (c) => ({ ...c, id: "tmp" }),
   getCompetitorById: async () => {
