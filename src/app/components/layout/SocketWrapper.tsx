@@ -94,13 +94,22 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
 
     // Race announcement (broadcast)
     const unsubscribeRace = subscribeToRaceAnnouncements((race) => {
-      toast.info(
-        `🏁 ${race.title || 'Nouvelle course disponible'}`,
-        {
-          duration: 5000,
-          description: 'Placez vos paris maintenant !',
-        }
-      );
+      if (race.bettingOpen) {
+        toast.info(
+          `🏁 ${race.title || 'Nouvelle course disponible'}`,
+          {
+            duration: 5000,
+            description: 'Placez vos paris maintenant !',
+          }
+        );
+      } else {
+        toast.info(
+          `🏁 ${race.title || 'Nouvelle course ajoutée'}`,
+          {
+            duration: 4000,
+          }
+        );
+      }
       refreshCompetitors();
     });
 

@@ -24,6 +24,7 @@ interface PerfectScoreData {
 
 interface Race {
   title?: string;
+  bettingOpen?: boolean;
 }
 
 let socket: Socket | null = null;

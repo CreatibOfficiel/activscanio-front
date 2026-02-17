@@ -28,45 +28,76 @@ export const scoreSetupSchema = z
   .object({
     scores: z.array(competitorScoreSchema).min(2, 'Au moins 2 pilotes requis'),
   })
-  .refine(
-    (data) => data.scores.every((s) => s.score !== null),
-    {
-      message: 'Tous les scores doivent être remplis',
-    }
-  )
-  .refine(
-    (data) => {
-      // Skip rank/score check if any score is null (caught by previous refine)
-      if (data.scores.some((s) => s.score === null)) return true;
+  .superRefine((data, ctx) => {
+    // Track which indices already have an error to avoid duplicates
+    const flagged = new Set<number>();
 
-      // Sort by rank
-      const sorted = [...data.scores].sort((a, b) => a.rank - b.rank);
+    // 1. Check for null scores — target each empty field individually
+    data.scores.forEach((s, i) => {
+      if (s.score === null) {
+        flagged.add(i);
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Le score est requis',
+          path: ['scores', i, 'score'],
+        });
+      }
+    });
 
-      // Check consistency between ranks and scores
-      for (let i = 0; i < sorted.length - 1; i++) {
-        const current = sorted[i];
-        const next = sorted[i + 1];
+    // 2. Skip rank/score consistency if any score is missing
+    if (flagged.size > 0) return;
 
+    // Build sorted copy keeping original index
+    const withIndex = data.scores.map((s, i) => ({ ...s, originalIndex: i }));
+    withIndex.sort((a, b) => a.rank - b.rank);
+
+    for (let i = 0; i < withIndex.length - 1; i++) {
+      const current = withIndex[i];
+      const next = withIndex[i + 1];
+
+      if (current.rank === next.rank) {
         // Same rank => scores must be identical
-        if (current.rank === next.rank) {
-          if (current.score !== next.score) {
-            return false;
+        if (current.score !== next.score) {
+          if (!flagged.has(current.originalIndex)) {
+            flagged.add(current.originalIndex);
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Rang ${current.rank} ex-æquo : les scores doivent être identiques`,
+              path: ['scores', current.originalIndex, 'score'],
+            });
           }
-        } else if (current.rank < next.rank) {
-          // Better rank (lower number) => score must be higher
-          if ((current.score as number) <= (next.score as number)) {
-            return false;
+          if (!flagged.has(next.originalIndex)) {
+            flagged.add(next.originalIndex);
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Rang ${next.rank} ex-æquo : les scores doivent être identiques`,
+              path: ['scores', next.originalIndex, 'score'],
+            });
+          }
+        }
+      } else if (current.rank < next.rank) {
+        // Better rank (lower number) => score must be strictly higher
+        if ((current.score as number) <= (next.score as number)) {
+          if (!flagged.has(current.originalIndex)) {
+            flagged.add(current.originalIndex);
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Rang ${current.rank} doit avoir un score supérieur au rang ${next.rank}`,
+              path: ['scores', current.originalIndex, 'score'],
+            });
+          }
+          if (!flagged.has(next.originalIndex)) {
+            flagged.add(next.originalIndex);
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Rang ${next.rank} doit avoir un score inférieur au rang ${current.rank}`,
+              path: ['scores', next.originalIndex, 'score'],
+            });
           }
         }
       }
-
-      return true;
-    },
-    {
-      message:
-        'Incohérence rang/score détectée : un meilleur classement doit avoir un score supérieur',
     }
-  );
+  });
 
 export type CompetitorScoreData = z.infer<typeof competitorScoreSchema>;
 export type ScoreSetupFormData = z.infer<typeof scoreSetupSchema>;

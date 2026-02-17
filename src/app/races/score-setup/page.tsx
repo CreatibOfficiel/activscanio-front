@@ -22,7 +22,7 @@ const ScoreSetupPage: NextPage = () => {
     control,
     handleSubmit,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<ScoreSetupFormData>({
     resolver: zodResolver(scoreSetupSchema),
     mode: "onChange",
@@ -163,13 +163,17 @@ const ScoreSetupPage: NextPage = () => {
       </p>
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit(onSubmit, () => toast.error('Corrige les erreurs avant de continuer'))} className="flex flex-col gap-4">
         {fields.map((field, index) => {
           const competitor = allCompetitors.find(c => c.id === field.competitorId);
           if (!competitor) return null;
 
           return (
-            <div key={field.id} className="bg-neutral-800 p-4 rounded">
+            <div key={field.id} className={`p-4 rounded ${
+              errors.scores?.[index]?.rank || errors.scores?.[index]?.score
+                ? 'bg-error-500/5 ring-1 ring-error-500/40'
+                : 'bg-neutral-800'
+            }`}>
               {/* Labels row */}
               <div className="flex justify-end gap-6 mb-1">
                 <p className="w-14 text-xs text-neutral-400 font-semibold uppercase text-center">
@@ -215,7 +219,7 @@ const ScoreSetupPage: NextPage = () => {
                       onFocus={(e) => e.target.select()}
                       onChange={(e) => {
                         const value = e.target.value ? parseInt(e.target.value, 10) : 1;
-                        setValue(`scores.${index}.rank`, value);
+                        setValue(`scores.${index}.rank`, value, { shouldValidate: true });
                       }}
                     />
                     {errors.scores?.[index]?.rank && (
@@ -240,7 +244,7 @@ const ScoreSetupPage: NextPage = () => {
                       onFocus={(e) => e.target.select()}
                       onChange={(e) => {
                         const value = e.target.value === "" ? null : parseInt(e.target.value, 10);
-                        setValue(`scores.${index}.score`, value);
+                        setValue(`scores.${index}.score`, value, { shouldValidate: true });
                       }}
                     />
                     {errors.scores?.[index]?.score && (
@@ -255,13 +259,6 @@ const ScoreSetupPage: NextPage = () => {
           );
         })}
 
-        {/* Global form errors */}
-        {errors.scores?.root?.message && (
-          <div className="bg-error-500/10 border border-error-500 rounded p-3">
-            <p className="text-error-500 text-sm">{errors.scores.root.message}</p>
-          </div>
-        )}
-
         {/* Footer : continue button */}
         <div className="mt-8">
           <Button
@@ -270,7 +267,7 @@ const ScoreSetupPage: NextPage = () => {
             size="lg"
             fullWidth
             loading={isSubmitting}
-            disabled={isSubmitting}
+            disabled={!isValid || isSubmitting}
           >
             Continuer
           </Button>
