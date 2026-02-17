@@ -141,7 +141,20 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribeResults?.();
       unsubscribeCompetitor?.();
     };
-  }, [socket, isConnected]);
+  }, [socket, isConnected, refreshCompetitors]);
+
+  // Refresh data when app returns to foreground (iOS PWA fix)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCompetitors();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshCompetitors]);
 
   // Connection status indicator (optional - for development)
   if (process.env.NODE_ENV === 'development' && userId) {

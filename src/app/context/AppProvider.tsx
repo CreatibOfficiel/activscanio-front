@@ -1,6 +1,6 @@
 "use client";
 
-import React, { PropsWithChildren, useEffect, useState } from "react";
+import React, { PropsWithChildren, useCallback, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AppContext } from "./AppContext";
 import { Competitor, UpdateCompetitorPayload } from "../models/Competitor";
@@ -77,7 +77,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   };
 
   /* ───────── lightweight refresh ───────── */
-  const refreshCompetitors = async (): Promise<void> => {
+  const refreshCompetitors = useCallback(async (): Promise<void> => {
     try {
       const token = await getToken();
       const headers: HeadersInit = token
@@ -90,7 +90,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     } catch (err) {
       console.error('refreshCompetitors failed:', err);
     }
-  };
+  }, [getToken]);
 
   /* ───────── characters helpers ───────── */
   const getCharacterVariants = (baseCharacterId: string) =>
@@ -168,27 +168,28 @@ export function AppProvider({ children }: PropsWithChildren) {
     const created = await racesRepo.createRace(newEvent, token!);
     await idbDel("raceImage");
     setRaceEvents((prev) => [created, ...prev]);
+    await refreshCompetitors();
     return created;
   };
 
-  const getRaceById = async (raceId: string) => {
+  const getRaceById = useCallback(async (raceId: string) => {
     const token = await getToken();
     return racesRepo.fetchRaceById(raceId, token!);
-  };
+  }, [getToken]);
 
-  const getRecentRacesOfCompetitor = async (competitorId: string) => {
+  const getRecentRacesOfCompetitor = useCallback(async (competitorId: string) => {
     const token = await getToken();
     return racesRepo.fetchRecentRacesOfCompetitor(competitorId, undefined, token!);
-  };
+  }, [getToken]);
 
-  const getBestScoreOfCompetitor = async (competitorId: string) => {
+  const getBestScoreOfCompetitor = useCallback(async (competitorId: string) => {
     return racesRepo.fetchBestScore(competitorId);
-  };
+  }, []);
 
-  const getSimilarRaces = async (raceId: string) => {
+  const getSimilarRaces = useCallback(async (raceId: string) => {
     const token = await getToken();
     return racesRepo.fetchSimilarRaces(raceId, token!);
-  };
+  }, [getToken]);
 
   /* ───────── image analyse ───────── */
   const analyzeRaceImage = async (
