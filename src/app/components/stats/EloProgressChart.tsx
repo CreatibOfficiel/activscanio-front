@@ -122,16 +122,19 @@ const EloProgressChart = React.memo(function EloProgressChart({
 
   // Transform data for the chart
   const chartData = useMemo(() => {
-    return data.map((point) => ({
-      date: new Date(point.date).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-      }),
-      rating: Math.round(point.rating),
-      ratingMin: Math.round(point.rating - point.rd),
-      ratingMax: Math.round(point.rating + point.rd),
-      rd: Math.round(point.rd),
-    }));
+    return data.map((point) => {
+      const conservativeScore = point.rating - 2 * point.rd;
+      return {
+        date: new Date(point.date).toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: 'short',
+        }),
+        rating: Math.round(conservativeScore),
+        ratingMin: Math.round(conservativeScore - point.rd),
+        ratingMax: Math.round(conservativeScore + point.rd),
+        rd: Math.round(point.rd),
+      };
+    });
   }, [data]);
 
   if (loading) {
@@ -194,7 +197,7 @@ const EloProgressChart = React.memo(function EloProgressChart({
             labelStyle={{ fontWeight: 'bold', color: '#fff' }}
             itemStyle={{ color: '#9ca3af' }}
             formatter={(value, name) => {
-              if (name === 'rating') return [value, 'ELO'];
+              if (name === 'rating') return [value, 'Score ELO'];
               if (name === 'rd') return [value, 'Déviation (RD)'];
               return [value, name];
             }}
@@ -202,9 +205,9 @@ const EloProgressChart = React.memo(function EloProgressChart({
           <Legend
             wrapperStyle={{ color: '#9ca3af' }}
             formatter={(value) => {
-              if (value === 'rating') return 'Rating ELO';
-              if (value === 'ratingMin') return 'Min (ELO - RD)';
-              if (value === 'ratingMax') return 'Max (ELO + RD)';
+              if (value === 'rating') return 'Score ELO';
+              if (value === 'ratingMin') return 'Min';
+              if (value === 'ratingMax') return 'Max';
               return value;
             }}
           />

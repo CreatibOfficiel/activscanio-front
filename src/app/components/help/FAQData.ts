@@ -40,8 +40,8 @@ export const faqSections: FAQSection[] = [
     points: [
       "Nouvelle semaine de paris chaque lundi à minuit",
       "1ère semaine du mois = Calibration (pas de paris, ELO se stabilise)",
-      "2ème semaine et + = Paris ouverts le lundi, de 00h00 a minuit",
-      "Mardi au dimanche = Surprise ! Les courses continuent mais les paris sont fermes",
+      "2ème semaine et + = Paris ouverts le lundi, de 00h00 à minuit",
+      "Mardi au dimanche = Surprise ! Les courses continuent mais les paris sont fermés",
       "Les résultats et points sont calculés le dimanche à 20h",
       "Archive mensuelle le 1er de chaque mois avec soft reset ELO",
     ],

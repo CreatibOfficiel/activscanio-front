@@ -20,6 +20,10 @@ import {
 } from 'react-icons/md';
 import WeekOddsPreview from '@/app/components/betting/WeekOddsPreview';
 import CommunityBetCard from '@/app/components/betting/CommunityBetCard';
+import PositionMedal from '@/app/components/betting/PositionMedal';
+import { formatOdds, formatCompetitorName } from '@/app/utils/formatters';
+import { BetPosition } from '@/app/models/Bet';
+import { MdBolt } from 'react-icons/md';
 
 const BettingPage: FC = () => {
   const { getToken } = useAuth();
@@ -173,15 +177,59 @@ const BettingPage: FC = () => {
             {/* Content */}
             <div className="p-4">
               {currentBet ? (
-                // User has already bet
+                // User has already bet - show picks + countdown
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-green-400">
                     <MdCheckCircle className="text-xl" />
                     <span className="text-bold">Pari enregistré</span>
                   </div>
-                  <p className="text-sm text-neutral-400">
-                    Vous avez placé {currentBet.picks.length} pronostics pour cette semaine
-                  </p>
+
+                  {/* Bet picks */}
+                  <div className="space-y-2">
+                    {currentBet.picks
+                      .sort((a, b) => {
+                        const order = { [BetPosition.FIRST]: 1, [BetPosition.SECOND]: 2, [BetPosition.THIRD]: 3 };
+                        return order[a.position] - order[b.position];
+                      })
+                      .map((pick) => (
+                        <div
+                          key={pick.id}
+                          className="flex items-center gap-3 p-2.5 rounded-lg bg-neutral-800 border border-neutral-700"
+                        >
+                          <PositionMedal position={pick.position} isCorrect={undefined} isFinalized={false} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm text-white truncate">
+                                {pick.competitor
+                                  ? formatCompetitorName(pick.competitor.firstName, pick.competitor.lastName)
+                                  : `#${pick.competitorId.slice(0, 8)}`}
+                              </span>
+                              {pick.hasBoost && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-warning-500/20 text-warning-500 text-xs font-semibold">
+                                  <MdBolt className="w-3 h-3" />
+                                  x2
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-neutral-500">
+                              Cote {formatOdds(pick.oddAtBet)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Countdown to results */}
+                  <div className="flex items-center justify-center pt-1">
+                    <Countdown
+                      label="Résultats dans"
+                      targetDate={new Date(currentWeek.endDate)}
+                      thresholds={{ warningSeconds: 86400, criticalSeconds: 7200 }}
+                      expiredLabel="Résultats disponibles"
+                      compact
+                    />
+                  </div>
+
                   <Link href="/betting/history">
                     <Button variant="secondary" size="sm" className="w-full gap-2">
                       <MdHistory className="text-lg" />
