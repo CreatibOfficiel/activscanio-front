@@ -32,6 +32,11 @@ export function usePullToRefresh({
     (e: TouchEvent) => {
       if (!isEnabled || isRefreshing) return;
       if (window.scrollY !== 0) return;
+
+      // Don't interfere with scrolling inside modals
+      const target = e.target as HTMLElement;
+      if (target.closest('[aria-modal="true"]')) return;
+
       startY.current = e.touches[0].clientY;
       pulling.current = false;
     },
@@ -41,6 +46,11 @@ export function usePullToRefresh({
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
       if (!isEnabled || isRefreshing) return;
+
+      // Don't interfere with scrolling inside modals
+      const target = e.target as HTMLElement;
+      if (target.closest('[aria-modal="true"]')) return;
+
       if (window.scrollY > 0) {
         // User scrolled down, cancel any pull
         if (pulling.current) {

@@ -149,6 +149,8 @@ const CharacterSelectModal: FC<CharacterSelectModalProps> = ({
   const content = (
     <div
       className="fixed inset-0 z-50 bg-neutral-900 sm:bg-black/50 sm:flex sm:items-center sm:justify-center animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
