@@ -145,15 +145,6 @@ const AchievementsPage: FC = () => {
           subtitle="Explorez et suivez votre progression sur tous les achievements"
           backHref="/profile?tab=achievements"
           backLabel="Retour au profil"
-          rightAction={
-            <Link
-              href="/profile"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-600 transition-all"
-            >
-              <MdPerson className="w-5 h-5" />
-              <span className="text-sm font-medium">Mon Profil</span>
-            </Link>
-          }
         />
 
         {/* Progress Overview */}
