@@ -164,7 +164,7 @@ const Modal: FC<ModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain max-h-[calc(90vh-140px)]">
           {children}
         </div>
       </div>
