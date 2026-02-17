@@ -168,7 +168,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     const created = await racesRepo.createRace(newEvent, token!);
     await idbDel("raceImage");
     setRaceEvents((prev) => [created, ...prev]);
-    await loadInitialData();
     return created;
   };
 

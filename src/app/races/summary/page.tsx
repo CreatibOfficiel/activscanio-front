@@ -51,6 +51,7 @@ const RaceSummaryPage: NextPage = () => {
 
   const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
   const [results, setResults] = useState<RaceResult[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const ids = searchParams.get("ids");
@@ -65,10 +66,16 @@ const RaceSummaryPage: NextPage = () => {
   }, [searchParams, allCompetitors]);
 
   const handleValidate = async () => {
-    await addRaceEvent(results);
-    sessionStorage.removeItem("raceImage");
-    toast.success("Course ajoutée avec succès !");
-    router.push("/");
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await addRaceEvent(results);
+      sessionStorage.removeItem("raceImage");
+      toast.success("Course ajoutée avec succès !");
+      router.push("/");
+    } catch {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBack = () => {
@@ -95,10 +102,11 @@ const RaceSummaryPage: NextPage = () => {
 
       <div className="mt-8">
         <button
-          className="w-full h-12 rounded font-semibold bg-primary-500 text-neutral-900"
+          className="w-full h-12 rounded font-semibold bg-primary-500 text-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleValidate}
+          disabled={isSubmitting}
         >
-          Valider
+          {isSubmitting ? "Envoi..." : "Valider"}
         </button>
       </div>
     </div>
