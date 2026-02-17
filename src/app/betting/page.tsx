@@ -230,7 +230,7 @@ const BettingPage: FC = () => {
                   <Link href="/betting/history?tab=mine">
                     <Button variant="secondary" size="sm" className="w-full gap-2">
                       <MdCasino className="text-lg" />
-                      Voir mon pari
+                      Voir mes paris
                     </Button>
                   </Link>
                 </div>

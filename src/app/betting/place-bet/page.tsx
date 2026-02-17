@@ -232,10 +232,10 @@ const PlaceBetPage: FC = () => {
                 <Button
                   variant="primary"
                   size="md"
-                  onClick={() => router.push('/betting/history')}
+                  onClick={() => router.push('/betting/history?tab=mine')}
                   className="mt-4"
                 >
-                  Voir mon pari
+                  Voir mes paris
                 </Button>
               )}
             </div>
