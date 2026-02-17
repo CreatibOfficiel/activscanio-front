@@ -158,8 +158,8 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
     return { direction: "stable" as const, value: 0 };
   }, [trendProp, competitor.previousDayRank, currentRank]);
 
-  // Rival calculation
-  const rival = useMemo(() => {
+  // Rival calculation — returns worst enemy + full ranked list
+  const rivalData = useMemo(() => {
     if (!allRaces.length || !allCompetitors.length) return null;
 
     const lossCount: Record<string, number> = {};
@@ -181,27 +181,31 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
       }
     }
 
-    let worstId: string | null = null;
-    let worstRatio = 0;
+    const allRivals = Object.entries(lossCount)
+      .map(([id, losses]) => {
+        const shared = sharedCount[id] ?? 0;
+        if (shared < 3) return null;
+        const comp = allCompetitors.find((c) => c.id === id);
+        if (!comp) return null;
+        return {
+          id,
+          name: formatCompetitorName(comp.firstName, comp.lastName),
+          losses,
+          shared,
+          ratio: losses / shared,
+        };
+      })
+      .filter(
+        (r): r is { id: string; name: string; losses: number; shared: number; ratio: number } =>
+          r !== null
+      )
+      .sort((a, b) => b.ratio - a.ratio || b.losses - a.losses);
 
-    for (const [id, losses] of Object.entries(lossCount)) {
-      const shared = sharedCount[id] ?? 0;
-      if (shared < 3) continue;
-      const ratio = losses / shared;
-      if (ratio > worstRatio) {
-        worstRatio = ratio;
-        worstId = id;
-      }
-    }
-
-    if (!worstId) return null;
-    const rivalComp = allCompetitors.find((c) => c.id === worstId);
-    if (!rivalComp) return null;
+    if (allRivals.length === 0) return null;
 
     return {
-      name: formatCompetitorName(rivalComp.firstName, rivalComp.lastName),
-      losses: lossCount[worstId],
-      shared: sharedCount[worstId],
+      worst: allRivals[0],
+      all: allRivals,
     };
   }, [allRaces, allCompetitors, competitor.id]);
 
@@ -384,13 +388,61 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 />
               )}
 
-              {/* Rival */}
-              {rival && (
-                <StatCard
-                  icon="💀"
-                  title="Pire ennemi"
-                  value={`${rival.name} (bat ${rival.losses}/${rival.shared}x)`}
-                />
+              {/* Rival — expandable */}
+              {rivalData && (
+                <details className="group col-span-1 sm:col-span-2">
+                  <summary className="flex items-start gap-3 bg-neutral-800/40 rounded-xl p-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span className="text-lg">💀</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-neutral-400">Pire ennemi</p>
+                      <p className="text-sm text-neutral-200 font-medium truncate">
+                        {rivalData.worst.name} (bat {rivalData.worst.losses}/{rivalData.worst.shared}x)
+                      </p>
+                    </div>
+                    <span className="text-neutral-500 text-xs mt-1 transition-transform group-open:rotate-90">
+                      ▶
+                    </span>
+                  </summary>
+
+                  <div className="mt-2 p-3 bg-neutral-800/40 rounded-xl space-y-3">
+                    <p className="text-xs text-neutral-400">
+                      Le compétiteur qui te bat le plus souvent (min. 3 courses communes).
+                      Basé sur le ratio victoires/courses partagées.
+                    </p>
+
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-neutral-500 font-semibold uppercase tracking-wider">
+                        Classement des rivaux
+                      </p>
+                      {rivalData.all.map((r, i) => {
+                        const pct = Math.round(r.ratio * 100);
+                        return (
+                          <div key={r.id} className="flex items-center gap-2 text-sm">
+                            <span className="text-neutral-500 w-5 text-right shrink-0">
+                              {i + 1}.
+                            </span>
+                            {i === 0 && <span className="shrink-0">💀</span>}
+                            <span className={`truncate ${i === 0 ? "text-neutral-100 font-semibold" : "text-neutral-300"}`} style={{ minWidth: 0, flex: "1 1 0" }}>
+                              {r.name}
+                            </span>
+                            <span className="text-neutral-400 shrink-0 w-10 text-right tabular-nums">
+                              {r.losses}/{r.shared}
+                            </span>
+                            <span className="text-neutral-500 shrink-0 w-10 text-right tabular-nums">
+                              {pct}%
+                            </span>
+                            <div className="w-16 h-2 bg-neutral-700 rounded-full overflow-hidden shrink-0">
+                              <div
+                                className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </details>
               )}
 
               {/* Best score (all-time record) */}
