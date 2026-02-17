@@ -5,7 +5,7 @@ import { FC, useEffect, useState, useCallback, useRef } from 'react';
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { useAuth, useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MdLock } from 'react-icons/md';
 import { BettingRepository, PaginationMeta } from '@/app/repositories/BettingRepository';
 import { Bet, BetStatus } from '@/app/models/Bet';
@@ -19,6 +19,7 @@ const BETS_PER_PAGE = 10;
 
 const HistoryPage: FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { getToken } = useAuth();
   const { user } = useUser();
 
@@ -29,7 +30,9 @@ const HistoryPage: FC = () => {
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
 
   // Community filters
-  const [activeTab, setActiveTab] = useState<'all' | 'mine'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'mine'>(
+    searchParams.get('tab') === 'mine' ? 'mine' : 'all'
+  );
   const [activeStatus, setActiveStatus] = useState<BetStatus | null>(null);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [hasCurrentBet, setHasCurrentBet] = useState(false);

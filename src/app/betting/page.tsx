@@ -220,20 +220,17 @@ const BettingPage: FC = () => {
                   </div>
 
                   {/* Countdown to results */}
-                  <div className="flex items-center justify-center pt-1">
-                    <Countdown
-                      label="Résultats dans"
-                      targetDate={new Date(currentWeek.endDate)}
-                      thresholds={{ warningSeconds: 86400, criticalSeconds: 7200 }}
-                      expiredLabel="Résultats disponibles"
-                      compact
-                    />
-                  </div>
+                  <Countdown
+                    label="Résultats dans"
+                    targetDate={new Date(currentWeek.endDate)}
+                    thresholds={{ warningSeconds: 86400, criticalSeconds: 7200 }}
+                    expiredLabel="Résultats disponibles"
+                  />
 
-                  <Link href="/betting/history">
+                  <Link href="/betting/history?tab=mine">
                     <Button variant="secondary" size="sm" className="w-full gap-2">
-                      <MdHistory className="text-lg" />
-                      Voir les détails
+                      <MdCasino className="text-lg" />
+                      Voir mon pari
                     </Button>
                   </Link>
                 </div>
