@@ -209,6 +209,9 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                       <p className="text-lg font-bold text-white">
                         {formatCompetitorName(comp.firstName, comp.lastName)}
                       </p>
+                      {winners.length > 1 && (
+                        <EloDeltaBadge delta={w.ratingDelta} size="sm" />
+                      )}
                     </div>
                   );
                 })}
@@ -222,7 +225,9 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                     · {winners[0].score} pts
                   </span>
                 </div>
-                <EloDeltaBadge delta={winners[0].ratingDelta} size="md" />
+                {winners.length === 1 && (
+                  <EloDeltaBadge delta={winners[0].ratingDelta} size="md" />
+                )}
               </div>
             </div>
           )}
