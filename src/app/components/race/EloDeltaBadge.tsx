@@ -20,7 +20,7 @@ const EloDeltaBadge: FC<EloDeltaBadgeProps> = ({ delta, size = "sm" }) => {
     <span
       className={`inline-flex items-center gap-0.5 rounded-full tabular-nums font-medium ${colorClasses} ${sizeClasses}`}
     >
-      {arrow} {sign}{delta.toFixed(1)}
+      {arrow} {sign}{Math.round(delta)}
     </span>
   );
 };
