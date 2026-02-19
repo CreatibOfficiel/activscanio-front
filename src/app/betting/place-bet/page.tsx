@@ -72,7 +72,7 @@ const PlaceBetPage: FC = () => {
 
       // Check if user already has a bet and load boost availability
       if (user) {
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         if (token) {
           const bet = await BettingRepository.getCurrentBet(user.id, token);
           if (bet) {
@@ -161,7 +161,7 @@ const PlaceBetPage: FC = () => {
       setIsSubmitting(true);
       setError(null);
 
-      const token = await getToken();
+      const token = await getToken({ skipCache: true });
       if (!token) {
         throw new Error('Token non disponible');
       }

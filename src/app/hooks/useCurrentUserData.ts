@@ -18,7 +18,8 @@ export function useCurrentUserData() {
 
     (async () => {
       try {
-        const token = await getToken();
+        // Force fresh token when cache is empty to avoid stale tokens
+        const token = await getToken({ skipCache: true });
         if (!token || cancelled) return;
 
         const data = await UsersRepository.getMe(token);
@@ -26,8 +27,11 @@ export function useCurrentUserData() {
 
         cachedUserData = data;
         setUserData(data);
-      } catch {
-        // Silently fail — caller will see userData as null
+      } catch (err: any) {
+        // On 401, invalidate cache so next mount retries with a fresh token
+        if (err?.status === 401) {
+          cachedUserData = null;
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

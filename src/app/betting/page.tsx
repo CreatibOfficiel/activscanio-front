@@ -49,7 +49,7 @@ const BettingPage: FC = () => {
       setRecentBets(communityResponse.data);
 
       if (user) {
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         if (token) {
           // Load current bet
           const bet = await BettingRepository.getCurrentBet(user.id, token);

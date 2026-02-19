@@ -11,7 +11,8 @@ import OfflineIndicator from "./components/ui/OfflineIndicator";
 import { SoundboardModal, ShakeDetector } from "./components/soundboard";
 import SocketProvider from "./components/layout/SocketProvider";
 import { ReactNode } from "react";
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+import { AuthLayout, PublicLayout } from "./components/layout/AuthLayoutSwitch";
 import { Toaster } from "sonner";
 import type { Metadata, Viewport } from "next";
 
@@ -81,29 +82,29 @@ export default function RootLayout({
                 }}
               />
 
-              {/* Desktop Sidebar - only when signed in */}
-              <SignedIn>
+              {/* Desktop Sidebar - hidden on auth pages */}
+              <AuthLayout>
                 <Sidebar />
-              </SignedIn>
+              </AuthLayout>
 
-              {/* Main content with responsive margins - when signed in */}
-              <SignedIn>
+              {/* Main content with responsive margins - authenticated pages */}
+              <AuthLayout>
                 <MainContent>
                   {children}
                 </MainContent>
-              </SignedIn>
+              </AuthLayout>
 
-              {/* Main content without margins - when signed out (sign-in/sign-up pages) */}
-              <SignedOut>
+              {/* Main content without margins - sign-in/sign-up pages */}
+              <PublicLayout>
                 <main>
                   {children}
                 </main>
-              </SignedOut>
+              </PublicLayout>
 
-              {/* Mobile BottomNav - only when signed in */}
-              <SignedIn>
+              {/* Mobile BottomNav - hidden on auth pages */}
+              <AuthLayout>
                 <BottomNav />
-              </SignedIn>
+              </AuthLayout>
             </OnboardingGuard>
             <SoundboardModal />
             <ShakeDetector />

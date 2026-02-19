@@ -47,7 +47,9 @@ export class UsersRepository {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch user: ${response.statusText}`);
+      const error = new Error(`Failed to fetch user: ${response.statusText}`);
+      (error as any).status = response.status;
+      throw error;
     }
 
     return await response.json();

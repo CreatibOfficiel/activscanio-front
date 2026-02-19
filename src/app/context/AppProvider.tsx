@@ -15,6 +15,7 @@ import {
 } from "../repositories/RaceAnalysisRepository";
 import { CharactersRepository } from "../repositories/CharactersRepository";
 import { del as idbDel } from "idb-keyval";
+import { authenticatedFetch } from "../utils/authenticated-fetch";
 
 const baseUrl =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
@@ -46,15 +47,11 @@ export function AppProvider({ children }: PropsWithChildren) {
   > => {
     try {
       setIsLoading(true);
-      const token = await getToken();
-      const headers: HeadersInit = token
-        ? { Authorization: `Bearer ${token}` }
-        : {};
 
       const [competitorsRes, racesRes, charsRes] = await Promise.all([
-        fetch(`${baseUrl}/competitors`, { headers }),
-        fetch(`${baseUrl}/races?recent=true`, { headers }),
-        fetch(`${baseUrl}/base-characters`, { headers }),
+        authenticatedFetch(getToken, `${baseUrl}/competitors`),
+        authenticatedFetch(getToken, `${baseUrl}/races?recent=true`),
+        authenticatedFetch(getToken, `${baseUrl}/base-characters`),
       ]);
 
       if (!competitorsRes.ok) throw new Error('Failed to fetch competitors');
@@ -79,11 +76,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   /* ───────── lightweight refresh ───────── */
   const refreshCompetitors = useCallback(async (): Promise<void> => {
     try {
-      const token = await getToken();
-      const headers: HeadersInit = token
-        ? { Authorization: `Bearer ${token}` }
-        : {};
-      const res = await fetch(`${baseUrl}/competitors`, { headers });
+      const res = await authenticatedFetch(getToken, `${baseUrl}/competitors`);
       if (!res.ok) throw new Error('Failed to fetch competitors');
       const data = await res.json();
       setCompetitors(data);
@@ -104,7 +97,7 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   /* ───────── competitor CRUD ───────── */
   const addCompetitor = async (newCompetitor: Competitor) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     const created = await competitorsRepo.createCompetitor(newCompetitor, token!);
     setCompetitors((prev) => [...prev, created]);
     return created;
@@ -120,7 +113,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     id: string,
     payload: UpdateCompetitorPayload
   ) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     const updated = await competitorsRepo.updateCompetitor(id, payload, token!);
     setCompetitors((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
@@ -132,7 +125,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     competitorId: string,
     variantId: string
   ) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     const updated = await competitorsRepo.linkCharacterToCompetitor(
       competitorId,
       variantId,
@@ -145,7 +138,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   };
 
   const unlinkCharacterFromCompetitor = async (competitorId: string) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     const updated = await competitorsRepo.unlinkCharacterFromCompetitor(
       competitorId,
       token!,
@@ -158,7 +151,7 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   /* ───────── races ───────── */
   const addRaceEvent = async (results: RaceResult[]) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     const generatedId = Math.floor(Math.random() * 999_999).toString();
     const newEvent: RaceEvent = {
       id: generatedId,
@@ -173,12 +166,12 @@ export function AppProvider({ children }: PropsWithChildren) {
   };
 
   const getRaceById = useCallback(async (raceId: string) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     return racesRepo.fetchRaceById(raceId, token!);
   }, [getToken]);
 
   const getRecentRacesOfCompetitor = useCallback(async (competitorId: string) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     return racesRepo.fetchRecentRacesOfCompetitor(competitorId, undefined, token!);
   }, [getToken]);
 
@@ -187,7 +180,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, []);
 
   const getSimilarRaces = useCallback(async (raceId: string) => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     return racesRepo.fetchSimilarRaces(raceId, token!);
   }, [getToken]);
 
@@ -196,7 +189,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     image: File,
     competitorIds: string[]
   ): Promise<RaceAnalysisResult> => {
-    const token = await getToken();
+    const token = await getToken({ skipCache: true });
     return raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds, token!);
   };
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { authenticatedFetch } from '../utils/authenticated-fetch';
 
 export type NotificationPermission = 'default' | 'granted' | 'denied';
 
@@ -43,12 +44,9 @@ export function useNotifications(): UseNotificationsReturn {
 
   const loadPreferences = useCallback(async () => {
     try {
-      const token = await getToken();
-      const response = await fetch(
+      const response = await authenticatedFetch(
+        getToken,
         `${process.env.NEXT_PUBLIC_API_URL}/notifications/preferences`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
       );
 
       if (response.ok) {
@@ -144,16 +142,13 @@ export function useNotifications(): UseNotificationsReturn {
       }
 
       // Envoyer au backend
-      const token = await getToken();
-      const response = await fetch(
+      const response = await authenticatedFetch(
+        getToken,
         `${process.env.NEXT_PUBLIC_API_URL}/notifications/subscribe`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(subscription)
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription),
         }
       );
 
@@ -178,13 +173,10 @@ export function useNotifications(): UseNotificationsReturn {
         await subscription.unsubscribe();
       }
 
-      const token = await getToken();
-      await fetch(
+      await authenticatedFetch(
+        getToken,
         `${process.env.NEXT_PUBLIC_API_URL}/notifications/unsubscribe`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { method: 'DELETE' },
       );
 
       return true;
@@ -198,16 +190,13 @@ export function useNotifications(): UseNotificationsReturn {
     prefs: Partial<NotificationPreferences>
   ): Promise<void> => {
     try {
-      const token = await getToken();
-      const response = await fetch(
+      const response = await authenticatedFetch(
+        getToken,
         `${process.env.NEXT_PUBLIC_API_URL}/notifications/preferences`,
         {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(prefs)
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(prefs),
         }
       );
 

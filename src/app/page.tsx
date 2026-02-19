@@ -99,7 +99,7 @@ export default function Home() {
     if (!isSignedIn) return;
     const fetchWarnings = async () => {
       try {
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         if (!token) return;
         const warnings = await AchievementsRepository.getStreakWarnings(token);
         setStreakWarnings(warnings);

@@ -46,7 +46,7 @@ const HistoryPage: FC = () => {
     const resolveUserId = async () => {
       if (!user) return;
       try {
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         if (!token) return;
         const bet = await BettingRepository.getCurrentBet(user.id, token);
         if (bet) {
@@ -99,7 +99,7 @@ const HistoryPage: FC = () => {
         if (!user) {
           throw new Error('Utilisateur non connecté');
         }
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         if (!token) {
           throw new Error('Token non disponible');
         }

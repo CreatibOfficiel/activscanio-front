@@ -16,6 +16,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   getTokenRef.current = getToken;
 
   const hasCheckedForPath = useRef<string | null>(null);
+  const consecutiveErrors = useRef(0);
 
   const checkOnboarding = useCallback(async () => {
     if (!isLoaded) return;
@@ -37,13 +38,15 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const token = await getTokenRef.current();
+      // Force fresh token to avoid using an expired cached token
+      const token = await getTokenRef.current({ skipCache: true });
       if (!token) {
         setIsChecking(false);
         return;
       }
 
       const userData = await UsersRepository.getMe(token);
+      consecutiveErrors.current = 0;
       const isOnboardingPath = pathname.startsWith('/onboarding');
 
       if (userData.hasCompletedOnboarding) {
@@ -61,8 +64,16 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
           router.push('/onboarding');
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error checking onboarding status:', err);
+      consecutiveErrors.current += 1;
+
+      // If 401 or too many consecutive errors, redirect to sign-in
+      if (err?.status === 401 || consecutiveErrors.current >= 2) {
+        router.push('/sign-in');
+        return;
+      }
+
       setError('Impossible de contacter le serveur. Vérifie ta connexion.');
       setIsChecking(false);
     }

@@ -57,7 +57,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-neutral-800 border-t border-neutral-700 min-h-14 pb-[env(safe-area-inset-bottom)] flex items-center justify-around px-2 z-50 lg:hidden"
+      className="fixed bottom-0 left-0 right-0 bg-neutral-800 border-t border-neutral-700 flex items-stretch justify-around px-2 z-50 lg:hidden"
       role="navigation"
       aria-label="Navigation mobile"
     >
@@ -72,7 +72,8 @@ export default function BottomNav() {
             href={item.href}
             onClick={isLeaderboard ? handleLeaderboardClick : undefined}
             className={`
-              flex flex-col items-center justify-center flex-1 h-full
+              flex flex-col items-center justify-start flex-1
+              pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]
               transition-colors duration-200
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
               ${isActive ? "text-primary-500" : "text-neutral-300"}
@@ -86,7 +87,7 @@ export default function BottomNav() {
                 <span className="absolute -top-1 -right-1 text-[8px]" aria-hidden="true">🔊</span>
               )}
             </div>
-            <span className="text-xs">{item.label}</span>
+            <span className="text-xs mt-0.5">{item.label}</span>
           </Link>
         );
       })}

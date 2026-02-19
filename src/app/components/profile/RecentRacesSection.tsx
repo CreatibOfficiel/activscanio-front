@@ -161,7 +161,7 @@ const RecentRacesSection: FC<RecentRacesSectionProps> = ({
       try {
         setLoading(true);
         setError(null);
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         const repo = new RacesRepository(API_BASE_URL);
         const data = await repo.fetchRecentRacesOfCompetitor(competitorId, limit, token ?? undefined);
         setRaces(data);

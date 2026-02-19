@@ -17,7 +17,7 @@ export default function ExportDataButtons() {
     setIsExporting(`${type}-${format}`);
 
     try {
-      const token = await getToken();
+      const token = await getToken({ skipCache: true });
       const endpoint =
         type === 'stats'
           ? '/export/stats/json'

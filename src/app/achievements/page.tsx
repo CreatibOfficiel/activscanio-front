@@ -62,7 +62,7 @@ const AchievementsPage: FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         const data = await AchievementsRepository.getAchievements({}, token || undefined);
         setAchievements(data);
       } catch (err) {

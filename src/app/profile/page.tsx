@@ -70,7 +70,7 @@ const ProfilePage: FC = () => {
         setLoading(true);
         setError(null);
 
-        const token = await getToken();
+        const token = await getToken({ skipCache: true });
         if (!token) {
           throw new Error('Non authentifié');
         }
@@ -144,7 +144,7 @@ const ProfilePage: FC = () => {
 
   // Handle character change
   const handleChangeCharacter = useCallback(async (variantId: string) => {
-    const freshToken = await getToken();
+    const freshToken = await getToken({ skipCache: true });
     if (!freshToken) {
       throw new Error('Non authentifié');
     }
