@@ -15,9 +15,11 @@ import { StreakWarningBanner } from "./components/achievements";
 import {
   ElevatedPodium,
   LeaderboardRow,
+  LeagueDivider,
 } from "./components/leaderboard";
 import { TrendDirection } from "./components/leaderboard/TrendIndicator";
 import { computeRanksWithTies } from "./utils/rankings";
+import { groupByLeague } from "./utils/leagues";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
 
 const sortByConservativeScore = (competitors: Competitor[]): Competitor[] => {
@@ -108,7 +110,7 @@ export default function Home() {
     fetchWarnings();
   }, [isSignedIn, getToken]);
 
-  const { confirmed, inactive, calibrating, topThree, others, trends, confirmedRanks, inactiveRanks, calibratingRanks } = useMemo(() => {
+  const { confirmed, inactive, calibrating, topThree, leagueGroups, trends, confirmedRanks, inactiveRanks, calibratingRanks } = useMemo(() => {
     const allWithRaces = allCompetitors.filter((c) => c.raceCount && c.raceCount > 0);
     const sorted = sortByConservativeScore(allWithRaces);
 
@@ -142,12 +144,19 @@ export default function Home() {
 
     const trendData = calculateCompetitorTrends(conf);
 
+    const leagueGrps = groupByLeague(
+      conf,
+      (c) => c.id,
+      confRanks,
+      true, // exclude Champions (podium)
+    );
+
     return {
       confirmed: conf,
       inactive: inact,
       calibrating: cal,
       topThree: conf.slice(0, 3),
-      others: conf.slice(3),
+      leagueGroups: leagueGrps,
       trends: trendData,
       confirmedRanks: confRanks,
       inactiveRanks: inactRanks,
@@ -253,13 +262,11 @@ export default function Home() {
         </div>
       )}
 
-      {/* Other ranked competitors */}
-      {others.length > 0 && (
-        <div className="space-y-1">
-          <h2 className="text-heading text-neutral-400 mb-3 px-1">
-            Autres classés
-          </h2>
-          {others.map((competitor, index) => (
+      {/* League sections (below podium) */}
+      {leagueGroups.map((group, groupIndex) => (
+        <div key={group.league.id} className={`space-y-1 ${groupIndex === 0 ? "" : "mt-6"}`}>
+          <LeagueDivider league={group.league} variant="mobile" className="mb-3 px-1" />
+          {group.items.map((competitor, index) => (
             <LeaderboardRow
               key={competitor.id}
               competitor={competitor}
@@ -269,7 +276,7 @@ export default function Home() {
             />
           ))}
         </div>
-      )}
+      ))}
 
       {/* Inactive confirmed competitors */}
       {inactive.length > 0 && (

@@ -9,6 +9,7 @@ import {
   ArchivedCompetitorRanking,
 } from '../../repositories/SeasonsRepository';
 import { Skeleton } from '../ui';
+import { getLeagueForRank } from '../../utils/leagues';
 
 interface SeasonHistorySectionProps {
   competitorId: string;
@@ -58,31 +59,13 @@ const getRankBadge = (
   rank: number | null
 ): { label: string; bg: string; border: string; glow: string } | null => {
   if (rank === null) return null;
-  if (rank === 1) {
-    return {
-      label: 'Champion',
-      bg: 'bg-gradient-to-r from-yellow-600 to-yellow-500',
-      border: 'border-l-yellow-500',
-      glow: 'shadow-yellow-500/30',
-    };
-  }
-  if (rank <= 3) {
-    return {
-      label: 'Podium',
-      bg: 'bg-gradient-to-r from-orange-600 to-orange-500',
-      border: 'border-l-orange-500',
-      glow: 'shadow-orange-500/20',
-    };
-  }
-  if (rank <= 5) {
-    return {
-      label: 'Top 5',
-      bg: 'bg-blue-500',
-      border: 'border-l-blue-500',
-      glow: '',
-    };
-  }
-  return null;
+  const league = getLeagueForRank(rank);
+  return {
+    label: `${league.emoji} ${league.label}`,
+    bg: league.badgeBg,
+    border: '',
+    glow: rank <= 3 ? 'shadow-yellow-500/30' : '',
+  };
 };
 
 const getRankIcon = (rank: number | null): string => {
@@ -124,11 +107,18 @@ const getRankStyle = (
       text: 'text-orange-400',
     };
   }
-  if (rank <= 5) {
+  if (rank <= 7) {
     return {
       border: 'border-l-4 border-l-blue-500',
       bg: '',
       text: 'text-blue-400',
+    };
+  }
+  if (rank <= 11) {
+    return {
+      border: 'border-l-4 border-l-emerald-500',
+      bg: '',
+      text: 'text-emerald-400',
     };
   }
   return {

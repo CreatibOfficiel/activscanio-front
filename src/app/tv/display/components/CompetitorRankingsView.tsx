@@ -7,6 +7,8 @@ import TVCountdown from "./TVCountdown";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import { computeRanksWithTies } from "@/app/utils/rankings";
+import { groupByLeague } from "@/app/utils/leagues";
+import { LeagueDivider } from "@/app/components/leaderboard";
 import { getRaceSeasonEndDate } from "../utils/deadlines";
 
 interface Props {
@@ -76,7 +78,14 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
 
   // Podium from confirmed players
   const top3 = confirmed.slice(0, 3);
-  const othersConfirmed = confirmed.slice(3, 15);
+
+  // Group confirmed players by league (excluding champions/podium)
+  const leagueGroups = groupByLeague(
+    confirmed,
+    (c) => c.id,
+    confirmedRanks,
+    true, // exclude Champions (podium)
+  );
 
   const podiumItems = top3.map((competitor) => {
     const avgRank = competitor.avgRank12
@@ -143,10 +152,11 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
         </div>
       )}
 
-      {/* Confirmed: others after podium */}
-      {othersConfirmed.length > 0 && (
-        <div className="space-y-3 max-w-5xl mx-auto">
-          {othersConfirmed.map((competitor, index) => {
+      {/* Confirmed: league sections after podium */}
+      {leagueGroups.map((group) => (
+        <div key={group.league.id} className="space-y-3 max-w-5xl mx-auto">
+          <LeagueDivider league={group.league} variant="tv" />
+          {group.items.map((competitor, index) => {
             const rank = confirmedRanks.get(competitor.id) ?? index + 4;
             const trend = getTrend(competitor, rank);
             return (
@@ -174,7 +184,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
             );
           })}
         </div>
-      )}
+      ))}
 
       {/* Inactive confirmed section */}
       {inactive.length > 0 && (
