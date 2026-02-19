@@ -48,7 +48,7 @@ export class UsersRepository {
 
     if (!response.ok) {
       const error = new Error(`Failed to fetch user: ${response.statusText}`);
-      (error as any).status = response.status;
+      (error as unknown as Record<string, number>).status = response.status;
       throw error;
     }
 

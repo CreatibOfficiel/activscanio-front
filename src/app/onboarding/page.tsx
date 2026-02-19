@@ -203,6 +203,7 @@ const OnboardingPage: FC = () => {
     };
 
     loadAllCompetitors();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, getToken, user?.firstName, user?.lastName, allCompetitors.length]);
 
   // Filter competitors locally based on search query
@@ -656,16 +657,19 @@ const OnboardingPage: FC = () => {
                             : 'hover:border-primary-500 hover:bg-primary-500/5'
                         }`}
                         onClick={() => setSelectedCompetitor(suggestedCompetitor)}
-                        role="listitem"
+                        role="option"
                         tabIndex={0}
                         aria-label={`Suggestion: ${suggestedCompetitor.firstName} ${suggestedCompetitor.lastName}`}
                         aria-selected={selectedCompetitor?.id === suggestedCompetitor.id}
                       >
                         <div className="flex items-center gap-3">
                           {suggestedCompetitor.profilePictureUrl ? (
-                            <img
+                            <Image
                               src={suggestedCompetitor.profilePictureUrl}
                               alt={`${suggestedCompetitor.firstName} ${suggestedCompetitor.lastName}`}
+                              width={48}
+                              height={48}
+                              unoptimized
                               className={`w-12 h-12 rounded-full object-cover ${
                                 selectedCompetitor?.id === suggestedCompetitor.id ? 'ring-2 ring-primary-500' : ''
                               }`}
@@ -721,7 +725,7 @@ const OnboardingPage: FC = () => {
                                 : 'hover:border-primary-500 hover:bg-primary-500/5 cursor-pointer'
                           }`}
                           onClick={() => isAvailable && setSelectedCompetitor(competitor)}
-                          role="listitem"
+                          role="option"
                           tabIndex={isAvailable ? 0 : -1}
                           onKeyPress={(e) => e.key === 'Enter' && isAvailable && setSelectedCompetitor(competitor)}
                           aria-label={`${competitor.firstName} ${competitor.lastName}${!isAvailable ? ' (déjà lié à un compte)' : ''}`}
@@ -730,9 +734,12 @@ const OnboardingPage: FC = () => {
                         >
                           <div className="flex items-center gap-3">
                             {competitor.profilePictureUrl ? (
-                              <img
+                              <Image
                                 src={competitor.profilePictureUrl}
                                 alt={`${competitor.firstName} ${competitor.lastName}`}
+                                width={48}
+                                height={48}
+                                unoptimized
                                 className={`w-12 h-12 rounded-full object-cover ${
                                   !isAvailable ? 'grayscale' : isSelected ? 'ring-2 ring-primary-500' : ''
                                 }`}
@@ -946,9 +953,12 @@ const OnboardingPage: FC = () => {
                               {!hasAvailable && takenVariant?.takenBy && (
                                 <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-2 border-neutral-800 overflow-hidden bg-neutral-700">
                                   {takenVariant.takenBy.profilePictureUrl ? (
-                                    <img
+                                    <Image
                                       src={takenVariant.takenBy.profilePictureUrl}
                                       alt={takenVariant.takenBy.firstName}
+                                      width={28}
+                                      height={28}
+                                      unoptimized
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
@@ -1068,9 +1078,12 @@ const OnboardingPage: FC = () => {
                             {!selectable && variant.takenBy && (
                               <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-neutral-800 overflow-hidden bg-neutral-700">
                                 {variant.takenBy.profilePictureUrl ? (
-                                  <img
+                                  <Image
                                     src={variant.takenBy.profilePictureUrl}
                                     alt={variant.takenBy.firstName}
+                                    width={24}
+                                    height={24}
+                                    unoptimized
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (

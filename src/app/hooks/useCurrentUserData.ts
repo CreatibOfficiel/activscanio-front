@@ -27,9 +27,10 @@ export function useCurrentUserData() {
 
         cachedUserData = data;
         setUserData(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         // On 401, invalidate cache so next mount retries with a fresh token
-        if (err?.status === 401) {
+        const status = err && typeof err === 'object' && 'status' in err ? (err as { status: number }).status : undefined;
+        if (status === 401) {
           cachedUserData = null;
         }
       } finally {
