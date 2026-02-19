@@ -64,12 +64,13 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
           router.push('/onboarding');
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error checking onboarding status:', err);
       consecutiveErrors.current += 1;
 
       // If 401 or too many consecutive errors, redirect to sign-in
-      if (err?.status === 401 || consecutiveErrors.current >= 2) {
+      const status = err && typeof err === 'object' && 'status' in err ? (err as { status: number }).status : undefined;
+      if (status === 401 || consecutiveErrors.current >= 2) {
         router.push('/sign-in');
         return;
       }

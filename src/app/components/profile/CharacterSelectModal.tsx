@@ -245,10 +245,13 @@ const CharacterSelectModal: FC<CharacterSelectModalProps> = ({
                       {!hasAvailable && takenVariant?.takenBy && (
                         <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-neutral-800 overflow-hidden bg-neutral-700">
                           {takenVariant.takenBy.profilePictureUrl ? (
-                            <img
+                            <Image
                               src={takenVariant.takenBy.profilePictureUrl}
                               alt={takenVariant.takenBy.firstName}
                               className="w-full h-full object-cover"
+                              width={24}
+                              height={24}
+                              unoptimized
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
@@ -327,10 +330,13 @@ const CharacterSelectModal: FC<CharacterSelectModalProps> = ({
                       {!isAvailable && variant.takenBy && (
                         <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-neutral-800 overflow-hidden bg-neutral-700">
                           {variant.takenBy.profilePictureUrl ? (
-                            <img
+                            <Image
                               src={variant.takenBy.profilePictureUrl}
                               alt={variant.takenBy.firstName}
                               className="w-full h-full object-cover"
+                              width={20}
+                              height={20}
+                              unoptimized
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
