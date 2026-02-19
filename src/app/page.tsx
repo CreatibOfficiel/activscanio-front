@@ -108,38 +108,49 @@ export default function Home() {
     fetchWarnings();
   }, [isSignedIn, getToken]);
 
-  const { confirmed, calibrating, topThree, others, trends, confirmedRanks, calibratingRanks } = useMemo(() => {
+  const { confirmed, inactive, calibrating, topThree, others, trends, confirmedRanks, inactiveRanks, calibratingRanks } = useMemo(() => {
     const allWithRaces = allCompetitors.filter((c) => c.raceCount && c.raceCount > 0);
     const sorted = sortByConservativeScore(allWithRaces);
 
-    // Split confirmed vs calibrating (same logic as TV display)
-    const conf = sorted.filter((c) => !c.provisional);
+    // Split confirmed active vs confirmed inactive vs calibrating
+    const conf = sorted.filter((c) => !c.provisional && !c.inactive);
+    const inact = sorted.filter((c) => !c.provisional && c.inactive);
     const cal = sorted.filter((c) => c.provisional);
 
-    // Compute ranks with ties for confirmed competitors
+    // Compute ranks with ties for active confirmed competitors
     const confRanks = computeRanksWithTies(
       conf,
       (c) => c.conservativeScore ?? 0,
       (c) => c.id,
     );
 
-    // Compute ranks with ties for calibrating competitors (offset by confirmed count)
+    // Compute ranks with ties for inactive (offset by active confirmed count)
+    const inactRanks = computeRanksWithTies(
+      inact,
+      (c) => c.conservativeScore ?? 0,
+      (c) => c.id,
+      conf.length,
+    );
+
+    // Compute ranks with ties for calibrating competitors (offset by confirmed + inactive count)
     const calRanks = computeRanksWithTies(
       cal,
       (c) => c.conservativeScore ?? 0,
       (c) => c.id,
-      conf.length,
+      conf.length + inact.length,
     );
 
     const trendData = calculateCompetitorTrends(conf);
 
     return {
       confirmed: conf,
+      inactive: inact,
       calibrating: cal,
       topThree: conf.slice(0, 3),
       others: conf.slice(3),
       trends: trendData,
       confirmedRanks: confRanks,
+      inactiveRanks: inactRanks,
       calibratingRanks: calRanks,
     };
   }, [allCompetitors]);
@@ -190,6 +201,7 @@ export default function Home() {
         <p className="text-sm text-neutral-500">
           {confirmed.length} pilote
           {confirmed.length > 1 ? "s" : ""}
+          {inactive.length > 0 && ` + ${inactive.length} inactif${inactive.length > 1 ? "s" : ""}`}
           {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
         </p>
       </div>
@@ -255,6 +267,29 @@ export default function Home() {
               trend={trends.get(competitor.id)}
               animationDelay={index * 50}
             />
+          ))}
+        </div>
+      )}
+
+      {/* Inactive confirmed competitors */}
+      {inactive.length > 0 && (
+        <div className="mt-8 space-y-1">
+          <div className="flex items-center gap-3 mb-3 px-1">
+            <div className="h-px flex-1 bg-neutral-700" />
+            <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+              <span>💤</span> Inactifs
+            </h2>
+            <div className="h-px flex-1 bg-neutral-700" />
+          </div>
+
+          {inactive.map((competitor, index) => (
+            <div key={competitor.id} className="opacity-50">
+              <LeaderboardRow
+                competitor={competitor}
+                rank={inactiveRanks.get(competitor.id) ?? confirmed.length + index + 1}
+                animationDelay={index * 50}
+              />
+            </div>
           ))}
         </div>
       )}

@@ -39,6 +39,7 @@ export interface Competitor {
   bestPlayStreak?: number;
   totalLifetimeRaces?: number;
   currentMonthRaceCount?: number;
+  inactive?: boolean;
 }
 
 // Competitor with availability status (for onboarding)

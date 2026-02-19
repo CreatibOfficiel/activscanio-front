@@ -33,8 +33,9 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     .filter((c) => c.raceCount && c.raceCount > 0)
     .sort((a, b) => (b.conservativeScore ?? 0) - (a.conservativeScore ?? 0));
 
-  // Split confirmed (5+ races) vs calibrating
-  const confirmed = withRaces.filter((c) => !c.provisional);
+  // Split confirmed active vs confirmed inactive vs calibrating
+  const confirmed = withRaces.filter((c) => !c.provisional && !c.inactive);
+  const inactive = withRaces.filter((c) => !c.provisional && c.inactive);
   const calibrating = withRaces.filter((c) => c.provisional);
 
   // Calculate max score for progress bars
@@ -48,11 +49,17 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     (c) => c.conservativeScore ?? 0,
     (c) => c.id,
   );
+  const inactiveRanks = computeRanksWithTies(
+    inactive,
+    (c) => c.conservativeScore ?? 0,
+    (c) => c.id,
+    confirmed.length,
+  );
   const calibratingRanks = computeRanksWithTies(
     calibrating,
     (c) => c.conservativeScore ?? 0,
     (c) => c.id,
-    confirmed.length,
+    confirmed.length + inactive.length,
   );
 
   // Real trend based on previousDayRank snapshot
@@ -166,6 +173,48 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
               />
             );
           })}
+        </div>
+      )}
+
+      {/* Inactive confirmed section */}
+      {inactive.length > 0 && (
+        <div className="space-y-4 max-w-5xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-neutral-700" />
+            <h3 className="text-lg font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-2">
+              <span>💤</span> Inactifs
+            </h3>
+            <div className="h-px flex-1 bg-neutral-700" />
+          </div>
+          <div className="space-y-3 opacity-50">
+            {inactive.map((competitor, index) => {
+              const rank = inactiveRanks.get(competitor.id) ?? confirmed.length + index + 1;
+              const trend = getTrend(competitor, rank);
+              return (
+                <TVLeaderboardRow
+                  key={competitor.id}
+                  item={{
+                    id: competitor.id,
+                    rank,
+                    name: formatCompetitorName(
+                      competitor.firstName,
+                      competitor.lastName
+                    ),
+                    imageUrl: competitor.profilePictureUrl,
+                    score: Math.round(competitor.conservativeScore ?? 0),
+                    scoreLabel: "ELO",
+                    subtitle: competitor.characterVariant
+                      ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
+                      : `${competitor.raceCount || 0} courses`,
+                    trend: trend.direction,
+                    trendValue: trend.value,
+                    maxScore,
+                  }}
+                  animationDelay={index * 80}
+                />
+              );
+            })}
+          </div>
         </div>
       )}
 
