@@ -1,11 +1,9 @@
 'use client';
 
 import { FC, useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@clerk/nextjs';
 import { motion } from 'motion/react';
 import * as Tabs from '@radix-ui/react-tabs';
-import { MdPerson } from 'react-icons/md';
 import { LayoutGrid, GitBranch } from 'lucide-react';
 import { PageHeader } from '../components/ui';
 import {
