@@ -25,8 +25,8 @@ export const LEAGUES: LeagueConfig[] = [
     maxRank: 3,
   },
   {
-    id: 'ligue1',
-    label: 'Ligue 1',
+    id: 'formule1',
+    label: 'Formule 1',
     emoji: '⭐',
     textColor: 'text-blue-400',
     lineColor: 'bg-blue-500/40',
@@ -37,8 +37,8 @@ export const LEAGUES: LeagueConfig[] = [
     maxRank: 7,
   },
   {
-    id: 'ligue2',
-    label: 'Ligue 2',
+    id: 'karting',
+    label: 'Karting',
     emoji: '🌟',
     textColor: 'text-emerald-400',
     lineColor: 'bg-emerald-500/40',
@@ -49,8 +49,8 @@ export const LEAGUES: LeagueConfig[] = [
     maxRank: 11,
   },
   {
-    id: 'district',
-    label: 'District',
+    id: 'velo-a-roulettes',
+    label: 'Vélo à roulettes',
     emoji: '🏟️',
     textColor: 'text-neutral-400',
     lineColor: 'bg-neutral-600/40',
