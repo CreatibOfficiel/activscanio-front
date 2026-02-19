@@ -65,24 +65,26 @@ const StreakWarningBanner: FC<StreakWarningBannerProps> = ({
       )}
 
       {playStreak.atRisk && (
-        <div
-          className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-red-500/10 border-red-500/30"
-        >
-          <span className="text-xl animate-pulse">🚨</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-red-400">
-              Serie de {playStreak.currentStreak}j en danger !
-            </p>
-            <p className="text-xs text-neutral-400 truncate">
-              Dernier jour pour sauver ta serie. Fais une course !
-            </p>
-          </div>
-          <span
-            className="text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 bg-red-500/20 text-red-400"
+        <Link href="/races" className="block">
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-red-500/10 border-red-500/30"
           >
-            Jouer
-          </span>
-        </div>
+            <span className="text-xl animate-pulse">🚨</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-400">
+                Serie de {playStreak.currentStreak}j en danger !
+              </p>
+              <p className="text-xs text-neutral-400 truncate">
+                Dernier jour pour sauver ta serie. Fais une course !
+              </p>
+            </div>
+            <span
+              className="text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 bg-red-500/20 text-red-400"
+            >
+              Jouer
+            </span>
+          </div>
+        </Link>
       )}
     </div>
   );

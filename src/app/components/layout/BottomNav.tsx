@@ -57,7 +57,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-neutral-800 border-t border-neutral-700 h-14 flex items-center justify-around px-2 z-50 lg:hidden"
+      className="fixed bottom-0 left-0 right-0 bg-neutral-800 border-t border-neutral-700 min-h-14 pb-[env(safe-area-inset-bottom)] flex items-center justify-around px-2 z-50 lg:hidden"
       role="navigation"
       aria-label="Navigation mobile"
     >

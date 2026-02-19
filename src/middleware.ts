@@ -10,25 +10,23 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
-  if (isPublicRoute(request)) return;
+  if (isPublicRoute(request)) return NextResponse.next();
 
   const { userId } = await auth();
 
   if (!userId) {
-    // Detect redirect loop: if referer is from Clerk, we're looping
-    const referer = request.headers.get("referer") || "";
-    const isFromClerk =
-      referer.includes("clerk.") || referer.includes("accounts.");
+    const signInUrl = new URL("/sign-in", request.url);
+    const pathname = request.nextUrl.pathname;
 
-    if (isFromClerk) {
-      // Break the loop: redirect to local sign-in instead of back to Clerk
-      const signInUrl = new URL("/sign-in", request.url);
-      return NextResponse.redirect(signInUrl);
+    // Avoid circular redirections
+    if (!pathname.startsWith("/sign-in") && !pathname.startsWith("/sign-up")) {
+      signInUrl.searchParams.set("redirect_url", pathname);
     }
 
-    // Normal case: let Clerk handle the redirect
-    await auth.protect();
+    return NextResponse.redirect(signInUrl);
   }
+
+  return NextResponse.next();
 });
 
 export const config = {

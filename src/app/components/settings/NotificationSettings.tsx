@@ -19,6 +19,7 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
     isSupported,
     isIOS,
     isPWAInstalled,
+    iOSVersion,
     requestPermission,
     subscribeToPush,
     unsubscribeFromPush,
@@ -31,25 +32,12 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
     try {
       setIsSaving(true);
 
-      if (isIOS && !isPWAInstalled) {
-        toast.info(
-          'Sur iOS, installez l\'app sur votre écran d\'accueil pour activer les notifications push',
-          { duration: 5000 }
-        );
-        return;
-      }
-
       const perm = await requestPermission();
 
       if (perm === 'granted') {
-        const success = await subscribeToPush();
-
-        if (success) {
-          await updatePreferences({ enablePush: true });
-          toast.success('Notifications push activées !');
-        } else {
-          toast.error('Erreur lors de l\'inscription aux notifications push');
-        }
+        await subscribeToPush();
+        await updatePreferences({ enablePush: true });
+        toast.success('Notifications push activées !');
       } else if (perm === 'denied') {
         toast.error(
           'Permission refusée. Autorisez les notifications dans les paramètres de votre navigateur.',
@@ -58,7 +46,8 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
       }
     } catch (error) {
       console.error(error);
-      toast.error('Erreur lors de l\'activation des notifications');
+      const message = error instanceof Error ? error.message : 'Erreur lors de l\'activation des notifications';
+      toast.error(message, { duration: 6000 });
     } finally {
       setIsSaving(false);
     }
@@ -121,10 +110,17 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
   return (
     <div className={sectionSpacing}>
       {/* Avertissement iOS */}
-      {isIOS && !isPWAInstalled && (
+      {isIOS && iOSVersion !== null && iOSVersion < 16.4 && (
+        <div className="rounded-xl bg-error-500/10 border border-error-500 p-3 sm:p-4">
+          <p className="text-error-500 text-sub sm:text-regular">
+            iOS {iOSVersion} détecté. Les notifications push nécessitent iOS 16.4 minimum. Mettez à jour votre iPhone dans Réglages &gt; Général &gt; Mise à jour logicielle.
+          </p>
+        </div>
+      )}
+      {isIOS && (iOSVersion === null || iOSVersion >= 16.4) && !isPWAInstalled && (
         <div className="rounded-xl bg-info-500/10 border border-info-500 p-3 sm:p-4">
           <p className="text-info-500 text-sub sm:text-regular">
-            Sur iOS, ajoutez l&apos;app à votre écran d&apos;accueil pour activer les notifications push
+            Sur iOS, ajoutez l&apos;app à votre écran d&apos;accueil pour activer les notifications push (Safari &gt; Partager &gt; Sur l&apos;écran d&apos;accueil)
           </p>
         </div>
       )}

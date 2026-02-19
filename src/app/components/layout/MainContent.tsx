@@ -10,7 +10,7 @@ export default function MainContent({ children }: { children: ReactNode }) {
   const isFullScreen = fullScreenPaths.some(path => pathname.startsWith(path));
 
   return (
-    <main className={isFullScreen ? '' : 'pb-20 lg:pb-0 lg:pl-64'}>
+    <main className={isFullScreen ? '' : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-64'}>
       {children}
     </main>
   );

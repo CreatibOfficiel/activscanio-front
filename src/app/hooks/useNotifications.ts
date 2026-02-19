@@ -24,11 +24,11 @@ interface UseNotificationsReturn {
   isSupported: boolean;
   isIOS: boolean;
   isPWAInstalled: boolean;
+  iOSVersion: number | null;
   requestPermission: () => Promise<NotificationPermission>;
   subscribeToPush: () => Promise<boolean>;
   unsubscribeFromPush: () => Promise<boolean>;
   updatePreferences: (prefs: Partial<NotificationPreferences>) => Promise<void>;
-
 }
 
 export function useNotifications(): UseNotificationsReturn {
@@ -39,6 +39,7 @@ export function useNotifications(): UseNotificationsReturn {
   const [isSupported, setIsSupported] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isPWAInstalled, setIsPWAInstalled] = useState(false);
+  const [iOSVersion, setIOSVersion] = useState<number | null>(null);
 
   const loadPreferences = useCallback(async () => {
     try {
@@ -69,9 +70,16 @@ export function useNotifications(): UseNotificationsReturn {
     const supported = 'Notification' in window && 'serviceWorker' in navigator;
     setIsSupported(supported);
 
-    // Détecter iOS
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // Détecter iOS et version
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
     setIsIOS(iOS);
+    if (iOS) {
+      const match = navigator.userAgent.match(/OS (\d+)_(\d+)/);
+      if (match) {
+        setIOSVersion(parseFloat(`${match[1]}.${match[2]}`));
+      }
+    }
 
     // Détecter PWA installée
     const installed = window.matchMedia('(display-mode: standalone)').matches ||
@@ -89,25 +97,35 @@ export function useNotifications(): UseNotificationsReturn {
 
   const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
     if (!isSupported) {
-      throw new Error('Notifications not supported');
+      throw new Error('Les notifications ne sont pas supportées sur cet appareil.');
+    }
+
+    if (isIOS && iOSVersion !== null && iOSVersion < 16.4) {
+      throw new Error(`iOS ${iOSVersion} détecté. Les notifications push nécessitent iOS 16.4 ou plus récent. Mettez à jour votre iPhone.`);
     }
 
     if (isIOS && !isPWAInstalled) {
-      throw new Error('iOS requires PWA installation for notifications');
+      throw new Error('Sur iOS, installez l\'app sur l\'écran d\'accueil (Partager → Sur l\'écran d\'accueil) pour activer les notifications push.');
     }
 
     const result = await Notification.requestPermission();
     setPermission(result);
     return result;
-  }, [isSupported, isIOS, isPWAInstalled]);
+  }, [isSupported, isIOS, isPWAInstalled, iOSVersion]);
 
   const subscribeToPush = useCallback(async (): Promise<boolean> => {
     if (!isSupported || permission !== 'granted') {
+      console.warn('[Push] Cannot subscribe: supported=%s, permission=%s', isSupported, permission);
       return false;
     }
 
     try {
       const registration = await navigator.serviceWorker.ready;
+
+      if (!registration.pushManager) {
+        console.error('[Push] pushManager unavailable — iOS trop ancien ou pas en mode PWA');
+        throw new Error('Push non disponible. Vérifiez que l\'app est installée sur l\'écran d\'accueil et que vous êtes sur iOS 16.4+.');
+      }
 
       // Vérifier si déjà subscribed
       let subscription = await registration.pushManager.getSubscription();
@@ -115,8 +133,8 @@ export function useNotifications(): UseNotificationsReturn {
       if (!subscription) {
         const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
         if (!vapidPublicKey) {
-          console.error('NEXT_PUBLIC_VAPID_PUBLIC_KEY is not configured');
-          return false;
+          console.error('[Push] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not configured');
+          throw new Error('Configuration push manquante côté serveur.');
         }
 
         subscription = await registration.pushManager.subscribe({
@@ -139,10 +157,15 @@ export function useNotifications(): UseNotificationsReturn {
         }
       );
 
-      return response.ok;
+      if (!response.ok) {
+        console.error('[Push] Backend subscribe failed: %s', response.status);
+        throw new Error('Erreur serveur lors de l\'inscription push.');
+      }
+
+      return true;
     } catch (error) {
-      console.error('Failed to subscribe to push notifications:', error);
-      return false;
+      console.error('[Push] Subscribe error:', error);
+      throw error;
     }
   }, [isSupported, permission, getToken]);
 
@@ -205,6 +228,7 @@ export function useNotifications(): UseNotificationsReturn {
     isSupported,
     isIOS,
     isPWAInstalled,
+    iOSVersion,
     requestPermission,
     subscribeToPush,
     unsubscribeFromPush,

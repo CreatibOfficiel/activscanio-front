@@ -314,6 +314,7 @@ const BettingPage: FC = () => {
                   isCurrentUser={!!internalUserId && bet.userId === internalUserId}
                   variant="compact"
                   currentUserHasBet={!!currentBet}
+                  weekClosed={currentWeek?.status !== BettingWeekStatus.OPEN}
                 />
               ))}
             </div>

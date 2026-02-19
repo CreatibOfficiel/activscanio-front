@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MdLock } from 'react-icons/md';
 import { BettingRepository, PaginationMeta } from '@/app/repositories/BettingRepository';
 import { Bet, BetStatus } from '@/app/models/Bet';
+import { BettingWeekStatus } from '@/app/models/BettingWeek';
 import { Card, Button, Spinner, PageHeader } from '@/app/components/ui';
 import { AchievementCard } from '@/app/components/achievements';
 import { formatPoints } from '@/app/utils/formatters';
@@ -36,10 +37,11 @@ const HistoryPage: FC = () => {
   const [activeStatus, setActiveStatus] = useState<BetStatus | null>(null);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [hasCurrentBet, setHasCurrentBet] = useState(false);
+  const [weekClosed, setWeekClosed] = useState(false);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Resolve internal user ID on mount
+  // Resolve internal user ID + week status on mount
   useEffect(() => {
     const resolveUserId = async () => {
       if (!user) return;
@@ -61,7 +63,16 @@ const HistoryPage: FC = () => {
         // Non-critical, just can't identify own bets
       }
     };
+    const loadWeekStatus = async () => {
+      try {
+        const week = await BettingRepository.getCurrentWeek();
+        setWeekClosed(week ? week.status !== BettingWeekStatus.OPEN : false);
+      } catch {
+        // Non-critical
+      }
+    };
     resolveUserId();
+    loadWeekStatus();
   }, [user, getToken]);
 
   const loadHistory = useCallback(async (offset = 0, append = false) => {
@@ -307,6 +318,7 @@ const HistoryPage: FC = () => {
                   isCurrentUser={!!internalUserId && bet.userId === internalUserId}
                   variant="full"
                   currentUserHasBet={hasCurrentBet}
+                  weekClosed={weekClosed}
                 />
 
                 {/* Achievement Timeline — only on "mine" tab for own bets */}
