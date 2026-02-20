@@ -2,6 +2,7 @@
 
 import { FC, useContext, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useUser } from "@clerk/nextjs";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
@@ -12,6 +13,8 @@ import Skeleton from "../ui/Skeleton";
 import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
 import { TrendDirection } from "../leaderboard/TrendIndicator";
 import DuelChallengeSheet from "../duel/DuelChallengeSheet";
+import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
+import { BettingRepository } from "@/app/repositories/BettingRepository";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -105,11 +108,16 @@ const DetailSkeleton: FC = () => (
 const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: rankProp, trend: trendProp }) => {
   const { getRecentRacesOfCompetitor, getBestScoreOfCompetitor, allRaces, allCompetitors } =
     useContext(AppContext);
+  const { userData } = useCurrentUserData();
+  const { user } = useUser();
 
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [bestScore, setBestScore] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showDuelSheet, setShowDuelSheet] = useState(false);
+  const [userPoints, setUserPoints] = useState<number | undefined>(undefined);
+
+  const isOwnCompetitor = userData?.competitorId === competitor.id;
 
   /* ---------- load recent races + best score ---------- */
   useEffect(() => {
@@ -125,6 +133,18 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
       setIsLoaded(true);
     })();
   }, [competitor.id, isOpen, getRecentRacesOfCompetitor, getBestScoreOfCompetitor]);
+
+  /* ---------- fetch user points for duel stakes ---------- */
+  useEffect(() => {
+    if (!isOpen || !user?.id) return;
+    const now = new Date();
+    BettingRepository.getMonthlyRankings(now.getMonth() + 1, now.getFullYear())
+      .then((res) => {
+        const myRanking = res.rankings.find((r) => r.userId === user.id);
+        setUserPoints(myRanking?.totalPoints ?? 0);
+      })
+      .catch(() => setUserPoints(0));
+  }, [isOpen, user?.id]);
 
   /* ---------- derived data ---------- */
   const shortName = formatCompetitorName(
@@ -235,12 +255,14 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
           >
             {/* Close / Edit / Duel buttons */}
             <div className="flex justify-end gap-2 mb-3">
-              <button
-                onClick={() => setShowDuelSheet(true)}
-                className="px-3 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-primary-400 hover:bg-primary-500/20 text-sm font-bold transition-colors"
-              >
-                Defier
-              </button>
+              {!isOwnCompetitor && (
+                <button
+                  onClick={() => setShowDuelSheet(true)}
+                  className="px-3 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-primary-400 hover:bg-primary-500/20 text-sm font-bold transition-colors"
+                >
+                  Defier
+                </button>
+              )}
               <EditCompetitorButton competitor={competitor} />
               <button
                 onClick={onClose}
@@ -585,6 +607,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
         competitorId={competitor.id}
         competitorName={shortName}
         competitorAvatar={competitor.profilePictureUrl}
+        userPoints={userPoints}
       />
     </Modal>
   );

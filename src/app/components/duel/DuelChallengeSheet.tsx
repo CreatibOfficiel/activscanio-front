@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
@@ -13,6 +13,7 @@ interface DuelChallengeSheetProps {
   competitorId: string;
   competitorName: string;
   competitorAvatar?: string;
+  userPoints?: number;
 }
 
 const STAKE_OPTIONS = [5, 10, 25] as const;
@@ -23,12 +24,29 @@ const DuelChallengeSheet: FC<DuelChallengeSheetProps> = ({
   competitorId,
   competitorName,
   competitorAvatar,
+  userPoints,
 }) => {
   const { getToken } = useAuth();
-  const [selectedStake, setSelectedStake] = useState<number>(10);
+  const [selectedStake, setSelectedStake] = useState<number | null>(10);
   const [isLoading, setIsLoading] = useState(false);
 
+  const points = userPoints ?? 0;
+
+  // Auto-select the best affordable stake when the sheet opens or points change
+  useEffect(() => {
+    if (!isOpen) return;
+    if (userPoints === undefined) return; // points not loaded yet
+
+    // If current selection is still affordable, keep it
+    if (selectedStake !== null && selectedStake <= points) return;
+
+    // Find the highest affordable stake
+    const affordable = [...STAKE_OPTIONS].reverse().find((s) => s <= points);
+    setSelectedStake(affordable ?? null);
+  }, [isOpen, userPoints, points, selectedStake]);
+
   const handleChallenge = async () => {
+    if (selectedStake === null) return;
     try {
       setIsLoading(true);
       const token = await getToken();
@@ -44,6 +62,8 @@ const DuelChallengeSheet: FC<DuelChallengeSheetProps> = ({
       setIsLoading(false);
     }
   };
+
+  const canSubmit = selectedStake !== null && selectedStake <= points;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Defier" size="sm">
@@ -68,20 +88,29 @@ const DuelChallengeSheet: FC<DuelChallengeSheetProps> = ({
         <div className="w-full">
           <p className="text-sub text-neutral-400 mb-2 text-center">Choisis ta mise</p>
           <div className="flex gap-2">
-            {STAKE_OPTIONS.map((stake) => (
-              <button
-                key={stake}
-                onClick={() => setSelectedStake(stake)}
-                className={`flex-1 py-3 rounded-lg text-center font-bold transition-all ${
-                  selectedStake === stake
-                    ? "bg-primary-500 text-neutral-900 ring-2 ring-primary-400"
-                    : "bg-neutral-700 text-neutral-200 hover:bg-neutral-600"
-                }`}
-              >
-                {stake} pts
-              </button>
-            ))}
+            {STAKE_OPTIONS.map((stake) => {
+              const affordable = stake <= points;
+              return (
+                <button
+                  key={stake}
+                  onClick={() => affordable && setSelectedStake(stake)}
+                  disabled={!affordable}
+                  className={`flex-1 py-3 rounded-lg text-center font-bold transition-all ${
+                    !affordable
+                      ? "bg-neutral-800 text-neutral-600 cursor-not-allowed"
+                      : selectedStake === stake
+                        ? "bg-primary-500 text-neutral-900 ring-2 ring-primary-400"
+                        : "bg-neutral-700 text-neutral-200 hover:bg-neutral-600"
+                  }`}
+                >
+                  {stake} pts
+                </button>
+              );
+            })}
           </div>
+          <p className="text-xs text-neutral-500 text-center mt-2">
+            Tu as {points} pts ce mois
+          </p>
         </div>
 
         {/* Info */}
@@ -95,8 +124,11 @@ const DuelChallengeSheet: FC<DuelChallengeSheetProps> = ({
           fullWidth
           loading={isLoading}
           onClick={handleChallenge}
+          disabled={!canSubmit}
         >
-          Defier pour {selectedStake} pts
+          {canSubmit
+            ? `Defier pour ${selectedStake} pts`
+            : "Pas assez de points"}
         </Button>
       </div>
     </Modal>
