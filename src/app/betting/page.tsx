@@ -24,6 +24,10 @@ import PositionMedal from '@/app/components/betting/PositionMedal';
 import { formatOdds, formatCompetitorName } from '@/app/utils/formatters';
 import { BetPosition } from '@/app/models/Bet';
 import { MdBolt } from 'react-icons/md';
+import { Duel, DuelStatus } from '@/app/models/Duel';
+import { DuelRepository } from '@/app/repositories/DuelRepository';
+import DuelCard from '@/app/components/duel/DuelCard';
+import { MdSportsMma } from 'react-icons/md';
 
 const BettingPage: FC = () => {
   const { getToken } = useAuth();
@@ -35,6 +39,8 @@ const BettingPage: FC = () => {
   const [recentBets, setRecentBets] = useState<Bet[]>([]);
   const [userRanking, setUserRanking] = useState<BettorRanking | null>(null);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
+  const [activeDuels, setActiveDuels] = useState<Duel[]>([]);
+  const [recentDuels, setRecentDuels] = useState<Duel[]>([]);
 
   const loadData = useCallback(async () => {
     try {
@@ -66,6 +72,17 @@ const BettingPage: FC = () => {
             (r) => r.userId === user.id
           );
           setUserRanking(myRanking || null);
+
+          // Load duels
+          const myDuels = await DuelRepository.getMyDuels(token);
+          setActiveDuels(
+            myDuels.filter(
+              (d) => d.status === DuelStatus.PENDING || d.status === DuelStatus.ACCEPTED,
+            ),
+          );
+          setRecentDuels(
+            myDuels.filter((d) => d.status === DuelStatus.RESOLVED).slice(0, 3),
+          );
         }
       }
 
@@ -296,6 +313,32 @@ const BettingPage: FC = () => {
             </div>
           </Card>
         </div>
+
+        {/* Duels Section */}
+        {(activeDuels.length > 0 || recentDuels.length > 0) && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MdSportsMma className="text-lg text-primary-400" />
+                <h2 className="text-bold text-white">Duels</h2>
+                {activeDuels.length > 0 && (
+                  <Badge variant="primary" size="sm">{activeDuels.length} actif{activeDuels.length > 1 ? 's' : ''}</Badge>
+                )}
+              </div>
+              <Link href="/betting/duels" className="text-sm text-primary-400 hover:text-primary-300">
+                Voir tout →
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {activeDuels.slice(0, 2).map((duel) => (
+                <DuelCard key={duel.id} duel={duel} currentUserId={user?.id} compact />
+              ))}
+              {activeDuels.length === 0 && recentDuels.slice(0, 2).map((duel) => (
+                <DuelCard key={duel.id} duel={duel} currentUserId={user?.id} compact />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Recent Community Bets */}
         {recentBets.length > 0 && (
