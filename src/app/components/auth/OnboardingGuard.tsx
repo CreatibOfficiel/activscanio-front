@@ -15,27 +15,26 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const getTokenRef = useRef(getToken);
   getTokenRef.current = getToken;
 
-  const hasCheckedForPath = useRef<string | null>(null);
+  const hasPassedOnboarding = useRef(false);
   const consecutiveErrors = useRef(0);
 
   const checkOnboarding = useCallback(async () => {
     if (!isLoaded) return;
 
-    // Ne pas re-checker si on a deja verifie pour ce pathname
-    if (hasCheckedForPath.current === pathname) {
+    // Already verified successfully → skip
+    if (hasPassedOnboarding.current) {
+      setIsChecking(false);
+      return;
+    }
+
+    const isPublicPath = ['/tv/display', '/sign-in', '/sign-up'].some(path => pathname.startsWith(path));
+    if (isPublicPath) {
       setIsChecking(false);
       return;
     }
 
     setError(null);
     setIsChecking(true);
-
-    const isPublicPath = ['/tv/display', '/sign-in', '/sign-up'].some(path => pathname.startsWith(path));
-    if (isPublicPath) {
-      hasCheckedForPath.current = pathname;
-      setIsChecking(false);
-      return;
-    }
 
     try {
       // Force fresh token to avoid using an expired cached token
@@ -47,22 +46,18 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
       const userData = await UsersRepository.getMe(token);
       consecutiveErrors.current = 0;
-      const isOnboardingPath = pathname.startsWith('/onboarding');
 
       if (userData.hasCompletedOnboarding) {
-        if (isOnboardingPath) {
+        hasPassedOnboarding.current = true;
+        if (pathname.startsWith('/onboarding')) {
           router.push('/');
-        } else {
-          hasCheckedForPath.current = pathname;
-          setIsChecking(false);
         }
+        setIsChecking(false);
       } else {
-        if (isOnboardingPath) {
-          hasCheckedForPath.current = pathname;
-          setIsChecking(false);
-        } else {
+        if (!pathname.startsWith('/onboarding')) {
           router.push('/onboarding');
         }
+        setIsChecking(false);
       }
     } catch (err: unknown) {
       console.error('Error checking onboarding status:', err);
@@ -92,7 +87,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
           <p className="text-neutral-400 mb-6">{error}</p>
           <button
             onClick={() => {
-              hasCheckedForPath.current = null;
+              hasPassedOnboarding.current = false;
               checkOnboarding();
             }}
             className="px-6 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
