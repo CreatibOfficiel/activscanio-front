@@ -105,19 +105,22 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   });
 
   return (
-    <div className="space-y-12">
-      {/* Season end countdown */}
-      <div className="flex justify-center">
-        <TVCountdown
-          label="Fin de saison"
-          targetDate={raceSeasonEndDate}
-          thresholds={SEASON_THRESHOLDS}
-          expiredLabel="Saison terminée"
-        />
-      </div>
+    <div className="space-y-8">
+      {/* Podium + Countdown side by side */}
+      <div className="relative">
+        {/* Countdown pinned top-right */}
+        <div className="absolute top-0 right-0 z-10">
+          <TVCountdown
+            label="Fin de saison"
+            targetDate={raceSeasonEndDate}
+            thresholds={SEASON_THRESHOLDS}
+            expiredLabel="Saison terminée"
+          />
+        </div>
 
-      {/* Confirmed: Podium Top 3 */}
-      {top3.length >= 3 && <TVPodium items={podiumItems} />}
+        {/* Confirmed: Podium Top 3 */}
+        {top3.length >= 3 && <TVPodium items={podiumItems} />}
+      </div>
 
       {/* Confirmed: list (if not enough for podium, show as rows) */}
       {top3.length > 0 && top3.length < 3 && (

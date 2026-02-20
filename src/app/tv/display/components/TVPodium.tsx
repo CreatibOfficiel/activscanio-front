@@ -166,7 +166,7 @@ const TVPodium: FC<Props> = ({ items, title }) => {
 
       {/* 3D Podium layout */}
       <div
-        className="flex justify-center items-end gap-8 pt-20"
+        className="flex justify-center items-end gap-8 pt-4"
         style={{ perspective: "1200px" }}
       >
         {/* 2nd place - left */}
