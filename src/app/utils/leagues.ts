@@ -27,7 +27,7 @@ export const LEAGUES: LeagueConfig[] = [
   {
     id: 'formule1',
     label: 'Formule 1',
-    emoji: '🏎️',
+    emoji: '⭐',
     textColor: 'text-blue-400',
     lineColor: 'bg-blue-500/40',
     badgeBg: 'bg-blue-500',
@@ -39,7 +39,7 @@ export const LEAGUES: LeagueConfig[] = [
   {
     id: 'karting',
     label: 'Karting',
-    emoji: '🏁',
+    emoji: '🌟',
     textColor: 'text-emerald-400',
     lineColor: 'bg-emerald-500/40',
     badgeBg: 'bg-emerald-500',
@@ -51,7 +51,7 @@ export const LEAGUES: LeagueConfig[] = [
   {
     id: 'velo-a-roulettes',
     label: 'Vélo à roulettes',
-    emoji: '🚲',
+    emoji: '🏟️',
     textColor: 'text-neutral-400',
     lineColor: 'bg-neutral-600/40',
     badgeBg: 'bg-neutral-600',

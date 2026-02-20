@@ -27,17 +27,6 @@ interface Race {
   bettingOpen?: boolean;
 }
 
-export interface DuelReceivedData {
-  duelId: string;
-  challenger: {
-    firstName: string;
-    lastName: string;
-    profilePictureUrl?: string;
-  };
-  stake: number;
-  expiresAt: string;
-}
-
 let socket: Socket | null = null;
 
 // Reconnection configuration
@@ -278,80 +267,5 @@ export const subscribeToRankingsUpdated = (
 
   return () => {
     socket?.off('rankings:updated', callback);
-  };
-};
-
-/**
- * Subscribe to duel received events (challenged user)
- */
-export const subscribeToDuelReceived = (
-  callback: (data: DuelReceivedData) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:received', callback);
-
-  return () => {
-    socket?.off('duel:received', callback);
-  };
-};
-
-/**
- * Subscribe to duel accepted events (challenger)
- */
-export const subscribeToDuelAccepted = (
-  callback: (data: { duelId: string }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:accepted', callback);
-
-  return () => {
-    socket?.off('duel:accepted', callback);
-  };
-};
-
-/**
- * Subscribe to duel declined events (challenger)
- */
-export const subscribeToDuelDeclined = (
-  callback: (data: { duelId: string }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:declined', callback);
-
-  return () => {
-    socket?.off('duel:declined', callback);
-  };
-};
-
-/**
- * Subscribe to duel resolved events (both users)
- */
-export const subscribeToDuelResolved = (
-  callback: (data: { duelId: string; winnerUserId: string; loserUserId: string; stake: number }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:resolved', callback);
-
-  return () => {
-    socket?.off('duel:resolved', callback);
-  };
-};
-
-/**
- * Subscribe to duel cancelled events (both users)
- */
-export const subscribeToDuelCancelled = (
-  callback: (data: { duelId: string; reason: string }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:cancelled', callback);
-
-  return () => {
-    socket?.off('duel:cancelled', callback);
   };
 };
