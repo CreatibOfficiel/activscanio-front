@@ -11,6 +11,7 @@ import Badge from "../ui/Badge";
 import Skeleton from "../ui/Skeleton";
 import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
 import { TrendDirection } from "../leaderboard/TrendIndicator";
+import DuelChallengeSheet from "../duel/DuelChallengeSheet";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -108,6 +109,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [bestScore, setBestScore] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showDuelSheet, setShowDuelSheet] = useState(false);
 
   /* ---------- load recent races + best score ---------- */
   useEffect(() => {
@@ -231,8 +233,14 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
           <div
             className="bg-gradient-to-b from-neutral-800 to-neutral-900 -m-4 sm:-m-6 mb-0 p-6 pb-5 rounded-t-2xl"
           >
-            {/* Close / Edit buttons */}
+            {/* Close / Edit / Duel buttons */}
             <div className="flex justify-end gap-2 mb-3">
+              <button
+                onClick={() => setShowDuelSheet(true)}
+                className="px-3 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-primary-400 hover:bg-primary-500/20 text-sm font-bold transition-colors"
+              >
+                Defier
+              </button>
               <EditCompetitorButton competitor={competitor} />
               <button
                 onClick={onClose}
@@ -570,6 +578,14 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
           </details>
         </div>
       )}
+
+      <DuelChallengeSheet
+        isOpen={showDuelSheet}
+        onClose={() => setShowDuelSheet(false)}
+        competitorId={competitor.id}
+        competitorName={shortName}
+        competitorAvatar={competitor.profilePictureUrl}
+      />
     </Modal>
   );
 };
