@@ -105,7 +105,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   });
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-6">
       {/* Season end countdown */}
       <div className="flex justify-center">
         <TVCountdown

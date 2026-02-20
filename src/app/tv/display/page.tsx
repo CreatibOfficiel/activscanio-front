@@ -270,7 +270,7 @@ const TVDisplayContent: FC = () => {
   return (
     <div className="h-screen overflow-hidden bg-neutral-900 text-neutral-100 p-8 lg:p-12 flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-4">
         <div>
           <h1
             className={`text-tv-display font-bold transition-opacity duration-300 ${
@@ -348,7 +348,7 @@ const TVDisplayContent: FC = () => {
       </main>
 
       {/* Footer with progress bar */}
-      <footer className="mt-8 pt-6 border-t border-neutral-800">
+      <footer className="mt-4 pt-4 border-t border-neutral-800">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-neutral-500">
             Vue suivante: {viewLabels[activeViews[(currentIndex + 1) % activeViews.length]]}
