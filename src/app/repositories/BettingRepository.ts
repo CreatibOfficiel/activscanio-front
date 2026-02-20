@@ -2,6 +2,7 @@ import { apiFetch } from '../utils/api-fetch';
 import { Bet, BetStatus, CreateBetDto } from '../models/Bet';
 import { BettingWeek } from '../models/BettingWeek';
 import { CompetitorOdds, BettorRanking } from '../models/CompetitorOdds';
+import { BetResultPayload, StreakLossesResponse } from '../types/bet-result';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -334,6 +335,96 @@ export class BettingRepository {
     } catch (error) {
       console.error('Error fetching boost availability:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get most recent unseen bet result
+   */
+  static async getUnseenBetResult(
+    authToken: string
+  ): Promise<BetResultPayload | null> {
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/betting/bets/unseen-result`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch unseen result: ${response.statusText}`);
+      }
+
+      const text = await response.text();
+      if (!text || text === 'null') return null;
+
+      return JSON.parse(text) as BetResultPayload;
+    } catch (error) {
+      console.error('Error fetching unseen bet result:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Mark a bet result as seen
+   */
+  static async markBetResultSeen(
+    betId: string,
+    authToken: string
+  ): Promise<void> {
+    try {
+      await apiFetch(`${API_BASE_URL}/betting/bets/${betId}/mark-result-seen`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error marking bet result seen:', error);
+    }
+  }
+
+  /**
+   * Get unseen streak losses (betting + play)
+   */
+  static async getUnseenStreakLosses(
+    authToken: string
+  ): Promise<StreakLossesResponse | null> {
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/betting/streaks/unseen-losses`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch streak losses: ${response.statusText}`);
+      }
+
+      return await response.json() as StreakLossesResponse;
+    } catch (error) {
+      console.error('Error fetching unseen streak losses:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Mark all streak losses as seen
+   */
+  static async markStreakLossesSeen(authToken: string): Promise<void> {
+    try {
+      await apiFetch(`${API_BASE_URL}/betting/streaks/mark-losses-seen`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error marking streak losses seen:', error);
     }
   }
 }

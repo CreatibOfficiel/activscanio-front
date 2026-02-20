@@ -75,26 +75,25 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Month subtitle */}
-      <div className="text-center">
-        <p className="text-tv-body text-neutral-400">
-          {monthNames[month - 1]} {year}
-        </p>
-      </div>
+    <div className="space-y-8">
+      {/* Podium + Countdown side by side */}
+      <div className="relative">
+        {/* Month + Countdown pinned top-right */}
+        <div className="absolute top-0 right-0 z-10 flex flex-col items-end gap-2">
+          <p className="text-tv-body text-neutral-400">
+            {monthNames[month - 1]} {year}
+          </p>
+          <TVCountdown
+            label="Fin de saison"
+            targetDate={seasonEndDate}
+            thresholds={SEASON_THRESHOLDS}
+            expiredLabel="Saison terminée"
+          />
+        </div>
 
-      {/* Season end countdown */}
-      <div className="flex justify-center">
-        <TVCountdown
-          label="Fin de saison"
-          targetDate={seasonEndDate}
-          thresholds={SEASON_THRESHOLDS}
-          expiredLabel="Saison terminée"
-        />
+        {/* Podium Top 3 */}
+        {top3.length >= 3 && <TVPodium items={podiumItems} />}
       </div>
-
-      {/* Podium Top 3 */}
-      {top3.length >= 3 && <TVPodium items={podiumItems} />}
 
       {/* Stats summary for top 3 */}
       {top3.length > 0 && (

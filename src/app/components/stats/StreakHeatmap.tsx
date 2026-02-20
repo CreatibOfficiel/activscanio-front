@@ -72,7 +72,7 @@ const StreakHeatmap: FC<StreakHeatmapProps> = ({
           3: '#059669', // emerald-600 - good activity
           4: '#10b981', // emerald-500 - high activity
         }}
-        rectRender={(props) => {
+        rectRender={(props: React.SVGProps<SVGRectElement>) => {
           return (
             <rect
               {...props}

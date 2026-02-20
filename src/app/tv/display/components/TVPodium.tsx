@@ -16,9 +16,10 @@ interface PodiumItem {
 interface Props {
   items: PodiumItem[];
   title?: string;
+  disableEntryAnimation?: boolean;
 }
 
-const TVPodium: FC<Props> = ({ items, title }) => {
+const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) => {
   const [first, second, third] = [
     items[0] || null,
     items[1] || null,
@@ -34,8 +35,8 @@ const TVPodium: FC<Props> = ({ items, title }) => {
             "bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600",
           glow: "shadow-[0_0_60px_rgba(234,179,8,0.5)]",
           border: "border-yellow-400",
-          height: "h-[20vh]",
-          avatarSize: 96,
+          height: "h-52",
+          avatarSize: 120,
           textColor: "text-yellow-900",
           crown: true,
         };
@@ -45,8 +46,8 @@ const TVPodium: FC<Props> = ({ items, title }) => {
           gradient: "bg-gradient-to-b from-gray-100 via-gray-300 to-gray-500",
           glow: "shadow-[0_0_40px_rgba(156,163,175,0.4)]",
           border: "border-gray-300",
-          height: "h-[15vh]",
-          avatarSize: 72,
+          height: "h-40",
+          avatarSize: 96,
           textColor: "text-gray-800",
           crown: false,
         };
@@ -57,8 +58,8 @@ const TVPodium: FC<Props> = ({ items, title }) => {
             "bg-gradient-to-b from-amber-200 via-amber-500 to-amber-700",
           glow: "shadow-[0_0_40px_rgba(217,119,6,0.4)]",
           border: "border-amber-500",
-          height: "h-[12vh]",
-          avatarSize: 72,
+          height: "h-32",
+          avatarSize: 96,
           textColor: "text-amber-900",
           crown: false,
         };
@@ -76,22 +77,22 @@ const TVPodium: FC<Props> = ({ items, title }) => {
 
     return (
       <div
-        className="flex flex-col items-center animate-podium-rise"
-        style={{ animationDelay: `${animationDelay}ms` }}
+        className={`flex flex-col items-center ${disableEntryAnimation ? '' : 'animate-podium-rise'}`}
+        style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
       >
         {/* Crown for 1st place */}
         {config.crown && (
-          <div className="animate-crown-drop mb-1">
-            <span className="text-5xl drop-shadow-xl">
+          <div className={disableEntryAnimation ? 'mb-2' : 'animate-crown-drop mb-2'}>
+            <span className="text-6xl drop-shadow-xl">
               {item.name.includes("Joran") ? "🤪" : "👑"}
             </span>
           </div>
         )}
 
         {/* Avatar with glow */}
-        <div className={`relative mb-2 ${config.glow} rounded-full`}>
+        <div className={`relative mb-4 ${config.glow} rounded-full`}>
           <div
-            className={`ring-3 ${config.border} ring-offset-2 ring-offset-neutral-900 rounded-full overflow-hidden`}
+            className={`ring-4 ${config.border} ring-offset-4 ring-offset-neutral-900 rounded-full overflow-hidden`}
           >
             {item.imageUrl ? (
               <Image
@@ -115,15 +116,15 @@ const TVPodium: FC<Props> = ({ items, title }) => {
           </div>
 
           {/* Medal badge */}
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-3xl">
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-4xl">
             {config.medal}
           </div>
         </div>
 
         {/* Name */}
         <h3
-          className={`font-bold text-white text-center mt-2 ${
-            position === 1 ? "text-xl" : "text-lg"
+          className={`font-bold text-white text-center mt-3 ${
+            position === 1 ? "text-2xl" : "text-xl"
           }`}
         >
           {item.name}
@@ -131,25 +132,25 @@ const TVPodium: FC<Props> = ({ items, title }) => {
 
         {/* Subtitle */}
         {item.subtitle && (
-          <p className="text-neutral-400 text-sm mt-0.5">{item.subtitle}</p>
+          <p className="text-neutral-400 text-base mt-1">{item.subtitle}</p>
         )}
 
         {/* Podium base */}
         <div
           className={`
-            mt-3 w-40 rounded-t-2xl ${config.gradient} ${config.height}
-            flex flex-col items-center justify-start pt-4
+            mt-4 w-48 rounded-t-2xl ${config.gradient} ${config.height}
+            flex flex-col items-center justify-start pt-6
             transform transition-transform hover:scale-105
             border-t-4 ${config.border}
           `}
         >
-          <span className={`text-3xl font-black ${config.textColor}`}>
+          <span className={`text-4xl font-black ${config.textColor}`}>
             {typeof item.score === "number"
               ? item.score.toFixed(item.scoreLabel === "pts" ? 1 : 0)
               : item.score}
           </span>
           <span
-            className={`text-xs font-bold uppercase tracking-wider ${config.textColor} opacity-70 mt-1`}
+            className={`text-sm font-bold uppercase tracking-wider ${config.textColor} opacity-70 mt-1`}
           >
             {item.scoreLabel}
           </span>
@@ -166,14 +167,14 @@ const TVPodium: FC<Props> = ({ items, title }) => {
 
       {/* 3D Podium layout */}
       <div
-        className="flex justify-center items-end gap-6 pt-6"
+        className="flex justify-center items-end gap-8 pt-4"
         style={{ perspective: "1200px" }}
       >
         {/* 2nd place - left */}
         <div className="transform">{renderPodiumPlace(second, 2, 200)}</div>
 
         {/* 1st place - center, elevated */}
-        <div className="transform -mt-10">
+        <div className="transform -mt-16">
           {renderPodiumPlace(first, 1, 400)}
         </div>
 

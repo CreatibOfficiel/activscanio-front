@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToDuelReceived, subscribeToDuelAccepted, subscribeToDuelDeclined, subscribeToDuelResolved, subscribeToDuelCancelled, DuelReceivedData } from '@/app/hooks/useSocket';
+import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated, subscribeToStreakLost, subscribeToDuelReceived, subscribeToDuelAccepted, subscribeToDuelDeclined, subscribeToDuelResolved, subscribeToDuelCancelled, DuelReceivedData } from '@/app/hooks/useSocket';
 import { useApp } from '@/app/context/AppContext';
+import { useResultModals } from '@/app/context/ResultModalsContext';
 import { toast } from 'sonner';
 import DuelRequestModal from '@/app/components/duel/DuelRequestModal';
 
@@ -13,6 +14,7 @@ interface SocketWrapperProps {
 export default function SocketWrapper({ userId }: SocketWrapperProps) {
   const { socket, isConnected } = useSocket(userId);
   const { refreshCompetitors } = useApp();
+  const { enqueueBetResult, enqueueStreakLoss } = useResultModals();
 
   const [pendingDuel, setPendingDuel] = useState<DuelReceivedData | null>(null);
 
@@ -59,27 +61,20 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       );
     });
 
-    // Bet finalized
+    // Bet finalized — enqueue modal instead of toast
     const unsubscribeBet = subscribeToBetFinalized((bet) => {
-      const pointsEarned = bet.pointsEarned || 0;
-
-      if (pointsEarned > 0) {
-        toast.success(
-          `🎯 ${pointsEarned} points gagnés !`,
-          {
-            duration: 4000,
-            description: 'Pari finalisé',
-          }
-        );
-      } else {
-        toast.info(
-          '📊 Plus de chance la prochaine fois !',
-          {
-            duration: 3000,
-            description: 'Pari finalisé',
-          }
-        );
-      }
+      enqueueBetResult({
+        betId: bet.betId,
+        weekId: bet.weekId,
+        status: bet.status,
+        pointsEarned: bet.pointsEarned,
+        isPerfectPodium: bet.isPerfectPodium,
+        perfectPodiumBonus: bet.perfectPodiumBonus,
+        correctPicks: bet.correctPicks,
+        totalPicks: bet.totalPicks,
+        hasBoost: bet.hasBoost,
+        picks: bet.picks,
+      });
     });
 
     // Perfect score celebration
@@ -137,6 +132,20 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       refreshCompetitors();
     });
 
+    // Rankings updated (broadcast) — triggers ranking animation
+    const unsubscribeRankings = subscribeToRankingsUpdated(() => {
+      refreshCompetitors();
+    });
+
+    // Streak lost — enqueue modal
+    const unsubscribeStreak = subscribeToStreakLost((data) => {
+      enqueueStreakLoss([{
+        type: data.type,
+        lostValue: data.lostValue,
+        lostAt: data.lostAt,
+      }]);
+    });
+
     // Duel received — show modal
     const unsubscribeDuelReceived = subscribeToDuelReceived((data) => {
       setPendingDuel(data);
@@ -176,13 +185,15 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribeRace?.();
       unsubscribeResults?.();
       unsubscribeCompetitor?.();
+      unsubscribeRankings?.();
+      unsubscribeStreak?.();
       unsubscribeDuelReceived?.();
       unsubscribeDuelAccepted?.();
       unsubscribeDuelDeclined?.();
       unsubscribeDuelResolved?.();
       unsubscribeDuelCancelled?.();
     };
-  }, [socket, isConnected, refreshCompetitors, userId]);
+  }, [socket, isConnected, refreshCompetitors, enqueueBetResult, enqueueStreakLoss, userId]);
 
   // Refresh data when app returns to foreground (iOS PWA fix)
   useEffect(() => {

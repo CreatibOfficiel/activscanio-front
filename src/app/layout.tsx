@@ -2,6 +2,7 @@ import "./globals.css";
 import "./styles/animations.css";
 import { AppProvider } from "./context/AppProvider";
 import { SoundboardProvider } from "./context/SoundboardContext";
+import { ResultModalsProvider } from "./context/ResultModalsContext";
 import { BottomNav, Sidebar } from "./components/layout";
 import MainContent from "./components/layout/MainContent";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
@@ -10,6 +11,8 @@ import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
 import OfflineIndicator from "./components/ui/OfflineIndicator";
 import { SoundboardModal, ShakeDetector } from "./components/soundboard";
 import SocketProvider from "./components/layout/SocketProvider";
+import ResultModalsRenderer from "./components/betting/ResultModalsRenderer";
+import ResultModalsInitializer from "./components/layout/ResultModalsInitializer";
 import { ReactNode } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthLayout, PublicLayout } from "./components/layout/AuthLayoutSwitch";
@@ -54,6 +57,7 @@ export default function RootLayout({
         <ClerkProvider>
           <AppProvider>
             <SoundboardProvider>
+            <ResultModalsProvider>
             <OnboardingGuard>
               {/* Offline Indicator */}
               <OfflineIndicator />
@@ -66,6 +70,10 @@ export default function RootLayout({
 
               {/* WebSocket real-time notifications */}
               <SocketProvider />
+
+              {/* Result modals (bet results + streak losses) */}
+              <ResultModalsRenderer />
+              <ResultModalsInitializer />
 
               {/* Toast notifications */}
               <Toaster
@@ -106,6 +114,7 @@ export default function RootLayout({
                 <BottomNav />
               </AuthLayout>
             </OnboardingGuard>
+            </ResultModalsProvider>
             <SoundboardModal />
             <ShakeDetector />
             </SoundboardProvider>
