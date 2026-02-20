@@ -89,7 +89,7 @@ const ScoreSetupPage: NextPage = () => {
   const [imageExpanded, setImageExpanded] = useState(isFromAnalysis);
 
   useEffect(() => {
-    idbGet<string>("raceImage").then((stored) => {
+    idbGet<string>("raceImage").then((stored: string | undefined) => {
       if (stored) setRaceImageUrl(stored);
     });
   }, []);

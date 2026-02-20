@@ -17,6 +17,7 @@ interface Props {
   };
   isCurrentUser?: boolean;
   animationDelay?: number;
+  disableEntryAnimation?: boolean;
 }
 
 const LeaderboardRow: FC<Props> = ({
@@ -25,6 +26,7 @@ const LeaderboardRow: FC<Props> = ({
   trend,
   isCurrentUser = false,
   animationDelay = 0,
+  disableEntryAnimation = false,
 }) => {
   const [showModal, setShowModal] = useState(false);
 
@@ -50,9 +52,9 @@ const LeaderboardRow: FC<Props> = ({
           group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer
           transition-all duration-200 hover:bg-neutral-800/50
           ${isCurrentUser ? "bg-primary-500/10 ring-1 ring-primary-500/30" : ""}
-          stagger-item
+          ${disableEntryAnimation ? '' : 'stagger-item'}
         `}
-        style={{
+        style={disableEntryAnimation ? undefined : {
           animationDelay: `${animationDelay}ms`,
         }}
       >

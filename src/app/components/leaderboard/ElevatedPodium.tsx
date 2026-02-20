@@ -10,9 +10,10 @@ import TrendIndicator, { TrendDirection } from "./TrendIndicator";
 interface Props {
   topThree: Competitor[];
   trends?: Map<string, { direction: TrendDirection; value?: number }>;
+  disableEntryAnimation?: boolean;
 }
 
-const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
+const ElevatedPodium: FC<Props> = ({ topThree, trends, disableEntryAnimation = false }) => {
   const [selectedCompetitor, setSelectedCompetitor] =
     useState<Competitor | null>(null);
 
@@ -79,14 +80,14 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
       <div
         className={`
           flex flex-col items-center cursor-pointer
-          animate-podium-rise
+          ${disableEntryAnimation ? '' : 'animate-podium-rise'}
         `}
-        style={{ animationDelay: `${animationDelay}ms` }}
+        style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
         onClick={() => setSelectedCompetitor(competitor)}
       >
         {/* Crown for 1st place */}
         {config.crown && (
-          <div className="animate-crown-drop mb-1">
+          <div className={disableEntryAnimation ? 'mb-1' : 'animate-crown-drop mb-1'}>
             <span className="text-3xl drop-shadow-lg">
               {competitor.firstName === "Joran" ? "🤪" : "👑"}
             </span>
@@ -187,9 +188,9 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends }) => {
                 flex items-center gap-4 p-4 rounded-xl cursor-pointer
                 ${config.gradient} ${config.glow}
                 transform transition-all duration-200 hover:scale-[1.02]
-                stagger-item
+                ${disableEntryAnimation ? '' : 'stagger-item'}
               `}
-              style={{ animationDelay: `${idx * 100}ms` }}
+              style={disableEntryAnimation ? undefined : { animationDelay: `${idx * 100}ms` }}
             >
               {/* Avatar */}
               <div className={`ring-2 ${config.ring} rounded-full`}>

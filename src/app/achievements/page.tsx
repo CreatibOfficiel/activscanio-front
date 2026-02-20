@@ -203,7 +203,7 @@ const AchievementsPage: FC = () => {
               <span className="text-sm font-medium text-neutral-400">Domaine:</span>
               <Tabs.Root
                 value={selectedDomain}
-                onValueChange={(value) => setSelectedDomain(value as FilterDomain)}
+                onValueChange={(value: string) => setSelectedDomain(value as FilterDomain)}
               >
                 <Tabs.List className="inline-flex p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
                   {([
@@ -231,7 +231,7 @@ const AchievementsPage: FC = () => {
               <span className="text-sm font-medium text-neutral-400">Statut:</span>
               <Tabs.Root
                 value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value as FilterStatus)}
+                onValueChange={(value: string) => setSelectedStatus(value as FilterStatus)}
               >
                 <Tabs.List className="inline-flex p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
                   {([
@@ -260,7 +260,7 @@ const AchievementsPage: FC = () => {
                 <span className="text-sm font-medium text-neutral-400 hidden sm:inline">Vue:</span>
                 <Tabs.Root
                   value={view}
-                  onValueChange={(value) => setView(value as 'grid' | 'chains')}
+                  onValueChange={(value: string) => setView(value as 'grid' | 'chains')}
                 >
                   <Tabs.List className="inline-flex p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
                     <Tabs.Trigger
@@ -291,7 +291,7 @@ const AchievementsPage: FC = () => {
               <span className="text-sm font-medium text-neutral-400">Catégorie:</span>
               <Tabs.Root
                 value={selectedCategory}
-                onValueChange={(value) => setSelectedCategory(value as FilterCategory)}
+                onValueChange={(value: string) => setSelectedCategory(value as FilterCategory)}
               >
                 <Tabs.List className="inline-flex flex-wrap p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
                   <Tabs.Trigger
@@ -323,7 +323,7 @@ const AchievementsPage: FC = () => {
               <span className="text-sm font-medium text-neutral-400">Rareté:</span>
               <Tabs.Root
                 value={selectedRarity}
-                onValueChange={(value) => setSelectedRarity(value as FilterRarity)}
+                onValueChange={(value: string) => setSelectedRarity(value as FilterRarity)}
               >
                 <Tabs.List className="inline-flex flex-wrap p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
                   <Tabs.Trigger

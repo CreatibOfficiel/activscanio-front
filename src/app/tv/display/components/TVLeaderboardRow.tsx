@@ -20,9 +20,10 @@ export interface TVLeaderboardItem {
 interface Props {
   item: TVLeaderboardItem;
   animationDelay?: number;
+  disableEntryAnimation?: boolean;
 }
 
-const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0 }) => {
+const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAnimation = false }) => {
   const progressPercent = item.maxScore
     ? Math.min((item.score / item.maxScore) * 100, 100)
     : 0;
@@ -72,8 +73,8 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0 }) => {
 
   return (
     <div
-      className="flex items-center gap-6 py-4 px-6 rounded-xl bg-neutral-800/40 hover:bg-neutral-800/60 transition-colors animate-row-slide-in"
-      style={{ animationDelay: `${animationDelay}ms` }}
+      className={`flex items-center gap-6 py-4 px-6 rounded-xl bg-neutral-800/40 hover:bg-neutral-800/60 transition-colors ${disableEntryAnimation ? '' : 'animate-row-slide-in'}`}
+      style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
     >
       {/* Rank */}
       <div className={`w-16 text-3xl text-center ${getRankStyle()}`}>

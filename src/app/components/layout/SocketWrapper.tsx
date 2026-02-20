@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated } from '@/app/hooks/useSocket';
+import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated } from '@/app/hooks/useSocket';
 import { useApp } from '@/app/context/AppContext';
 import { toast } from 'sonner';
 
@@ -130,6 +130,11 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       refreshCompetitors();
     });
 
+    // Rankings updated (broadcast) — triggers ranking animation
+    const unsubscribeRankings = subscribeToRankingsUpdated(() => {
+      refreshCompetitors();
+    });
+
     // Cleanup all subscriptions on unmount
     return () => {
       unsubscribeAchievements?.();
@@ -140,6 +145,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribeRace?.();
       unsubscribeResults?.();
       unsubscribeCompetitor?.();
+      unsubscribeRankings?.();
     };
   }, [socket, isConnected, refreshCompetitors]);
 

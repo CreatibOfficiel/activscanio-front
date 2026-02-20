@@ -16,9 +16,10 @@ interface PodiumItem {
 interface Props {
   items: PodiumItem[];
   title?: string;
+  disableEntryAnimation?: boolean;
 }
 
-const TVPodium: FC<Props> = ({ items, title }) => {
+const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) => {
   const [first, second, third] = [
     items[0] || null,
     items[1] || null,
@@ -76,12 +77,12 @@ const TVPodium: FC<Props> = ({ items, title }) => {
 
     return (
       <div
-        className="flex flex-col items-center animate-podium-rise"
-        style={{ animationDelay: `${animationDelay}ms` }}
+        className={`flex flex-col items-center ${disableEntryAnimation ? '' : 'animate-podium-rise'}`}
+        style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
       >
         {/* Crown for 1st place */}
         {config.crown && (
-          <div className="animate-crown-drop mb-2">
+          <div className={disableEntryAnimation ? 'mb-2' : 'animate-crown-drop mb-2'}>
             <span className="text-6xl drop-shadow-xl">
               {item.name.includes("Joran") ? "🤪" : "👑"}
             </span>

@@ -21,6 +21,8 @@ import { TrendDirection } from "./components/leaderboard/TrendIndicator";
 import { computeRanksWithTies } from "./utils/rankings";
 import { groupByLeague } from "./utils/leagues";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
+import { useRankingAnimation } from "./hooks/useRankingAnimation";
+import RankingAnimationOverlay from "./components/leaderboard/RankingAnimationOverlay";
 
 const sortByConservativeScore = (competitors: Competitor[]): Competitor[] => {
   return [...competitors].sort((a, b) => {
@@ -164,6 +166,18 @@ export default function Home() {
     };
   }, [allCompetitors]);
 
+  const {
+    animationPhase,
+    displayOrder,
+    showUniformCards,
+    changedIds,
+    onTransitionComplete,
+  } = useRankingAnimation({
+    mode: 'homepage',
+    competitors: confirmed,
+    enabled: !isLoading && !!now,
+  });
+
   if (isLoading || !now) {
     return (
       <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
@@ -227,56 +241,70 @@ export default function Home() {
       {/* Streak Warning Banners */}
       {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mb-4" />}
 
-      {/* Podium or empty state */}
-      {topThree.length > 0 ? (
-        <div className="mb-8">
-          <ElevatedPodium topThree={topThree} trends={trends} />
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 px-4">
-          <div className="mb-6">
-            <Image
-              src="/illustrations/empty-podium.svg"
-              alt="Podium vide"
-              width={240}
-              height={200}
-              priority
+      {/* Ranking animation overlay + Podium + Leagues */}
+      <RankingAnimationOverlay
+        phase={animationPhase}
+        displayOrder={displayOrder}
+        changedIds={changedIds}
+        variant="mobile"
+        onTransitionComplete={onTransitionComplete}
+      >
+        {/* Podium or empty state */}
+        {topThree.length > 0 ? (
+          <div className="mb-8">
+            <ElevatedPodium
+              topThree={topThree}
+              trends={trends}
+              disableEntryAnimation={showUniformCards}
             />
           </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div className="mb-6">
+              <Image
+                src="/illustrations/empty-podium.svg"
+                alt="Podium vide"
+                width={240}
+                height={200}
+                priority
+              />
+            </div>
 
-          <div className="text-center max-w-sm">
-            <h2 className="text-heading text-white mb-2">
-              Le podium vous attend !
-            </h2>
-            <p className="text-regular text-neutral-400 mb-6">
-              Aucune course n&apos;a encore été enregistrée. Ajoutez votre première course pour voir le classement !
-            </p>
+            <div className="text-center max-w-sm">
+              <h2 className="text-heading text-white mb-2">
+                Le podium vous attend !
+              </h2>
+              <p className="text-regular text-neutral-400 mb-6">
+                Aucune course n&apos;a encore été enregistrée. Ajoutez votre première course pour voir le classement !
+              </p>
 
-            <Link href="/races/add">
-              <Button variant="primary" className="gap-2">
-                <MdFlag className="text-lg" />
-                Ajouter une course
-              </Button>
-            </Link>
+              <Link href="/races/add">
+                <Button variant="primary" className="gap-2">
+                  <MdFlag className="text-lg" />
+                  Ajouter une course
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* League sections (below podium) */}
-      {leagueGroups.map((group, groupIndex) => (
-        <div key={group.league.id} className={`space-y-1 ${groupIndex === 0 ? "" : "mt-6"}`}>
-          <LeagueDivider league={group.league} variant="mobile" className="mb-3 px-1" />
-          {group.items.map((competitor, index) => (
-            <LeaderboardRow
-              key={competitor.id}
-              competitor={competitor}
-              rank={confirmedRanks.get(competitor.id) ?? index + 4}
-              trend={trends.get(competitor.id)}
-              animationDelay={index * 50}
-            />
-          ))}
-        </div>
-      ))}
+        {/* League sections (below podium) */}
+        {leagueGroups.map((group, groupIndex) => (
+          <div key={group.league.id} className={`space-y-1 ${groupIndex === 0 ? "" : "mt-6"}`}>
+            <LeagueDivider league={group.league} variant="mobile" className="mb-3 px-1" />
+            {group.items.map((competitor, index) => (
+              <LeaderboardRow
+                key={competitor.id}
+                competitor={competitor}
+                rank={confirmedRanks.get(competitor.id) ?? index + 4}
+                trend={trends.get(competitor.id)}
+                animationDelay={index * 50}
+                disableEntryAnimation={showUniformCards}
+              />
+            ))}
+          </div>
+        ))}
+      </RankingAnimationOverlay>
 
       {/* Inactive confirmed competitors */}
       {inactive.length > 0 && (
