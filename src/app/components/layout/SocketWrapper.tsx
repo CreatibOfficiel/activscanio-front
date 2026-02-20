@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated } from '@/app/hooks/useSocket';
+import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated, subscribeToStreakLost } from '@/app/hooks/useSocket';
 import { useApp } from '@/app/context/AppContext';
+import { useResultModals } from '@/app/context/ResultModalsContext';
 import { toast } from 'sonner';
 
 interface SocketWrapperProps {
@@ -12,6 +13,7 @@ interface SocketWrapperProps {
 export default function SocketWrapper({ userId }: SocketWrapperProps) {
   const { socket, isConnected } = useSocket(userId);
   const { refreshCompetitors } = useApp();
+  const { enqueueBetResult, enqueueStreakLoss } = useResultModals();
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -52,27 +54,20 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       );
     });
 
-    // Bet finalized
+    // Bet finalized — enqueue modal instead of toast
     const unsubscribeBet = subscribeToBetFinalized((bet) => {
-      const pointsEarned = bet.pointsEarned || 0;
-
-      if (pointsEarned > 0) {
-        toast.success(
-          `🎯 ${pointsEarned} points gagnés !`,
-          {
-            duration: 4000,
-            description: 'Pari finalisé',
-          }
-        );
-      } else {
-        toast.info(
-          '📊 Plus de chance la prochaine fois !',
-          {
-            duration: 3000,
-            description: 'Pari finalisé',
-          }
-        );
-      }
+      enqueueBetResult({
+        betId: bet.betId,
+        weekId: bet.weekId,
+        status: bet.status,
+        pointsEarned: bet.pointsEarned,
+        isPerfectPodium: bet.isPerfectPodium,
+        perfectPodiumBonus: bet.perfectPodiumBonus,
+        correctPicks: bet.correctPicks,
+        totalPicks: bet.totalPicks,
+        hasBoost: bet.hasBoost,
+        picks: bet.picks,
+      });
     });
 
     // Perfect score celebration
@@ -135,6 +130,15 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       refreshCompetitors();
     });
 
+    // Streak lost — enqueue modal
+    const unsubscribeStreak = subscribeToStreakLost((data) => {
+      enqueueStreakLoss([{
+        type: data.type,
+        lostValue: data.lostValue,
+        lostAt: data.lostAt,
+      }]);
+    });
+
     // Cleanup all subscriptions on unmount
     return () => {
       unsubscribeAchievements?.();
@@ -146,8 +150,9 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribeResults?.();
       unsubscribeCompetitor?.();
       unsubscribeRankings?.();
+      unsubscribeStreak?.();
     };
-  }, [socket, isConnected, refreshCompetitors]);
+  }, [socket, isConnected, refreshCompetitors, enqueueBetResult, enqueueStreakLoss]);
 
   // Refresh data when app returns to foreground (iOS PWA fix)
   useEffect(() => {

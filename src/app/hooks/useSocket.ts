@@ -14,8 +14,32 @@ interface LevelUpData {
   rewards: unknown[];
 }
 
-interface Bet {
-  pointsEarned?: number;
+interface BetFinalizedPayload {
+  betId: string;
+  weekId: string;
+  userId: string;
+  status: 'won' | 'lost';
+  pointsEarned: number;
+  isPerfectPodium: boolean;
+  perfectPodiumBonus: number;
+  correctPicks: number;
+  totalPicks: number;
+  hasBoost: boolean;
+  picks: Array<{
+    competitorName: string;
+    position: string;
+    isCorrect: boolean;
+    oddAtBet: number;
+    hasBoost: boolean;
+    pointsEarned: number;
+    usedBogOdd: boolean;
+  }>;
+}
+
+interface StreakLostData {
+  type: 'betting' | 'play';
+  lostValue: number;
+  lostAt: string;
 }
 
 interface PerfectScoreData {
@@ -181,10 +205,10 @@ export const subscribeToAchievementRevoked = (
 };
 
 /**
- * Subscribe to bet finalized events
+ * Subscribe to bet finalized events (enriched payload)
  */
 export const subscribeToBetFinalized = (
-  callback: (bet: Bet) => void,
+  callback: (bet: BetFinalizedPayload) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
@@ -267,5 +291,20 @@ export const subscribeToRankingsUpdated = (
 
   return () => {
     socket?.off('rankings:updated', callback);
+  };
+};
+
+/**
+ * Subscribe to streak lost events (betting or play)
+ */
+export const subscribeToStreakLost = (
+  callback: (data: StreakLostData) => void,
+): (() => void) | undefined => {
+  if (!socket) return;
+
+  socket.on('streak:lost', callback);
+
+  return () => {
+    socket?.off('streak:lost', callback);
   };
 };
