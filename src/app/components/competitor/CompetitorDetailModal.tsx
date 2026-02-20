@@ -12,7 +12,7 @@ import Badge from "../ui/Badge";
 import Skeleton from "../ui/Skeleton";
 import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
 import { TrendDirection } from "../leaderboard/TrendIndicator";
-import DuelChallengeSheet from "../duel/DuelChallengeSheet";
+import DuelChallengeForm from "../duel/DuelChallengeSheet";
 import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
 import { BettingRepository } from "@/app/repositories/BettingRepository";
 
@@ -114,10 +114,15 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [bestScore, setBestScore] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [showDuelSheet, setShowDuelSheet] = useState(false);
+  const [step, setStep] = useState<"detail" | "challenge">("detail");
   const [userPoints, setUserPoints] = useState<number | undefined>(undefined);
 
   const isOwnCompetitor = userData?.competitorId === competitor.id;
+
+  /* ---------- reset step on close ---------- */
+  useEffect(() => {
+    if (!isOpen) setStep("detail");
+  }, [isOpen]);
 
   /* ---------- load recent races + best score ---------- */
   useEffect(() => {
@@ -245,7 +250,16 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
       size="xl"
       className="!max-w-2xl"
     >
-      {!isLoaded ? (
+      {step === "challenge" ? (
+        <DuelChallengeForm
+          competitorId={competitor.id}
+          competitorName={shortName}
+          competitorAvatar={competitor.profilePictureUrl}
+          userPoints={userPoints}
+          onSuccess={onClose}
+          onCancel={() => setStep("detail")}
+        />
+      ) : !isLoaded ? (
         <DetailSkeleton />
       ) : (
         <div className="space-y-5">
@@ -257,7 +271,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
             <div className="flex justify-end gap-2 mb-3">
               {!isOwnCompetitor && (
                 <button
-                  onClick={() => setShowDuelSheet(true)}
+                  onClick={() => setStep("challenge")}
                   className="px-3 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-primary-400 hover:bg-primary-500/20 text-sm font-bold transition-colors"
                 >
                   Defier
@@ -601,14 +615,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
         </div>
       )}
 
-      <DuelChallengeSheet
-        isOpen={showDuelSheet}
-        onClose={() => setShowDuelSheet(false)}
-        competitorId={competitor.id}
-        competitorName={shortName}
-        competitorAvatar={competitor.profilePictureUrl}
-        userPoints={userPoints}
-      />
     </Modal>
   );
 };
