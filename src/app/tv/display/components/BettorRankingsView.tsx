@@ -75,7 +75,7 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
       {/* Month subtitle */}
       <div className="text-center">
         <p className="text-tv-body text-neutral-400">
