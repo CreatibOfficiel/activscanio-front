@@ -154,10 +154,10 @@ const RankingsPage: FC = () => {
                       >
                         <div className="text-center">
                           <div className="w-16 h-16 bg-neutral-700 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl font-bold">
-                            U
+                            {topThree[1].userName.charAt(0).toUpperCase()}
                           </div>
                           <h3 className="text-bold text-white mb-1">
-                            User #{topThree[1].userId.slice(0, 8)}
+                            {topThree[1].userName}
                           </h3>
                           <div className="flex items-center justify-center gap-1 text-silver-500 mb-2">
                             <MdTrendingUp />
@@ -189,10 +189,10 @@ const RankingsPage: FC = () => {
                       >
                         <div className="text-center">
                           <div className="w-20 h-20 bg-neutral-700 rounded-full mx-auto mb-2 flex items-center justify-center text-3xl font-bold">
-                            U
+                            {topThree[0].userName.charAt(0).toUpperCase()}
                           </div>
                           <h3 className="text-heading text-white mb-1">
-                            User #{topThree[0].userId.slice(0, 8)}
+                            {topThree[0].userName}
                           </h3>
                           <div className="flex items-center justify-center gap-1 text-gold-500 mb-2">
                             <MdTrendingUp />
@@ -224,10 +224,10 @@ const RankingsPage: FC = () => {
                       >
                         <div className="text-center">
                           <div className="w-16 h-16 bg-neutral-700 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl font-bold">
-                            U
+                            {topThree[2].userName.charAt(0).toUpperCase()}
                           </div>
                           <h3 className="text-bold text-white mb-1">
-                            User #{topThree[2].userId.slice(0, 8)}
+                            {topThree[2].userName}
                           </h3>
                           <div className="flex items-center justify-center gap-1 text-bronze-500 mb-2">
                             <MdTrendingUp />
@@ -263,11 +263,11 @@ const RankingsPage: FC = () => {
                             #{ranking.rank}
                           </Badge>
                           <div className="w-12 h-12 bg-neutral-700 rounded-full flex items-center justify-center text-lg font-bold">
-                            U
+                            {ranking.userName.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <h3 className="text-bold text-white">
-                              User #{ranking.userId.slice(0, 8)}
+                              {ranking.userName}
                             </h3>
                             <p className="text-sub text-neutral-500">
                               {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
