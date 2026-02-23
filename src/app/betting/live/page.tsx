@@ -64,14 +64,14 @@ const LiveBettingPage: FC = () => {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-24">
       <div className="max-w-2xl mx-auto space-y-4">
         <PageHeader
-          title="Paris Live"
+          title="Paris en direct"
           backHref="/betting"
           backLabel="Paris"
         />
 
         {/* Main action */}
         <Card className="p-0 overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-600 to-red-500 p-4">
+          <div className="bg-linear-to-r from-orange-600 to-red-500 p-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <MdCameraAlt className="text-2xl text-white" />
@@ -152,20 +152,6 @@ const LiveBettingPage: FC = () => {
           </div>
         )}
 
-        {/* Empty state */}
-        {recentBets.length === 0 && history.length === 0 && activeBets.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-neutral-400 mb-4">
-              Aucun pari live pour le moment.
-            </p>
-            <Link href="/betting/live/create">
-              <Button variant="primary" className="gap-2">
-                <MdCameraAlt className="text-lg" />
-                Lancer mon premier pari
-              </Button>
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   );
