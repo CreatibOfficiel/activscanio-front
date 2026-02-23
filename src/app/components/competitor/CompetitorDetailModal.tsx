@@ -493,7 +493,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                             </span>
                             <div className="w-16 h-2 bg-neutral-700 rounded-full overflow-hidden shrink-0">
                               <div
-                                className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full"
+                                className="h-full bg-linear-to-r from-red-600 to-red-400 rounded-full"
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
@@ -590,7 +590,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                       <div className="flex-grow">
                         <div className="h-1.5 bg-neutral-800/80 rounded-full overflow-hidden border border-white/5">
                           <div
-                            className="h-full bg-gradient-to-r from-primary-600/60 to-primary-400/60 rounded-full"
+                            className="h-full bg-linear-to-r from-primary-600/60 to-primary-400/60 rounded-full"
                             style={{
                               width: `${(race.score / maxScore) * 100}%`,
                             }}

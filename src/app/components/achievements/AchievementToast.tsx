@@ -148,7 +148,7 @@ const AchievementToast: FC<AchievementToastProps> = ({
           {/* Progress bar for auto-close */}
           <div className="mt-3 h-1 bg-neutral-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary-500 to-success-500 animate-shrink"
+              className="h-full bg-linear-to-r from-primary-500 to-success-500 animate-shrink"
               style={{ animationDuration: `${autoCloseDuration}ms` }}
             />
           </div>

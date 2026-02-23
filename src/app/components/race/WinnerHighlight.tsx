@@ -16,7 +16,7 @@ const WinnerHighlight: FC<Props> = ({ competitor, score, rank12 }) => {
   const displayName = formatCompetitorName(competitor.firstName, competitor.lastName);
 
   return (
-    <div className="p-4 bg-gradient-to-r from-gold-500/15 via-gold-500/5 to-transparent border-l-4 border-gold-500">
+    <div className="p-4 bg-linear-to-r from-gold-500/15 via-gold-500/5 to-transparent border-l-4 border-gold-500">
       <div className="flex items-center gap-4">
         {/* Avatar with crown */}
         <div className="relative flex-shrink-0">

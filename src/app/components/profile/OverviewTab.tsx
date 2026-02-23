@@ -193,7 +193,7 @@ const OverviewTab: FC<OverviewTabProps> = ({
           </div>
           <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary-500 to-primary-400 transition-all duration-500"
+              className="h-full bg-linear-to-r from-primary-500 to-primary-400 transition-all duration-500"
               style={{ width: `${stats.achievementProgress}%` }}
             />
           </div>

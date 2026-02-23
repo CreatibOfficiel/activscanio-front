@@ -76,7 +76,7 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
     <div
       className={`flex items-center gap-3 py-2 px-4 rounded-xl relative overflow-hidden
                   border border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.15)]
-                  bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-fuchsia-950/30
+                  bg-linear-to-r from-cyan-950/40 via-blue-950/30 to-fuchsia-950/30
                   hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] transition-all
                   ${disableEntryAnimation ? '' : 'animate-row-slide-in'}`}
       style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
@@ -127,7 +127,7 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
         {item.maxScore && (
           <div className="mt-1 h-1 bg-neutral-700/50 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-700 animate-progress-fill"
+              className="h-full bg-linear-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-700 animate-progress-fill"
               style={{ width: `${progressPercent}%` }}
             />
           </div>

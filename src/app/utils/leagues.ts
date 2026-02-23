@@ -19,7 +19,7 @@ export const LEAGUES: LeagueConfig[] = [
     emoji: '🏆',
     textColor: 'text-yellow-400',
     lineColor: 'bg-yellow-500/40',
-    badgeBg: 'bg-gradient-to-r from-yellow-600 to-yellow-500',
+    badgeBg: 'bg-linear-to-r from-yellow-600 to-yellow-500',
     badgeText: 'text-neutral-900',
     tvTextClass: 'text-yellow-400',
     minRank: 1,

@@ -47,7 +47,7 @@ export const SpecialNotificationToast: FC<SpecialNotificationToastProps> = ({
   const { icon, title, color, emoji } = config[type];
 
   return (
-    <div className={`relative overflow-hidden rounded-lg bg-gradient-to-r ${color} p-[2px]`}>
+    <div className={`relative overflow-hidden rounded-lg bg-linear-to-r ${color} p-[2px]`}>
       <div className="bg-neutral-900 rounded-lg p-6">
         {/* Animation confetti */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">

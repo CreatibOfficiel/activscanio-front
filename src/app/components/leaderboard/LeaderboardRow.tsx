@@ -107,7 +107,7 @@ const LeaderboardRow: FC<Props> = ({
           {/* Progress bar */}
           <div className="mt-1.5 h-1 bg-neutral-700/50 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-500"
+              className="h-full bg-linear-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -139,7 +139,7 @@ const LeaderboardRow: FC<Props> = ({
         </div>
 
         {/* Hover glow effect */}
-        <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-gradient-to-r from-primary-500/5 to-transparent" />
+        <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-linear-to-r from-primary-500/5 to-transparent" />
       </div >
 
       <CompetitorDetailModal

@@ -20,7 +20,7 @@ const TVHeroCountdown: FC<Props> = ({ targetDate, seasonName = "SAISON ACTUELLE"
         <div className="w-full flex justify-center mb-2">
             <div className="relative overflow-hidden rounded-lg w-[70%] transform -skew-x-12 bg-gradient-to-b from-red-400 via-orange-500 to-orange-700 p-[1.5px] shadow-[0_0_10px_rgba(239,68,68,0.3)]">
                 {/* Shimmer effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 animate-metallic-shine" />
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent skew-x-12 animate-metallic-shine" />
 
                 <div className="bg-gradient-to-b from-red-600 via-red-500 to-orange-600 rounded-lg h-full w-full flex flex-col items-center justify-center p-2 relative overflow-hidden">
                     {/* Inner reflection top */}

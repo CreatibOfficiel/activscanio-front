@@ -70,7 +70,7 @@ const XPLevelDisplay: FC<XPLevelDisplayProps> = ({
         <div className="flex-1 min-w-[80px] max-w-[150px]">
           <div className="h-2 bg-neutral-800 rounded-full overflow-hidden border border-neutral-700">
             <div
-              className={`h-full bg-gradient-to-r ${getLevelColor()} transition-all duration-500`}
+              className={`h-full bg-linear-to-r ${getLevelColor()} transition-all duration-500`}
               style={{ width: `${Math.min(100, xpProgressPercent)}%` }}
             />
           </div>
@@ -94,7 +94,7 @@ const XPLevelDisplay: FC<XPLevelDisplayProps> = ({
         </div>
 
         <div className="flex flex-col flex-1">
-          <span className={`text-lg font-bold bg-gradient-to-r ${getLevelColor()} bg-clip-text text-transparent`}>
+          <span className={`text-lg font-bold bg-linear-to-r ${getLevelColor()} bg-clip-text text-transparent`}>
             {getLevelTitle()}
           </span>
           {showTitle && currentTitle && (
@@ -129,11 +129,11 @@ const XPLevelDisplay: FC<XPLevelDisplayProps> = ({
         {/* Progress bar */}
         <div className="relative h-3 bg-neutral-800 rounded-full overflow-hidden border border-neutral-700 shadow-inner">
           <div
-            className={`h-full bg-gradient-to-r ${getLevelColor()} transition-all duration-500 shadow-lg`}
+            className={`h-full bg-linear-to-r ${getLevelColor()} transition-all duration-500 shadow-lg`}
             style={{ width: `${Math.min(100, xpProgressPercent)}%` }}
           >
             {/* Animated shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
           </div>
         </div>
 

@@ -39,7 +39,7 @@ const TVProgressBar: FC<Props> = ({ duration, onComplete, className = "" }) => {
       className={`h-1.5 bg-neutral-700/50 rounded-full overflow-hidden ${className}`}
     >
       <div
-        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-none"
+        className="h-full bg-linear-to-r from-primary-500 to-primary-400 rounded-full transition-none"
         style={{
           width: `${progress}%`,
           transition: "width 100ms linear",

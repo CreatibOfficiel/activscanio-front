@@ -139,7 +139,7 @@ export default function BetResultModal({ data, onClose }: BetResultModalProps) {
       >
         {/* Top accent bar */}
         {isWinner && (
-          <div className="h-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500" />
+          <div className="h-1 bg-linear-to-r from-amber-500 via-yellow-400 to-amber-500" />
         )}
 
         <div className="p-6 text-center">

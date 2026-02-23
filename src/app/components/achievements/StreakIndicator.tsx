@@ -111,8 +111,8 @@ const MonthlyStreak: FC<MonthlyStreakProps> = ({ streak, totalWeeks, className =
             <div
               className={`h-full transition-all duration-500 rounded-full ${
                 isPerfect
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-400'
-                  : 'bg-gradient-to-r from-orange-500 to-amber-400'
+                  ? 'bg-linear-to-r from-green-500 to-emerald-400'
+                  : 'bg-linear-to-r from-orange-500 to-amber-400'
               }`}
               style={{ width: `${progress}%` }}
             />
@@ -168,7 +168,7 @@ const LifetimeStreak: FC<LifetimeStreakProps> = ({ streak, className = '' }) => 
       <div className="space-y-1">
         <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+            className="h-full bg-linear-to-r from-purple-500 to-pink-500 rounded-full"
             style={{ width: streak > 0 ? '100%' : '0%' }}
           />
         </div>

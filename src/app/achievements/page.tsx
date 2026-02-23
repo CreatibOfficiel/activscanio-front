@@ -165,7 +165,7 @@ const AchievementsPage: FC = () => {
                   initial={{ width: 0 }}
                   animate={{ width: `${stats.progress}%` }}
                   transition={{ duration: 1, ease: 'easeOut' }}
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-primary-400"
+                  className="absolute inset-y-0 left-0 bg-linear-to-r from-primary-500 to-primary-400"
                 />
               </div>
             </div>

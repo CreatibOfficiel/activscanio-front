@@ -173,7 +173,7 @@ const CreateLiveBetPage: FC = () => {
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-24">
       <div className="max-w-2xl mx-auto space-y-4">
         <PageHeader
-          title="Paris Live"
+          title="Paris en direct"
           backHref="/betting/live"
           backLabel="Retour"
         />
@@ -277,7 +277,7 @@ const CreateLiveBetPage: FC = () => {
                 variant="secondary"
                 onClick={() => router.push('/betting/live')}
               >
-                Retour aux paris live
+                Retour aux paris en direct
               </Button>
             </div>
           </Card>
@@ -310,7 +310,7 @@ const CreateLiveBetPage: FC = () => {
                 variant="primary"
                 onClick={() => router.push('/betting/live')}
               >
-                Retour aux paris live
+                Retour aux paris en direct
               </Button>
             </div>
           </Card>

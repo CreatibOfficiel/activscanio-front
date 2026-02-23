@@ -115,7 +115,7 @@ const ScoreSetupPage: NextPage = () => {
 
       {/* Notification for auto-detected results */}
       {isFromAnalysis && (
-        <div className="mb-6 rounded-lg bg-gradient-to-r from-primary-500/15 to-primary-400/10 p-4 flex items-start gap-3 ring-1 ring-primary-500/30">
+        <div className="mb-6 rounded-lg bg-linear-to-r from-primary-500/15 to-primary-400/10 p-4 flex items-start gap-3 ring-1 ring-primary-500/30">
           <MdOutlineCheckCircle size={24} className="shrink-0 text-primary-400 mt-0.5" />
           <p className="text-sm text-neutral-100 leading-relaxed">
             Les résultats des joueurs ont été&nbsp;pré-remplis grâce à

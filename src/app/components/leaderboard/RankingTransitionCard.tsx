@@ -55,7 +55,7 @@ const RankingTransitionCard: FC<Props> = ({
       className={`
         flex items-center gap-3 rounded-xl border backdrop-blur-sm transition-all
         ${isTV
-          ? `bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-fuchsia-950/30 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.15)]`
+          ? `bg-linear-to-r from-cyan-950/40 via-blue-950/30 to-fuchsia-950/30 border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.15)]`
           : `bg-neutral-800/60 ${borderClass} ${glowClass}`}
         ${isTV ? 'px-6 py-4 gap-5' : 'px-3 py-2.5'}
       `}

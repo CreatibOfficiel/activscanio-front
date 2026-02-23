@@ -25,7 +25,7 @@ const SkeletonRaceCard: FC<Props> = ({ count = 3 }) => {
           </div>
 
           {/* Winner skeleton */}
-          <div className="p-4 bg-gradient-to-r from-neutral-700/30 to-transparent border-l-4 border-neutral-600">
+          <div className="p-4 bg-linear-to-r from-neutral-700/30 to-transparent border-l-4 border-neutral-600">
             <div className="flex items-center gap-4">
               {/* Avatar */}
               <div className="w-14 h-14 rounded-xl bg-neutral-700" />

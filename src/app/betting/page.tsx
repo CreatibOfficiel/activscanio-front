@@ -170,7 +170,7 @@ const BettingPage: FC = () => {
         {currentWeek && (
           <Card className="p-0 overflow-hidden">
             {/* Header with gradient */}
-            <div className="bg-gradient-to-r from-primary-600 to-primary-500 p-4">
+            <div className="bg-linear-to-r from-primary-600 to-primary-500 p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-primary-100 opacity-80">Semaine en cours</p>
@@ -282,13 +282,13 @@ const BettingPage: FC = () => {
         {/* Paris Live */}
         <Link href="/betting/live" className="block">
           <Card className="p-0 overflow-hidden hover:border-orange-500/50 transition-colors cursor-pointer">
-            <div className="bg-gradient-to-r from-orange-600 to-red-500 p-3">
+            <div className="bg-linear-to-r from-orange-600 to-red-500 p-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                   <MdCameraAlt className="text-xl text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-bold text-white">Paris Live</p>
+                  <p className="text-bold text-white">Paris en direct</p>
                   <p className="text-xs text-white/70">
                     Pariez sur le gagnant avant chaque course
                   </p>

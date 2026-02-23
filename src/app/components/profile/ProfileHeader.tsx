@@ -185,7 +185,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
           <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">
             {/* Level Badge */}
             <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${levelColor} shadow-lg`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full bg-linear-to-r ${levelColor} shadow-lg`}
             >
               <span className="text-xs font-medium text-white/90">NIV.</span>
               <span className="text-lg font-bold text-white">{stats.level}</span>

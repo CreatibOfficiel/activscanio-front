@@ -110,7 +110,7 @@ const AchievementShowcase: FC<AchievementShowcaseProps> = ({
             key={achievement.id}
             className={`
               relative flex items-center gap-4 p-4 rounded-xl
-              bg-gradient-to-r ${colors.bg}
+              bg-linear-to-r ${colors.bg}
               border-2 ${colors.border} ${colors.glow}
               transition-all duration-200 hover:scale-[1.02]
             `}
@@ -135,7 +135,7 @@ const AchievementShowcase: FC<AchievementShowcaseProps> = ({
                 <span
                   className={`
                     text-[10px] font-bold px-2 py-0.5 rounded-full
-                    bg-gradient-to-r ${colors.gradient} text-white
+                    bg-linear-to-r ${colors.gradient} text-white
                   `}
                 >
                   {colors.label}

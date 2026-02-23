@@ -52,7 +52,7 @@ function getContainerBorder(status: string, isCurrentWeek: boolean) {
 function getHeaderStyles(status: string, isCurrentWeek: boolean) {
   if (isCurrentWeek && status === BettingWeekStatus.OPEN) {
     return {
-      bg: 'bg-gradient-to-r from-primary-600 to-primary-500',
+      bg: 'bg-linear-to-r from-primary-600 to-primary-500',
       text: 'text-white',
       subtext: 'text-white/70',
       chevron: 'text-white/70 group-hover:text-white',

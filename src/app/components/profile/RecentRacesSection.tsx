@@ -34,21 +34,21 @@ const itemVariants = {
 const getRankStyle = (rank: number): { bg: string; text: string; badge: string } => {
   if (rank === 1)
     return {
-      bg: 'bg-gradient-to-r from-yellow-600/30 to-yellow-500/20',
+      bg: 'bg-linear-to-r from-yellow-600/30 to-yellow-500/20',
       text: 'text-yellow-400',
-      badge: 'bg-gradient-to-r from-yellow-600 to-yellow-500',
+      badge: 'bg-linear-to-r from-yellow-600 to-yellow-500',
     };
   if (rank === 2)
     return {
-      bg: 'bg-gradient-to-r from-slate-400/30 to-slate-300/20',
+      bg: 'bg-linear-to-r from-slate-400/30 to-slate-300/20',
       text: 'text-slate-300',
-      badge: 'bg-gradient-to-r from-slate-400 to-slate-300',
+      badge: 'bg-linear-to-r from-slate-400 to-slate-300',
     };
   if (rank === 3)
     return {
-      bg: 'bg-gradient-to-r from-orange-700/30 to-orange-600/20',
+      bg: 'bg-linear-to-r from-orange-700/30 to-orange-600/20',
       text: 'text-orange-400',
-      badge: 'bg-gradient-to-r from-orange-700 to-orange-500',
+      badge: 'bg-linear-to-r from-orange-700 to-orange-500',
     };
   if (rank <= 6)
     return {
@@ -284,7 +284,7 @@ const RecentRacesSection: FC<RecentRacesSectionProps> = ({
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-2 bg-neutral-900 rounded-full overflow-hidden">
                     <motion.div
-                      className={`h-full bg-gradient-to-r ${scoreColor} rounded-full`}
+                      className={`h-full bg-linear-to-r ${scoreColor} rounded-full`}
                       initial={{ width: 0 }}
                       animate={{ width: `${scorePercent}%` }}
                       transition={{

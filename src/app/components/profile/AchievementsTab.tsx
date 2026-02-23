@@ -147,7 +147,7 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
             initial={{ width: 0 }}
             animate={{ width: `${stats.achievementProgress}%` }}
             transition={{ duration: 1, ease: 'easeOut' }}
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-primary-400"
+            className="absolute inset-y-0 left-0 bg-linear-to-r from-primary-500 to-primary-400"
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xs font-bold text-white drop-shadow">
@@ -275,7 +275,7 @@ const AchievementsTab: FC<AchievementsTabProps> = ({
       >
         <Link
           href="/achievements"
-          className="flex items-center justify-between p-5 rounded-xl bg-gradient-to-r from-primary-500/10 to-primary-600/10 border border-primary-500/30 hover:border-primary-500/50 hover:from-primary-500/20 hover:to-primary-600/20 transition-all group"
+          className="flex items-center justify-between p-5 rounded-xl bg-linear-to-r from-primary-500/10 to-primary-600/10 border border-primary-500/30 hover:border-primary-500/50 hover:from-primary-500/20 hover:to-primary-600/20 transition-all group"
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center">

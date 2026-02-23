@@ -200,7 +200,7 @@ const StatsTab: FC<StatsTabProps> = ({
               initial={{ width: 0 }}
               animate={{ width: `${periodStats.winRate}%` }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+              className="h-full bg-linear-to-r from-emerald-500 to-emerald-400 rounded-full"
             />
           </div>
         </div>

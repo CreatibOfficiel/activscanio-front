@@ -93,7 +93,7 @@ const AchievementCard: FC<AchievementCardProps> = ({
   if (variant === 'compact') {
     return (
       <div
-        className={`relative flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r ${colors.bg} border ${colors.border} ${glowClass} ${lockedClass} ${onClick ? 'cursor-pointer hover:scale-105' : ''} transition-all duration-200 ${className}`}
+        className={`relative flex items-center gap-3 p-3 rounded-lg bg-linear-to-r ${colors.bg} border ${colors.border} ${glowClass} ${lockedClass} ${onClick ? 'cursor-pointer hover:scale-105' : ''} transition-all duration-200 ${className}`}
         onClick={onClick}
       >
         {/* Icon */}
@@ -165,7 +165,7 @@ const AchievementCard: FC<AchievementCardProps> = ({
         <h3 className={`text-lg font-bold ${colors.text} mb-1`}>{name}</h3>
         <div className="flex items-center justify-center gap-2">
           <span
-            className={`text-xs font-semibold px-2 py-1 rounded-full bg-gradient-to-r ${colors.gradient} text-white`}
+            className={`text-xs font-semibold px-2 py-1 rounded-full bg-linear-to-r ${colors.gradient} text-white`}
           >
             {rarity}
           </span>
@@ -197,7 +197,7 @@ const AchievementCard: FC<AchievementCardProps> = ({
           </div>
           <div className="h-2 bg-neutral-800 rounded-full overflow-hidden border border-neutral-700">
             <div
-              className={`h-full bg-gradient-to-r ${colors.gradient} transition-all duration-500`}
+              className={`h-full bg-linear-to-r ${colors.gradient} transition-all duration-500`}
               style={{ width: `${Math.min(100, progress)}%` }}
             />
           </div>

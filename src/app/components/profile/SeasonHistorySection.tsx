@@ -82,28 +82,28 @@ const getRankStyle = (
   if (rank === null) {
     return {
       border: 'border-l-4 border-l-neutral-500 border-dashed',
-      bg: 'bg-gradient-to-r from-neutral-500/5 to-transparent',
+      bg: 'bg-linear-to-r from-neutral-500/5 to-transparent',
       text: 'text-neutral-500',
     };
   }
   if (rank === 1) {
     return {
       border: 'border-l-4 border-l-yellow-500',
-      bg: 'bg-gradient-to-r from-yellow-500/10 to-transparent',
+      bg: 'bg-linear-to-r from-yellow-500/10 to-transparent',
       text: 'text-yellow-400',
     };
   }
   if (rank === 2) {
     return {
       border: 'border-l-4 border-l-slate-400',
-      bg: 'bg-gradient-to-r from-slate-400/10 to-transparent',
+      bg: 'bg-linear-to-r from-slate-400/10 to-transparent',
       text: 'text-slate-300',
     };
   }
   if (rank === 3) {
     return {
       border: 'border-l-4 border-l-orange-500',
-      bg: 'bg-gradient-to-r from-orange-500/10 to-transparent',
+      bg: 'bg-linear-to-r from-orange-500/10 to-transparent',
       text: 'text-orange-400',
     };
   }
