@@ -43,11 +43,11 @@ const StreakWarningBanner: FC<StreakWarningBannerProps> = ({
               >
                 {isBettingCritical
                   ? 'DERNIER JOUR pour parier !'
-                  : `Serie de ${bettingStreak.currentStreak} semaine(s) en danger !`}
+                  : `Série de ${bettingStreak.currentStreak} semaine${bettingStreak.currentStreak > 1 ? 's' : ''} en danger !`}
               </p>
               <p className="text-xs text-neutral-400 truncate">
                 {isBettingCritical
-                  ? `Ta serie de ${bettingStreak.currentStreak} semaine(s) se termine ce soir.`
+                  ? `Ta série de ${bettingStreak.currentStreak} semaine${bettingStreak.currentStreak > 1 ? 's' : ''} se termine ce soir.`
                   : "N'oublie pas de placer ton prono cette semaine."}
               </p>
             </div>
@@ -72,10 +72,10 @@ const StreakWarningBanner: FC<StreakWarningBannerProps> = ({
             <span className="text-xl animate-pulse">🚨</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-red-400">
-                Serie de {playStreak.currentStreak}j en danger !
+                Série de {playStreak.currentStreak}j en danger !
               </p>
               <p className="text-xs text-neutral-400 truncate">
-                Dernier jour pour sauver ta serie. Fais une course !
+                Dernier jour pour sauver ta série. Fais une course !
               </p>
             </div>
             <span

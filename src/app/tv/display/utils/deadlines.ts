@@ -1,12 +1,12 @@
 /**
- * Calculate the betting deadline (Tuesday 00:00 UTC = Monday midnight) from a week's start date.
- * The startDate is the Monday of the betting week, so deadline = startDate + 1 day at 00:00.
+ * Calculate the betting deadline from a week's start date.
+ * Displayed as Monday 23:00 UTC (= midnight CET/Paris time).
+ * The backend cron closes at Tuesday 00:00 UTC, giving 1h of grace after the UI shows "Fermé".
  */
 export function getBettingDeadline(weekStartDate: string): Date {
   const start = new Date(weekStartDate);
   const deadline = new Date(start);
-  deadline.setUTCDate(deadline.getUTCDate() + 1); // Monday -> Tuesday
-  deadline.setUTCHours(0, 0, 0, 0);
+  deadline.setUTCHours(23, 0, 0, 0); // Monday 23:00 UTC = midnight Paris time
   return deadline;
 }
 
