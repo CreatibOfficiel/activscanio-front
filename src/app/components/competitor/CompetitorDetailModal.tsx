@@ -134,15 +134,15 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
 
   /* ---------- fetch user points for duel stakes ---------- */
   useEffect(() => {
-    if (!isOpen || !user?.id) return;
+    if (!isOpen || !userData?.id) return;
     const now = new Date();
     BettingRepository.getMonthlyRankings(now.getMonth() + 1, now.getFullYear())
       .then((res) => {
-        const myRanking = res.rankings.find((r) => r.userId === user.id);
+        const myRanking = res.rankings.find((r) => r.userId === userData?.id);
         setUserPoints(myRanking?.totalPoints ?? 0);
       })
       .catch(() => setUserPoints(0));
-  }, [isOpen, user?.id]);
+  }, [isOpen, userData?.id]);
 
   /* ---------- derived data ---------- */
   const shortName = formatCompetitorName(
