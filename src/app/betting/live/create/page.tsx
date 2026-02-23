@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { FC, useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { Button, Card, Spinner, PageHeader } from '@/app/components/ui';
@@ -11,7 +11,7 @@ import { LiveBet, LiveBetStatus } from '@/app/models/LiveBet';
 import LiveCompetitorPicker from '@/app/components/live-betting/LiveCompetitorPicker';
 import DetectionConfirm from '@/app/components/live-betting/DetectionConfirm';
 import LiveBetCard from '@/app/components/live-betting/LiveBetCard';
-import { MdCameraAlt, MdArrowBack } from 'react-icons/md';
+import { MdCameraAlt } from 'react-icons/md';
 import { formatOdds } from '@/app/utils/formatters';
 import { useSocket } from '@/app/hooks/useSocket';
 
@@ -175,11 +175,6 @@ const CreateLiveBetPage: FC = () => {
     (c) => c.competitorId === selectedCompetitorId,
   );
 
-  const hasEnoughPoints = useMemo(() => {
-    if (!selectedCompetitor) return true;
-    return userPoints >= selectedCompetitor.oddFirst;
-  }, [selectedCompetitor, userPoints]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 flex items-center justify-center">
@@ -206,10 +201,17 @@ const CreateLiveBetPage: FC = () => {
         {/* Step 1: Pick a winner */}
         {step === 'pick' && (
           <>
+            {userPoints > 0 && (
+              <p className="text-xs text-neutral-500 text-right">
+                Vos points : <span className="text-neutral-300 font-medium">{userPoints}</span>
+              </p>
+            )}
+
             <LiveCompetitorPicker
               competitors={competitors}
               selectedId={selectedCompetitorId}
               onSelect={setSelectedCompetitorId}
+              userPoints={userPoints}
             />
 
             {selectedCompetitorId && selectedCompetitor && (
@@ -237,17 +239,11 @@ const CreateLiveBetPage: FC = () => {
                     variant="primary"
                     className="w-full gap-2"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isSubmitting || !hasEnoughPoints}
+                    disabled={isSubmitting}
                   >
                     <MdCameraAlt className="text-lg" />
                     Valider avec photo
                   </Button>
-
-                  {!hasEnoughPoints && (
-                    <p className="text-xs text-red-400">
-                      Pas assez de points ({userPoints}) pour couvrir la cote ({formatOdds(selectedCompetitor!.oddFirst)}).
-                    </p>
-                  )}
 
                   <p className="text-xs text-neutral-500">
                     Prenez en photo l&apos;écran de sélection des karts
