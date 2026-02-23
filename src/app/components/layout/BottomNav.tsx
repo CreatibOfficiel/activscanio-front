@@ -31,6 +31,7 @@ export default function BottomNav() {
     '/races/score-setup',
     '/races/summary',
     '/betting/place-bet',
+    '/betting/live/create',
     '/competitors/add',
     '/competitors/edit',
     '/tv',

@@ -27,7 +27,7 @@ import { MdBolt } from 'react-icons/md';
 import { Duel, DuelStatus } from '@/app/models/Duel';
 import { DuelRepository } from '@/app/repositories/DuelRepository';
 import DuelCard from '@/app/components/duel/DuelCard';
-import { MdSportsMma } from 'react-icons/md';
+import { MdSportsMma, MdCameraAlt } from 'react-icons/md';
 
 const BettingPage: FC = () => {
   const { getToken } = useAuth();
@@ -278,6 +278,26 @@ const BettingPage: FC = () => {
 
         {/* Week Odds Preview */}
         {currentWeek && <WeekOddsPreview weekId={currentWeek.id} />}
+
+        {/* Paris Live */}
+        <Link href="/betting/live">
+          <Card className="p-0 overflow-hidden hover:border-orange-500/50 transition-colors cursor-pointer">
+            <div className="bg-gradient-to-r from-orange-600 to-red-500 p-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <MdCameraAlt className="text-xl text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-bold text-white">Paris Live</p>
+                  <p className="text-xs text-white/70">
+                    Pariez sur le gagnant avant chaque course
+                  </p>
+                </div>
+                <span className="text-white/60 text-sm">→</span>
+              </div>
+            </div>
+          </Card>
+        </Link>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-3">

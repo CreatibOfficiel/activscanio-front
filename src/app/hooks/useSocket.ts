@@ -394,3 +394,26 @@ export const subscribeToDuelCancelled = (
     socket?.off('duel:cancelled', callback);
   };
 };
+
+export interface LiveBetResolvedData {
+  liveBetId: string;
+  status: string;
+  pointsEarned: number | null;
+  competitorId: string;
+  oddAtBet: number;
+}
+
+/**
+ * Subscribe to live bet resolved events (bettor)
+ */
+export const subscribeToLiveBetResolved = (
+  callback: (data: LiveBetResolvedData) => void,
+): (() => void) | undefined => {
+  if (!socket) return;
+
+  socket.on('liveBet:resolved', callback);
+
+  return () => {
+    socket?.off('liveBet:resolved', callback);
+  };
+};

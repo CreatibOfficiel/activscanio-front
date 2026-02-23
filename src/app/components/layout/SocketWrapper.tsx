@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated, subscribeToStreakLost, subscribeToDuelReceived, subscribeToDuelAccepted, subscribeToDuelDeclined, subscribeToDuelResolved, subscribeToDuelCancelled, DuelReceivedData } from '@/app/hooks/useSocket';
+import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated, subscribeToStreakLost, subscribeToDuelReceived, subscribeToDuelAccepted, subscribeToDuelDeclined, subscribeToDuelResolved, subscribeToDuelCancelled, subscribeToLiveBetResolved, DuelReceivedData } from '@/app/hooks/useSocket';
 import { useApp } from '@/app/context/AppContext';
 import { useResultModals } from '@/app/context/ResultModalsContext';
 import { toast } from 'sonner';
@@ -175,6 +175,21 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       toast(`Duel annule : ${reason}`, { duration: 4000 });
     });
 
+    // Live bet resolved
+    const unsubscribeLiveBetResolved = subscribeToLiveBetResolved((data) => {
+      if (data.status === 'won') {
+        toast.success(
+          `🎉 Pari live gagné ! +${data.pointsEarned ?? 0} pts`,
+          { duration: 6000 },
+        );
+      } else if (data.status === 'lost') {
+        toast.error(
+          `😔 Pari live perdu : ${data.pointsEarned ?? 0} pts`,
+          { duration: 5000 },
+        );
+      }
+    });
+
     // Cleanup all subscriptions on unmount
     return () => {
       unsubscribeAchievements?.();
@@ -192,6 +207,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribeDuelDeclined?.();
       unsubscribeDuelResolved?.();
       unsubscribeDuelCancelled?.();
+      unsubscribeLiveBetResolved?.();
     };
   }, [socket, isConnected, refreshCompetitors, enqueueBetResult, enqueueStreakLoss, userId]);
 
