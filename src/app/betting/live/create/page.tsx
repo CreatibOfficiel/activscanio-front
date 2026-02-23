@@ -1,12 +1,12 @@
 "use client";
 
-import { FC, useState, useCallback, useRef, useEffect } from 'react';
+import { FC, useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { Button, Card, Spinner, PageHeader } from '@/app/components/ui';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { LiveBettingRepository } from '@/app/repositories/LiveBettingRepository';
-import { CompetitorOdds } from '@/app/models/CompetitorOdds';
+import { CompetitorOdds, BettorRanking } from '@/app/models/CompetitorOdds';
 import { LiveBet, LiveBetStatus } from '@/app/models/LiveBet';
 import LiveCompetitorPicker from '@/app/components/live-betting/LiveCompetitorPicker';
 import DetectionConfirm from '@/app/components/live-betting/DetectionConfirm';
@@ -30,15 +30,29 @@ const CreateLiveBetPage: FC = () => {
   const [competitors, setCompetitors] = useState<CompetitorOdds[]>([]);
   const [selectedCompetitorId, setSelectedCompetitorId] = useState<string | null>(null);
   const [liveBet, setLiveBet] = useState<LiveBet | null>(null);
+  const [userPoints, setUserPoints] = useState<number>(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load competitors with odds
+  // Load competitors with odds + user ranking
   useEffect(() => {
     const load = async () => {
       try {
         const odds = await BettingRepository.getCurrentWeekOdds();
         setCompetitors(odds);
+
+        // Load user's current month points
+        const now = new Date();
+        const rankingsData = await BettingRepository.getMonthlyRankings(
+          now.getMonth() + 1,
+          now.getFullYear(),
+        );
+        if (userId) {
+          const myRanking = rankingsData.rankings.find(
+            (r: BettorRanking) => r.userId === userId,
+          );
+          setUserPoints(myRanking?.totalPoints ?? 0);
+        }
       } catch (err) {
         console.error('Error loading odds:', err);
         setError('Impossible de charger les cotes');
@@ -47,7 +61,7 @@ const CreateLiveBetPage: FC = () => {
       }
     };
     load();
-  }, []);
+  }, [userId]);
 
   // Listen for detection WebSocket events
   useEffect(() => {
@@ -161,6 +175,11 @@ const CreateLiveBetPage: FC = () => {
     (c) => c.competitorId === selectedCompetitorId,
   );
 
+  const hasEnoughPoints = useMemo(() => {
+    if (!selectedCompetitor) return true;
+    return userPoints >= selectedCompetitor.oddFirst;
+  }, [selectedCompetitor, userPoints]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 flex items-center justify-center">
@@ -218,11 +237,17 @@ const CreateLiveBetPage: FC = () => {
                     variant="primary"
                     className="w-full gap-2"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !hasEnoughPoints}
                   >
                     <MdCameraAlt className="text-lg" />
                     Valider avec photo
                   </Button>
+
+                  {!hasEnoughPoints && (
+                    <p className="text-xs text-red-400">
+                      Pas assez de points ({userPoints}) pour couvrir la cote ({formatOdds(selectedCompetitor!.oddFirst)}).
+                    </p>
+                  )}
 
                   <p className="text-xs text-neutral-500">
                     Prenez en photo l&apos;écran de sélection des karts

@@ -117,6 +117,7 @@ Pick boosté (cote 5.0) correct = 10 pts
       "Prenez en photo l'écran de sélection des karts comme preuve anti-triche",
       "L'IA détecte les joueurs sur la photo (30s pour vérifier/corriger)",
       "Le pari est résolu automatiquement quand la course suivante est ajoutée",
+      "Vous devez avoir assez de points pour couvrir la cote (pas de pari à crédit !)",
       "Gagné = +cote en points, Perdu = -cote en points (plancher à 0)",
       "Le pari expire après 15 minutes sans course correspondante",
     ],
