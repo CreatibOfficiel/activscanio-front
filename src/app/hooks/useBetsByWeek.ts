@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Bet, BetStatus } from '@/app/models/Bet';
+import { BettingWeek } from '@/app/models/BettingWeek';
 import { BettingRepository, PaginationMeta } from '@/app/repositories/BettingRepository';
 
 const BETS_PER_PAGE = 10;
@@ -82,11 +83,13 @@ export function useBetsByWeek({ activeTab, activeStatus, userId, getToken }: Use
 
   // Determine current week status
   const [currentWeekKey, setCurrentWeekKey] = useState<string | null>(null);
+  const currentWeekDataRef = useRef<BettingWeek | null>(null);
 
   useEffect(() => {
     BettingRepository.getCurrentWeek().then((week) => {
       if (week) {
         setCurrentWeekKey(`${week.year}-W${String(week.weekNumber).padStart(2, '0')}`);
+        currentWeekDataRef.current = week;
       }
     }).catch(() => {});
   }, []);
@@ -106,7 +109,7 @@ export function useBetsByWeek({ activeTab, activeStatus, userId, getToken }: Use
           activeStatus ?? undefined
         );
       } else {
-        if (!userId) throw new Error('Utilisateur non connect\u00e9');
+        if (!userId) throw new Error('Utilisateur non connecté');
         const token = await getToken();
         if (!token) throw new Error('Token non disponible');
         response = await BettingRepository.getBetHistory(userId, token, BETS_PER_PAGE, offset);
@@ -120,7 +123,27 @@ export function useBetsByWeek({ activeTab, activeStatus, userId, getToken }: Use
 
       // Group by week
       const grouped = groupBetsByWeek(newBets);
-      setWeekGroups(buildWeekGroups(grouped));
+      const groups = buildWeekGroups(grouped);
+
+      // Inject empty current week group if not present
+      const cw = currentWeekDataRef.current;
+      if (cw && currentWeekKey && !groups.some((g) => g.key === currentWeekKey)) {
+        groups.unshift({
+          key: currentWeekKey,
+          weekNumber: cw.weekNumber,
+          year: cw.year,
+          startDate: cw.startDate,
+          endDate: cw.endDate,
+          status: cw.status,
+          bets: [],
+          totalBets: 0,
+          totalPoints: 0,
+          wonCount: 0,
+          perfectCount: 0,
+        });
+      }
+
+      setWeekGroups(groups);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erreur lors du chargement.';
       setError(msg);
@@ -128,7 +151,7 @@ export function useBetsByWeek({ activeTab, activeStatus, userId, getToken }: Use
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, [activeTab, activeStatus, userId, getToken, allBets]);
+  }, [activeTab, activeStatus, userId, getToken, allBets, currentWeekKey]);
 
   const loadMore = useCallback(() => {
     const meta = metaRef.current;
@@ -139,7 +162,7 @@ export function useBetsByWeek({ activeTab, activeStatus, userId, getToken }: Use
   // Reload on tab/filter change
   useEffect(() => {
     if (activeTab === 'mine' && !userId) {
-      setError('Vous devez \u00eatre connect\u00e9 pour voir vos paris.');
+      setError('Vous devez être connecté pour voir vos paris.');
       setIsLoading(false);
       return;
     }

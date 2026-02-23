@@ -29,6 +29,7 @@ const HistoryPage: FC = () => {
   const [expandedWeekKey, setExpandedWeekKey] = useState<string | null>(null);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const hasAutoExpanded = useRef(false);
 
   const stableGetToken = useCallback(async () => {
     return await getToken({ skipCache: true });
@@ -74,12 +75,13 @@ const HistoryPage: FC = () => {
     resolveUserId();
   }, [user, getToken]);
 
-  // Auto-expand first group when data loads
+  // Auto-expand first group when data loads (once per tab/filter change)
   useEffect(() => {
-    if (weekGroups.length > 0 && expandedWeekKey === null) {
+    if (weekGroups.length > 0 && !hasAutoExpanded.current) {
       setExpandedWeekKey(weekGroups[0].key);
+      hasAutoExpanded.current = true;
     }
-  }, [weekGroups, expandedWeekKey]);
+  }, [weekGroups]);
 
   // Intersection observer for infinite scroll
   useEffect(() => {
@@ -104,11 +106,13 @@ const HistoryPage: FC = () => {
     setActiveTab(tab);
     setActiveStatus(null);
     setExpandedWeekKey(null);
+    hasAutoExpanded.current = false;
   };
 
   const handleStatusChange = (status: BetStatus | null) => {
     setActiveStatus(status);
     setExpandedWeekKey(null);
+    hasAutoExpanded.current = false;
   };
 
   const handleToggleWeek = (key: string) => {
@@ -122,7 +126,7 @@ const HistoryPage: FC = () => {
           <PageHeader
             variant="detail"
             title="Historique des paris"
-            subtitle="Communaut\u00e9"
+            subtitle="Communauté"
             backHref="/betting"
           />
           <Card variant="error" className="p-6">
@@ -148,7 +152,7 @@ const HistoryPage: FC = () => {
         <PageHeader
           variant="detail"
           title="Historique des paris"
-          subtitle={activeTab === 'all' ? 'Paris de la communaut\u00e9' : 'Vos paris pass\u00e9s et performances'}
+          subtitle={activeTab === 'all' ? 'Paris de la communauté' : 'Vos paris passés et performances'}
           backHref="/betting"
         />
 
@@ -171,7 +175,7 @@ const HistoryPage: FC = () => {
             </div>
             <div className="bg-neutral-800 rounded-xl p-3 text-center border border-success-500/30">
               <div className="text-xl sm:text-2xl font-bold text-success-500">{stats.won}</div>
-              <div className="text-xs text-neutral-400">Gagn\u00e9s</div>
+              <div className="text-xs text-neutral-400">Gagnés</div>
             </div>
             <div className="bg-neutral-800 rounded-xl p-3 text-center border border-primary-500/30">
               <div className="text-xl sm:text-2xl font-bold text-primary-500">
@@ -196,14 +200,14 @@ const HistoryPage: FC = () => {
         ) : weekGroups.length === 0 ? (
           /* Empty state */
           <Card className="p-8 text-center">
-            <div className="text-6xl mb-4">{activeTab === 'all' ? '\u{1F465}' : '\u{1F3B0}'}</div>
+            <div className="text-6xl mb-4">{activeTab === 'all' ? '👥' : '🎰'}</div>
             <h3 className="text-xl font-bold text-white mb-2">
-              {activeTab === 'all' ? 'Aucun pari pour le moment' : "Vous n'avez pas encore pari\u00e9"}
+              {activeTab === 'all' ? 'Aucun pari pour le moment' : "Vous n'avez pas encore parié"}
             </h3>
             <p className="text-neutral-400 mb-6">
               {activeTab === 'all'
-                ? 'Soyez le premier \u00e0 parier cette semaine !'
-                : 'Commencez \u00e0 parier pour voir votre historique ici'}
+                ? 'Soyez le premier à parier cette semaine !'
+                : 'Commencez à parier pour voir votre historique ici'}
             </p>
             <Button
               variant="primary"
