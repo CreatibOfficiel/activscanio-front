@@ -34,9 +34,6 @@ const LeaderboardRow: FC<Props> = ({
     competitor.firstName,
     competitor.lastName
   );
-  const baseName = competitor.characterVariant?.baseCharacter?.name ?? null;
-  const variantLabel = competitor.characterVariant?.label ?? null;
-
   // Progress bar calculation (towards next rank)
   const maxScore = 2000; // Approximate max ELO
   const progressPercent = Math.min(

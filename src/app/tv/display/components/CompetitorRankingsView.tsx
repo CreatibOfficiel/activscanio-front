@@ -19,8 +19,6 @@ interface Props {
   onAnimatingChange?: (isAnimating: boolean) => void;
 }
 
-const SEASON_THRESHOLDS = { warningSeconds: 259200, criticalSeconds: 86400 }; // 3 days / 1 day
-
 export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   const raceSeasonEndDate = useMemo(() => getRaceSeasonEndDate(), []);
 

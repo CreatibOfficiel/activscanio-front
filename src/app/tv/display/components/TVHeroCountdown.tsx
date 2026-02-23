@@ -1,7 +1,7 @@
 "use client";
 
 import { FC } from "react";
-import { useCountdown, UrgencyThresholds } from "@/app/hooks/useCountdown";
+import { useCountdown } from "@/app/hooks/useCountdown";
 
 interface Props {
     targetDate: Date | null;
@@ -9,9 +9,9 @@ interface Props {
 }
 
 const TVHeroCountdown: FC<Props> = ({ targetDate, seasonName = "SAISON ACTUELLE" }) => {
-    const { time, isExpired } = useCountdown(targetDate, {
-        warning: 7 * 24 * 60 * 60 * 1000,
-        critical: 24 * 60 * 60 * 1000,
+    const { time } = useCountdown(targetDate, {
+        warningSeconds: 7 * 24 * 60 * 60,
+        criticalSeconds: 24 * 60 * 60,
     });
 
     if (!targetDate) return null;
@@ -28,7 +28,7 @@ const TVHeroCountdown: FC<Props> = ({ targetDate, seasonName = "SAISON ACTUELLE"
 
                     <div className="transform skew-x-12 flex flex-col items-center z-10 w-full">
                         <h2 className="text-xl lg:text-2xl font-black italic text-yellow-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)] tracking-wider uppercase">
-                            {isExpired ? "Saison Terminée" : seasonName}
+                            {time.isExpired ? "Saison Terminée" : seasonName}
                         </h2>
                         <div className="bg-black/30 px-3 py-0.5 rounded-full mt-1 border border-orange-400/30">
                             <p className="text-white font-bold tracking-widest text-[10px] lg:text-xs drop-shadow-md uppercase">

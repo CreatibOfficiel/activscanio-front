@@ -8,7 +8,6 @@ import { Competitor } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
 import EditCompetitorButton from "./EditCompetitorButton";
 import Modal from "../ui/Modal";
-import Badge from "../ui/Badge";
 import Skeleton from "../ui/Skeleton";
 import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
 import { TrendDirection } from "../leaderboard/TrendIndicator";
@@ -36,13 +35,6 @@ interface Props {
 const formatRankFR = (rank: number) => {
   if (rank <= 0) return "--";
   return rank === 1 ? "1er" : `${rank}e`;
-};
-
-const rankBadgeVariant = (rank: number) => {
-  if (rank === 1) return "gold" as const;
-  if (rank === 2) return "silver" as const;
-  if (rank === 3) return "bronze" as const;
-  return "default" as const;
 };
 
 const consistencyLabel = (positions?: number[]) => {
