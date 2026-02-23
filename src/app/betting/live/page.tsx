@@ -103,7 +103,7 @@ const LiveBettingPage: FC = () => {
                 <Link href="/betting/live/create">
                   <Button variant="primary" className="w-full gap-2">
                     <MdCameraAlt className="text-lg" />
-                    Nouveau pari live
+                    Nouveau pari en direct
                   </Button>
                 </Link>
               </div>
