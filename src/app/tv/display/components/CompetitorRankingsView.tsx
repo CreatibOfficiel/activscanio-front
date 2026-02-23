@@ -1,9 +1,10 @@
 "use client";
 
 import { FC, useMemo } from "react";
-import TVPodium from "./TVPodium";
+import Image from "next/image";
+import TVHeroPodium from "./TVHeroPodium";
 import TVLeaderboardRow from "./TVLeaderboardRow";
-import TVCountdown from "./TVCountdown";
+import TVHeroCountdown from "./TVHeroCountdown";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import { computeRanksWithTies } from "@/app/utils/rankings";
@@ -92,6 +93,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
         id: competitor.id,
         name: formatCompetitorName(competitor.firstName, competitor.lastName),
         imageUrl: competitor.profilePictureUrl,
+        characterImageUrl: competitor.characterVariant?.imageUrl,
         score: Math.round(competitor.conservativeScore ?? 0),
         scoreLabel: "ELO",
         subtitle: avgRank ? `${avgRank} · ${races}` : races,
@@ -113,7 +115,8 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     };
   }, [rankings]);
 
-  // Ranking animation hook (TV mode — uses previousDayRank, animates every load)
+  // Ranking animation hook specifically for the Peloton (Rank 4+)
+  const peloton = confirmed.slice(3);
   const {
     animationPhase,
     displayOrder,
@@ -122,8 +125,8 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     onTransitionComplete,
   } = useRankingAnimation({
     mode: 'tv',
-    competitors: confirmed,
-    enabled: confirmed.length > 0,
+    competitors: peloton,
+    enabled: peloton.length > 0,
   });
 
   // Real trend based on previousDayRank snapshot
@@ -149,119 +152,26 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Podium + Countdown side by side */}
-      <div className="relative">
-        {/* Countdown pinned top-right */}
-        <div className="absolute top-0 right-0 z-10">
-          <TVCountdown
-            label="Fin de saison"
+    <div className="flex flex-row items-start gap-8 max-w-[1800px] mx-auto w-full px-4">
+      {/* LEFT COLUMN: Hero Zone (Sticky) */}
+      <div className="w-[45%] sticky top-2 flex flex-col items-center">
+
+        {/* Countdown */}
+        <div className="mb-4 w-full max-w-[90%]">
+          <TVHeroCountdown
             targetDate={raceSeasonEndDate}
-            thresholds={SEASON_THRESHOLDS}
-            expiredLabel="Saison terminée"
           />
         </div>
 
-        {/* Ranking animation overlay wrapping podium + leagues */}
-        <RankingAnimationOverlay
-          phase={animationPhase}
-          displayOrder={displayOrder}
-          changedIds={changedIds}
-          variant="tv"
-          onTransitionComplete={onTransitionComplete}
-        >
-          {/* Confirmed: Podium Top 3 */}
-          {top3.length >= 3 && (
-            <TVPodium
-              items={podiumItems}
-              disableEntryAnimation={showUniformCards}
-            />
-          )}
-
-          {/* Confirmed: list (if not enough for podium, show as rows) */}
-          {top3.length > 0 && top3.length < 3 && (
-            <div className="space-y-3 max-w-5xl mx-auto">
-              {confirmed.map((competitor, index) => {
-                const rank = confirmedRanks.get(competitor.id) ?? index + 1;
-                const trend = getTrend(competitor, rank);
-                return (
-                  <TVLeaderboardRow
-                    key={competitor.id}
-                    item={{
-                      id: competitor.id,
-                      rank,
-                      name: formatCompetitorName(
-                        competitor.firstName,
-                        competitor.lastName
-                      ),
-                      imageUrl: competitor.profilePictureUrl,
-                      score: Math.round(competitor.conservativeScore ?? 0),
-                      scoreLabel: "ELO",
-                      subtitle: competitor.characterVariant
-                        ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
-                        : `${competitor.raceCount || 0} courses`,
-                      trend: trend.direction,
-                      trendValue: trend.value,
-                      maxScore,
-                    }}
-                    animationDelay={index * 80}
-                    disableEntryAnimation={showUniformCards}
-                  />
-                );
-              })}
-            </div>
-          )}
-
-          {/* Confirmed: league sections after podium */}
-          {leagueGroups.map((group) => (
-            <div key={group.league.id} className="space-y-3 max-w-5xl mx-auto">
-              <LeagueDivider league={group.league} variant="tv" />
-              {group.items.map((competitor, index) => {
-                const rank = confirmedRanks.get(competitor.id) ?? index + 4;
-                const trend = getTrend(competitor, rank);
-                return (
-                  <TVLeaderboardRow
-                    key={competitor.id}
-                    item={{
-                      id: competitor.id,
-                      rank,
-                      name: formatCompetitorName(
-                        competitor.firstName,
-                        competitor.lastName
-                      ),
-                      imageUrl: competitor.profilePictureUrl,
-                      score: Math.round(competitor.conservativeScore ?? 0),
-                      scoreLabel: "ELO",
-                      subtitle: competitor.characterVariant
-                        ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
-                        : `${competitor.raceCount || 0} courses`,
-                      trend: trend.direction,
-                      trendValue: trend.value,
-                      maxScore,
-                    }}
-                    animationDelay={index * 80}
-                    disableEntryAnimation={showUniformCards}
-                  />
-                );
-              })}
-            </div>
-          ))}
-        </RankingAnimationOverlay>
-      </div>
-
-      {/* Inactive confirmed section */}
-      {inactive.length > 0 && (
-        <div className="space-y-4 max-w-5xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-neutral-700" />
-            <h3 className="text-lg font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-2">
-              <span>💤</span> Inactifs
-            </h3>
-            <div className="h-px flex-1 bg-neutral-700" />
+        {/* Confirmed: Podium Top 3 (Always visible or self-animating) */}
+        {top3.length >= 3 ? (
+          <div className="w-full">
+            <TVHeroPodium items={podiumItems} />
           </div>
-          <div className="space-y-3 opacity-50">
-            {inactive.map((competitor, index) => {
-              const rank = inactiveRanks.get(competitor.id) ?? confirmed.length + index + 1;
+        ) : top3.length > 0 && (
+          <div className="space-y-3 w-full max-w-md mt-6">
+            {top3.map((competitor, index) => {
+              const rank = confirmedRanks.get(competitor.id) ?? index + 1;
               const trend = getTrend(competitor, rank);
               return (
                 <TVLeaderboardRow
@@ -269,11 +179,9 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
                   item={{
                     id: competitor.id,
                     rank,
-                    name: formatCompetitorName(
-                      competitor.firstName,
-                      competitor.lastName
-                    ),
+                    name: formatCompetitorName(competitor.firstName, competitor.lastName),
                     imageUrl: competitor.profilePictureUrl,
+                    characterImageUrl: competitor.characterVariant?.imageUrl,
                     score: Math.round(competitor.conservativeScore ?? 0),
                     scoreLabel: "ELO",
                     subtitle: competitor.characterVariant
@@ -288,57 +196,153 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* No confirmed players message */}
-      {confirmed.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-tv-body text-neutral-400">
-            Aucun pilote confirmé pour le moment
-          </p>
-        </div>
-      )}
+      {/* RIGHT COLUMN: Peloton Zone (Scrolls) */}
+      <div className="w-[55%] flex flex-col">
+        <h2 className="text-3xl font-black italic text-cyan-400 mb-6 text-center drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+          Peloton
+        </h2>
 
-      {/* Calibrating section */}
-      {calibrating.length > 0 && (
-        <div className="space-y-4 max-w-5xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-neutral-700" />
-            <h3 className="text-lg font-semibold text-neutral-500 uppercase tracking-wider">
-              En calibrage
-            </h3>
-            <div className="h-px flex-1 bg-neutral-700" />
-          </div>
-          <div className="space-y-3">
-            {calibrating.map((competitor, index) => {
-              const rank = calibratingRanks.get(competitor.id) ?? confirmed.length + index + 1;
-              const trend = getTrend(competitor, rank);
-              return (
-                <TVLeaderboardRow
-                  key={competitor.id}
-                  item={{
-                    id: competitor.id,
-                    rank,
-                    name: formatCompetitorName(
-                      competitor.firstName,
-                      competitor.lastName
-                    ),
-                    imageUrl: competitor.profilePictureUrl,
-                    score: Math.round(competitor.conservativeScore ?? 0),
-                    scoreLabel: "ELO",
-                    subtitle: `${competitor.raceCount || 0}/5 courses`,
-                    trend: trend.direction,
-                    trendValue: trend.value,
-                    maxScore,
-                  }}
-                  animationDelay={index * 80}
-                />
-              );
-            })}
-          </div>
+        <div className="space-y-8 flex-1">
+          <RankingAnimationOverlay
+            phase={animationPhase}
+            displayOrder={displayOrder}
+            changedIds={changedIds}
+            variant="tv"
+            onTransitionComplete={onTransitionComplete}
+          >
+            {/* Confirmed: league sections after podium */}
+            {leagueGroups.map((group) => (
+              <div key={group.league.id} className="space-y-3 w-full">
+                <LeagueDivider league={group.league} variant="tv" />
+                {group.items.map((competitor, index) => {
+                  const rank = confirmedRanks.get(competitor.id) ?? index + 4;
+                  const trend = getTrend(competitor, rank);
+                  return (
+                    <TVLeaderboardRow
+                      key={competitor.id}
+                      item={{
+                        id: competitor.id,
+                        rank,
+                        name: formatCompetitorName(competitor.firstName, competitor.lastName),
+                        imageUrl: competitor.profilePictureUrl,
+                        characterImageUrl: competitor.characterVariant?.imageUrl,
+                        score: Math.round(competitor.conservativeScore ?? 0),
+                        scoreLabel: "ELO",
+                        subtitle: competitor.characterVariant
+                          ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
+                          : `${competitor.raceCount || 0} courses`,
+                        trend: trend.direction,
+                        trendValue: trend.value,
+                        maxScore,
+                      }}
+                      animationDelay={index * 80}
+                      disableEntryAnimation={showUniformCards}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </RankingAnimationOverlay>
+
+          {/* Inactive confirmed section */}
+          {inactive.length > 0 && (
+            <div className="space-y-4 w-full pt-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-neutral-700" />
+                <h3 className="text-lg font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-2">
+                  <div className="relative w-6 h-6">
+                    <Image
+                      src="/mk-icons/bob-omb.webp"
+                      alt="Inactive"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  Inactifs
+                </h3>
+                <div className="h-px flex-1 bg-neutral-700" />
+              </div>
+              <div className="space-y-3 opacity-50">
+                {inactive.map((competitor, index) => {
+                  const rank = inactiveRanks.get(competitor.id) ?? confirmed.length + index + 1;
+                  const trend = getTrend(competitor, rank);
+                  return (
+                    <TVLeaderboardRow
+                      key={competitor.id}
+                      item={{
+                        id: competitor.id,
+                        rank,
+                        name: formatCompetitorName(competitor.firstName, competitor.lastName),
+                        imageUrl: competitor.profilePictureUrl,
+                        characterImageUrl: competitor.characterVariant?.imageUrl,
+                        score: Math.round(competitor.conservativeScore ?? 0),
+                        scoreLabel: "ELO",
+                        subtitle: competitor.characterVariant
+                          ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
+                          : `${competitor.raceCount || 0} courses`,
+                        trend: trend.direction,
+                        trendValue: trend.value,
+                        maxScore,
+                      }}
+                      animationDelay={index * 80}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* No confirmed players message */}
+          {confirmed.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-tv-body text-neutral-400">
+                Aucun pilote confirmé pour le moment
+              </p>
+            </div>
+          )}
+
+          {/* Calibrating section */}
+          {calibrating.length > 0 && (
+            <div className="space-y-4 w-full pt-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-neutral-700" />
+                <h3 className="text-lg font-semibold text-neutral-500 uppercase tracking-wider">
+                  En calibrage
+                </h3>
+                <div className="h-px flex-1 bg-neutral-700" />
+              </div>
+              <div className="space-y-3">
+                {calibrating.map((competitor, index) => {
+                  const rank = calibratingRanks.get(competitor.id) ?? confirmed.length + index + 1;
+                  const trend = getTrend(competitor, rank);
+                  return (
+                    <TVLeaderboardRow
+                      key={competitor.id}
+                      item={{
+                        id: competitor.id,
+                        rank,
+                        name: formatCompetitorName(competitor.firstName, competitor.lastName),
+                        imageUrl: competitor.profilePictureUrl,
+                        characterImageUrl: competitor.characterVariant?.imageUrl,
+                        score: Math.round(competitor.conservativeScore ?? 0),
+                        scoreLabel: "ELO",
+                        subtitle: `${competitor.raceCount || 0}/5 courses`,
+                        trend: trend.direction,
+                        trendValue: trend.value,
+                        maxScore,
+                      }}
+                      animationDelay={index * 80}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

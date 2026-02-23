@@ -49,9 +49,10 @@ const LeaderboardRow: FC<Props> = ({
       <div
         onClick={() => setShowModal(true)}
         className={`
-          group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer
-          transition-all duration-200 hover:bg-neutral-800/50
-          ${isCurrentUser ? "bg-primary-500/10 ring-1 ring-primary-500/30" : ""}
+          group relative flex items-center gap-3 py-2 px-3 rounded-xl cursor-pointer
+          bg-neutral-800/40 border border-neutral-600/60
+          transition-all duration-200 hover:bg-neutral-800/60 hover:border-neutral-500/60
+          ${isCurrentUser ? "ring-1 ring-primary-500/30" : ""}
           ${disableEntryAnimation ? '' : 'stagger-item'}
         `}
         style={disableEntryAnimation ? undefined : {
@@ -61,30 +62,32 @@ const LeaderboardRow: FC<Props> = ({
         {/* Rank badge */}
         <RankBadge rank={rank} size="md" />
 
-        {/* Avatar with colored ring based on rank */}
-        <div
-          className={`relative flex-shrink-0 ${
-            rank <= 3 ? "ring-2 ring-offset-2 ring-offset-neutral-900" : ""
-          } ${
-            rank === 1
-              ? "ring-yellow-500"
-              : rank === 2
-                ? "ring-gray-400"
-                : rank === 3
-                  ? "ring-amber-600"
-                  : ""
-          } rounded-full`}
-        >
+        {/* Avatar with Character Overlay */}
+        <div className="relative flex-shrink-0">
           <Image
             src={competitor.profilePictureUrl}
             alt={competitor.firstName}
             width={40}
             height={40}
-            className="rounded-full object-cover"
+            className="rounded-full object-cover border border-neutral-700"
           />
+
+          {/* Character Overlay */}
+          {competitor.characterVariant?.imageUrl && (
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-neutral-900 border border-neutral-700 overflow-hidden shadow-sm">
+              <Image
+                src={competitor.characterVariant.imageUrl}
+                alt="Character"
+                width={20}
+                height={20}
+                className="object-contain w-full h-full p-0.5"
+              />
+            </div>
+          )}
+
           {isCurrentUser && (
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary-500 rounded-full flex items-center justify-center">
-              <span className="text-[8px] text-neutral-900 font-bold">YOU</span>
+            <div className="absolute -top-1 -right-1 px-1 h-3.5 bg-primary-500 rounded-full flex items-center justify-center border border-neutral-900 shadow-sm">
+              <span className="text-[7px] text-neutral-900 font-black leading-none uppercase">You</span>
             </div>
           )}
         </div>
@@ -100,17 +103,6 @@ const LeaderboardRow: FC<Props> = ({
             {competitor.provisional && (
               <span className="text-xs text-primary-400 bg-primary-500/10 px-1.5 py-0.5 rounded">
                 {competitor.raceCount}/5
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-neutral-400">
-            {baseName && (
-              <span className="truncate">
-                {baseName}
-                {variantLabel && variantLabel !== "Default"
-                  ? ` (${variantLabel})`
-                  : ""}
               </span>
             )}
           </div>
@@ -151,7 +143,7 @@ const LeaderboardRow: FC<Props> = ({
 
         {/* Hover glow effect */}
         <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-gradient-to-r from-primary-500/5 to-transparent" />
-      </div>
+      </div >
 
       <CompetitorDetailModal
         competitor={competitor}

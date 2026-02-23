@@ -15,6 +15,7 @@ import { TrendDirection } from "../leaderboard/TrendIndicator";
 import DuelChallengeForm from "../duel/DuelChallengeSheet";
 import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
 import { BettingRepository } from "@/app/repositories/BettingRepository";
+import { MdClose, MdSportsKabaddi, MdChevronRight } from "react-icons/md";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -265,52 +266,50 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
         <div className="space-y-5">
           {/* ---- HERO ---- */}
           <div
-            className="bg-gradient-to-b from-neutral-800 to-neutral-900 -m-4 sm:-m-6 mb-0 p-6 pb-5 rounded-t-2xl"
+            className="-m-4 sm:-m-6 mb-0 p-6 pb-5 rounded-t-2xl"
           >
             {/* Close / Edit / Duel buttons */}
             <div className="flex justify-end gap-2 mb-3">
               {!isOwnCompetitor && (
                 <button
                   onClick={() => setStep("challenge")}
-                  className="px-3 py-1.5 rounded-lg bg-primary-500/10 border border-primary-500/30 text-primary-400 hover:bg-primary-500/20 text-sm font-bold transition-colors"
+                  className="p-2 rounded-xl text-primary-400 hover:text-primary-300 bg-primary-500/10 border border-primary-500/30 hover:bg-primary-500/20 transition-all duration-200 shadow-sm group"
+                  aria-label="Défier"
+                  title="Défier ce pilote"
                 >
-                  Defier
+                  <MdSportsKabaddi className="text-xl transition-transform duration-200 group-hover:scale-110" />
                 </button>
               )}
               <EditCompetitorButton competitor={competitor} />
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/50 transition-colors"
+                className="p-2 rounded-xl text-neutral-400 hover:text-white bg-neutral-900/50 border border-neutral-700 hover:bg-neutral-800/80 hover:border-neutral-600 transition-all duration-200 shadow-sm group"
                 aria-label="Fermer"
               >
-                <span className="text-xl leading-none">&times;</span>
+                <MdClose className="text-xl transition-transform duration-200 group-hover:rotate-90" />
               </button>
             </div>
 
             <div className="flex flex-col items-center">
-              {/* Avatar */}
+              {/* Avatar with Metallic Ring */}
               <div
-                className={`w-20 h-20 rounded-full overflow-hidden ${
-                  currentRank <= 3
-                    ? "ring-4 ring-offset-2 ring-offset-neutral-900"
-                    : ""
-                } ${
-                  currentRank === 1
-                    ? "ring-yellow-500"
-                    : currentRank === 2
-                      ? "ring-gray-400"
-                      : currentRank === 3
-                        ? "ring-amber-600"
-                        : ""
-                }`}
+                className={`
+                  w-[88px] h-[88px] rounded-full flex items-center justify-center p-[5px]
+                  ${currentRank === 1 ? 'bg-gradient-to-br from-yellow-200 via-yellow-500 to-yellow-700 shadow-[0_0_15px_rgba(255,215,0,0.3)]' : ''}
+                  ${currentRank === 2 ? 'bg-gradient-to-br from-slate-100 via-slate-400 to-slate-500 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : ''}
+                  ${currentRank === 3 ? 'bg-gradient-to-br from-orange-200 via-orange-600 to-orange-800 shadow-[0_0_15px_rgba(205,127,50,0.3)]' : ''}
+                  ${currentRank > 3 ? 'bg-neutral-700/50' : ''}
+                `}
               >
-                <Image
-                  src={competitor.profilePictureUrl}
-                  alt={shortName}
-                  width={80}
-                  height={80}
-                  className="object-cover w-full h-full"
-                />
+                <div className="w-full h-full rounded-full bg-neutral-900 p-1 overflow-hidden">
+                  <Image
+                    src={competitor.profilePictureUrl}
+                    alt={shortName}
+                    width={80}
+                    height={80}
+                    className="object-cover w-full h-full rounded-full"
+                  />
+                </div>
               </div>
 
               {/* Name */}
@@ -320,22 +319,36 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
 
               {/* Badges */}
               <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
-                {/* Character badge */}
+                {/* Character display: Round photo + Pill */}
                 {variant && (
-                  <Badge variant="default" size="sm">
-                    {baseName}
-                    {variantLabel && ` – ${variantLabel}`}
-                  </Badge>
+                  <div className="flex items-center">
+                    <div className="w-9 h-9 rounded-full border border-neutral-600 overflow-hidden z-10 bg-neutral-900 shadow-sm flex-shrink-0">
+                      <Image
+                        src={variant.imageUrl}
+                        alt={baseName || "Character"}
+                        width={36}
+                        height={36}
+                        className="object-contain w-full h-full p-1"
+                      />
+                    </div>
+                    <div className="bg-neutral-700/40 backdrop-blur-sm border border-neutral-600/50 pl-6 pr-4 py-1 rounded-full -ml-4 z-0 text-xs font-bold text-neutral-200 flex items-center gap-1.5">
+                      <span className="truncate">{baseName}</span>
+                      {variantLabel && (
+                        <span className="text-neutral-400 font-medium border-l border-neutral-600 pl-1.5">
+                          {variantLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {/* Trend badge */}
                 {trend && trend.direction !== "stable" && (
                   <span
-                    className={`text-sm font-semibold ${
-                      trend.direction === "up"
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }`}
+                    className={`text-sm font-semibold ${trend.direction === "up"
+                      ? "text-green-400"
+                      : "text-red-400"
+                      }`}
                   >
                     {trend.direction === "up" ? "↑" : "↓"}
                     {trend.value}
@@ -345,70 +358,84 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
             </div>
           </div>
 
-          {/* ---- STATS TILES ---- */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
-            {[
-              {
-                label: "Elo",
-                value: Math.round(
-                  competitor.conservativeScore ?? competitor.rating
-                ),
-              },
-              {
-                label: "Rang",
-                value: currentRank > 0 ? formatRankFR(currentRank) : "--",
-              },
-              {
-                label: "Courses",
-                value: totalRaces,
-              },
-              {
-                label: "Victoires",
-                value: wins,
-              },
-            ].map((tile, i) => (
-              <div
-                key={tile.label}
-                className="bg-neutral-800/60 rounded-xl p-3 text-center stagger-item"
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                <p className="text-2xl font-bold text-neutral-100">
-                  {tile.value}
-                </p>
-                <p className="text-xs text-neutral-400 mt-1">{tile.label}</p>
+          {/* ---- STATS TILES (4 Quadrants) ---- */}
+          <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl mt-2 overflow-hidden">
+            {/* Top Row: Elo & Rank */}
+            <div className="grid grid-cols-2 divide-x divide-neutral-700/50 py-2.5">
+              <div className="flex items-baseline justify-center gap-2">
+                <span className={`text-2xl font-black ${currentRank === 1 ? 'text-yellow-400' : currentRank === 2 ? 'text-slate-300' : currentRank === 3 ? 'text-orange-500' : 'text-neutral-100'}`}>
+                  {Math.round(competitor.conservativeScore ?? competitor.rating)}
+                </span>
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Elo</span>
               </div>
-            ))}
+              <div className="flex items-baseline justify-center gap-2">
+                <span className={`text-2xl font-black ${currentRank === 1 ? 'text-yellow-400' : currentRank === 2 ? 'text-slate-300' : currentRank === 3 ? 'text-orange-500' : 'text-neutral-100'}`}>
+                  {currentRank > 0 ? formatRankFR(currentRank) : "--"}
+                </span>
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Rang</span>
+              </div>
+            </div>
+
+            {/* Horizontal Divider */}
+            <div className="h-px bg-neutral-700/50 w-full" />
+
+            {/* Bottom Row: Races & Wins */}
+            <div className="grid grid-cols-2 divide-x divide-neutral-700/50 py-2.5">
+              <div className="flex items-baseline justify-center gap-2">
+                <span className="text-2xl font-black text-neutral-100">{totalRaces}</span>
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Courses</span>
+              </div>
+              <div className="flex items-baseline justify-center gap-2">
+                <span className="text-2xl font-black text-neutral-100">{wins}</span>
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Victoires</span>
+              </div>
+            </div>
           </div>
 
           {/* ---- FORME RECENTE ---- */}
           {positions.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-2">
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">
                 Forme récente
               </h3>
-              <div className="flex gap-2">
-                {positions.slice(0, 5).map((pos, i) => (
-                  <Badge
-                    key={i}
-                    variant={rankBadgeVariant(pos)}
-                    size="md"
-                    className="min-w-[40px]"
-                  >
-                    {pos <= 3
-                      ? ["🥇", "🥈", "🥉"][pos - 1]
-                      : formatRankFR(pos)}
-                  </Badge>
-                ))}
+
+              <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl p-4 flex justify-between items-center w-full">
+                {positions.slice(0, 5).map((pos, i) => {
+                  const isPodium = pos <= 3;
+                  const illustration = isPodium
+                    ? `/illustrations/${pos === 1 ? 'gold' : pos === 2 ? 'silver' : 'bronze'}-medal.png`
+                    : '/illustrations/flag.webp';
+
+                  return (
+                    <div key={i} className="relative flex flex-col items-center group">
+                      <div className="relative w-12 h-12 transition-transform duration-200 group-hover:scale-110">
+                        <Image
+                          src={illustration}
+                          alt={`Position ${pos}`}
+                          fill
+                          className="object-contain"
+                        />
+                        {!isPodium && (
+                          <div className="absolute inset-0 flex items-center justify-center pt-1">
+                            <span className="text-white font-black text-lg drop-shadow-[0_2px_10px_rgba(0,0,0,1)]">
+                              {pos}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-bold text-neutral-500 mt-1 uppercase">
+                        {pos === 1 ? '1er' : `${pos}e`}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-              <p className="text-xs text-neutral-500 mt-1">
-                récente → ancienne
-              </p>
             </div>
           )}
 
           {/* ---- STATS FUN ---- */}
-          <div>
-            <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">
               Stats
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -417,9 +444,8 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 <StatCard
                   icon="🔥"
                   title="Série en cours"
-                  value={`${competitor.winStreak} victoire${
-                    (competitor.winStreak ?? 0) > 1 ? "s" : ""
-                  } d'affilée${(competitor.bestWinStreak ?? 0) > 0 ? ` (record : ${competitor.bestWinStreak}v)` : ""}`}
+                  value={`${competitor.winStreak} victoire${(competitor.winStreak ?? 0) > 1 ? "s" : ""
+                    } d'affilée${(competitor.bestWinStreak ?? 0) > 0 ? ` (record : ${competitor.bestWinStreak}v)` : ""}`}
                 />
               )}
 
@@ -435,20 +461,18 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
               {/* Rival — expandable */}
               {rivalData && (
                 <details className="group col-span-1 sm:col-span-2">
-                  <summary className="flex items-start gap-3 bg-neutral-800/40 rounded-xl p-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <summary className="flex items-start gap-3 bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl p-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                     <span className="text-lg">💀</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-neutral-400">Pire ennemi</p>
-                      <p className="text-sm text-neutral-200 font-medium truncate">
+                      <p className="text-[10px] font-bold text-neutral-500 uppercase">Pire ennemi</p>
+                      <p className="text-sm text-neutral-100 font-bold truncate">
                         {rivalData.worst.name} (bat {rivalData.worst.losses}/{rivalData.worst.shared}x)
                       </p>
                     </div>
-                    <span className="text-neutral-500 text-xs mt-1 transition-transform group-open:rotate-90">
-                      ▶
-                    </span>
+                    <MdChevronRight className="text-neutral-500 text-xl mt-1 transition-transform group-open:rotate-90" />
                   </summary>
 
-                  <div className="mt-2 p-3 bg-neutral-800/40 rounded-xl space-y-3">
+                  <div className="mt-2 p-4 bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl space-y-3 shadow-inner">
                     <p className="text-xs text-neutral-400">
                       Le compétiteur qui te bat le plus souvent (min. 3 courses communes).
                       Basé sur le ratio victoires/courses partagées.
@@ -522,69 +546,83 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 <StatCard
                   icon="📅"
                   title="Activité ce mois"
-                  value={`${competitor.currentMonthRaceCount} course${
-                    competitor.currentMonthRaceCount > 1 ? "s" : ""
-                  }`}
+                  value={`${competitor.currentMonthRaceCount} course${competitor.currentMonthRaceCount > 1 ? "s" : ""
+                    }`}
                 />
               )}
             </div>
           </div>
 
           {/* ---- RESULTATS RECENTS ---- */}
-          <div>
-            <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">
               Résultats récents
             </h3>
             {recentRaces.length === 0 ? (
-              <p className="text-neutral-500 text-sm">
-                Aucune course récente
-              </p>
+              <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl p-6 text-center">
+                <p className="text-neutral-500 text-sm">Aucune course récente</p>
+              </div>
             ) : (
-              <div className="space-y-2">
-                {recentRaces.map((race) => (
-                  <div
-                    key={race.raceId}
-                    className="flex items-center gap-3 bg-neutral-800/60 p-3 rounded-xl"
-                  >
-                    <span className="text-xs text-neutral-400 w-20 shrink-0">
-                      {formatRelativeDate(race.date)}
-                    </span>
-                    <Badge
-                      variant={rankBadgeVariant(race.rank12)}
-                      size="sm"
+              <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl overflow-hidden divide-y divide-neutral-700/30">
+                {recentRaces.map((race) => {
+                  const isPodium = race.rank12 <= 3;
+                  const illustration = isPodium
+                    ? `/illustrations/${race.rank12 === 1 ? 'gold' : race.rank12 === 2 ? 'silver' : 'bronze'}-medal.png`
+                    : '/illustrations/flag.webp';
+
+                  return (
+                    <div
+                      key={race.raceId}
+                      className="flex items-center gap-3 p-3 transition-colors hover:bg-white/5"
                     >
-                      {race.rank12 <= 3
-                        ? ["🥇", "🥈", "🥉"][race.rank12 - 1]
-                        : formatRankFR(race.rank12)}
-                    </Badge>
-                    <div className="flex-grow">
-                      <div className="h-2 bg-neutral-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${(race.score / maxScore) * 100}%`,
-                          }}
+                      <span className="text-[10px] font-bold text-neutral-500 w-16 shrink-0 uppercase tracking-tighter">
+                        {formatRelativeDate(race.date)}
+                      </span>
+
+                      <div className="relative w-9 h-9 shrink-0">
+                        <Image
+                          src={illustration}
+                          alt={`Position ${race.rank12}`}
+                          fill
+                          className="object-contain"
                         />
+                        {!isPodium && (
+                          <div className="absolute inset-0 flex items-center justify-center pt-0.5">
+                            <span className="text-white font-black text-xs drop-shadow-[0_1px_4px_rgba(0,0,0,1)]">
+                              {race.rank12}
+                            </span>
+                          </div>
+                        )}
                       </div>
+
+                      <div className="flex-grow">
+                        <div className="h-1.5 bg-neutral-800/80 rounded-full overflow-hidden border border-white/5">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary-600/60 to-primary-400/60 rounded-full"
+                            style={{
+                              width: `${(race.score / maxScore) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <span className="text-xs font-black text-neutral-200 w-12 text-right shrink-0">
+                        {race.score}<span className="text-[8px] ml-0.5 text-neutral-500">PT</span>
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-neutral-200 w-12 text-right shrink-0">
-                      {race.score} pts
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* ---- GLICKO-2 COLLAPSIBLE ---- */}
           <details className="group">
-            <summary className="cursor-pointer text-sm text-neutral-400 hover:text-neutral-200 transition-colors flex items-center gap-2">
-              <span className="transition-transform group-open:rotate-90">
-                ▶
-              </span>
+            <summary className="cursor-pointer text-sm font-bold text-neutral-500 uppercase tracking-widest hover:text-neutral-300 transition-colors flex items-center justify-center gap-2 list-none">
+              <MdChevronRight className="transition-transform group-open:rotate-90 text-lg" />
               Stats détaillées (Glicko-2)
             </summary>
-            <div className="mt-3 p-4 bg-neutral-800/40 rounded-xl space-y-3">
+            <div className="mt-3 p-4 bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-neutral-400">Rating</span>
                 <span className="text-neutral-200 font-medium">
@@ -629,12 +667,12 @@ const StatCard: FC<{ icon: string; title: string; value: string; subtitle?: stri
   value,
   subtitle,
 }) => (
-  <div className="flex items-start gap-3 bg-neutral-800/40 rounded-xl p-3">
-    <span className="text-lg">{icon}</span>
+  <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl p-3 flex items-start gap-3">
+    <span className="text-xl mt-0.5">{icon}</span>
     <div className="min-w-0">
-      <p className="text-xs text-neutral-400">{title}</p>
-      <p className="text-sm text-neutral-200 font-medium truncate">{value}</p>
-      {subtitle && <p className="text-xs text-neutral-500 mt-0.5">{subtitle}</p>}
+      <p className="text-[10px] font-bold text-neutral-500 uppercase">{title}</p>
+      <p className="text-sm font-bold text-neutral-100 leading-snug">{value}</p>
+      {subtitle && <p className="text-[10px] text-neutral-500 mt-0.5 italic">{subtitle}</p>}
     </div>
   </div>
 );

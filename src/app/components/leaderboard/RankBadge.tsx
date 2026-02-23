@@ -38,9 +38,9 @@ const RankBadge: FC<Props> = ({ rank, size = "md", showMedal = true }) => {
         return "bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 text-amber-900 shadow-[0_0_12px_rgba(217,119,6,0.4)]";
       default:
         if (rank <= 10) {
-          return "bg-gradient-to-br from-primary-400/20 to-primary-600/30 text-primary-400 border border-primary-500/30";
+          return "text-primary-400 font-bold";
         }
-        return "bg-neutral-800 text-neutral-400 border border-neutral-700";
+        return "text-neutral-500 font-medium";
     }
   };
 

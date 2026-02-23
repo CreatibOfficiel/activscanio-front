@@ -1,6 +1,7 @@
 "use client";
 
 import { FC } from "react";
+import Image from "next/image";
 import { useCountdown, UrgencyThresholds, Urgency } from "@/app/hooks/useCountdown";
 import { MdTimer } from "react-icons/md";
 
@@ -57,7 +58,7 @@ const DigitPair: FC<{ value: number; unit: string; urgency: Urgency }> = ({ valu
       >
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-[0.65em] text-neutral-500 font-medium">{unit}</span>
+      <span className="text-[0.65em] text-blue-200/60 font-medium lowercase tracking-tight">{unit}</span>
     </div>
   );
 };
@@ -105,25 +106,30 @@ const Countdown: FC<CountdownProps> = ({
   // Full card-like display
   return (
     <div
-      className={`flex items-center justify-between px-4 py-3 rounded-xl ${styles.bg} border ${styles.border} ${className}`}
+      className={`flex items-center justify-between px-5 py-4 rounded-2xl bg-sky-900/15 backdrop-blur-sm border border-sky-400/30 shadow-lg ${className}`}
     >
-      <div className="flex items-center gap-2.5">
-        <div className={`relative flex items-center justify-center`}>
-          <div className={`w-2 h-2 rounded-full ${styles.dot} ${pulseClass}`} />
+      <div className="flex items-center gap-2">
+        <div className="relative w-4 h-4 flex-shrink-0">
+          <Image
+            src="/mk-icons/mushroom.webp"
+            alt="Mushroom"
+            fill
+            className={`object-contain ${pulseClass}`}
+          />
         </div>
-        <span className={`text-sm font-medium ${styles.text}`}>{label}</span>
+        <span className={`${urgency === 'normal' ? 'text-blue-100/90' : styles.text} text-sm font-medium tracking-wide`}>{label}</span>
       </div>
       <div className="flex items-center gap-1.5 text-base">
         {time.days > 0 && (
           <>
             <DigitPair value={time.days} unit="j" urgency={urgency} />
-            <span className={`${styles.text} opacity-40 mx-0.5`}>·</span>
+            <span className="text-blue-400/30 font-bold mx-0.5">·</span>
           </>
         )}
         <DigitPair value={time.hours} unit="h" urgency={urgency} />
-        <span className={`${styles.text} opacity-40`}>:</span>
+        <span className="text-blue-400/20">:</span>
         <DigitPair value={time.minutes} unit="m" urgency={urgency} />
-        <span className={`${styles.text} opacity-40`}>:</span>
+        <span className="text-blue-400/20">:</span>
         <DigitPair value={time.seconds} unit="s" urgency={urgency} />
       </div>
     </div>

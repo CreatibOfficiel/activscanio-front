@@ -191,6 +191,30 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-24 relative overflow-x-hidden">
+      {/* Top Header Glow - Intensified */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] pointer-events-none z-0 opacity-40 blur-[100px]"
+        style={{
+          background: 'radial-gradient(circle at center, var(--color-primary-500) 0%, transparent 70%)',
+          width: '150%',
+        }}
+      />
+
+      {/* Test Checkered Background Pattern */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.03] z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(45deg, white 25%, transparent 25%), 
+            linear-gradient(-45deg, white 25%, transparent 25%), 
+            linear-gradient(45deg, transparent 75%, white 75%), 
+            linear-gradient(-45deg, transparent 75%, white 75%)
+          `,
+          backgroundSize: '40px 40px',
+          backgroundPosition: '0 0, 0 20px, 20px 20px, 20px 0'
+        }}
+      />
+
       {/* Pull-to-refresh indicator */}
       {(isPulling || isRefreshing) && (
         <div
@@ -198,9 +222,8 @@ export default function Home() {
           style={{ top: isPulling ? pullDistance - 40 : 8 }}
         >
           <div
-            className={`w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full ${
-              isRefreshing || pullDistance >= 80 ? "animate-spin" : ""
-            }`}
+            className={`w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full ${isRefreshing || pullDistance >= 80 ? "animate-spin" : ""
+              }`}
             style={
               !isRefreshing && pullDistance < 80
                 ? { transform: `rotate(${pullDistance * 3.6}deg)`, opacity: pullDistance / 80 }
@@ -217,139 +240,147 @@ export default function Home() {
           transition: isPulling ? "none" : "transform 0.3s ease-out",
         }}
       >
-      {/* Header */}
-      <div className="flex flex-col items-center mb-6">
-        <h1 className="text-title mb-2">Classement des pilotes</h1>
+        {/* Header */}
+        <div className="flex flex-col items-center mt-8 mb-8">
+          <h1 className="text-title mb-2">Classement des pilotes</h1>
 
-        <p className="text-sm text-neutral-500">
-          {confirmed.length} pilote
-          {confirmed.length > 1 ? "s" : ""}
-          {inactive.length > 0 && ` + ${inactive.length} inactif${inactive.length > 1 ? "s" : ""}`}
-          {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
-        </p>
-      </div>
+          <p className="text-sm text-neutral-500">
+            {confirmed.length} pilote
+            {confirmed.length > 1 ? "s" : ""}
+            {inactive.length > 0 && ` + ${inactive.length} inactif${inactive.length > 1 ? "s" : ""}`}
+            {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
+          </p>
+        </div>
 
-      {/* Season countdown */}
-      <Countdown
-        label="Fin de saison"
-        targetDate={seasonEndDate}
-        thresholds={{ warningSeconds: 259200, criticalSeconds: 86400 }}
-        expiredLabel="Saison terminée"
-        className="mx-4 mb-4"
-      />
+        {/* Season countdown */}
+        <Countdown
+          label="Fin de saison"
+          targetDate={seasonEndDate}
+          thresholds={{ warningSeconds: 259200, criticalSeconds: 86400 }}
+          expiredLabel="Saison terminée"
+          className="mx-4 mb-4"
+        />
 
-      {/* Streak Warning Banners */}
-      {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mb-4" />}
+        {/* Streak Warning Banners */}
+        {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mb-4" />}
 
-      {/* Ranking animation overlay + Podium + Leagues */}
-      <RankingAnimationOverlay
-        phase={animationPhase}
-        displayOrder={displayOrder}
-        changedIds={changedIds}
-        variant="mobile"
-        onTransitionComplete={onTransitionComplete}
-      >
-        {/* Podium or empty state */}
-        {topThree.length > 0 ? (
-          <div className="mb-8">
-            <ElevatedPodium
-              topThree={topThree}
-              trends={trends}
-              disableEntryAnimation={showUniformCards}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 px-4">
-            <div className="mb-6">
-              <Image
-                src="/illustrations/empty-podium.svg"
-                alt="Podium vide"
-                width={240}
-                height={200}
-                priority
+        {/* Ranking animation overlay + Podium + Leagues */}
+        <RankingAnimationOverlay
+          phase={animationPhase}
+          displayOrder={displayOrder}
+          changedIds={changedIds}
+          variant="mobile"
+          onTransitionComplete={onTransitionComplete}
+        >
+          {/* Podium or empty state */}
+          {topThree.length > 0 ? (
+            <div className="mb-8">
+              <ElevatedPodium
+                topThree={topThree}
+                trends={trends}
+                disableEntryAnimation={showUniformCards}
               />
             </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="mb-6">
+                <Image
+                  src="/illustrations/empty-podium.svg"
+                  alt="Podium vide"
+                  width={240}
+                  height={200}
+                  priority
+                />
+              </div>
 
-            <div className="text-center max-w-sm">
-              <h2 className="text-heading text-white mb-2">
-                Le podium vous attend !
-              </h2>
-              <p className="text-regular text-neutral-400 mb-6">
-                Aucune course n&apos;a encore été enregistrée. Ajoutez votre première course pour voir le classement !
-              </p>
+              <div className="text-center max-w-sm">
+                <h2 className="text-heading text-white mb-2">
+                  Le podium vous attend !
+                </h2>
+                <p className="text-regular text-neutral-400 mb-6">
+                  Aucune course n&apos;a encore été enregistrée. Ajoutez votre première course pour voir le classement !
+                </p>
 
-              <Link href="/races/add">
-                <Button variant="primary" className="gap-2">
-                  <MdFlag className="text-lg" />
-                  Ajouter une course
-                </Button>
-              </Link>
+                <Link href="/races/add">
+                  <Button variant="primary" className="gap-2">
+                    <MdFlag className="text-lg" />
+                    Ajouter une course
+                  </Button>
+                </Link>
+              </div>
             </div>
+          )}
+
+          {/* League sections (below podium) */}
+          {leagueGroups.map((group, groupIndex) => (
+            <div key={group.league.id} className={`space-y-2 ${groupIndex === 0 ? "" : "mt-6"}`}>
+              <LeagueDivider league={group.league} variant="mobile" className="mb-3 px-1" />
+              {group.items.map((competitor, index) => (
+                <LeaderboardRow
+                  key={competitor.id}
+                  competitor={competitor}
+                  rank={confirmedRanks.get(competitor.id) ?? index + 4}
+                  trend={trends.get(competitor.id)}
+                  animationDelay={index * 50}
+                  disableEntryAnimation={showUniformCards}
+                />
+              ))}
+            </div>
+          ))}
+        </RankingAnimationOverlay>
+
+        {/* Inactive confirmed competitors */}
+        {inactive.length > 0 && (
+          <div className="mt-8 space-y-2">
+            <div className="flex items-center gap-3 mb-3 px-1">
+              <div className="h-px flex-1 bg-neutral-700" />
+              <h2 className="text-sm text-neutral-500 uppercase tracking-wider flex items-center gap-2">
+                <div className="relative w-5 h-5">
+                  <Image
+                    src="/mk-icons/bob-omb.webp"
+                    alt="Inactive"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                Inactifs
+              </h2>
+              <div className="h-px flex-1 bg-neutral-700" />
+            </div>
+
+            {inactive.map((competitor, index) => (
+              <div key={competitor.id} className="opacity-50">
+                <LeaderboardRow
+                  competitor={competitor}
+                  rank={inactiveRanks.get(competitor.id) ?? confirmed.length + index + 1}
+                  animationDelay={index * 50}
+                />
+              </div>
+            ))}
           </div>
         )}
 
-        {/* League sections (below podium) */}
-        {leagueGroups.map((group, groupIndex) => (
-          <div key={group.league.id} className={`space-y-1 ${groupIndex === 0 ? "" : "mt-6"}`}>
-            <LeagueDivider league={group.league} variant="mobile" className="mb-3 px-1" />
-            {group.items.map((competitor, index) => (
+        {/* Calibrating competitors */}
+        {calibrating.length > 0 && (
+          <div className="mt-8 space-y-2">
+            <div className="flex items-center gap-3 mb-3 px-1">
+              <div className="h-px flex-1 bg-neutral-700" />
+              <h2 className="text-sm text-neutral-500 uppercase tracking-wider">
+                En calibrage
+              </h2>
+              <div className="h-px flex-1 bg-neutral-700" />
+            </div>
+
+            {calibrating.map((competitor, index) => (
               <LeaderboardRow
                 key={competitor.id}
                 competitor={competitor}
-                rank={confirmedRanks.get(competitor.id) ?? index + 4}
-                trend={trends.get(competitor.id)}
+                rank={calibratingRanks.get(competitor.id) ?? confirmed.length + index + 1}
                 animationDelay={index * 50}
-                disableEntryAnimation={showUniformCards}
               />
             ))}
           </div>
-        ))}
-      </RankingAnimationOverlay>
-
-      {/* Inactive confirmed competitors */}
-      {inactive.length > 0 && (
-        <div className="mt-8 space-y-1">
-          <div className="flex items-center gap-3 mb-3 px-1">
-            <div className="h-px flex-1 bg-neutral-700" />
-            <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
-              <span>💤</span> Inactifs
-            </h2>
-            <div className="h-px flex-1 bg-neutral-700" />
-          </div>
-
-          {inactive.map((competitor, index) => (
-            <div key={competitor.id} className="opacity-50">
-              <LeaderboardRow
-                competitor={competitor}
-                rank={inactiveRanks.get(competitor.id) ?? confirmed.length + index + 1}
-                animationDelay={index * 50}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Calibrating competitors */}
-      {calibrating.length > 0 && (
-        <div className="mt-8 space-y-1">
-          <div className="flex items-center gap-3 mb-3 px-1">
-            <div className="h-px flex-1 bg-neutral-700" />
-            <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider">
-              En calibrage
-            </h2>
-            <div className="h-px flex-1 bg-neutral-700" />
-          </div>
-
-          {calibrating.map((competitor, index) => (
-            <LeaderboardRow
-              key={competitor.id}
-              competitor={competitor}
-              rank={calibratingRanks.get(competitor.id) ?? confirmed.length + index + 1}
-              animationDelay={index * 50}
-            />
-          ))}
-        </div>
-      )}
+        )}
       </div>{/* end content wrapper */}
     </div>
   );

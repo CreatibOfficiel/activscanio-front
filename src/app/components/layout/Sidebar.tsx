@@ -69,7 +69,7 @@ const Sidebar: FC = () => {
 
   return (
     <aside
-      className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 lg:bg-neutral-800 lg:border-r lg:border-neutral-700 lg:z-40"
+      className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 lg:bg-neutral-900 lg:border-r lg:border-neutral-700 lg:z-40"
       role="navigation"
       aria-label="Navigation principale"
     >
@@ -107,10 +107,9 @@ const Sidebar: FC = () => {
                   flex items-center gap-3 px-4 py-3 rounded-lg
                   transition-colors duration-200
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
-                  ${
-                    isActive
-                      ? 'bg-primary-500/10 text-primary-500'
-                      : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'
+                  ${isActive
+                    ? 'bg-primary-500/10 text-primary-500'
+                    : 'text-neutral-300 hover:bg-neutral-700 hover:text-white'
                   }
                 `}
                 aria-current={isActive ? 'page' : undefined}

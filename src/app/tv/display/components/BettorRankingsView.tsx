@@ -75,12 +75,12 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Podium + Countdown side by side */}
       <div className="relative">
         {/* Month + Countdown pinned top-right */}
-        <div className="absolute top-0 right-0 z-10 flex flex-col items-end gap-2">
-          <p className="text-tv-body text-neutral-400">
+        <div className="absolute top-0 right-0 z-10 flex flex-col items-end gap-1">
+          <p className="text-[10px] text-neutral-400">
             {monthNames[month - 1]} {year}
           </p>
           <TVCountdown
@@ -97,21 +97,21 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
 
       {/* Stats summary for top 3 */}
       {top3.length > 0 && (
-        <div className="grid grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto">
           {top3.map((bettor, index) => (
             <div
               key={bettor.userId}
-              className={`text-center p-4 rounded-xl bg-neutral-800/30 animate-row-slide-in`}
+              className={`text-center p-2 rounded-lg bg-neutral-800/30 animate-row-slide-in`}
               style={{ animationDelay: `${(index + 3) * 100}ms` }}
             >
-              <p className="text-sm text-neutral-500 uppercase tracking-wide mb-1">
+              <p className="text-[8px] text-neutral-500 uppercase tracking-wide mb-0.5">
                 Taux de réussite
               </p>
-              <p className="text-2xl font-bold text-primary-400">
+              <p className="text-lg font-bold text-primary-400">
                 {(bettor.winRate * 100).toFixed(0)}%
               </p>
               {bettor.perfectBets > 0 && (
-                <p className="text-sm text-primary-500 mt-2">
+                <p className="text-[8px] text-primary-500 mt-0.5">
                   {bettor.perfectBets} podium
                   {bettor.perfectBets > 1 ? "s" : ""} parfait
                   {bettor.perfectBets > 1 ? "s" : ""}
@@ -124,7 +124,7 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
 
       {/* Other ranked bettors */}
       {others.length > 0 && (
-        <div className="space-y-3 max-w-5xl mx-auto">
+        <div className="space-y-2 max-w-4xl mx-auto">
           {others.map((bettor, index) => {
             const trend = getTrend(bettor);
             return (
@@ -136,12 +136,12 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
                   name: bettor.userName,
                   score: bettor.totalPoints,
                   scoreLabel: "pts",
-                  subtitle: `${bettor.betsWon}/${bettor.betsPlaced} gagnés • ${(bettor.winRate * 100).toFixed(0)}%`,
+                  subtitle: `${bettor.betsWon}/${bettor.betsPlaced} • ${(bettor.winRate * 100).toFixed(0)}%`,
                   trend: trend.direction,
                   trendValue: trend.value,
                   maxScore: maxScore,
                 }}
-                animationDelay={index * 80}
+                animationDelay={index * 60}
               />
             );
           })}
