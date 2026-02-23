@@ -92,6 +92,23 @@ export const formatRelativeDate = (dateStr: string): string => {
 };
 
 /**
+ * Format a week date range in French
+ * Same month: "17 - 23 fév. 2026"
+ * Different months: "28 jan. - 3 fév. 2026"
+ */
+export const formatWeekDateRange = (startDate: string | Date, endDate: string | Date): string => {
+  const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+  const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+  const yearOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.getDate()} - ${end.toLocaleDateString('fr-FR', yearOpts)}`;
+  }
+  return `${start.toLocaleDateString('fr-FR', opts)} - ${end.toLocaleDateString('fr-FR', yearOpts)}`;
+};
+
+/**
  * Get a date label for grouping races (Aujourd'hui, Hier, Cette semaine, or date)
  */
 export const getDateLabel = (dateStr: string): string => {

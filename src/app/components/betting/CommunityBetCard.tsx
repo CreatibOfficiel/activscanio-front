@@ -13,6 +13,7 @@ interface CommunityBetCardProps {
   variant: 'compact' | 'full';
   currentUserHasBet?: boolean;
   weekClosed?: boolean;
+  isCurrentWeek?: boolean;
 }
 
 const positionOrder = {
@@ -52,10 +53,10 @@ function getStatusBadge(status: BetStatus, pointsEarned?: number) {
   }
 }
 
-const CompactCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHasBet, weekClosed }) => {
+const CompactCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHasBet, weekClosed, isCurrentWeek }) => {
   const displayName = getUserDisplayName(bet, isCurrentUser);
   const avatarName = bet.user ? `${bet.user.firstName} ${bet.user.lastName}` : 'Joueur';
-  const picksHidden = !isCurrentUser && bet.status === BetStatus.PENDING && !currentUserHasBet && !weekClosed;
+  const picksHidden = (isCurrentWeek ?? true) && !isCurrentUser && bet.status === BetStatus.PENDING && !currentUserHasBet && !weekClosed;
 
   return (
     <Card
@@ -96,10 +97,10 @@ const CompactCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUse
   );
 };
 
-const FullCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHasBet, weekClosed }) => {
+const FullCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHasBet, weekClosed, isCurrentWeek }) => {
   const displayName = getUserDisplayName(bet, isCurrentUser);
   const avatarName = bet.user ? `${bet.user.firstName} ${bet.user.lastName}` : 'Joueur';
-  const picksHidden = !isCurrentUser && bet.status === BetStatus.PENDING && !currentUserHasBet && !weekClosed;
+  const picksHidden = (isCurrentWeek ?? true) && !isCurrentUser && bet.status === BetStatus.PENDING && !currentUserHasBet && !weekClosed;
   const isPerfectPodium =
     bet.isFinalized && bet.picks.every((pick) => pick.isCorrect === true);
 
