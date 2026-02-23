@@ -135,12 +135,15 @@ const Modal: FC<ModalProps> = ({
         aria-describedby={ariaDescribedBy}
         tabIndex={-1}
         className={`
-          relative w-full bg-neutral-800 border border-neutral-700 rounded-2xl
-          shadow-2xl overflow-hidden animate-slideUp
+          relative w-full bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl
+          shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden animate-slideUp
           ${sizes[size]}
           ${size !== 'full' ? 'max-h-[90vh]' : ''}
           ${className}
         `}
+        style={{
+          boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.02)',
+        }}
       >
         {/* Header */}
         {(title || showCloseButton) && (
@@ -154,10 +157,10 @@ const Modal: FC<ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-lg text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700 transition-colors"
+                className="p-2 rounded-xl text-neutral-400 hover:text-white bg-neutral-800/50 border border-neutral-700 hover:bg-neutral-700/80 hover:border-neutral-600 transition-all duration-200 shadow-sm group"
                 aria-label="Fermer la modal"
               >
-                <MdClose className="text-2xl" />
+                <MdClose className="text-xl transition-transform duration-200 group-hover:rotate-90" />
               </button>
             )}
           </div>

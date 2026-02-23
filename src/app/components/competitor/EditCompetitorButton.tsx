@@ -23,10 +23,11 @@ const EditCompetitorButton: FC<Props> = ({ competitor, className = "" }) => {
   return (
     <button
       onClick={handleEdit}
-      className={`rounded-full bg-neutral-700 hover:bg-neutral-600 p-2 transition-colors ${className}`}
+      className={`p-2 rounded-xl text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all duration-200 shadow-sm group ${className}`}
       aria-label="Éditer le pilote"
+      title="Éditer le pilote"
     >
-      <MdEdit className="text-lg text-neutral-200" />
+      <MdEdit className="text-xl transition-transform duration-200 group-hover:scale-110" />
     </button>
   );
 };

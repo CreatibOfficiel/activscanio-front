@@ -23,6 +23,7 @@ export interface CompetitorAnimData {
   newRank: number;
   delta: number; // positive = moved up, negative = moved down
   isNew: boolean; // new competitor not in old snapshot
+  characterImageUrl?: string;
 }
 
 interface RankingSnapshot {
@@ -165,6 +166,7 @@ function buildAnimData(
       newRank,
       delta: isNew ? 0 : oldRank - newRank,
       isNew,
+      characterImageUrl: c.characterVariant?.imageUrl,
     };
   });
 }

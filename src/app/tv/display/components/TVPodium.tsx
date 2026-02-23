@@ -3,10 +3,11 @@
 import { FC } from "react";
 import Image from "next/image";
 
-interface PodiumItem {
+export interface PodiumItem {
   id: string;
   name: string;
   imageUrl?: string;
+  characterImageUrl?: string;
   score: number;
   scoreLabel: string;
   subtitle?: string;
@@ -82,17 +83,17 @@ const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) =>
       >
         {/* Crown for 1st place */}
         {config.crown && (
-          <div className={disableEntryAnimation ? 'mb-2' : 'animate-crown-drop mb-2'}>
-            <span className="text-6xl drop-shadow-xl">
+          <div className={disableEntryAnimation ? 'mb-0.5' : 'animate-crown-drop mb-0.5'}>
+            <span className="text-4xl drop-shadow-xl">
               {item.name.includes("Joran") ? "🤪" : "👑"}
             </span>
           </div>
         )}
 
         {/* Avatar with glow */}
-        <div className={`relative mb-4 ${config.glow} rounded-full`}>
+        <div className={`relative mb-2 ${config.glow} rounded-full`}>
           <div
-            className={`ring-4 ${config.border} ring-offset-4 ring-offset-neutral-900 rounded-full overflow-hidden`}
+            className={`ring-2 ${config.border} ring-offset-2 ring-offset-neutral-900 rounded-full overflow-hidden relative`}
           >
             {item.imageUrl ? (
               <Image
@@ -104,7 +105,7 @@ const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) =>
               />
             ) : (
               <div
-                className={`flex items-center justify-center bg-neutral-700 text-4xl font-bold text-neutral-300`}
+                className={`flex items-center justify-center bg-neutral-700 text-2xl font-bold text-neutral-300`}
                 style={{
                   width: config.avatarSize,
                   height: config.avatarSize,
@@ -115,42 +116,54 @@ const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) =>
             )}
           </div>
 
+          {/* Character variant small overlay */}
+          {item.characterImageUrl && (
+            <div className={`absolute -right-1 -bottom-1 bg-neutral-800 rounded-full p-0.5 z-10 ring-2 ${config.border}`}>
+              <Image
+                src={item.characterImageUrl}
+                alt="Character"
+                width={position === 1 ? 32 : 24}
+                height={position === 1 ? 32 : 24}
+                className="rounded-full object-contain"
+              />
+            </div>
+          )}
+
           {/* Medal badge */}
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-4xl">
+          <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-2xl z-20">
             {config.medal}
           </div>
         </div>
 
         {/* Name */}
         <h3
-          className={`font-bold text-white text-center mt-3 ${
-            position === 1 ? "text-2xl" : "text-xl"
-          }`}
+          className={`font-bold text-white text-center mt-1.5 ${position === 1 ? "text-lg" : "text-base"
+            }`}
         >
           {item.name}
         </h3>
 
         {/* Subtitle */}
         {item.subtitle && (
-          <p className="text-neutral-400 text-base mt-1">{item.subtitle}</p>
+          <p className="text-neutral-400 text-[10px] mt-0.5 text-center">{item.subtitle}</p>
         )}
 
         {/* Podium base */}
         <div
           className={`
-            mt-4 w-48 rounded-t-2xl ${config.gradient} ${config.height}
-            flex flex-col items-center justify-start pt-6
+            mt-2 w-36 rounded-t-lg ${config.gradient} ${config.height}
+            flex flex-col items-center justify-start pt-3
             transform transition-transform hover:scale-105
-            border-t-4 ${config.border}
+            border-t-2 ${config.border}
           `}
         >
-          <span className={`text-4xl font-black ${config.textColor}`}>
+          <span className={`text-2xl font-black ${config.textColor}`}>
             {typeof item.score === "number"
               ? item.score.toFixed(item.scoreLabel === "pts" ? 1 : 0)
               : item.score}
           </span>
           <span
-            className={`text-sm font-bold uppercase tracking-wider ${config.textColor} opacity-70 mt-1`}
+            className={`text-[10px] font-bold uppercase tracking-wider ${config.textColor} opacity-70 mt-0`}
           >
             {item.scoreLabel}
           </span>
@@ -162,19 +175,19 @@ const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) =>
   return (
     <div className="flex flex-col items-center">
       {title && (
-        <h2 className="text-3xl font-bold text-white mb-8">{title}</h2>
+        <h2 className="text-xl font-bold text-white mb-4">{title}</h2>
       )}
 
       {/* 3D Podium layout */}
       <div
-        className="flex justify-center items-end gap-8 pt-4"
+        className="flex justify-center items-end gap-2 pt-2"
         style={{ perspective: "1200px" }}
       >
         {/* 2nd place - left */}
         <div className="transform">{renderPodiumPlace(second, 2, 200)}</div>
 
         {/* 1st place - center, elevated */}
-        <div className="transform -mt-16">
+        <div className="transform -mt-10">
           {renderPodiumPlace(first, 1, 400)}
         </div>
 

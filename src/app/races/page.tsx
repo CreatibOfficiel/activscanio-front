@@ -244,10 +244,11 @@ const RacesPage: NextPage = () => {
       {allRaces.length > 0 && (
         <Link
           href="/races/add"
-          className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 w-14 h-14 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 focus:ring-offset-neutral-900 z-40"
+          className="fixed bottom-[calc(6.5rem+env(safe-area-inset-bottom))] right-6 w-14 h-14 bg-primary-500/20 backdrop-blur-xl border-2 border-primary-500/50 text-primary-400 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_15px_rgba(59,130,246,0.2)] flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-primary-500/30 hover:border-primary-400 hover:text-primary-300 z-40 group"
           aria-label="Ajouter une course"
         >
-          <MdAdd className="text-2xl" />
+          <div className="absolute inset-0 rounded-2xl bg-primary-500/10 blur-xl group-hover:bg-primary-500/20 transition-colors" />
+          <MdAdd className="text-3xl relative z-10" />
         </Link>
       )}
     </div>

@@ -48,8 +48,6 @@ interface TVDisplayData {
 const ALL_VIEWS = [
   DisplayView.COMPETITOR_RANKINGS,
   DisplayView.BETTOR_RANKINGS,
-  DisplayView.WEEKLY_ODDS,
-  DisplayView.ARCHIVED_SEASONS,
 ];
 
 const viewLabels: Record<DisplayView, string> = {
@@ -268,47 +266,44 @@ const TVDisplayContent: FC = () => {
   const currentIndex = activeViews.indexOf(currentView);
 
   return (
-    <div className="h-screen overflow-hidden bg-neutral-900 text-neutral-100 p-8 lg:p-12 flex flex-col">
+    <div className="h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-950 via-slate-900 to-black text-neutral-100 p-2 lg:p-3 flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between mb-2">
         <div>
           <h1
-            className={`text-tv-display font-bold transition-opacity duration-300 ${
-              isTransitioning ? "opacity-0" : "opacity-100"
-            }`}
+            className={`text-tv-display font-bold transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"
+              }`}
           >
             {viewTitles[currentView]}
           </h1>
           {lastUpdate && (
-            <p className="text-base text-neutral-500 mt-2">
+            <p className="text-[10px] text-neutral-500 mt-0.5">
               Mis à jour à {lastUpdate.toLocaleTimeString("fr-FR")}
             </p>
           )}
         </div>
 
         {/* View indicators */}
-        <div className="flex items-center gap-6">
-          <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5">
             {activeViews.map((view) => (
               <button
                 key={view}
                 onClick={() => goToView(view)}
-                className="flex flex-col items-center gap-1 cursor-pointer"
+                className="flex flex-col items-center gap-0.5 cursor-pointer"
               >
                 <div
-                  className={`h-3 w-16 rounded-full transition-all duration-300 ${
-                    currentView === view
-                      ? "bg-primary-500 shadow-lg shadow-primary-500/30"
-                      : "bg-neutral-700 hover:bg-neutral-600"
-                  }`}
+                  className={`h-2 w-10 rounded-full transition-all duration-300 ${currentView === view
+                    ? "bg-primary-500 shadow-lg shadow-primary-500/30"
+                    : "bg-neutral-700 hover:bg-neutral-600"
+                    }`}
                   title={viewLabels[view]}
                 />
                 <span
-                  className={`text-xs transition-colors ${
-                    currentView === view
-                      ? "text-primary-400"
-                      : "text-neutral-600"
-                  }`}
+                  className={`text-[8px] transition-colors ${currentView === view
+                    ? "text-primary-400"
+                    : "text-neutral-600"
+                    }`}
                 >
                   {viewLabels[view]}
                 </span>
@@ -321,11 +316,10 @@ const TVDisplayContent: FC = () => {
       {/* Main content */}
       <main ref={mainRef} className="flex-grow overflow-y-auto scrollbar-hide">
         <div
-          className={`transition-all duration-300 ${
-            isTransitioning
-              ? "opacity-0 transform -translate-x-8"
-              : "opacity-100 transform translate-x-0"
-          }`}
+          className={`transition-all duration-300 ${isTransitioning
+            ? "opacity-0 transform -translate-x-8"
+            : "opacity-100 transform translate-x-0"
+            }`}
         >
           {currentView === DisplayView.BETTOR_RANKINGS && (
             <BettorRankingsView rankings={data.bettorRankings} />
@@ -348,7 +342,7 @@ const TVDisplayContent: FC = () => {
       </main>
 
       {/* Footer with progress bar */}
-      <footer className="mt-8 pt-6 border-t border-neutral-800">
+      <footer className="mt-2 pt-2 border-t border-neutral-800">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-neutral-500">
             Vue suivante: {viewLabels[activeViews[(currentIndex + 1) % activeViews.length]]}

@@ -32,44 +32,11 @@ const urgencyColors: Record<Urgency, { text: string; border: string; bg: string;
   },
 };
 
-interface DigitBlockProps {
-  value: number;
-  unit: string;
-  urgency: Urgency;
-}
-
-const DigitBlock: FC<DigitBlockProps> = ({ value, unit, urgency }) => {
-  const colors = urgencyColors[urgency];
-  return (
-    <div className="flex flex-col items-center">
-      <div
-        className={`${colors.bg} ${colors.border} border rounded-lg px-3 py-2 min-w-[3.5rem] text-center`}
-      >
-        <span
-          className={`text-3xl font-bold tabular-nums ${colors.text}`}
-          style={{ fontVariantNumeric: "tabular-nums" }}
-        >
-          {String(value).padStart(2, "0")}
-        </span>
-      </div>
-      <span className="text-xs text-neutral-500 mt-1 uppercase tracking-wider">{unit}</span>
-    </div>
-  );
-};
-
-const Separator: FC<{ urgency: Urgency }> = ({ urgency }) => {
-  const colors = urgencyColors[urgency];
-  return (
-    <span className={`text-2xl font-bold ${colors.text} self-start mt-2 opacity-60`}>:</span>
-  );
-};
-
 const TVCountdown: FC<TVCountdownProps> = ({
   label,
   targetDate,
   thresholds,
   expiredLabel = "Terminé",
-  showDays = true,
 }) => {
   const { time, urgency } = useCountdown(targetDate, thresholds);
 
@@ -78,7 +45,7 @@ const TVCountdown: FC<TVCountdownProps> = ({
   if (time.isExpired) {
     return (
       <div className="flex items-center justify-center gap-3">
-        <span className="text-lg text-neutral-500">{expiredLabel}</span>
+        <span className="text-sm font-bold text-neutral-500 uppercase tracking-widest">{expiredLabel}</span>
       </div>
     );
   }
@@ -87,22 +54,27 @@ const TVCountdown: FC<TVCountdownProps> = ({
   const pulseClass = urgency === "critical" ? "animate-countdown-pulse" : "";
 
   return (
-    <div className={`flex flex-col items-center gap-2 ${pulseClass} ${colors.glow}`}>
-      <span className={`text-sm uppercase tracking-widest ${colors.text} font-medium`}>
+    <div className={`p-1 px-3 rounded-lg border-2 backdrop-blur-md ${colors.glow} ${pulseClass} border-white/10 flex flex-col items-center min-w-[100px]`}>
+      <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">
         {label}
       </span>
-      <div className="flex items-center gap-1.5">
-        {showDays && time.days > 0 && (
-          <>
-            <DigitBlock value={time.days} unit="j" urgency={urgency} />
-            <Separator urgency={urgency} />
-          </>
+      <div className="flex gap-2 items-baseline">
+        {time.days > 0 && (
+          <div className="flex flex-col items-center">
+            <span className="text-lg font-black text-white leading-none">
+              {time.days}
+            </span>
+            <span className="text-[6px] font-bold text-neutral-500 uppercase">
+              J
+            </span>
+          </div>
         )}
-        <DigitBlock value={time.hours} unit="h" urgency={urgency} />
-        <Separator urgency={urgency} />
-        <DigitBlock value={time.minutes} unit="m" urgency={urgency} />
-        <Separator urgency={urgency} />
-        <DigitBlock value={time.seconds} unit="s" urgency={urgency} />
+        <div className="flex flex-col items-center">
+          <span className="text-lg font-black text-white leading-none tabular-nums">
+            {time.hours.toString().padStart(2, "0")}:{time.minutes.toString().padStart(2, "0")}
+            <span className="text-xs ml-0.5 opacity-70">:{time.seconds.toString().padStart(2, "0")}</span>
+          </span>
+        </div>
       </div>
     </div>
   );

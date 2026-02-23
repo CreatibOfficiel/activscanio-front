@@ -33,40 +33,40 @@ export const ArchivedSeasonsView: FC<Props> = ({ seasons }) => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
         {recentSeasons.map((season) => (
-          <Card key={season.id} className="p-6 hover:border-primary-500 transition-colors">
-            <div className="mb-4">
-              <h3 className="text-heading font-bold text-white mb-1">
+          <Card key={season.id} className="p-3 hover:border-primary-500 transition-colors">
+            <div className="mb-2">
+              <h3 className="text-base font-bold text-white mb-0.5">
                 {monthNames[season.month - 1]} {season.year}
               </h3>
-              <p className="text-sub text-neutral-400">{season.seasonName}</p>
+              <p className="text-[10px] text-neutral-400 truncate">{season.seasonName}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <p className="text-sub text-neutral-400">
+                <p className="text-[9px] text-neutral-400">
                   {season.totalCompetitors === 1 ? "Pilote" : "Pilotes"}
                 </p>
-                <p className="text-bold text-primary-500">{season.totalCompetitors}</p>
+                <p className="text-xs font-bold text-primary-500">{season.totalCompetitors}</p>
               </div>
               <div>
-                <p className="text-sub text-neutral-400">
+                <p className="text-[9px] text-neutral-400">
                   {season.totalBettors === 1 ? "Parieur" : "Parieurs"}
                 </p>
-                <p className="text-bold text-primary-500">{season.totalBettors}</p>
+                <p className="text-xs font-bold text-primary-500">{season.totalBettors}</p>
               </div>
               <div>
-                <p className="text-sub text-neutral-400">
-                  {season.totalRaces === 1 ? "Course" : "Courses"}
+                <p className="text-[9px] text-neutral-400">
+                  Course{season.totalRaces > 1 ? 's' : ''}
                 </p>
-                <p className="text-bold text-white">{season.totalRaces}</p>
+                <p className="text-xs font-bold text-white">{season.totalRaces}</p>
               </div>
               <div>
-                <p className="text-sub text-neutral-400">
-                  {season.totalBets === 1 ? "Pari" : "Paris"}
+                <p className="text-[9px] text-neutral-400">
+                  Pari{season.totalBets > 1 ? 's' : ''}
                 </p>
-                <p className="text-bold text-white">{season.totalBets}</p>
+                <p className="text-xs font-bold text-white">{season.totalBets}</p>
               </div>
             </div>
           </Card>

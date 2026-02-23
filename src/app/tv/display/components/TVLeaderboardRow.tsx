@@ -9,6 +9,7 @@ export interface TVLeaderboardItem {
   rank: number;
   name: string;
   imageUrl?: string;
+  characterImageUrl?: string;
   score: number;
   scoreLabel: string;
   subtitle?: string;
@@ -73,41 +74,58 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
 
   return (
     <div
-      className={`flex items-center gap-6 py-4 px-6 rounded-xl bg-neutral-800/40 hover:bg-neutral-800/60 transition-colors ${disableEntryAnimation ? '' : 'animate-row-slide-in'}`}
+      className={`flex items-center gap-3 py-2 px-4 rounded-xl relative overflow-hidden
+                  border border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.15)]
+                  bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-fuchsia-950/30
+                  hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] transition-all
+                  ${disableEntryAnimation ? '' : 'animate-row-slide-in'}`}
       style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
     >
       {/* Rank */}
-      <div className={`w-16 text-3xl text-center ${getRankStyle()}`}>
-        #{item.rank}
+      <div className={`w-12 text-xl italic text-center ${getRankStyle()} drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]`}>
+        {item.rank}
       </div>
 
       {/* Avatar */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 relative">
         {item.imageUrl ? (
           <Image
             src={item.imageUrl}
             alt={item.name}
-            width={64}
-            height={64}
-            className="rounded-full object-cover ring-2 ring-neutral-700"
+            width={44}
+            height={44}
+            className="rounded-full object-cover ring-2 ring-cyan-500/50"
           />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-neutral-700 flex items-center justify-center text-2xl font-bold text-neutral-400">
+          <div className="w-11 h-11 rounded-full bg-cyan-900/50 ring-2 ring-cyan-500/50 flex items-center justify-center text-lg font-bold text-cyan-200">
             {item.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+
+        {/* Character variant small overlay */}
+        {item.characterImageUrl && (
+          <div className="absolute -right-1.5 -bottom-1.5 bg-neutral-900 rounded-full p-[2px] z-10 ring-1 ring-cyan-400">
+            <Image
+              src={item.characterImageUrl}
+              alt="Character"
+              width={18}
+              height={18}
+              className="rounded-full object-contain"
+            />
           </div>
         )}
       </div>
 
       {/* Name and subtitle */}
       <div className="flex-grow min-w-0">
-        <h4 className="text-xl font-bold text-white truncate">{item.name}</h4>
+        <h4 className="text-base font-bold text-white truncate leading-tight">{item.name}</h4>
         {item.subtitle && (
-          <p className="text-base text-neutral-400 truncate">{item.subtitle}</p>
+          <p className="text-[10px] text-neutral-400 truncate leading-tight">{item.subtitle}</p>
         )}
 
         {/* Progress bar */}
         {item.maxScore && (
-          <div className="mt-2 h-2 bg-neutral-700/50 rounded-full overflow-hidden">
+          <div className="mt-1 h-1 bg-neutral-700/50 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-700 animate-progress-fill"
               style={{ width: `${progressPercent}%` }}
@@ -117,19 +135,19 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
       </div>
 
       {/* Score */}
-      <div className="text-right min-w-[120px]">
-        <div className="text-3xl font-black text-primary-400">
+      <div className="text-right min-w-[80px]">
+        <div className="text-xl font-black text-primary-400">
           {typeof item.score === "number"
             ? item.score.toFixed(item.scoreLabel === "pts" ? 1 : 0)
             : item.score}
         </div>
-        <div className="text-sm font-semibold uppercase text-neutral-500 tracking-wider">
+        <div className="text-[8px] font-bold uppercase text-neutral-500 tracking-wider">
           {item.scoreLabel}
         </div>
       </div>
 
       {/* Trend */}
-      <div className="w-20 flex justify-center" title={item.trend ? `Tendance (vs précédent)` : undefined}>{getTrendIcon()}</div>
+      <div className="w-14 flex justify-center scale-90" title={item.trend ? `Tendance (vs précédent)` : undefined}>{getTrendIcon()}</div>
     </div>
   );
 };

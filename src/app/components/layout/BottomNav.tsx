@@ -56,41 +56,52 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 bg-neutral-800 border-t border-neutral-700 flex items-stretch justify-around px-2 z-50 lg:hidden pb-[env(safe-area-inset-bottom)]"
-      role="navigation"
-      aria-label="Navigation mobile"
-    >
-      {items.map((item) => {
-        const Icon = item.icon;
-        const isActive = isActiveRoute(item.href, item.activePaths);
-        const isLeaderboard = item.href === "/";
+    <div className="fixed bottom-0 left-0 right-0 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 lg:hidden pointer-events-none">
+      <nav
+        className="mx-auto max-w-lg bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-around p-1.5 pointer-events-auto relative overflow-hidden"
+        style={{
+          boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.02)',
+        }}
+        role="navigation"
+        aria-label="Navigation mobile"
+      >
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive = isActiveRoute(item.href, item.activePaths);
+          const isLeaderboard = item.href === "/";
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={isLeaderboard ? handleLeaderboardClick : undefined}
-            className={`
-              flex flex-col items-center justify-start flex-1
-              pt-2 pb-2
-              transition-colors duration-200
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
-              ${isActive ? "text-primary-500" : "text-neutral-300"}
-            `}
-            aria-current={isActive ? "page" : undefined}
-            aria-label={item.label}
-          >
-            <div className="relative">
-              <Icon className="text-xl" aria-hidden="true" />
-              {isLeaderboard && state.isUnlocked && (
-                <span className="absolute -top-1 -right-1 text-[8px]" aria-hidden="true">🔊</span>
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={isLeaderboard ? handleLeaderboardClick : undefined}
+              className={`
+                relative flex flex-col items-center justify-center flex-1
+                py-2.5 rounded-2xl
+                transition-all duration-300
+                ${isActive ? "text-primary-400" : "text-neutral-400 hover:text-neutral-200"}
+              `}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={item.label}
+            >
+              {/* Active Indicator Background */}
+              {isActive && (
+                <div className="absolute inset-x-1 inset-y-1 bg-primary-500/10 rounded-xl" />
               )}
-            </div>
-            <span className="text-xs mt-0.5">{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+
+              <div className="relative">
+                <Icon className={`text-2xl transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} aria-hidden="true" />
+                {isLeaderboard && state.isUnlocked && (
+                  <span className="absolute -top-1 -right-1 text-[8px]" aria-hidden="true">🔊</span>
+                )}
+              </div>
+              <span className={`text-[10px] mt-1 font-bold uppercase tracking-wider ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
