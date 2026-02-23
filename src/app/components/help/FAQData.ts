@@ -107,6 +107,39 @@ Pick boosté (cote 5.0) correct = 10 pts
 + Bonus parfait (×2) = 20 pts au total pour ce pick`,
   },
   {
+    id: 'live-betting',
+    icon: '📸',
+    title: 'Paris en direct',
+    summary:
+      "En plus des paris hebdomadaires, vous pouvez parier sur le gagnant de chaque course en direct ! Prenez une photo de l'écran de sélection des karts comme preuve, et l'IA détecte automatiquement les joueurs présents.",
+    points: [
+      "Choisissez UN gagnant parmi les compétiteurs (avec leurs cotes)",
+      "Prenez en photo l'écran de sélection des karts comme preuve anti-triche",
+      "L'IA détecte les joueurs sur la photo (30s pour vérifier/corriger)",
+      "Le pari est résolu automatiquement quand la course suivante est ajoutée",
+      "Gagné = +cote en points, Perdu = -cote en points (plancher à 0)",
+      "Le pari expire après 15 minutes sans course correspondante",
+    ],
+    technicalDetails: `Flow complet :
+1. Choix du gagnant + cote verrouillée
+2. Photo de l'écran kart → statut DETECTING
+3. IA analyse la photo (détection des personnages)
+4. Timer 30s pour confirmer/corriger les joueurs → statut ACTIVE
+5. Attente de la prochaine course avec ≥75% des mêmes joueurs
+6. Résolution : WON (+cote) ou LOST (-cote)
+
+Annulation automatique :
+• Timeout 15 min sans course correspondante
+• Joueurs détectés ne matchent pas (< 75% overlap)
+• Détection échouée (aucun personnage reconnu)
+
+Points :
+• Mêmes points que le classement mensuel des parieurs
+• Gagné : totalPoints + oddAtBet
+• Perdu : totalPoints - oddAtBet (minimum 0)
+• Les cotes utilisées sont celles de la semaine en cours (oddFirst)`,
+  },
+  {
     id: 'best-odds-guaranteed',
     icon: '🎯',
     title: 'Best Odds Guaranteed',
