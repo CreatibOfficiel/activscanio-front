@@ -280,7 +280,7 @@ const BettingPage: FC = () => {
         {currentWeek && <WeekOddsPreview weekId={currentWeek.id} />}
 
         {/* Paris Live */}
-        <Link href="/betting/live">
+        <Link href="/betting/live" className="block">
           <Card className="p-0 overflow-hidden hover:border-orange-500/50 transition-colors cursor-pointer">
             <div className="bg-gradient-to-r from-orange-600 to-red-500 p-3">
               <div className="flex items-center gap-3">
