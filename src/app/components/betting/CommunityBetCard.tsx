@@ -10,7 +10,7 @@ import { MdCheckCircle, MdCancel, MdPending, MdBolt, MdLock } from 'react-icons/
 interface CommunityBetCardProps {
   bet: Bet;
   isCurrentUser: boolean;
-  variant: 'compact' | 'full';
+  variant: 'compact' | 'full' | 'row';
   currentUserHasBet?: boolean;
   weekClosed?: boolean;
   isCurrentWeek?: boolean;
@@ -235,8 +235,147 @@ const FullCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHa
   );
 };
 
+const RowCard: FC<CommunityBetCardProps> = ({ bet, isCurrentUser, currentUserHasBet, weekClosed, isCurrentWeek }) => {
+  const displayName = getUserDisplayName(bet, isCurrentUser);
+  const avatarName = bet.user ? `${bet.user.firstName} ${bet.user.lastName}` : 'Joueur';
+  const picksHidden = (isCurrentWeek ?? true) && !isCurrentUser && bet.status === BetStatus.PENDING && !currentUserHasBet && !weekClosed;
+  const isPerfectPodium =
+    bet.isFinalized && bet.picks.every((pick) => pick.isCorrect === true);
+
+  return (
+    <div
+      className={`p-4 ${
+        isCurrentUser ? 'bg-primary-500/5' : ''
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <UserAvatar
+            src={bet.user?.profilePictureUrl}
+            name={avatarName}
+            size="md"
+          />
+          <div>
+            <p className="text-base font-semibold text-white">{displayName}</p>
+            <p className="text-sm text-neutral-400">
+              {formatRelativeDate(bet.placedAt)}
+              {bet.user?.level && (
+                <span className="ml-2 text-xs text-neutral-500">Niv. {bet.user.level}</span>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {bet.isFinalized ? (
+            <>
+              {(bet.pointsEarned ?? 0) > 0 ? (
+                <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-success-500/20 text-success-500">
+                  <MdCheckCircle className="w-4 h-4" />
+                  <span className="font-semibold">+{formatPoints(bet.pointsEarned ?? 0, 1)} pts</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-error-500/20 text-error-500">
+                  <MdCancel className="w-4 h-4" />
+                  <span className="font-semibold">0 pts</span>
+                </div>
+              )}
+              {isPerfectPodium && (
+                <Badge variant="gold" size="sm">Parfait!</Badge>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-warning-500/20 text-warning-500">
+              <MdPending className="w-4 h-4" />
+              <span className="font-medium">En attente</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Picks */}
+      {picksHidden ? (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-800 border border-neutral-700">
+          <MdLock className="w-5 h-5 text-neutral-500 flex-shrink-0" />
+          <p className="text-sm text-neutral-400">
+            Pariez pour découvrir les pronostics
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {bet.picks
+            .sort((a, b) => positionOrder[a.position] - positionOrder[b.position])
+            .map((pick) => (
+              <div
+                key={pick.id}
+                className={`flex items-center gap-4 p-3 rounded-xl transition-all ${
+                  bet.isFinalized
+                    ? pick.isCorrect
+                      ? 'bg-success-500/10 border border-success-500/30'
+                      : 'bg-neutral-800/50 border border-neutral-700/50'
+                    : 'bg-neutral-800 border border-neutral-700'
+                }`}
+              >
+                <PositionMedal
+                  position={pick.position}
+                  isCorrect={pick.isCorrect}
+                  isFinalized={bet.isFinalized}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`font-medium truncate ${
+                        bet.isFinalized && !pick.isCorrect ? 'text-neutral-400' : 'text-white'
+                      }`}
+                    >
+                      {pick.competitor
+                        ? formatCompetitorName(pick.competitor.firstName, pick.competitor.lastName)
+                        : `#${pick.competitorId.slice(0, 8)}`}
+                    </span>
+                    {pick.hasBoost && (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-warning-500/20 text-warning-500 text-xs font-semibold">
+                        <MdBolt className="w-3 h-3" />
+                        x2
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm text-neutral-500">
+                    Cote {formatOdds(pick.oddAtBet)}
+                  </span>
+                </div>
+                {bet.isFinalized && (
+                  <div className="flex flex-col items-end">
+                    {pick.isCorrect ? (
+                      <MdCheckCircle className="w-6 h-6 text-success-500" />
+                    ) : (
+                      <MdCancel className="w-6 h-6 text-error-500/60" />
+                    )}
+                    <span
+                      className={`text-sm font-medium ${
+                        pick.isCorrect ? 'text-success-500' : 'text-neutral-500'
+                      }`}
+                    >
+                      {formatPoints(pick.pointsEarned ?? 0, 1)} pts
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CommunityBetCard: FC<CommunityBetCardProps> = (props) => {
-  return props.variant === 'compact' ? <CompactCard {...props} /> : <FullCard {...props} />;
+  switch (props.variant) {
+    case 'compact':
+      return <CompactCard {...props} />;
+    case 'row':
+      return <RowCard {...props} />;
+    default:
+      return <FullCard {...props} />;
+  }
 };
 
 export default CommunityBetCard;

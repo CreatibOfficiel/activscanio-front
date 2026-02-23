@@ -219,7 +219,7 @@ const HistoryPage: FC = () => {
           </Card>
         ) : (
           /* Week accordion list */
-          <div className="space-y-3">
+          <div className="space-y-4">
             {weekGroups.map((group) => (
               <WeekAccordionSection
                 key={group.key}

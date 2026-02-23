@@ -5,9 +5,8 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { MdLock } from 'react-icons/md';
-import { Bet } from '@/app/models/Bet';
 import { BettingWeekStatus } from '@/app/models/BettingWeek';
-import { Card, Badge } from '@/app/components/ui';
+import { Badge } from '@/app/components/ui';
 import { AchievementCard } from '@/app/components/achievements';
 import { formatWeekDateRange, formatPoints } from '@/app/utils/formatters';
 import CommunityBetCard from './CommunityBetCard';
@@ -38,10 +37,22 @@ function getStatusBadge(status: string) {
   }
 }
 
+function getContainerBorder(status: string, isCurrentWeek: boolean) {
+  if (isCurrentWeek && status === BettingWeekStatus.OPEN) return 'border-primary-500/40';
+  switch (status) {
+    case BettingWeekStatus.FINALIZED:
+      return 'border-success-500/30';
+    case BettingWeekStatus.OPEN:
+      return 'border-yellow-500/30';
+    default:
+      return 'border-neutral-700';
+  }
+}
+
 function getHeaderStyles(status: string, isCurrentWeek: boolean) {
   if (isCurrentWeek && status === BettingWeekStatus.OPEN) {
     return {
-      container: 'bg-gradient-to-r from-primary-600 to-primary-500 border-primary-400/30',
+      bg: 'bg-gradient-to-r from-primary-600 to-primary-500',
       text: 'text-white',
       subtext: 'text-white/70',
       chevron: 'text-white/70 group-hover:text-white',
@@ -51,7 +62,7 @@ function getHeaderStyles(status: string, isCurrentWeek: boolean) {
   switch (status) {
     case BettingWeekStatus.FINALIZED:
       return {
-        container: 'bg-success-500/10 border-success-500/30 hover:border-success-500/50',
+        bg: 'bg-success-500/8',
         text: 'text-white',
         subtext: 'text-neutral-400',
         chevron: 'text-neutral-400 group-hover:text-white',
@@ -59,7 +70,7 @@ function getHeaderStyles(status: string, isCurrentWeek: boolean) {
       };
     case BettingWeekStatus.OPEN:
       return {
-        container: 'bg-yellow-500/10 border-yellow-500/30 hover:border-yellow-500/50',
+        bg: 'bg-yellow-500/8',
         text: 'text-white',
         subtext: 'text-neutral-400',
         chevron: 'text-neutral-400 group-hover:text-white',
@@ -67,7 +78,7 @@ function getHeaderStyles(status: string, isCurrentWeek: boolean) {
       };
     default:
       return {
-        container: 'bg-neutral-800 border-neutral-600 hover:border-neutral-500',
+        bg: 'bg-neutral-800',
         text: 'text-white',
         subtext: 'text-neutral-400',
         chevron: 'text-neutral-400 group-hover:text-white',
@@ -88,13 +99,14 @@ const WeekAccordionSection: FC<WeekAccordionSectionProps> = ({
   const weekClosed = group.status !== BettingWeekStatus.OPEN;
   const showLockBanner = isCurrentWeek && !currentUserHasBet && activeTab === 'all';
   const headerStyles = getHeaderStyles(group.status, isCurrentWeek);
+  const containerBorder = getContainerBorder(group.status, isCurrentWeek);
 
   return (
-    <div className="w-full">
+    <div className={`w-full rounded-xl border overflow-hidden bg-neutral-800 ${containerBorder}`}>
       {/* Header */}
       <button
         onClick={onToggle}
-        className={`w-full flex items-center justify-between p-4 rounded-xl border ${headerStyles.container} transition-all group`}
+        className={`w-full flex items-center justify-between p-4 ${headerStyles.bg} transition-all group`}
         aria-expanded={isExpanded}
         aria-controls={`week-content-${group.key}`}
       >
@@ -114,10 +126,20 @@ const WeekAccordionSection: FC<WeekAccordionSectionProps> = ({
           <span className={`text-xs ${headerStyles.subtext}`}>
             {group.totalBets} pari{group.totalBets > 1 ? 's' : ''}
           </span>
-          {group.status === BettingWeekStatus.FINALIZED && group.totalPoints > 0 && (
-            <span className="text-xs font-bold text-success-500">
-              +{formatPoints(group.totalPoints, 0)} pts
-            </span>
+          {group.status === BettingWeekStatus.FINALIZED && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-success-400">
+                {group.wonCount} gagné{group.wonCount > 1 ? 's' : ''}
+              </span>
+              {group.totalPoints > 0 && (
+                <>
+                  <span className="text-neutral-600">·</span>
+                  <span className="text-xs font-medium text-neutral-300">
+                    +{formatPoints(group.totalPoints, 0)} pts
+                  </span>
+                </>
+              )}
+            </div>
           )}
           <div className={`${headerStyles.chevron} transition-colors`}>
             {isExpanded ? (
@@ -140,51 +162,51 @@ const WeekAccordionSection: FC<WeekAccordionSectionProps> = ({
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="pt-3 space-y-3">
-              {/* Lock banner — only for current week when user hasn't bet */}
-              {showLockBanner && (
-                <Link href="/betting/place-bet">
-                  <Card className="p-4 border-primary-500/50 hover:border-primary-500 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary-500/10 flex-shrink-0">
-                        <MdLock className="text-xl text-primary-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">
-                          Placez votre pari pour découvrir les pronostics des autres joueurs
-                        </p>
-                        <p className="text-xs text-primary-400 mt-0.5">Parier maintenant →</p>
-                      </div>
+            {/* Lock banner */}
+            {showLockBanner && (
+              <Link href="/betting/place-bet" className="block border-t border-neutral-700/50">
+                <div className="p-4 hover:bg-neutral-700/20 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary-500/10 flex-shrink-0">
+                      <MdLock className="text-xl text-primary-400" />
                     </div>
-                  </Card>
-                </Link>
-              )}
-
-              {/* Empty state CTA — current week with no bets */}
-              {group.bets.length === 0 && isCurrentWeek && (
-                <Link href="/betting/place-bet">
-                  <div className="border-2 border-dashed border-neutral-600 rounded-xl p-6 text-center hover:border-primary-500/50 transition-colors cursor-pointer">
-                    <p className="text-sm text-neutral-400">Aucun pari cette semaine</p>
-                    <p className="text-sm font-medium text-primary-400 mt-1">Parier maintenant →</p>
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        Placez votre pari pour découvrir les pronostics des autres joueurs
+                      </p>
+                      <p className="text-xs text-primary-400 mt-0.5">Parier maintenant →</p>
+                    </div>
                   </div>
-                </Link>
-              )}
+                </div>
+              </Link>
+            )}
 
-              {/* Bet cards */}
-              {group.bets.map((bet) => (
-                <div key={bet.id}>
-                  <CommunityBetCard
-                    bet={bet}
-                    isCurrentUser={!!internalUserId && bet.userId === internalUserId}
-                    variant="full"
-                    currentUserHasBet={currentUserHasBet}
-                    weekClosed={weekClosed}
-                    isCurrentWeek={isCurrentWeek}
-                  />
+            {/* Empty state CTA */}
+            {group.bets.length === 0 && isCurrentWeek && (
+              <Link href="/betting/place-bet" className="block border-t border-neutral-700/50">
+                <div className="p-6 text-center hover:bg-neutral-700/20 transition-colors cursor-pointer">
+                  <p className="text-sm text-neutral-400">Aucun pari cette semaine</p>
+                  <p className="text-sm font-medium text-primary-400 mt-1">Parier maintenant →</p>
+                </div>
+              </Link>
+            )}
 
-                  {/* Achievement Timeline — only on "mine" tab for own bets */}
-                  {activeTab === 'mine' && bet.achievementsUnlocked && bet.achievementsUnlocked.length > 0 && (
-                    <div className="mt-2 ml-4 pl-4 border-l-2 border-neutral-700">
+            {/* Bet rows */}
+            {group.bets.map((bet) => (
+              <div key={bet.id} className="border-t border-neutral-700/50">
+                <CommunityBetCard
+                  bet={bet}
+                  isCurrentUser={!!internalUserId && bet.userId === internalUserId}
+                  variant="row"
+                  currentUserHasBet={currentUserHasBet}
+                  weekClosed={weekClosed}
+                  isCurrentWeek={isCurrentWeek}
+                />
+
+                {/* Achievement Timeline — only on "mine" tab for own bets */}
+                {activeTab === 'mine' && bet.achievementsUnlocked && bet.achievementsUnlocked.length > 0 && (
+                  <div className="px-4 pb-4 -mt-1">
+                    <div className="ml-4 pl-4 border-l-2 border-neutral-700">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-sm font-semibold text-primary-400">
                           Achievements débloqués
@@ -203,10 +225,10 @@ const WeekAccordionSection: FC<WeekAccordionSectionProps> = ({
                         ))}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
