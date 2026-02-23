@@ -172,6 +172,31 @@ export function useBetsByWeek({ activeTab, activeStatus, userId, getToken }: Use
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, activeStatus, userId]);
 
+  // Re-group when currentWeekKey resolves (inject empty current week if needed)
+  useEffect(() => {
+    if (!currentWeekKey || isLoading) return;
+    const grouped = groupBetsByWeek(allBets);
+    const groups = buildWeekGroups(grouped);
+    const cw = currentWeekDataRef.current;
+    if (cw && !groups.some((g) => g.key === currentWeekKey)) {
+      groups.unshift({
+        key: currentWeekKey,
+        weekNumber: cw.weekNumber,
+        year: cw.year,
+        startDate: cw.startDate,
+        endDate: cw.endDate,
+        status: cw.status,
+        bets: [],
+        totalBets: 0,
+        totalPoints: 0,
+        wonCount: 0,
+        perfectCount: 0,
+      });
+    }
+    setWeekGroups(groups);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWeekKey]);
+
   // Stats across all loaded bets (for mine tab)
   const stats = {
     total: totalBets,
