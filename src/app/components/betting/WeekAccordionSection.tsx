@@ -106,46 +106,50 @@ const WeekAccordionSection: FC<WeekAccordionSectionProps> = ({
       {/* Header */}
       <button
         onClick={onToggle}
-        className={`w-full flex items-center justify-between p-4 ${headerStyles.bg} transition-all group`}
+        className={`w-full flex items-center gap-3 p-3 px-4 ${headerStyles.bg} transition-all group`}
         aria-expanded={isExpanded}
         aria-controls={`week-content-${group.key}`}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="min-w-0">
-            <p className={`text-sm font-semibold ${headerStyles.text} text-left`}>
-              {formatWeekDateRange(group.startDate, group.endDate)}
-            </p>
-            {headerStyles.label && (
-              <p className={`text-xs ${headerStyles.subtext} text-left`}>{headerStyles.label}</p>
-            )}
-          </div>
-          {getStatusBadge(group.status)}
+        {/* Chevron */}
+        <div className={`${headerStyles.chevron} transition-colors flex-shrink-0`}>
+          {isExpanded ? (
+            <ChevronDown className="w-4 h-4" />
+          ) : (
+            <ChevronRight className="w-4 h-4" />
+          )}
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <span className={`text-xs ${headerStyles.subtext}`}>
-            {group.totalBets} pari{group.totalBets > 1 ? 's' : ''}
-          </span>
-          {group.status === BettingWeekStatus.FINALIZED && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-success-400">
-                {group.wonCount} gagné{group.wonCount > 1 ? 's' : ''}
-              </span>
-              {group.totalPoints > 0 && (
-                <>
-                  <span className="text-neutral-600">·</span>
-                  <span className="text-xs font-medium text-neutral-300">
-                    +{formatPoints(group.totalPoints, 0)} pts
-                  </span>
-                </>
-              )}
-            </div>
-          )}
-          <div className={`${headerStyles.chevron} transition-colors`}>
-            {isExpanded ? (
-              <ChevronDown className="w-5 h-5" />
-            ) : (
-              <ChevronRight className="w-5 h-5" />
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-sm font-semibold ${headerStyles.text} whitespace-nowrap`}>
+              {formatWeekDateRange(group.startDate, group.endDate)}
+            </span>
+            {getStatusBadge(group.status)}
+            {headerStyles.label && (
+              <span className={`text-xs ${headerStyles.subtext}`}>{headerStyles.label}</span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className={`text-xs ${headerStyles.subtext}`}>
+              {group.totalBets} pari{group.totalBets > 1 ? 's' : ''}
+            </span>
+            {group.status === BettingWeekStatus.FINALIZED && (
+              <>
+                <span className="text-neutral-600">·</span>
+                <span className="text-xs font-medium text-success-400">
+                  {group.wonCount} gagné{group.wonCount > 1 ? 's' : ''}
+                </span>
+                {group.totalPoints > 0 && (
+                  <>
+                    <span className="text-neutral-600">·</span>
+                    <span className="text-xs font-medium text-neutral-300">
+                      +{formatPoints(group.totalPoints, 0)} pts
+                    </span>
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
