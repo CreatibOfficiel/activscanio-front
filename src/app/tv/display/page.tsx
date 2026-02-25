@@ -314,9 +314,9 @@ const TVDisplayContent: FC = () => {
       </header>
 
       {/* Main content */}
-      <main ref={mainRef} className="flex-grow overflow-y-auto scrollbar-hide">
+      <main ref={mainRef} className="flex-grow overflow-y-auto scrollbar-hide flex flex-col">
         <div
-          className={`transition-all duration-300 ${isTransitioning
+          className={`flex-1 transition-all duration-300 ${isTransitioning
             ? "opacity-0 transform -translate-x-8"
             : "opacity-100 transform translate-x-0"
             }`}
