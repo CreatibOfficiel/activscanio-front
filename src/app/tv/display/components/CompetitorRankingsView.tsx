@@ -10,13 +10,10 @@ import { formatCompetitorName } from "@/app/utils/formatters";
 import { computeRanksWithTies } from "@/app/utils/rankings";
 import { groupByLeague } from "@/app/utils/leagues";
 import { LeagueDivider } from "@/app/components/leaderboard";
-import RankingAnimationOverlay from "@/app/components/leaderboard/RankingAnimationOverlay";
-import { useRankingAnimation } from "@/app/hooks/useRankingAnimation";
 import { getRaceSeasonEndDate } from "../utils/deadlines";
 
 interface Props {
   rankings: Competitor[];
-  onAnimatingChange?: (isAnimating: boolean) => void;
 }
 
 export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
@@ -113,20 +110,6 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
     };
   }, [rankings]);
 
-  // Ranking animation hook specifically for the Peloton (Rank 4+)
-  const peloton = confirmed.slice(3);
-  const {
-    animationPhase,
-    displayOrder,
-    showUniformCards,
-    changedIds,
-    onTransitionComplete,
-  } = useRankingAnimation({
-    mode: 'tv',
-    competitors: peloton,
-    enabled: peloton.length > 0,
-  });
-
   // Real trend based on previousDayRank snapshot
   const getTrend = (
     competitor: Competitor,
@@ -150,9 +133,9 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
   }
 
   return (
-    <div className="flex flex-row items-start gap-8 max-w-[1800px] mx-auto w-full px-4">
-      {/* LEFT COLUMN: Hero Zone (Sticky) */}
-      <div className="w-[45%] sticky top-2 flex flex-col items-center">
+    <div className="flex flex-row items-stretch gap-8 max-w-[1800px] mx-auto w-full px-4 min-h-full">
+      {/* LEFT COLUMN: Hero Zone (Centered) */}
+      <div className="w-[45%] flex flex-col items-center justify-center my-auto">
 
         {/* Countdown */}
         <div className="mb-4 w-full max-w-[90%]">
@@ -204,46 +187,37 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
         </h2>
 
         <div className="space-y-8 flex-1">
-          <RankingAnimationOverlay
-            phase={animationPhase}
-            displayOrder={displayOrder}
-            changedIds={changedIds}
-            variant="tv"
-            onTransitionComplete={onTransitionComplete}
-          >
-            {/* Confirmed: league sections after podium */}
-            {leagueGroups.map((group) => (
-              <div key={group.league.id} className="space-y-3 w-full">
-                <LeagueDivider league={group.league} variant="tv" />
-                {group.items.map((competitor, index) => {
-                  const rank = confirmedRanks.get(competitor.id) ?? index + 4;
-                  const trend = getTrend(competitor, rank);
-                  return (
-                    <TVLeaderboardRow
-                      key={competitor.id}
-                      item={{
-                        id: competitor.id,
-                        rank,
-                        name: formatCompetitorName(competitor.firstName, competitor.lastName),
-                        imageUrl: competitor.profilePictureUrl,
-                        characterImageUrl: competitor.characterVariant?.imageUrl,
-                        score: Math.round(competitor.conservativeScore ?? 0),
-                        scoreLabel: "ELO",
-                        subtitle: competitor.characterVariant
-                          ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
-                          : `${competitor.raceCount || 0} courses`,
-                        trend: trend.direction,
-                        trendValue: trend.value,
-                        maxScore,
-                      }}
-                      animationDelay={index * 80}
-                      disableEntryAnimation={showUniformCards}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </RankingAnimationOverlay>
+          {/* Confirmed: league sections after podium */}
+          {leagueGroups.map((group) => (
+            <div key={group.league.id} className="space-y-3 w-full">
+              <LeagueDivider league={group.league} variant="tv" />
+              {group.items.map((competitor, index) => {
+                const rank = confirmedRanks.get(competitor.id) ?? index + 4;
+                const trend = getTrend(competitor, rank);
+                return (
+                  <TVLeaderboardRow
+                    key={competitor.id}
+                    item={{
+                      id: competitor.id,
+                      rank,
+                      name: formatCompetitorName(competitor.firstName, competitor.lastName),
+                      imageUrl: competitor.profilePictureUrl,
+                      characterImageUrl: competitor.characterVariant?.imageUrl,
+                      score: Math.round(competitor.conservativeScore ?? 0),
+                      scoreLabel: "ELO",
+                      subtitle: competitor.characterVariant
+                        ? `${competitor.characterVariant.baseCharacter.name} - ${competitor.characterVariant.label}`
+                        : `${competitor.raceCount || 0} courses`,
+                      trend: trend.direction,
+                      trendValue: trend.value,
+                      maxScore,
+                    }}
+                    animationDelay={index * 80}
+                  />
+                );
+              })}
+            </div>
+          ))}
 
           {/* Inactive confirmed section */}
           {inactive.length > 0 && (
