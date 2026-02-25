@@ -45,7 +45,7 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
     imageUrl: bettor.profilePictureUrl ?? undefined,
     score: bettor.totalPoints,
     scoreLabel: "pts",
-    subtitle: `${bettor.betsWon}/${bettor.betsPlaced} gagnés`,
+    subtitle: `${bettor.betsWon}/${bettor.betsPlaced} gagnés · ${bettor.winRate.toFixed(0)}%${bettor.perfectBets > 0 ? ` · ${bettor.perfectBets} parfait${bettor.perfectBets > 1 ? 's' : ''}` : ''}`,
     rank: bettor.rank,
   }));
 
@@ -80,41 +80,15 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
           </div>
         )}
 
-        {/* Stats summary for top 3 */}
-        {top3.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 max-w-2xl mx-auto mt-4">
-            {top3.map((bettor, index) => (
-              <div
-                key={bettor.userId}
-                className="text-center p-2 rounded-lg bg-neutral-800/30 animate-row-slide-in"
-                style={{ animationDelay: `${(index + 3) * 100}ms` }}
-              >
-                <p className="text-xs text-neutral-500 uppercase tracking-wide mb-0.5">
-                  Taux de réussite
-                </p>
-                <p className="text-2xl font-bold text-primary-400">
-                  {bettor.winRate.toFixed(0)}%
-                </p>
-                {bettor.perfectBets > 0 && (
-                  <p className="text-xs text-primary-500 mt-0.5">
-                    {bettor.perfectBets} podium
-                    {bettor.perfectBets > 1 ? "s" : ""} parfait
-                    {bettor.perfectBets > 1 ? "s" : ""}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* RIGHT COLUMN: Rankings list */}
-      <div className="w-[55%] flex flex-col">
+      <div className="w-[55%] flex flex-col justify-center">
         <h2 className="text-3xl font-black italic text-cyan-400 mb-6 text-center drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
           Classement
         </h2>
 
-        <div className="space-y-3 flex-1">
+        <div className="space-y-3">
           {others.map((bettor, index) => {
             const trend = getTrend(bettor);
             const winRate = bettor.winRate.toFixed(0);

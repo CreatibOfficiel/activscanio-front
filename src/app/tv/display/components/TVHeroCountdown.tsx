@@ -8,7 +8,7 @@ interface Props {
     seasonName?: string;
 }
 
-const TVHeroCountdown: FC<Props> = ({ targetDate, seasonName = "SAISON ACTUELLE" }) => {
+const TVHeroCountdown: FC<Props> = ({ targetDate, seasonName = "SAISON PILOTES" }) => {
     const { time } = useCountdown(targetDate, {
         warningSeconds: 7 * 24 * 60 * 60,
         criticalSeconds: 24 * 60 * 60,

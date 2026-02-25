@@ -181,12 +181,12 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings }) => {
       </div>
 
       {/* RIGHT COLUMN: Peloton Zone (Scrolls) */}
-      <div className="w-[55%] flex flex-col">
+      <div className="w-[55%] flex flex-col justify-center">
         <h2 className="text-3xl font-black italic text-cyan-400 mb-6 text-center drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
           Peloton
         </h2>
 
-        <div className="space-y-8 flex-1">
+        <div className="space-y-8">
           {/* Confirmed: league sections after podium */}
           {leagueGroups.map((group) => (
             <div key={group.league.id} className="space-y-3 w-full">
