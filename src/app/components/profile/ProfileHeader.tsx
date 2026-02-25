@@ -61,6 +61,7 @@ interface ProfileHeaderProps {
   userImageUrl?: string;
   character?: CharacterInfo | null;
   competitorStats?: CompetitorStats | null;
+  competitorRank?: number;
   streakWarnings?: StreakWarningStatus;
   className?: string;
   onEditCharacter?: () => void;
@@ -83,6 +84,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
   userImageUrl,
   character,
   competitorStats,
+  competitorRank,
   streakWarnings,
   className = '',
   onEditCharacter,
@@ -208,40 +210,21 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
 
           {/* Stats Pills */}
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-            {/* Monthly Rank */}
-            {stats.monthlyRank && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
-                <span className="text-sm">🏆</span>
+            {/* 1. Competitor Rank (players only) */}
+            {isPlayer && competitorRank && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm">
+                <span className="text-sm">🏁</span>
                 <span className="text-sm font-semibold text-white">
-                  #{stats.monthlyRank}
+                  #{competitorRank}
                 </span>
-                <span className="text-xs text-white/70">ce mois</span>
+                <span className="text-xs text-white/70">pilote</span>
               </div>
             )}
 
-            {/* Current Bet Streak */}
-            {stats.currentMonthlyStreak > 0 && (
-              <div
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm ${
-                  streakWarnings?.bettingStreak.atRisk
-                    ? 'ring-2 ring-amber-400 animate-pulse'
-                    : ''
-                }`}
-              >
-                <span className="text-sm">
-                  {streakWarnings?.bettingStreak.atRisk ? '⏳' : '🎲'}
-                </span>
-                <span className="text-sm font-semibold text-white">
-                  {stats.currentMonthlyStreak}
-                </span>
-                <span className="text-xs text-white/70">streak paris</span>
-              </div>
-            )}
-
-            {/* Current Play Streak (players only) */}
+            {/* 2. Play Streak (players only) */}
             {isPlayer && (competitorStats?.playStreak ?? 0) > 0 && (
               <div
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-sm ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm ${
                   streakWarnings?.playStreak.atRisk
                     ? 'ring-2 ring-amber-400 animate-pulse'
                     : ''
@@ -257,9 +240,39 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
               </div>
             )}
 
-            {/* Win Rate for bettors */}
+            {/* 3. Bettor Monthly Rank */}
+            {stats.monthlyRank && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/30 backdrop-blur-sm">
+                <span className="text-sm">🏆</span>
+                <span className="text-sm font-semibold text-white">
+                  #{stats.monthlyRank}
+                </span>
+                <span className="text-xs text-white/70">parieur</span>
+              </div>
+            )}
+
+            {/* 4. Bet Streak */}
+            {stats.currentMonthlyStreak > 0 && (
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/30 backdrop-blur-sm ${
+                  streakWarnings?.bettingStreak.atRisk
+                    ? 'ring-2 ring-amber-400 animate-pulse'
+                    : ''
+                }`}
+              >
+                <span className="text-sm">
+                  {streakWarnings?.bettingStreak.atRisk ? '⏳' : '🎲'}
+                </span>
+                <span className="text-sm font-semibold text-white">
+                  {stats.currentMonthlyStreak}
+                </span>
+                <span className="text-xs text-white/70">streak paris</span>
+              </div>
+            )}
+
+            {/* Win Rate for bettors only */}
             {!isPlayer && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm">
                 <span className="text-sm">📊</span>
                 <span className="text-sm font-semibold text-white">
                   {(stats.winRate ?? 0).toFixed(0)}%

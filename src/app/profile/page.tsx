@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState, useEffect, useCallback } from 'react';
+import { FC, useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth, useUser, useClerk } from '@clerk/nextjs';
@@ -21,6 +21,8 @@ import {
 } from '../components/profile';
 import { StreakWarningBanner } from '../components/achievements';
 import { formatCompetitorName } from '../utils/formatters';
+import { AppContext } from '../context/AppContext';
+import { computeRanksWithTies } from '../utils/rankings';
 
 // Type for competitor stats used in profile
 export interface CompetitorStats {
@@ -42,6 +44,7 @@ const ProfilePage: FC = () => {
   const { openUserProfile } = useClerk();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { allCompetitors } = useContext(AppContext);
 
   // Get initial tab from URL query param
   const getInitialTab = (): ProfileTab => {
@@ -62,6 +65,20 @@ const ProfilePage: FC = () => {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ProfileTab>(getInitialTab);
   const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(false);
+
+  // Compute competitor rank from live leaderboard data
+  const competitorRank = useMemo(() => {
+    if (!userData?.competitorId || allCompetitors.length === 0) return undefined;
+    const confirmed = allCompetitors
+      .filter((c) => c.raceCount && c.raceCount > 0 && !c.provisional && !c.inactive)
+      .sort((a, b) => (b.conservativeScore ?? 0) - (a.conservativeScore ?? 0));
+    const ranks = computeRanksWithTies(
+      confirmed,
+      (c) => c.conservativeScore ?? 0,
+      (c) => c.id,
+    );
+    return ranks.get(userData.competitorId);
+  }, [userData?.competitorId, allCompetitors]);
 
   // Fetch user stats, achievements, and user data
   useEffect(() => {
@@ -239,6 +256,7 @@ const ProfilePage: FC = () => {
           userImageUrl={clerkUser?.imageUrl}
           character={getCharacterInfo()}
           competitorStats={competitorStats}
+          competitorRank={competitorRank}
           streakWarnings={streakWarnings ?? undefined}
           onEditCharacter={userData?.role === 'player' ? () => setIsCharacterModalOpen(true) : undefined}
           onEditName={
