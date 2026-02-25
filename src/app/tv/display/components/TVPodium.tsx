@@ -137,7 +137,7 @@ const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) =>
 
         {/* Name */}
         <h3
-          className={`font-bold text-white text-center mt-1.5 ${position === 1 ? "text-lg" : "text-base"
+          className={`font-bold text-white text-center mt-1.5 line-clamp-1 max-w-[10rem] ${position === 1 ? "text-lg" : "text-base"
             }`}
         >
           {item.name}

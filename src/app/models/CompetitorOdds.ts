@@ -44,6 +44,9 @@ export interface BettorRanking {
   rank: number;
   userId: string;
   userName: string;
+  profilePictureUrl?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   totalPoints: number;
   betsPlaced: number;
   betsWon: number;

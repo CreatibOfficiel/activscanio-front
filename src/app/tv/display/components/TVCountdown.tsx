@@ -54,25 +54,25 @@ const TVCountdown: FC<TVCountdownProps> = ({
   const pulseClass = urgency === "critical" ? "animate-countdown-pulse" : "";
 
   return (
-    <div className={`p-1 px-3 rounded-lg border-2 backdrop-blur-md ${colors.glow} ${pulseClass} border-white/10 flex flex-col items-center min-w-[100px]`}>
-      <span className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">
+    <div className={`p-2 px-4 rounded-lg border-2 backdrop-blur-md ${colors.glow} ${pulseClass} border-white/10 flex flex-col items-center min-w-[140px]`}>
+      <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-0.5">
         {label}
       </span>
       <div className="flex gap-2 items-baseline">
         {time.days > 0 && (
           <div className="flex flex-col items-center">
-            <span className="text-lg font-black text-white leading-none">
+            <span className="text-2xl font-black text-white leading-none">
               {time.days}
             </span>
-            <span className="text-[6px] font-bold text-neutral-500 uppercase">
+            <span className="text-xs font-bold text-neutral-500 uppercase">
               J
             </span>
           </div>
         )}
         <div className="flex flex-col items-center">
-          <span className="text-lg font-black text-white leading-none tabular-nums">
+          <span className="text-2xl font-black text-white leading-none tabular-nums">
             {time.hours.toString().padStart(2, "0")}:{time.minutes.toString().padStart(2, "0")}
-            <span className="text-xs ml-0.5 opacity-70">:{time.seconds.toString().padStart(2, "0")}</span>
+            <span className="text-base ml-0.5 opacity-70">:{time.seconds.toString().padStart(2, "0")}</span>
           </span>
         </div>
       </div>
