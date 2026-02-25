@@ -77,7 +77,7 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends, disableEntryAnimation = f
         {/* Left Side (Photo, Name, Score) */}
         <div className={`
           flex-1 relative -skew-x-20 rounded-lg border-[1.5px] ${style.borderColor} ${style.glowClass}
-          bg-neutral-900 overflow-hidden
+          bg-neutral-900 overflow-hidden will-change-transform [backface-visibility:hidden]
         `}>
           {/* Metallic Strip (More progressive fade) */}
           <div
@@ -106,7 +106,7 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends, disableEntryAnimation = f
             }}
           />
 
-          <div className="w-full h-full skew-x-20 relative z-20 flex items-center pl-7 pr-4 gap-3">
+          <div className="w-full h-full skew-x-20 relative z-20 flex items-center pl-7 pr-4 gap-3 [backface-visibility:hidden]">
             {/* Avatar */}
             <div className="relative flex-shrink-0 rounded-full overflow-hidden">
               <Image
@@ -151,9 +151,9 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends, disableEntryAnimation = f
         {/* Right Side (Character) */}
         <div className={`
           w-16 sm:w-20 relative -skew-x-20 rounded-lg border-[1.5px] ${style.borderColor} ${style.glowClass}
-          bg-neutral-900 overflow-hidden
+          bg-neutral-900 overflow-hidden will-change-transform [backface-visibility:hidden]
         `}>
-          <div className="w-full h-full skew-x-20 flex items-center justify-center">
+          <div className="w-full h-full skew-x-20 flex items-center justify-center [backface-visibility:hidden]">
             <div className="relative z-[2] w-9 h-9 flex items-center justify-center">
               {characterImageUrl ? (
                 <Image
