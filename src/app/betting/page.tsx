@@ -276,8 +276,10 @@ const BettingPage: FC = () => {
           </Card>
         )}
 
-        {/* Week Odds Preview */}
-        {currentWeek && <WeekOddsPreview weekId={currentWeek.id} />}
+        {/* Week Odds Preview — only when week is OPEN */}
+        {currentWeek && currentWeek.status === BettingWeekStatus.OPEN && (
+          <WeekOddsPreview weekId={currentWeek.id} />
+        )}
 
         {/* Paris Live */}
         <Link href="/betting/live" className="block">

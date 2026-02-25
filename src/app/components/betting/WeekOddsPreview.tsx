@@ -87,19 +87,23 @@ const WeekOddsPreview: FC<WeekOddsPreviewProps> = ({ weekId }) => {
       {!isLoading && odds.length > 0 && (
         <>
           <div className="space-y-4">
-            {visibleOdds.map((competitorOdds) => (
-              <CompetitorOddsCard
-                key={competitorOdds.competitorId}
-                competitorOdds={competitorOdds}
-                isSelected={false}
-                isBoosted={false}
-                position={null}
-                showBoostButton={false}
-                disabled={false}
-                showAllOdds={true}
-                onSelect={() => openDetail(competitorOdds)}
-              />
-            ))}
+            {visibleOdds.map((competitorOdds) => {
+              const liveCompetitor = allCompetitors.find(c => c.id === competitorOdds.competitorId);
+              return (
+                <CompetitorOddsCard
+                  key={competitorOdds.competitorId}
+                  competitorOdds={competitorOdds}
+                  isSelected={false}
+                  isBoosted={false}
+                  position={null}
+                  showBoostButton={false}
+                  disabled={false}
+                  showAllOdds={true}
+                  onSelect={() => openDetail(competitorOdds)}
+                  liveElo={liveCompetitor?.conservativeScore != null ? Math.round(liveCompetitor.conservativeScore) : undefined}
+                />
+              );
+            })}
           </div>
 
           {hasMore && !showAll && (

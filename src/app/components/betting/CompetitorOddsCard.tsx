@@ -20,6 +20,8 @@ interface CompetitorOddsCardProps {
   showAllOdds?: boolean;
   variant?: 'default' | 'tv';
   animationDelay?: number;
+  /** Live ELO from current competitor data (overrides metadata.elo snapshot) */
+  liveElo?: number;
 }
 
 const sizeConfig = {
@@ -122,6 +124,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
   showAllOdds = false,
   variant = 'default',
   animationDelay,
+  liveElo,
 }) => {
   const sizes = sizeConfig[variant];
   const isIneligible = competitorOdds.isEligible === false;
@@ -202,7 +205,7 @@ const CompetitorOddsCard: FC<CompetitorOddsCardProps> = ({
           {/* Metadata line: ELO + inline pills */}
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className={`${sizes.elo} text-neutral-500`}>
-              ELO {Math.round(competitorOdds.metadata?.elo ?? 0)}
+              ELO {liveElo ?? Math.round(competitorOdds.metadata?.elo ?? 0)}
             </span>
 
             {/* Form indicator (inline pill) */}
