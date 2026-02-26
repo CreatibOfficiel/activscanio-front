@@ -83,10 +83,11 @@ export const BettorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
 
       </div>
 
-      {/* RIGHT COLUMN: Rankings list (Independent scroll) */}
+      {/* RIGHT COLUMN: Rankings list (Independent scroll, centered when short) */}
       <div ref={scrollRef} className="w-[55%] overflow-y-auto scrollbar-hide flex flex-col">
+        <div className="my-auto">
         <h2 className="text-3xl font-black italic text-cyan-400 mb-6 text-center drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-          Classement
+          Peloton
         </h2>
 
         <div className="space-y-3">
@@ -115,6 +116,7 @@ export const BettorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
               />
             );
           })}
+        </div>
         </div>
       </div>
     </div>
