@@ -66,6 +66,7 @@ interface ProfileHeaderProps {
   className?: string;
   onEditCharacter?: () => void;
   onEditName?: () => void;
+  onEditAvatar?: () => void;
 }
 
 /**
@@ -89,6 +90,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
   className = '',
   onEditCharacter,
   onEditName,
+  onEditAvatar,
 }) => {
   const isPlayer = !!character;
   const colors = getCharacterColors(character?.name);
@@ -151,6 +153,16 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
                 <div className="w-full h-full bg-neutral-700 flex items-center justify-center">
                   <span className="text-4xl">👤</span>
                 </div>
+              )}
+              {onEditAvatar && (
+                <button
+                  type="button"
+                  onClick={onEditAvatar}
+                  className="absolute bottom-0 right-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center text-white/90 hover:text-white transition-colors border border-white/20"
+                  aria-label="Modifier la photo de profil"
+                >
+                  <MdEdit className="text-base sm:text-lg" />
+                </button>
               )}
             </div>
           )}

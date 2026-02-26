@@ -5,22 +5,26 @@ import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useReducer } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Image from 'next/image';
 import { toast } from 'sonner';
 
+import { useAuth } from '@clerk/nextjs';
 import { useApp } from '@/app/context/AppContext';
 import { UpdateCompetitorPayload } from '@/app/models/Competitor';
 import { editCompetitorSchema, EditCompetitorFormData } from '@/app/schemas';
-import { Input, Button, PageHeader } from '@/app/components/ui';
+import { Input, Button, PageHeader, ImageUpload } from '@/app/components/ui';
 import {
   editCompetitorReducer,
   initialState,
 } from '@/app/reducers/editCompetitorReducer';
 import { useCurrentUserData } from '@/app/hooks/useCurrentUserData';
+import { CompetitorsRepository } from '@/app/repositories/CompetitorsRepository';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const EditCompetitorPage: NextPage = () => {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const { getToken } = useAuth();
 
   const {
     getCompetitorById,
@@ -161,32 +165,25 @@ const EditCompetitorPage: NextPage = () => {
           {...register('lastName')}
         />
 
-        <div>
-          <Input
-            label="Image de profil (URL)"
-            type="url"
-            placeholder="https://example.com/image.jpg"
-            error={errors.profilePictureUrl?.message}
-            required
-            {...register('profilePictureUrl')}
-          />
-          {profilePictureUrl && !errors.profilePictureUrl && (
-            <div className="mt-4 flex justify-center">
-              <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-primary-500/30">
-                <Image
-                  src={profilePictureUrl}
-                  alt="Preview"
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        <ImageUpload
+          currentImageUrl={profilePictureUrl}
+          onUpload={async (file) => {
+            const token = await getToken({ skipCache: true });
+            const repo = new CompetitorsRepository(API_BASE_URL);
+            const updated = await repo.uploadProfilePicture(
+              state.competitor!.id,
+              file,
+              token!,
+            );
+            setValue('profilePictureUrl', updated.profilePictureUrl, {
+              shouldValidate: true,
+            });
+            return updated.profilePictureUrl;
+          }}
+          label="Photo de profil"
+          error={errors.profilePictureUrl?.message}
+          required
+        />
 
         <div className="mt-6 flex gap-2">
           <Button

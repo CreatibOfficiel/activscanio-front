@@ -1,8 +1,17 @@
 import { z } from 'zod';
 
-const profilePictureUrlSchema = z
-  .string()
-  .url("L'URL de la photo n'est pas valide");
+const profilePictureUrlSchema = z.string().refine(
+  (val) => {
+    if (val.startsWith('/images/')) return true;
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  { message: "L'URL de la photo n'est pas valide" },
+);
 
 const nameFields = {
   firstName: z

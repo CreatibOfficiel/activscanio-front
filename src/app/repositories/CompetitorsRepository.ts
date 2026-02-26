@@ -84,6 +84,37 @@ export class CompetitorsRepository {
     return (await res.json()) as Competitor;
   }
 
+  /* ───────── UPLOAD PROFILE PICTURE ───────── */
+
+  // POST /competitors/:id/profile-picture
+  async uploadProfilePicture(
+    competitorId: string,
+    file: File,
+    authToken: string,
+  ): Promise<Competitor> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await apiFetch(
+      `${this.baseUrl}/competitors/${competitorId}/profile-picture`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: formData,
+        timeoutMs: 30_000,
+      },
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `Error uploading profile picture: ${await res.text()}`,
+      );
+    }
+    return (await res.json()) as Competitor;
+  }
+
   /* ───────── LINK / UNLINK CHARACTER VARIANT ───────── */
 
   // POST /competitors/:id/character-variant

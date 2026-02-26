@@ -264,6 +264,30 @@ const ProfilePage: FC = () => {
               ? () => router.push(`/competitors/edit/${userData.competitorId}`)
               : () => openUserProfile()
           }
+          onEditAvatar={
+            userData?.role !== 'player'
+              ? async () => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/jpeg,image/png,image/webp';
+                  input.onchange = async () => {
+                    const file = input.files?.[0];
+                    if (!file || !clerkUser) return;
+                    try {
+                      await clerkUser.setProfileImage({ file });
+                      toast.success('Photo de profil mise à jour !');
+                    } catch (err) {
+                      toast.error(
+                        err instanceof Error
+                          ? err.message
+                          : 'Erreur lors du changement de photo',
+                      );
+                    }
+                  };
+                  input.click();
+                }
+              : undefined
+          }
         />
 
         {/* Streak Warning Banners */}

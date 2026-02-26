@@ -12,3 +12,4 @@ export { default as PageHeader } from './PageHeader';
 export type { PageHeaderProps } from './PageHeader';
 export { default as Countdown } from './Countdown';
 export { default as UserAvatar } from './UserAvatar';
+export { default as ImageUpload } from './ImageUpload';
