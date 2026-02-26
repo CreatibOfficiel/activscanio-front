@@ -103,7 +103,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
           disabled={disabled || uploading}
           className="relative w-24 h-24 group focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <div className="w-full h-full rounded-full overflow-hidden ring-2 ring-neutral-700 group-hover:ring-primary-500/50 transition-all">
+          <div className="relative w-full h-full rounded-full overflow-hidden ring-2 ring-neutral-700 group-hover:ring-primary-500/50 transition-all">
             {displayUrl ? (
               <Image
                 src={displayUrl}
