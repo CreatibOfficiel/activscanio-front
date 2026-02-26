@@ -97,7 +97,7 @@ const Countdown: FC<CountdownProps> = ({
         {showIcon && <MdTimer className={`text-sm ${styles.compactText}`} />}
         <span className={`text-sm font-medium tabular-nums ${styles.compactText}`} style={{ fontVariantNumeric: "tabular-nums" }}>
           {time.days > 0 && `${time.days}j `}
-          {String(time.hours).padStart(2, "0")}:{String(time.minutes).padStart(2, "0")}:{String(time.seconds).padStart(2, "0")}
+          {String(time.hours).padStart(2, "0")}:{String(time.minutes).padStart(2, "0")}{time.days === 0 && `:${String(time.seconds).padStart(2, "0")}`}
         </span>
       </div>
     );
@@ -129,8 +129,12 @@ const Countdown: FC<CountdownProps> = ({
         <DigitPair value={time.hours} unit="h" urgency={urgency} />
         <span className="text-blue-400/20">:</span>
         <DigitPair value={time.minutes} unit="m" urgency={urgency} />
-        <span className="text-blue-400/20">:</span>
-        <DigitPair value={time.seconds} unit="s" urgency={urgency} />
+        {time.days === 0 && (
+          <>
+            <span className="text-blue-400/20">:</span>
+            <DigitPair value={time.seconds} unit="s" urgency={urgency} />
+          </>
+        )}
       </div>
     </div>
   );
