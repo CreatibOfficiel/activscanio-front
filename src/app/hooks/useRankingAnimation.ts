@@ -136,12 +136,23 @@ function hasRankChanges(
   newRanks: Map<string, number>,
   competitors: Competitor[],
 ): boolean {
-  for (const c of competitors) {
-    const oldR = oldRanks.get(c.id);
-    const newR = newRanks.get(c.id);
-    if (oldR != null && newR != null && oldR !== newR) {
-      return true;
-    }
+  // Only consider competitors present in both old and new snapshots
+  const commonIds = competitors
+    .filter((c) => oldRanks.has(c.id) && newRanks.has(c.id))
+    .map((c) => c.id);
+
+  // Sort by old rank (tie-break by id for determinism)
+  const oldOrder = [...commonIds].sort(
+    (a, b) => (oldRanks.get(a)! - oldRanks.get(b)!) || a.localeCompare(b),
+  );
+  // Sort by new rank
+  const newOrder = [...commonIds].sort(
+    (a, b) => (newRanks.get(a)! - newRanks.get(b)!) || a.localeCompare(b),
+  );
+
+  // Compare relative ordering — only animate if someone actually overtook another
+  for (let i = 0; i < oldOrder.length; i++) {
+    if (oldOrder[i] !== newOrder[i]) return true;
   }
   return false;
 }
