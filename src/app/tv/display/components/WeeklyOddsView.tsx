@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useMemo } from "react";
+import { FC, RefObject, useMemo } from "react";
 import TVCountdown from "./TVCountdown";
 import CompetitorOddsCard from "@/app/components/betting/CompetitorOddsCard";
 import { CompetitorOdds } from "@/app/models/CompetitorOdds";
@@ -11,6 +11,7 @@ interface WeeklyOddsViewProps {
   weekDates?: string;
   weekStartDate?: string;
   weekStatus?: string;
+  scrollRef?: RefObject<HTMLDivElement | null>;
 }
 
 const BETTING_THRESHOLDS = { warningSeconds: 86400, criticalSeconds: 7200 }; // 24h / 2h
@@ -20,6 +21,7 @@ export const WeeklyOddsView: FC<WeeklyOddsViewProps> = ({
   weekDates,
   weekStartDate,
   weekStatus,
+  scrollRef,
 }) => {
   const bettingDeadline = useMemo(
     () => (weekStartDate ? getBettingDeadline(weekStartDate) : null),
@@ -51,43 +53,45 @@ export const WeeklyOddsView: FC<WeeklyOddsViewProps> = ({
   }
 
   return (
-    <div className="space-y-12">
-      {/* Week dates subtitle */}
-      {weekDates && (
-        <p className="text-center text-xl text-neutral-400">{weekDates}</p>
-      )}
+    <div ref={scrollRef} className="overflow-y-auto scrollbar-hide h-full">
+      <div className="space-y-12">
+        {/* Week dates subtitle */}
+        {weekDates && (
+          <p className="text-center text-xl text-neutral-400">{weekDates}</p>
+        )}
 
-      {/* Betting countdown or closed badge */}
-      {weekStatus === "open" && bettingDeadline && (
-        <div className="flex justify-center">
-          <TVCountdown
-            label="Fin des paris"
-            targetDate={bettingDeadline}
-            thresholds={BETTING_THRESHOLDS}
-            expiredLabel="Temps de paris écoulé"
-          />
-        </div>
-      )}
-      {weekStatus === "closed" && (
-        <div className="flex justify-center">
-          <span className="text-lg text-neutral-400 bg-neutral-800/50 border border-neutral-700/50 rounded-lg px-4 py-2">
-            Paris fermés
-          </span>
-        </div>
-      )}
+        {/* Betting countdown or closed badge */}
+        {weekStatus === "open" && bettingDeadline && (
+          <div className="flex justify-center">
+            <TVCountdown
+              label="Fin des paris"
+              targetDate={bettingDeadline}
+              thresholds={BETTING_THRESHOLDS}
+              expiredLabel="Temps de paris écoulé"
+            />
+          </div>
+        )}
+        {weekStatus === "closed" && (
+          <div className="flex justify-center">
+            <span className="text-lg text-neutral-400 bg-neutral-800/50 border border-neutral-700/50 rounded-lg px-4 py-2">
+              Paris fermés
+            </span>
+          </div>
+        )}
 
-      {/* Competitor odds cards */}
-      <div className="space-y-3 max-w-5xl mx-auto">
-        {sortedOdds.map((o, i) => (
-          <CompetitorOddsCard
-            key={o.competitorId}
-            competitorOdds={o}
-            showAllOdds
-            showBoostButton={false}
-            variant="tv"
-            animationDelay={i * 60}
-          />
-        ))}
+        {/* Competitor odds cards */}
+        <div className="space-y-3 max-w-5xl mx-auto">
+          {sortedOdds.map((o, i) => (
+            <CompetitorOddsCard
+              key={o.competitorId}
+              competitorOdds={o}
+              showAllOdds
+              showBoostButton={false}
+              variant="tv"
+              animationDelay={i * 60}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

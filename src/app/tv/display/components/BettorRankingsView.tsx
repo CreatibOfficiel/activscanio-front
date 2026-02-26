@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useMemo } from "react";
+import { FC, RefObject, useMemo } from "react";
 import TVHeroPodium from "./TVHeroPodium";
 import TVLeaderboardRow from "./TVLeaderboardRow";
 import TVHeroCountdown from "./TVHeroCountdown";
@@ -15,9 +15,10 @@ interface Props {
     count: number;
     rankings: BettorRanking[];
   } | null;
+  scrollRef?: RefObject<HTMLDivElement | null>;
 }
 
-export const BettorRankingsView: FC<Props> = ({ rankings }) => {
+export const BettorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
   const seasonEndDate = useMemo(() => getSeasonEndDate(), []);
 
   if (!rankings || rankings.rankings.length === 0) {
@@ -61,9 +62,9 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
   };
 
   return (
-    <div className="flex flex-row items-stretch gap-8 max-w-[1800px] mx-auto w-full px-4 min-h-full">
-      {/* LEFT COLUMN: Hero Zone (Centered) */}
-      <div className="w-[45%] flex flex-col items-center justify-center my-auto">
+    <div className="flex flex-row gap-8 max-w-[1800px] mx-auto w-full px-4 h-full overflow-hidden">
+      {/* LEFT COLUMN: Hero Zone (Fixed, centered) */}
+      <div className="w-[45%] flex flex-col items-center justify-center shrink-0">
 
         {/* Countdown */}
         <div className="mb-4 w-full max-w-[90%]">
@@ -82,8 +83,8 @@ export const BettorRankingsView: FC<Props> = ({ rankings }) => {
 
       </div>
 
-      {/* RIGHT COLUMN: Rankings list */}
-      <div className="w-[55%] flex flex-col justify-center">
+      {/* RIGHT COLUMN: Rankings list (Independent scroll) */}
+      <div ref={scrollRef} className="w-[55%] overflow-y-auto scrollbar-hide flex flex-col">
         <h2 className="text-3xl font-black italic text-cyan-400 mb-6 text-center drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
           Classement
         </h2>

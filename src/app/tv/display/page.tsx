@@ -89,9 +89,10 @@ const TVDisplayContent: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [rotationKey, setRotationKey] = useState(0);
-  const mainRef = useRef<HTMLDivElement>(null);
+  // Each view provides its own scrollable ref (right column or single-column wrapper)
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  useAutoScroll(mainRef, rotationKey, {
+  useAutoScroll(scrollRef, rotationKey, {
     delay: 5000,
     speed: 150,
     enabled: !isTransitioning,
@@ -314,18 +315,18 @@ const TVDisplayContent: FC = () => {
       </header>
 
       {/* Main content */}
-      <main ref={mainRef} className="flex-grow overflow-y-auto scrollbar-hide flex flex-col">
+      <main className="flex-grow overflow-hidden flex flex-col min-h-0">
         <div
-          className={`flex-1 transition-all duration-300 ${isTransitioning
+          className={`flex-1 min-h-0 transition-all duration-300 ${isTransitioning
             ? "opacity-0 transform -translate-x-8"
             : "opacity-100 transform translate-x-0"
             }`}
         >
           {currentView === DisplayView.BETTOR_RANKINGS && (
-            <BettorRankingsView rankings={data.bettorRankings} />
+            <BettorRankingsView rankings={data.bettorRankings} scrollRef={scrollRef} />
           )}
           {currentView === DisplayView.COMPETITOR_RANKINGS && (
-            <CompetitorRankingsView rankings={data.competitorRankings} />
+            <CompetitorRankingsView rankings={data.competitorRankings} scrollRef={scrollRef} />
           )}
           {currentView === DisplayView.WEEKLY_ODDS && (
             <WeeklyOddsView
@@ -333,10 +334,11 @@ const TVDisplayContent: FC = () => {
               weekDates={data.currentWeekDates ?? undefined}
               weekStartDate={data.currentWeekStartDate ?? undefined}
               weekStatus={data.currentWeekStatus ?? undefined}
+              scrollRef={scrollRef}
             />
           )}
           {currentView === DisplayView.ARCHIVED_SEASONS && (
-            <ArchivedSeasonsView seasons={data.archivedSeasons} />
+            <ArchivedSeasonsView seasons={data.archivedSeasons} scrollRef={scrollRef} />
           )}
         </div>
       </main>

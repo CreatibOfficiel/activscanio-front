@@ -1,14 +1,15 @@
 "use client";
 
-import { FC } from 'react';
+import { FC, RefObject } from 'react';
 import { Card } from '@/app/components/ui';
 import { SeasonArchive } from '@/app/repositories/SeasonsRepository';
 
 interface Props {
   seasons: SeasonArchive[];
+  scrollRef?: RefObject<HTMLDivElement | null>;
 }
 
-export const ArchivedSeasonsView: FC<Props> = ({ seasons }) => {
+export const ArchivedSeasonsView: FC<Props> = ({ seasons, scrollRef }) => {
   if (!seasons || seasons.length === 0) {
     return (
       <div className="text-center py-16">
@@ -32,7 +33,8 @@ export const ArchivedSeasonsView: FC<Props> = ({ seasons }) => {
   const recentSeasons = sortedSeasons.slice(0, 12);
 
   return (
-    <div className="space-y-4">
+    <div ref={scrollRef} className="overflow-y-auto scrollbar-hide h-full">
+      <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
         {recentSeasons.map((season) => (
           <Card key={season.id} className="p-3 hover:border-primary-500 transition-colors">
@@ -78,6 +80,7 @@ export const ArchivedSeasonsView: FC<Props> = ({ seasons }) => {
           Et {seasons.length - 12} autre{seasons.length - 12 > 1 ? 's' : ''} saison{seasons.length - 12 > 1 ? 's' : ''}...
         </p>
       )}
+      </div>
     </div>
   );
 };
