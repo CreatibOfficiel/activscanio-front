@@ -4,7 +4,7 @@ import Image from 'next/image';
 interface UserAvatarProps {
   src?: string | null;
   name: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   className?: string;
 }
 
@@ -12,12 +12,16 @@ const sizeClasses = {
   sm: 'w-8 h-8 text-xs',
   md: 'w-10 h-10 text-sm',
   lg: 'w-14 h-14 text-base',
+  xl: 'w-16 h-16 text-lg',
+  '2xl': 'w-20 h-20 text-xl',
 };
 
 const imageSizes = {
   sm: 32,
   md: 40,
   lg: 56,
+  xl: 64,
+  '2xl': 80,
 };
 
 const bgColors = [

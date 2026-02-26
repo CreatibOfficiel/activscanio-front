@@ -3,7 +3,7 @@
 import { FC, useEffect, useState, useCallback } from 'react';
 import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { BettorRanking } from '@/app/models/CompetitorOdds';
-import { Card, Badge, PageHeader } from '@/app/components/ui';
+import { Card, Badge, PageHeader, UserAvatar } from '@/app/components/ui';
 import { FlameIndicator } from '@/app/components/achievements';
 import { MONTH_NAMES } from '@/app/utils/constants';
 import { MdTrendingUp, MdChevronLeft, MdChevronRight } from 'react-icons/md';
@@ -153,9 +153,7 @@ const RankingsPage: FC = () => {
                         className="w-full p-4 bg-silver-500/10 border-silver-500"
                       >
                         <div className="text-center">
-                          <div className="w-16 h-16 bg-neutral-700 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl font-bold">
-                            {topThree[1].userName.charAt(0).toUpperCase()}
-                          </div>
+                          <UserAvatar src={topThree[1].profilePictureUrl} name={topThree[1].userName} size="xl" className="mx-auto mb-2" />
                           <h3 className="text-bold text-white mb-1">
                             {topThree[1].userName}
                           </h3>
@@ -188,9 +186,7 @@ const RankingsPage: FC = () => {
                         className="w-full p-4 bg-gold-500/10 border-gold-500"
                       >
                         <div className="text-center">
-                          <div className="w-20 h-20 bg-neutral-700 rounded-full mx-auto mb-2 flex items-center justify-center text-3xl font-bold">
-                            {topThree[0].userName.charAt(0).toUpperCase()}
-                          </div>
+                          <UserAvatar src={topThree[0].profilePictureUrl} name={topThree[0].userName} size="2xl" className="mx-auto mb-2" />
                           <h3 className="text-heading text-white mb-1">
                             {topThree[0].userName}
                           </h3>
@@ -223,9 +219,7 @@ const RankingsPage: FC = () => {
                         className="w-full p-4 bg-bronze-500/10 border-bronze-500"
                       >
                         <div className="text-center">
-                          <div className="w-16 h-16 bg-neutral-700 rounded-full mx-auto mb-2 flex items-center justify-center text-2xl font-bold">
-                            {topThree[2].userName.charAt(0).toUpperCase()}
-                          </div>
+                          <UserAvatar src={topThree[2].profilePictureUrl} name={topThree[2].userName} size="xl" className="mx-auto mb-2" />
                           <h3 className="text-bold text-white mb-1">
                             {topThree[2].userName}
                           </h3>
@@ -262,9 +256,7 @@ const RankingsPage: FC = () => {
                           <Badge variant="default" size="md">
                             #{ranking.rank}
                           </Badge>
-                          <div className="w-12 h-12 bg-neutral-700 rounded-full flex items-center justify-center text-lg font-bold">
-                            {ranking.userName.charAt(0).toUpperCase()}
-                          </div>
+                          <UserAvatar src={ranking.profilePictureUrl} name={ranking.userName} size="lg" />
                           <div>
                             <h3 className="text-bold text-white">
                               {ranking.userName}
