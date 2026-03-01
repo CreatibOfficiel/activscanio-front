@@ -229,6 +229,55 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
     };
   }, [allRaces, allCompetitors, competitor.id]);
 
+  // Closest rival calculation — competitor with smallest avg score gap
+  const closestRivalData = useMemo(() => {
+    if (!allRaces.length || !allCompetitors.length) return null;
+
+    const totalGap: Record<string, number> = {};
+    const sharedCount: Record<string, number> = {};
+
+    for (const race of allRaces) {
+      const myResult = race.results.find(
+        (r) => r.competitorId === competitor.id
+      );
+      if (!myResult || myResult.score == null) continue;
+
+      for (const result of race.results) {
+        if (result.competitorId === competitor.id) continue;
+        if (result.score == null) continue;
+        const key = result.competitorId;
+        sharedCount[key] = (sharedCount[key] ?? 0) + 1;
+        totalGap[key] = (totalGap[key] ?? 0) + Math.abs(myResult.score - result.score);
+      }
+    }
+
+    const allClosest = Object.entries(sharedCount)
+      .map(([id, shared]) => {
+        if (shared < 3) return null;
+        const comp = allCompetitors.find((c) => c.id === id);
+        if (!comp) return null;
+        const avgGap = totalGap[id] / shared;
+        return {
+          id,
+          name: formatCompetitorName(comp.firstName, comp.lastName),
+          avgGap,
+          shared,
+        };
+      })
+      .filter(
+        (r): r is { id: string; name: string; avgGap: number; shared: number } =>
+          r !== null
+      )
+      .sort((a, b) => a.avgGap - b.avgGap);
+
+    if (allClosest.length === 0) return null;
+
+    return {
+      closest: allClosest[0],
+      all: allClosest,
+    };
+  }, [allRaces, allCompetitors, competitor.id]);
+
   // Podium count
   const podiumCount = positions.filter((p) => p <= 3).length;
 
@@ -495,6 +544,60 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                               <div
                                 className="h-full bg-linear-to-r from-red-600 to-red-400 rounded-full"
                                 style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </details>
+              )}
+
+              {/* Closest rival — expandable */}
+              {closestRivalData && (
+                <details className="group col-span-1 sm:col-span-2">
+                  <summary className="flex items-start gap-3 bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl p-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <span className="text-lg">⚔️</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold text-neutral-500 uppercase">Rival le plus proche</p>
+                      <p className="text-sm text-neutral-100 font-bold truncate">
+                        {closestRivalData.closest.name} — {closestRivalData.closest.avgGap.toFixed(1)}pts d&apos;écart
+                      </p>
+                    </div>
+                    <MdChevronRight className="text-neutral-500 text-xl mt-1 transition-transform group-open:rotate-90" />
+                  </summary>
+
+                  <div className="mt-2 p-4 bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl space-y-3 shadow-inner">
+                    <p className="text-xs text-neutral-400">
+                      Le compétiteur avec qui tu as les scores les plus serrés (min. 3 courses communes).
+                    </p>
+
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-neutral-500 font-semibold uppercase tracking-wider">
+                        Classement par écart de score
+                      </p>
+                      {closestRivalData.all.map((r, i) => {
+                        const barWidth = Math.max(5, 100 - (r.avgGap / 15) * 100);
+                        return (
+                          <div key={r.id} className="flex items-center gap-2 text-sm">
+                            <span className="text-neutral-500 w-5 text-right shrink-0">
+                              {i + 1}.
+                            </span>
+                            {i === 0 && <span className="shrink-0">⚔️</span>}
+                            <span className={`truncate ${i === 0 ? "text-neutral-100 font-semibold" : "text-neutral-300"}`} style={{ minWidth: 0, flex: "1 1 0" }}>
+                              {r.name}
+                            </span>
+                            <span className="text-neutral-400 shrink-0 w-14 text-right tabular-nums">
+                              {r.avgGap.toFixed(1)}pts
+                            </span>
+                            <span className="text-neutral-500 shrink-0 w-20 text-right tabular-nums text-xs">
+                              {r.shared} course{r.shared > 1 ? "s" : ""}
+                            </span>
+                            <div className="w-16 h-2 bg-neutral-700 rounded-full overflow-hidden shrink-0">
+                              <div
+                                className="h-full bg-linear-to-r from-cyan-600 to-blue-400 rounded-full"
+                                style={{ width: `${barWidth}%` }}
                               />
                             </div>
                           </div>
