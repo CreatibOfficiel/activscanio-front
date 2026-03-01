@@ -97,7 +97,7 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
                   <span className="text-sm font-semibold text-neutral-200">Flamme de paris</span>
                 </div>
                 <p className="text-sm text-neutral-400">
-                  Tu étais sur une série de <span className="font-bold text-amber-400">{bettingLoss.lostValue}</span> semaines — impressionnant !
+                  Tu étais sur une série de <span className="font-bold text-amber-400">{bettingLoss.lostValue}</span> semaine{bettingLoss.lostValue > 1 ? 's' : ''} — impressionnant !
                 </p>
               </div>
             )}
