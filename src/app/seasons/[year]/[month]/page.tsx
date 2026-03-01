@@ -14,8 +14,10 @@ import {
   MdEmojiEvents,
   MdPerson,
   MdCalendarToday,
+  MdAutoAwesome,
 } from 'react-icons/md';
 import { toast } from 'sonner';
+import SeasonRecapModal from '@/app/components/season/SeasonRecapModal';
 
 enum TabType {
   COMPETITORS = 'competitors',
@@ -35,6 +37,7 @@ const SeasonDetailPage: FC = () => {
   const [weeks, setWeeks] = useState<SeasonBettingWeek[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>(TabType.COMPETITORS);
   const [isLoading, setIsLoading] = useState(true);
+  const [showRecap, setShowRecap] = useState(false);
 
   useEffect(() => {
     const loadSeasonData = async () => {
@@ -116,9 +119,19 @@ const SeasonDetailPage: FC = () => {
           subtitle={season.seasonName || undefined}
           backHref="/seasons"
           rightAction={
-            <Badge variant="primary" size="lg">
-              Saison {season.month}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRecap(true)}
+              >
+                <MdAutoAwesome className="mr-1" />
+                Récap
+              </Button>
+              <Badge variant="primary" size="lg">
+                Saison {season.month}
+              </Badge>
+            </div>
           }
         />
 
@@ -292,6 +305,15 @@ const SeasonDetailPage: FC = () => {
               </div>
             )}
           </Card>
+        )}
+
+        {/* Season Recap Modal */}
+        {showRecap && (
+          <SeasonRecapModal
+            year={year}
+            month={month}
+            onClose={() => setShowRecap(false)}
+          />
         )}
       </div>
     </div>

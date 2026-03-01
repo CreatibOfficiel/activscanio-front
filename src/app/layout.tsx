@@ -11,6 +11,7 @@ import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
 import OfflineIndicator from "./components/ui/OfflineIndicator";
 import { SoundboardModal, ShakeDetector } from "./components/soundboard";
 import SocketProvider from "./components/layout/SocketProvider";
+import SeasonRecapAutoShow from "./components/layout/SeasonRecapAutoShow";
 import ResultModalsRenderer from "./components/betting/ResultModalsRenderer";
 import ResultModalsInitializer from "./components/layout/ResultModalsInitializer";
 import { ReactNode } from "react";
@@ -70,6 +71,9 @@ export default function RootLayout({
 
               {/* WebSocket real-time notifications */}
               <SocketProvider />
+
+              {/* Season recap auto-show (Wrapped-style modal) */}
+              <SeasonRecapAutoShow />
 
               {/* Result modals (bet results + streak losses) */}
               <ResultModalsRenderer />

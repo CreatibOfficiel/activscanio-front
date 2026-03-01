@@ -49,6 +49,28 @@ export interface SeasonBettingWeek {
   finalizedAt: string | null;
 }
 
+export interface SeasonHighlights {
+  perfectScores: { userName: string; week: number; points: number }[];
+  perfectPodiums: { userName: string; week: number; points: number }[];
+  highestBetScore: { userName: string; week: number; points: number } | null;
+  biggestUpset: {
+    userName: string;
+    competitorName: string;
+    odd: number;
+    week: number;
+  } | null;
+  longestParticipationStreak: { userName: string; streak: number } | null;
+  longestWinStreak: { competitorName: string; streak: number } | null;
+  mostRaces: { competitorName: string; count: number } | null;
+}
+
+export interface SeasonRecapData {
+  season: SeasonArchive;
+  competitors: ArchivedCompetitorRanking[];
+  bettors: ArchivedBettorRanking[];
+  highlights: SeasonHighlights;
+}
+
 export class SeasonsRepository {
   /**
    * Get all archived seasons
@@ -176,5 +198,50 @@ export class SeasonsRepository {
       console.error('Error fetching season weeks:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get season highlights for the recap
+   */
+  static async getSeasonHighlights(
+    year: number,
+    month: number
+  ): Promise<SeasonHighlights> {
+    try {
+      const response = await apiFetch(
+        `${API_BASE_URL}/seasons/${year}/${month}/highlights`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch season highlights: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching season highlights:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all data needed for the season recap modal
+   */
+  static async getSeasonRecapData(
+    year: number,
+    month: number
+  ): Promise<SeasonRecapData> {
+    const [season, competitors, bettors, highlights] = await Promise.all([
+      this.getSeason(year, month),
+      this.getCompetitorRankings(year, month),
+      this.getBettorRankings(year, month),
+      this.getSeasonHighlights(year, month),
+    ]);
+
+    return { season, competitors, bettors, highlights };
   }
 }

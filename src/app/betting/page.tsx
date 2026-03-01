@@ -27,7 +27,9 @@ import { MdBolt } from 'react-icons/md';
 import { Duel, DuelStatus } from '@/app/models/Duel';
 import { DuelRepository } from '@/app/repositories/DuelRepository';
 import DuelCard from '@/app/components/duel/DuelCard';
-import { MdSportsMma, MdCameraAlt } from 'react-icons/md';
+import { MdSportsMma, MdCameraAlt, MdAutoAwesome } from 'react-icons/md';
+import { SeasonsRepository } from '@/app/repositories/SeasonsRepository';
+import SeasonRecapModal from '@/app/components/season/SeasonRecapModal';
 
 const BettingPage: FC = () => {
   const { getToken } = useAuth();
@@ -41,6 +43,10 @@ const BettingPage: FC = () => {
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [activeDuels, setActiveDuels] = useState<Duel[]>([]);
   const [recentDuels, setRecentDuels] = useState<Duel[]>([]);
+  const [showRecapBanner, setShowRecapBanner] = useState(false);
+  const [showRecapModal, setShowRecapModal] = useState(false);
+  const [recapMonth, setRecapMonth] = useState(0);
+  const [recapYear, setRecapYear] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -96,6 +102,35 @@ const BettingPage: FC = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Check if we should show recap banner (first 7 days of month)
+  useEffect(() => {
+    const now = new Date();
+    if (now.getDate() > 7) return;
+
+    const bannerDismissKey = 'recapBannerDismissed';
+    const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth();
+    const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const dismissedValue = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+
+    if (localStorage.getItem(bannerDismissKey) === dismissedValue) return;
+
+    SeasonsRepository.getSeason(prevYear, prevMonth)
+      .then((season) => {
+        if (season && season.id) {
+          setRecapMonth(prevMonth);
+          setRecapYear(prevYear);
+          setShowRecapBanner(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const dismissRecapBanner = useCallback(() => {
+    setShowRecapBanner(false);
+    const key = `${recapYear}-${String(recapMonth).padStart(2, '0')}`;
+    localStorage.setItem('recapBannerDismissed', key);
+  }, [recapMonth, recapYear]);
 
   const bettingDeadline = useMemo(
     () => (currentWeek?.startDate ? getBettingDeadline(currentWeek.startDate) : null),
@@ -165,6 +200,43 @@ const BettingPage: FC = () => {
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Header */}
         <h1 className="text-center text-title mb-2">Paris</h1>
+
+        {/* Season Recap Banner */}
+        {showRecapBanner && recapMonth > 0 && (
+          <div
+            onClick={() => setShowRecapModal(true)}
+            className="relative bg-gradient-to-r from-purple-600/20 to-primary-600/20 border border-purple-500/30 rounded-xl p-3 cursor-pointer hover:border-purple-500/50 transition-colors"
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                dismissRecapBanner();
+              }}
+              className="absolute top-2 right-2 text-neutral-500 hover:text-white text-xs p-1"
+              aria-label="Fermer"
+            >
+              ✕
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+                <MdAutoAwesome className="text-xl text-purple-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">
+                  Le récap de {
+                    ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+                    ][recapMonth - 1]
+                  } est disponible !
+                </p>
+                <p className="text-xs text-neutral-400">
+                  Découvrez les highlights de la saison passée
+                </p>
+              </div>
+              <span className="text-purple-400 text-sm shrink-0">→</span>
+            </div>
+          </div>
+        )}
 
         {/* Main Action Card - Current Week */}
         {currentWeek && (
@@ -412,6 +484,15 @@ const BettingPage: FC = () => {
             </Link>
           </div>
         </div>
+
+        {/* Season Recap Modal */}
+        {showRecapModal && recapMonth > 0 && (
+          <SeasonRecapModal
+            year={recapYear}
+            month={recapMonth}
+            onClose={() => setShowRecapModal(false)}
+          />
+        )}
       </div>
     </div>
   );
