@@ -113,9 +113,9 @@ const StatsTab: FC<StatsTabProps> = ({
         <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <MdCalendarMonth className="text-orange-400" />
-            <span>Série mensuelle</span>
+            <span>Série saisonnière</span>
           </h3>
-          <p className="text-xs text-neutral-500 font-normal -mt-2 mb-4">Semaines consécutives avec au moins 1 pick correct ce mois-ci.</p>
+          <p className="text-xs text-neutral-500 font-normal -mt-2 mb-4">Semaines consécutives avec au moins 1 pick correct cette saison.</p>
           <StreakIndicator
             type="monthly"
             currentStreak={stats.currentMonthlyStreak}
@@ -293,7 +293,7 @@ const StatsTab: FC<StatsTabProps> = ({
           animated
         />
         <StatCard
-          label="Mois Consécutifs"
+          label="Saisons Consécutives"
           value={periodStats.consecutiveMonths}
           icon={<MdTrendingUp className="text-emerald-400" />}
           colorClass="text-emerald-400"

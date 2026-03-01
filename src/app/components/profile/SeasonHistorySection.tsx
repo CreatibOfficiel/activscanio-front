@@ -37,22 +37,9 @@ const itemVariants = {
 };
 
 // Helper functions
-const getSeasonLabel = (month: number, year: number): string => {
-  const monthNames = [
-    'Janvier',
-    'Février',
-    'Mars',
-    'Avril',
-    'Mai',
-    'Juin',
-    'Juillet',
-    'Août',
-    'Septembre',
-    'Octobre',
-    'Novembre',
-    'Décembre',
-  ];
-  return `${monthNames[month - 1]} ${year}`;
+const getSeasonLabel = (month: number, year: number, seasonNumber?: number): string => {
+  const label = seasonNumber ?? month;
+  return `Saison ${label} - ${year}`;
 };
 
 const getRankBadge = (
@@ -246,7 +233,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
           <div className="text-4xl mb-3">🏁</div>
           <p className="text-neutral-400">Première saison en cours</p>
           <p className="text-sm text-neutral-500 mt-1">
-            Votre palmarès apparaîtra ici à la fin du mois
+            Votre palmarès apparaîtra ici à la fin de la saison
           </p>
         </div>
       </div>
@@ -328,7 +315,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-white font-semibold">
-                    {getSeasonLabel(season.month, season.year)}
+                    {getSeasonLabel(season.month, season.year, season.seasonNumber)}
                   </span>
                   {isProvisional ? (
                     <span className="px-2 py-0.5 rounded text-xs font-medium bg-neutral-700 text-neutral-400">

@@ -41,7 +41,7 @@ const FlameIndicator: FC<FlameIndicatorProps> = ({
   // Get label based on type
   const getLabel = () => {
     if (type === 'monthly') {
-      return streak === 1 ? 'semaine ce mois' : 'semaines ce mois';
+      return streak === 1 ? 'semaine cette saison' : 'semaines cette saison';
     }
     return streak === 1 ? 'semaine consécutive' : 'semaines consécutives';
   };

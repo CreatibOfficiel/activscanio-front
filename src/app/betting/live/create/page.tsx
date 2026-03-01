@@ -14,6 +14,7 @@ import LiveBetCard from '@/app/components/live-betting/LiveBetCard';
 import { MdCameraAlt } from 'react-icons/md';
 import { formatOdds } from '@/app/utils/formatters';
 import { useSocket } from '@/app/hooks/useSocket';
+import { getCurrentSeasonNumber } from '@/app/utils/season-utils';
 
 type Step = 'pick' | 'photo' | 'detecting' | 'confirm' | 'active' | 'resolved';
 
@@ -41,10 +42,10 @@ const CreateLiveBetPage: FC = () => {
         const odds = await BettingRepository.getCurrentWeekOdds();
         setCompetitors(odds);
 
-        // Load user's current month points
+        // Load user's current season points
         const now = new Date();
         const rankingsData = await BettingRepository.getMonthlyRankings(
-          now.getMonth() + 1,
+          getCurrentSeasonNumber(),
           now.getFullYear(),
         );
         if (userId) {

@@ -72,7 +72,7 @@ const OverviewTab: FC<OverviewTabProps> = ({
       <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
           <MdCasino className="text-emerald-400" />
-          <span>Mes paris ce mois</span>
+          <span>Mes paris cette saison</span>
         </h3>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -23,7 +23,7 @@ const periodOptions: { value: PeriodFilter; label: string }[] = [
   { value: "all", label: "Tout" },
   { value: "today", label: "Aujourd'hui" },
   { value: "week", label: "Cette semaine" },
-  { value: "month", label: "Ce mois" },
+  { value: "month", label: "Cette saison" },
 ];
 
 const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {

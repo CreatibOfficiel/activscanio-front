@@ -36,23 +36,23 @@ export const faqSections: FAQSection[] = [
     icon: '📅',
     title: 'Saisons & Semaines',
     summary:
-      "Les paris fonctionnent par semaine, du lundi au dimanche. La première semaine de chaque mois est une période de calibration (pas de paris).",
+      "Les paris fonctionnent par semaine, du lundi au dimanche. La première semaine de chaque saison est une période de calibration (pas de paris).",
     points: [
       "Nouvelle semaine de paris chaque lundi à minuit",
-      "1ère semaine du mois = Calibration (pas de paris, ELO se stabilise)",
+      "1ère semaine de la saison = Calibration (pas de paris, ELO se stabilise)",
       "2ème semaine et + = Paris ouverts le lundi, de 00h00 à minuit",
       "Mardi au dimanche = Surprise ! Les courses continuent mais les paris sont fermés",
       "Les résultats et points sont calculés le dimanche à 20h",
-      "Archive mensuelle le 1er de chaque mois avec soft reset ELO",
+      "Archive en fin de saison avec soft reset ELO",
     ],
     technicalDetails: `Cycle hebdomadaire automatique :
 • Semaines ISO (lundi = jour 1)
-• CALIBRATION : 1ère semaine du mois (pas de paris)
+• CALIBRATION : 1ère semaine de la saison (pas de paris)
 • OPEN : lundi 00:00 → mardi 00:00 UTC (lundi minuit)
 • CLOSED : mardi 00:00 → dimanche 20:00 (6 jours d'incertitude)
 • FINALIZED : dimanche 20:00+ (résultats disponibles)
 
-Soft Reset mensuel (1er du mois) :
+Soft reset en début de saison :
 • Rating = 0.75 × ancien + 0.25 × 1500
 • RD augmente légèrement (+50, max 350)
 • L'écart entre joueurs se resserre mais l'ordre reste`,
@@ -66,7 +66,7 @@ Soft Reset mensuel (1er du mois) :
     points: [
       "Choisissez 3 joueurs pour le podium : 1er, 2ème, 3ème",
       "Chaque joueur a une cote qui détermine vos gains potentiels",
-      "Utilisez votre boost x2 sur un pick pour doubler ses points (1 boost par mois !)",
+      "Utilisez votre boost x2 sur un pick pour doubler ses points (1 boost par saison !)",
       "Podium parfait (3/3 correct) = tous vos points doublés !",
     ],
     technicalDetails: `Calcul des points :
@@ -88,17 +88,17 @@ Total = 8.5 pts`,
     icon: '🚀',
     title: 'Le Boost x2',
     summary:
-      "Le boost est un bonus spécial qui double les points d'un de vos picks. Utilisez-le stratégiquement car vous n'en avez qu'un seul par mois !",
+      "Le boost est un bonus spécial qui double les points d'un de vos picks. Utilisez-le stratégiquement car vous n'en avez qu'un seul par saison !",
     points: [
-      "1 boost disponible par mois calendaire",
+      "1 boost disponible par saison de 4 semaines",
       "Applicable sur n'importe lequel de vos 3 picks",
       "Double les points gagnés si le pick est correct",
-      "Le boost est réinitialisé le 1er de chaque mois",
+      "Le boost est réinitialisé au début de chaque saison",
       "Conseil : Utilisez-le sur un pick à cote élevée pour maximiser les gains !",
     ],
     technicalDetails: `Règles du boost :
-• Limite : 1 boost par mois calendaire
-• Réinitialisation : 1er du mois à 00:00
+• Limite : 1 boost par saison de 4 semaines
+• Réinitialisation : début de chaque saison
 • Multiplicateur : ×2 sur les points du pick boosté
 • Cumulable avec le bonus podium parfait
 
@@ -135,7 +135,7 @@ Annulation automatique :
 • Détection échouée (aucun personnage reconnu)
 
 Points :
-• Mêmes points que le classement mensuel des parieurs
+• Mêmes points que le classement saisonnier des parieurs
 • Gagné : totalPoints + oddAtBet
 • Perdu : totalPoints - oddAtBet (minimum 0)
 • Les cotes utilisées sont celles de la semaine en cours (oddFirst)`,
@@ -211,12 +211,12 @@ Quand les cotes changent :
     icon: '📈',
     title: 'Classement ELO (Glicko-2)',
     summary:
-      "Votre niveau est calculé après chaque course avec l'algorithme Glicko-2. Un soft reset (75/25) est appliqué chaque mois pour garder la compétition intéressante.",
+      "Votre niveau est calculé après chaque course avec l'algorithme Glicko-2. Un soft reset (75/25) est appliqué chaque saison pour garder la compétition intéressante.",
     points: [
       "Rating = votre niveau estimé (démarre à 1500)",
       "RD = incertitude sur votre niveau (diminue avec plus de courses)",
       "Gagner contre des joueurs forts rapporte plus de points",
-      "Soft reset mensuel : 75% ancien rating + 25% de 1500",
+      "Soft reset saisonnier : 75% ancien rating + 25% de 1500",
       "Le score conservateur (Rating - 2×RD) est utilisé pour le classement",
     ],
     technicalDetails: `Algorithme : Glicko-2 (évolution du système ELO)
@@ -226,7 +226,7 @@ Valeurs initiales :
 • RD (Rating Deviation) : 350
 • Volatilité (σ) : 0.06
 
-Soft Reset mensuel (1er du mois) :
+Soft reset en début de saison :
 • Nouveau rating = 0.75 × ancien + 0.25 × 1500
 • RD = min(ancien RD + 50, 350)
 • Exemple : 1800 → 1725, 1200 → 1275
@@ -306,7 +306,7 @@ Bonus XP associés aux séries :
     summary:
       "Le classement est basé sur le score conservateur (ELO - 2×RD). Il faut avoir participé à au moins 1 course dans la période pour être classé.",
     points: [
-      "Classement par semaine, mois ou depuis le début",
+      "Classement par semaine, saison ou depuis le début",
       "Score conservateur = niveau minimum probable",
       "Participation requise : au moins 1 course dans la période",
       "Plus vous jouez, plus votre RD diminue et votre classement devient stable",
@@ -319,7 +319,7 @@ Bonus XP associés aux séries :
 
 Filtrage par période :
 • Semaine : courses des 7 derniers jours
-• Mois : courses des 30 derniers jours
+• Saison : courses de la saison en cours
 • Tout : toutes les courses
 
 Seuls les joueurs avec raceCount > 0

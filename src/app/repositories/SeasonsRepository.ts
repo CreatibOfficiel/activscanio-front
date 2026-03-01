@@ -5,6 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export interface SeasonArchive {
   id: string;
   month: number;
+  seasonNumber: number;
   year: number;
   seasonName: string | null;
   totalCompetitors: number;

@@ -14,6 +14,7 @@ import { TrendDirection } from "../leaderboard/TrendIndicator";
 import DuelChallengeForm from "../duel/DuelChallengeSheet";
 import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
 import { BettingRepository } from "@/app/repositories/BettingRepository";
+import { getCurrentSeasonNumber } from "@/app/utils/season-utils";
 import { MdClose, MdSportsKabaddi, MdChevronRight } from "react-icons/md";
 
 /* ------------------------------------------------------------------ */
@@ -136,7 +137,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
   useEffect(() => {
     if (!isOpen || !userData?.id) return;
     const now = new Date();
-    BettingRepository.getMonthlyRankings(now.getMonth() + 1, now.getFullYear())
+    BettingRepository.getMonthlyRankings(getCurrentSeasonNumber(), now.getFullYear())
       .then((res) => {
         const myRanking = res.rankings.find((r) => r.userId === userData?.id);
         setUserPoints(myRanking?.totalPoints ?? 0);
@@ -636,11 +637,11 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 />
               )}
 
-              {/* Activity this month */}
+              {/* Activity this season */}
               {competitor.currentMonthRaceCount != null && (
                 <StatCard
                   icon="📅"
-                  title="Activité ce mois"
+                  title="Activité cette saison"
                   value={`${competitor.currentMonthRaceCount} course${competitor.currentMonthRaceCount > 1 ? "s" : ""
                     }`}
                 />

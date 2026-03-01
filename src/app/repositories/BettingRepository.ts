@@ -209,20 +209,21 @@ export class BettingRepository {
   }
 
   /**
-   * Get monthly rankings
+   * Get season rankings
    */
   static async getMonthlyRankings(
-    month: number,
+    season: number,
     year: number
   ): Promise<{
     month: number;
+    seasonNumber: number;
     year: number;
     count: number;
     rankings: BettorRanking[];
   }> {
     try {
       const response = await apiFetch(
-        `${API_BASE_URL}/betting/rankings/monthly?month=${month}&year=${year}`,
+        `${API_BASE_URL}/betting/rankings/monthly?season=${season}&year=${year}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -235,7 +236,6 @@ export class BettingRepository {
       }
 
       const data = await response.json();
-      // Backend returns { month, year, count, rankings: [...] }
       return data;
     } catch (error) {
       console.error('Error fetching rankings:', error);

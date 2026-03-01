@@ -488,7 +488,7 @@ const AchievementsPage: FC = () => {
                   const chainTitles: Record<string, string> = {
                     perfect_podium_chain: '🎯 Chaîne Précision - Podiums Parfaits',
                     participation_chain: '📅 Chaîne Régularité - Participation',
-                    points_monthly_chain: '🎲 Chaîne Audace - Points Mensuels',
+                    points_monthly_chain: '🎲 Chaîne Audace - Points par Saison',
                     win_streak_chain: '🏅 Chaîne Classement - Séries de Victoires',
                     race_wins_chain: '🏁 Courses - Victoires',
                     race_participation_chain: '🏎️ Courses - Participation',

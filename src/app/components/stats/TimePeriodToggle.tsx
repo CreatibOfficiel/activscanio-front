@@ -12,7 +12,7 @@ interface TimePeriodToggleProps {
 }
 
 const periodLabels: Record<TimePeriod, string> = {
-  month: 'Ce mois',
+  month: 'Cette saison',
   year: 'Cette année',
   all: 'Tout le temps',
 };

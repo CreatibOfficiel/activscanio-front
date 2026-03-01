@@ -79,7 +79,7 @@ const HelpPage: FC = () => {
             <div className="text-2xl mb-2">🚀</div>
             <p className="text-sm text-neutral-300">
               Votre <span className="text-warning-500 font-semibold">boost x2</span> se
-              réinitialise le 1er de chaque mois
+              réinitialise à chaque nouvelle saison
             </p>
           </div>
         </div>

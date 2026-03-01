@@ -68,11 +68,11 @@ const BettingPage: FC = () => {
           setCurrentBet(bet);
           if (bet) setInternalUserId(bet.userId);
 
-          // Load user ranking for current month
-          const now = new Date();
+          // Load user ranking for current season
+          const { getCurrentSeasonNumber } = await import('@/app/utils/season-utils');
           const rankingsData = await BettingRepository.getMonthlyRankings(
-            now.getMonth() + 1,
-            now.getFullYear()
+            getCurrentSeasonNumber(),
+            new Date().getFullYear()
           );
           const myRanking = rankingsData.rankings.find(
             (r) => r.userId === user.id
@@ -103,27 +103,29 @@ const BettingPage: FC = () => {
     loadData();
   }, [loadData]);
 
-  // Check if we should show recap banner (first 7 days of month)
+  // Check if we should show recap banner (first week of new season)
   useEffect(() => {
-    const now = new Date();
-    if (now.getDate() > 7) return;
+    import('@/app/utils/season-utils').then(({ getCurrentSeasonNumber }) => {
+      const currentSeason = getCurrentSeasonNumber();
+      const currentYear = new Date().getFullYear();
+      const prevSeason = currentSeason === 1 ? 13 : currentSeason - 1;
+      const prevYear = currentSeason === 1 ? currentYear - 1 : currentYear;
 
-    const bannerDismissKey = 'recapBannerDismissed';
-    const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth();
-    const prevYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-    const dismissedValue = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+      const bannerDismissKey = 'recapBannerDismissed';
+      const dismissedValue = `${prevYear}-${String(prevSeason).padStart(2, '0')}`;
 
-    if (localStorage.getItem(bannerDismissKey) === dismissedValue) return;
+      if (localStorage.getItem(bannerDismissKey) === dismissedValue) return;
 
-    SeasonsRepository.getSeason(prevYear, prevMonth)
-      .then((season) => {
-        if (season && season.id) {
-          setRecapMonth(prevMonth);
-          setRecapYear(prevYear);
-          setShowRecapBanner(true);
-        }
-      })
-      .catch(() => {});
+      SeasonsRepository.getSeason(prevYear, prevSeason)
+        .then((season) => {
+          if (season && season.id) {
+            setRecapMonth(prevSeason);
+            setRecapYear(prevYear);
+            setShowRecapBanner(true);
+          }
+        })
+        .catch(() => {});
+    });
   }, []);
 
   const dismissRecapBanner = useCallback(() => {
@@ -398,7 +400,7 @@ const BettingPage: FC = () => {
               <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
                 <MdTrendingUp className="text-2xl text-green-400" />
               </div>
-              <p className="text-sub text-neutral-400 mb-1">Points ce mois</p>
+              <p className="text-sub text-neutral-400 mb-1">Points cette saison</p>
               {userRanking ? (
                 <p className="text-statistic font-bold text-white">{userRanking.totalPoints}</p>
               ) : (

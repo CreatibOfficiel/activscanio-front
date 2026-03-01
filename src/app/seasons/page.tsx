@@ -32,16 +32,8 @@ const SeasonsPage: FC = () => {
     loadSeasons();
   }, []);
 
-  const getMonthName = (month: number): string => {
-    const months = [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ];
-    return months[month - 1];
-  };
-
   const handleSeasonClick = (season: SeasonArchive) => {
-    router.push(`/seasons/${season.year}/${season.month}`);
+    router.push(`/seasons/${season.year}/${season.seasonNumber}`);
   };
 
   // Pagination logic
@@ -103,7 +95,7 @@ const SeasonsPage: FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-heading text-white">
-                      {getMonthName(season.month)} {season.year}
+                      Saison {season.seasonNumber} - {season.year}
                     </h3>
                     {season.seasonName && (
                       <p className="text-sub text-neutral-400">{season.seasonName}</p>
@@ -111,7 +103,7 @@ const SeasonsPage: FC = () => {
                   </div>
                   <Badge variant="primary" size="md">
                     <MdCalendarToday className="mr-1" />
-                    S{season.month}
+                    S{season.seasonNumber}
                   </Badge>
                 </div>
 

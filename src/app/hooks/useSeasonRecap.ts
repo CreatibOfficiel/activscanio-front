@@ -2,16 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { SeasonsRepository } from "../repositories/SeasonsRepository";
+import { getCurrentSeasonNumber } from "../utils/season-utils";
 
 const STORAGE_KEY = "lastSeenSeasonRecap";
 
-function getPreviousMonth(): { month: number; year: number } {
-  const now = new Date();
-  const month = now.getMonth(); // 0-indexed: Jan=0
-  if (month === 0) {
-    return { month: 12, year: now.getFullYear() - 1 };
+function getPreviousSeason(): { month: number; year: number } {
+  const currentSeason = getCurrentSeasonNumber();
+  const currentYear = new Date().getFullYear();
+  if (currentSeason === 1) {
+    return { month: 13, year: currentYear - 1 };
   }
-  return { month, year: now.getFullYear() };
+  return { month: currentSeason - 1, year: currentYear };
 }
 
 function hasSeenRecap(month: number, year: number): boolean {
@@ -37,7 +38,7 @@ export function useSeasonRecap() {
   useEffect(() => {
     if (checked) return;
 
-    const { month, year } = getPreviousMonth();
+    const { month, year } = getPreviousSeason();
 
     if (hasSeenRecap(month, year)) {
       setChecked(true);

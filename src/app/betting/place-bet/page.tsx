@@ -54,7 +54,7 @@ const PlaceBetPage: FC = () => {
       // Check if week is open for betting
       if (week.status === BettingWeekStatus.CALIBRATION) {
         setError(
-          "C'est la première semaine du mois : période de calibration ELO. Les paris ouvriront la semaine prochaine."
+          "C'est la première semaine de la saison : période de calibration ELO. Les paris ouvriront la semaine prochaine."
         );
         setIsLoading(false);
         return;
@@ -297,7 +297,7 @@ const PlaceBetPage: FC = () => {
               {!boostAvailable && (
                 <div className="mt-3 p-2 bg-warning-500/10 border border-warning-500/30 rounded-lg">
                   <p className="text-sub text-warning-500">
-                    ⚠️ Vous avez déjà utilisé votre boost mensuel. Il sera réinitialisé le 1er du mois prochain.
+                    ⚠️ Vous avez déjà utilisé votre boost de saison. Il sera réinitialisé au début de la prochaine saison.
                   </p>
                 </div>
               )}

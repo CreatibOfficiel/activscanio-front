@@ -69,14 +69,6 @@ const SeasonDetailPage: FC = () => {
     loadSeasonData();
   }, [year, month]);
 
-  const getMonthName = (month: number): string => {
-    const months = [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ];
-    return months[month - 1];
-  };
-
   const getRankBadgeVariant = (rank: number | null) => {
     if (rank === null) return 'default';
     if (rank === 1) return 'gold';
@@ -115,7 +107,7 @@ const SeasonDetailPage: FC = () => {
         {/* Header */}
         <PageHeader
           variant="detail"
-          title={`${getMonthName(season.month)} ${season.year}`}
+          title={`Saison ${season.seasonNumber} - ${season.year}`}
           subtitle={season.seasonName || undefined}
           backHref="/seasons"
           rightAction={
@@ -129,7 +121,7 @@ const SeasonDetailPage: FC = () => {
                 Récap
               </Button>
               <Badge variant="primary" size="lg">
-                Saison {season.month}
+                Saison {season.seasonNumber}
               </Badge>
             </div>
           }

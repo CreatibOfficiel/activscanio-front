@@ -16,6 +16,7 @@ import TVProgressBar from "./components/TVProgressBar";
 import { useAutoScroll } from "@/app/hooks/useAutoScroll";
 import { BettorRanking, CompetitorOdds } from "@/app/models/CompetitorOdds";
 import { Competitor } from "@/app/models/Competitor";
+import { getCurrentSeasonNumber } from "@/app/utils/season-utils";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -177,13 +178,13 @@ const TVDisplayContent: FC = () => {
         setError(null);
 
         const now = new Date();
-        const currentMonth = now.getMonth() + 1;
+        const currentSeasonNum = getCurrentSeasonNumber();
         const currentYear = now.getFullYear();
 
         const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
 
         const [bettors, competitors, seasons, currentWeek] = await Promise.all([
-          BettingRepository.getMonthlyRankings(currentMonth, currentYear).catch(
+          BettingRepository.getMonthlyRankings(currentSeasonNum, currentYear).catch(
             () => null
           ),
           competitorsRepo.fetchCompetitors().catch(() => []),

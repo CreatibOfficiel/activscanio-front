@@ -47,10 +47,10 @@ const MonthlyStreak: FC<MonthlyStreakProps> = ({ streak, totalWeeks, className =
   const weeksRemaining = Math.max(0, totalWeeks - activeWeeks);
 
   const getMessage = () => {
-    if (isPerfect) return 'Mois parfait !';
+    if (isPerfect) return 'Saison parfaite !';
     if (activeWeeks === 0) return 'Placez un pari pour démarrer !';
-    if (weeksRemaining === 1) return 'Encore 1 semaine pour le mois parfait !';
-    return `Encore ${weeksRemaining} semaines pour le mois parfait !`;
+    if (weeksRemaining === 1) return 'Encore 1 semaine pour la saison parfaite !';
+    return `Encore ${weeksRemaining} semaines pour la saison parfaite !`;
   };
 
   return (
@@ -96,7 +96,7 @@ const MonthlyStreak: FC<MonthlyStreakProps> = ({ streak, totalWeeks, className =
 
       </div>
 
-      <p className="text-xs text-neutral-500 mt-2">Nombre de semaines où vous avez parié ce mois-ci. Pariez chaque semaine pour un mois parfait !</p>
+      <p className="text-xs text-neutral-500 mt-2">Nombre de semaines où vous avez parié cette saison. Pariez chaque semaine pour une saison parfaite !</p>
 
       {/* Summary text */}
       <div className="space-y-2">

@@ -111,7 +111,7 @@ const DuelChallengeForm: FC<DuelChallengeFormProps> = ({
           })}
         </div>
         <p className="text-xs text-neutral-500 text-center mt-2">
-          Tu as {points} pts ce mois
+          Tu as {points} pts cette saison
         </p>
       </div>
 

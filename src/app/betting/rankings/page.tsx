@@ -5,14 +5,14 @@ import { BettingRepository } from '@/app/repositories/BettingRepository';
 import { BettorRanking } from '@/app/models/CompetitorOdds';
 import { Card, Badge, PageHeader, UserAvatar } from '@/app/components/ui';
 import { FlameIndicator } from '@/app/components/achievements';
-import { MONTH_NAMES } from '@/app/utils/constants';
+import { getCurrentSeasonNumber, getSeasonLabel, TOTAL_SEASONS } from '@/app/utils/season-utils';
 import { MdTrendingUp, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
 const RankingsPage: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rankings, setRankings] = useState<BettorRanking[]>([]);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedSeason, setSelectedSeason] = useState(getCurrentSeasonNumber());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const loadRankings = useCallback(async () => {
@@ -21,7 +21,7 @@ const RankingsPage: FC = () => {
       setError(null);
 
       const data = await BettingRepository.getMonthlyRankings(
-        selectedMonth,
+        selectedSeason,
         selectedYear
       );
       setRankings(data.rankings);
@@ -32,7 +32,7 @@ const RankingsPage: FC = () => {
       setError('Erreur lors du chargement des classements.');
       setIsLoading(false);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [selectedSeason, selectedYear]);
 
   useEffect(() => {
     loadRankings();
@@ -41,32 +41,34 @@ const RankingsPage: FC = () => {
   const topThree = rankings.slice(0, 3);
   const others = rankings.slice(3);
 
-  // Navigation between months
-  const goToPreviousMonth = () => {
-    if (selectedMonth === 1) {
-      setSelectedMonth(12);
+  // Navigation between seasons
+  const goToPreviousSeason = () => {
+    if (selectedSeason === 1) {
+      setSelectedSeason(TOTAL_SEASONS);
       setSelectedYear(selectedYear - 1);
     } else {
-      setSelectedMonth(selectedMonth - 1);
+      setSelectedSeason(selectedSeason - 1);
     }
   };
 
-  const goToNextMonth = () => {
-    const now = new Date();
-    const isCurrentMonth = selectedMonth === now.getMonth() + 1 && selectedYear === now.getFullYear();
-    if (isCurrentMonth) return; // Can't go to future
+  const goToNextSeason = () => {
+    const currentSeason = getCurrentSeasonNumber();
+    const currentYear = new Date().getFullYear();
+    const isCurrentSeason = selectedSeason === currentSeason && selectedYear === currentYear;
+    if (isCurrentSeason) return; // Can't go to future
 
-    if (selectedMonth === 12) {
-      setSelectedMonth(1);
+    if (selectedSeason === TOTAL_SEASONS) {
+      setSelectedSeason(1);
       setSelectedYear(selectedYear + 1);
     } else {
-      setSelectedMonth(selectedMonth + 1);
+      setSelectedSeason(selectedSeason + 1);
     }
   };
 
   const isNextDisabled = () => {
-    const now = new Date();
-    return selectedMonth === now.getMonth() + 1 && selectedYear === now.getFullYear();
+    const currentSeason = getCurrentSeasonNumber();
+    const currentYear = new Date().getFullYear();
+    return selectedSeason === currentSeason && selectedYear === currentYear;
   };
 
   if (isLoading) {
@@ -100,31 +102,31 @@ const RankingsPage: FC = () => {
           backHref="/betting"
         />
 
-        {/* Month/Year Selector - Below header */}
+        {/* Season/Year Selector - Below header */}
         <div className="flex items-center justify-center gap-2 mb-6 -mt-2">
           <button
-            onClick={goToPreviousMonth}
+            onClick={goToPreviousSeason}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
-            aria-label="Mois précédent"
+            aria-label="Saison precedente"
           >
             <MdChevronLeft className="w-6 h-6" />
           </button>
 
           <div className="flex items-center gap-2 px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-full min-w-[180px] justify-center">
             <span className="text-white font-medium">
-              {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+              {getSeasonLabel(selectedSeason)} {selectedYear}
             </span>
           </div>
 
           <button
-            onClick={goToNextMonth}
+            onClick={goToNextSeason}
             disabled={isNextDisabled()}
             className={`flex items-center justify-center w-10 h-10 rounded-full bg-neutral-800 border border-neutral-700 transition-colors ${
               isNextDisabled()
                 ? 'text-neutral-600 cursor-not-allowed'
                 : 'text-neutral-400 hover:text-white hover:border-neutral-600'
             }`}
-            aria-label="Mois suivant"
+            aria-label="Saison suivante"
           >
             <MdChevronRight className="w-6 h-6" />
           </button>
@@ -262,7 +264,7 @@ const RankingsPage: FC = () => {
                               {ranking.userName}
                             </h3>
                             <p className="text-sub text-neutral-500">
-                              {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
+                              {getSeasonLabel(selectedSeason)} {selectedYear}
                             </p>
                           </div>
                         </div>
