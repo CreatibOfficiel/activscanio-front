@@ -208,10 +208,10 @@ const SeasonDetailPage: FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-bold text-primary-500">
-                        {Math.round(ranking.finalRating)}
+                        {Math.round(ranking.finalRating - 2 * ranking.finalRd)}
                       </p>
                       <p className="text-sub text-neutral-400">
-                        RD: {Math.round(ranking.finalRd)}
+                        ELO
                       </p>
                     </div>
                   </div>

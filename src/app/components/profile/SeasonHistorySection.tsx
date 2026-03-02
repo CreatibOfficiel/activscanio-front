@@ -353,7 +353,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
                   <div className="text-neutral-400 text-xs">ELO Final</div>
                   <div className="text-white font-medium flex items-center gap-1">
                     <MdStarRate className="text-primary-400 text-sm" />
-                    {Math.round(ranking.finalRating)}
+                    {Math.round(ranking.finalRating - 2 * ranking.finalRd)}
                   </div>
                 </div>
                 <div>

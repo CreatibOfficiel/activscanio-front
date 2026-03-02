@@ -345,9 +345,9 @@ function CompetitorRow({
         </div>
       </div>
 
-      {/* ELO */}
+      {/* ELO (conservative score = rating - 2*RD) */}
       <div className="text-right shrink-0">
-        <p className="text-sm font-bold text-primary-500">{Math.round(item.finalRating)}</p>
+        <p className="text-sm font-bold text-primary-500">{Math.round(item.finalRating - 2 * item.finalRd)}</p>
         <p className="text-[10px] text-neutral-500">ELO</p>
       </div>
     </motion.div>
@@ -703,15 +703,17 @@ function SlideEloReset({
         .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity))
         .slice(0, 8)
         .map((c) => {
-          const oldRating = Math.round(c.finalRating);
-          const newRating = Math.round(0.75 * c.finalRating + 0.25 * 1500);
+          const oldScore = Math.round(c.finalRating - 2 * c.finalRd);
+          const newRating = 0.75 * c.finalRating + 0.25 * 1500;
+          const newRd = Math.min(c.finalRd + 50, 350);
+          const newScore = Math.round(newRating - 2 * newRd);
           return {
             name: c.competitorName,
             imageUrl: c.profilePictureUrl,
             characterUrl: c.characterImageUrl,
-            oldRating,
-            newRating,
-            delta: newRating - oldRating,
+            oldRating: oldScore,
+            newRating: newScore,
+            delta: newScore - oldScore,
           };
         }),
     [competitors]
@@ -973,7 +975,7 @@ export default function SeasonRecapModal({
         .map((c) => ({
           name: c.competitorName,
           rank: c.rank!,
-          score: c.finalRating,
+          score: c.finalRating - 2 * c.finalRd,
           scoreLabel: "ELO",
           races: c.totalRaces,
           winStreak: c.winStreak,
