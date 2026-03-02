@@ -25,14 +25,17 @@ export interface ArchivedCompetitorRanking {
   finalRating: number;
   finalRd: number;
   finalVol: number;
-  raceCount: number;
+  totalRaces: number;
   avgRank12: number;
   winStreak: number;
+  profilePictureUrl: string | null;
+  characterImageUrl: string | null;
 }
 
 export interface ArchivedBettorRanking {
   userId: string;
   userName: string;
+  profilePictureUrl: string | null;
   rank: number;
   totalPoints: number;
   betsPlaced: number;
@@ -63,6 +66,7 @@ export interface SeasonHighlights {
   longestParticipationStreak: { userName: string; streak: number } | null;
   longestWinStreak: { competitorName: string; streak: number } | null;
   mostRaces: { competitorName: string; count: number } | null;
+  bestRaceScorers: { competitorName: string; maxScore: number; perfectCount: number }[] | null;
 }
 
 export interface SeasonRecapData {

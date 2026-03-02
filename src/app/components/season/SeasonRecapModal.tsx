@@ -6,6 +6,7 @@ import confetti from "canvas-confetti";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import CountUp from "react-countup";
 import Badge from "@/app/components/ui/Badge";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { Button } from "@/app/components/ui";
 import { getLeagueForRank } from "@/app/utils/leagues";
 import {
@@ -25,6 +26,7 @@ import {
   MdSportsScore,
   MdPerson,
   MdFlag,
+  MdAutorenew,
 } from "react-icons/md";
 
 interface SeasonRecapModalProps {
@@ -38,7 +40,7 @@ const MONTH_NAMES = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ];
 
-const TOTAL_SLIDES = 6;
+const TOTAL_SLIDES = 7;
 
 function getRankBadgeVariant(
   rank: number | null
@@ -59,7 +61,7 @@ function ProgressBar({
   current: number;
 }) {
   return (
-    <div className="flex gap-1 px-4 pt-3" role="progressbar" aria-valuenow={current + 1} aria-valuemin={1} aria-valuemax={total}>
+    <div className="flex gap-1 pl-4 pr-14 pt-3" role="progressbar" aria-valuenow={current + 1} aria-valuemin={1} aria-valuemax={total}>
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} className="flex-1 h-[3px] rounded-full bg-white/15 overflow-hidden">
           <div
@@ -163,7 +165,16 @@ function PodiumSlide({
   reducedMotion,
 }: {
   title: string;
-  items: { name: string; rank: number; score: number; scoreLabel: string; extra?: string }[];
+  items: {
+    name: string;
+    rank: number;
+    score: number;
+    scoreLabel: string;
+    races?: number;
+    winStreak?: number;
+    imageUrl?: string | null;
+    characterUrl?: string | null;
+  }[];
   type: "competitor" | "bettor";
   reducedMotion: boolean;
 }) {
@@ -174,17 +185,15 @@ function PodiumSlide({
     items.find((c) => c.rank === 3),
   ].filter(Boolean) as typeof items;
 
-  const heights = ["h-28", "h-36", "h-24"];
+  const colHeights = ["h-[88px]", "h-[120px]", "h-[72px]"];
   const delays = [0.3, 0.15, 0.45];
-  const gradients = [
-    "bg-gradient-to-t from-neutral-800 to-neutral-700 border-silver-500/40",
-    "bg-gradient-to-t from-neutral-800 to-neutral-700 border-gold-500/50",
-    "bg-gradient-to-t from-neutral-800 to-neutral-700 border-bronze-500/40",
-  ];
-  const glows = ["", "shadow-[0_0_20px_rgba(235,170,30,0.15)]", ""];
+  const borderColors = ["border-gray-300/40", "border-yellow-500/50", "border-amber-600/40"];
+  const glows = ["", "shadow-[0_0_24px_rgba(235,170,30,0.15)]", ""];
+  const avatarBorders = ["border-gray-300", "border-yellow-500", "border-amber-600"];
+  const charSizes = ["w-5 h-5", "w-6 h-6", "w-5 h-5"];
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 px-6">
+    <div className="flex flex-col items-center justify-center h-full gap-2 px-3">
       <motion.h2
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -194,46 +203,77 @@ function PodiumSlide({
         {title}
       </motion.h2>
 
-      <div className="flex items-end justify-center gap-3 w-full max-w-sm mt-4">
-        {podiumOrder.map((item, i) => (
-          <motion.div
-            key={item.name}
-            initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 50, scaleY: 0.4 }}
-            animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scaleY: 1 }}
-            transition={
-              reducedMotion
-                ? { duration: 0.15 }
-                : { delay: delays[i], type: "spring", stiffness: 150, damping: 14 }
-            }
-            className="flex-1 flex flex-col items-center"
-            style={{ transformOrigin: "bottom" }}
-          >
-            <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="mb-2">
-              #{item.rank}
-            </Badge>
-            <p className="text-bold text-white text-center truncate w-full mb-1">
-              {item.name}
-            </p>
-            {type === "competitor" && item.rank && (
-              <span className={`text-sub mb-2 ${getLeagueForRank(item.rank).textColor}`}>
-                {getLeagueForRank(item.rank).emoji} {getLeagueForRank(item.rank).label}
-              </span>
-            )}
-            <div
-              className={`w-full ${heights[i]} rounded-t-xl ${gradients[i]} border border-b-0 flex items-center justify-center ${glows[i]}`}
+      <div className="flex items-end justify-center gap-3 w-full max-w-xs mt-1">
+        {podiumOrder.map((item, i) => {
+          const league = type === "competitor" && item.rank ? getLeagueForRank(item.rank) : null;
+
+          return (
+            <motion.div
+              key={item.name}
+              initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 50, scaleY: 0.4 }}
+              animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scaleY: 1 }}
+              transition={
+                reducedMotion
+                  ? { duration: 0.15 }
+                  : { delay: delays[i], type: "spring", stiffness: 150, damping: 14 }
+              }
+              className="flex-1 flex flex-col items-center min-w-0"
+              style={{ transformOrigin: "bottom" }}
             >
-              <div className="text-center">
-                <p className="text-statistic text-white">
+              {/* Avatar + Character overlay */}
+              <div className="relative mb-1.5">
+                <UserAvatar
+                  src={item.imageUrl}
+                  name={item.name}
+                  size={i === 1 ? "lg" : "md"}
+                  className={`border-2 ${avatarBorders[i]}`}
+                />
+                {item.characterUrl && (
+                  <img
+                    src={item.characterUrl}
+                    alt=""
+                    className={`absolute -bottom-1 -right-1 ${charSizes[i]} object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}
+                  />
+                )}
+              </div>
+
+              {/* Badge */}
+              <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="mb-1">
+                #{item.rank}
+              </Badge>
+
+              {/* Name + League */}
+              <p className="font-semibold text-white text-center truncate w-full text-xs leading-tight">
+                {item.name}
+              </p>
+              {league && (
+                <span className={`text-[10px] leading-none ${league.textColor}`}>
+                  {league.emoji}
+                </span>
+              )}
+
+              {/* Podium column with stats inside */}
+              <div
+                className={`w-full ${colHeights[i]} rounded-t-xl bg-gradient-to-t from-neutral-800 to-neutral-700 border border-b-0 ${borderColors[i]} ${glows[i]} flex flex-col items-center justify-center gap-0.5 mt-1`}
+              >
+                <p className="text-lg font-bold text-white leading-tight">
                   {Math.round(item.score)}
                 </p>
-                <p className="text-sub text-neutral-400">{item.scoreLabel}</p>
+                <p className="text-[10px] text-neutral-400">{item.scoreLabel}</p>
+                {item.races !== undefined && (
+                  <p className="text-[10px] text-neutral-500 mt-0.5">
+                    {item.races} {type === "competitor" ? `course${item.races > 1 ? "s" : ""}` : `pari${item.races > 1 ? "s" : ""}`}
+                  </p>
+                )}
+                {(item.winStreak ?? 0) > 0 && (
+                  <p className="text-[10px] text-yellow-400/80">
+                    {item.winStreak} 🔥 d&apos;affilée
+                  </p>
+                )}
               </div>
-            </div>
-            {item.extra && (
-              <p className="text-sub text-neutral-500 mt-1">{item.extra}</p>
-            )}
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -247,16 +287,16 @@ function RankingListSlide({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col h-full px-4">
+    <div className="flex flex-col h-full px-3">
       <motion.h2
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="text-heading text-white text-center mb-4 shrink-0"
+        className="text-heading text-white text-center mb-3 shrink-0"
       >
         {title}
       </motion.h2>
-      <div className="overflow-y-auto flex-1 space-y-2 pb-4 overscroll-contain">
+      <div className="overflow-y-auto flex-1 space-y-1.5 pb-4 overscroll-contain">
         {children}
       </div>
     </div>
@@ -272,39 +312,50 @@ function CompetitorRow({
   index: number;
   reducedMotion: boolean;
 }) {
+  const league = item.rank ? getLeagueForRank(item.rank) : null;
+
   return (
     <motion.div
       initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: reducedMotion ? 0 : Math.min(index * 0.03, 0.5), duration: 0.3 }}
-      className="flex items-center justify-between p-3 bg-neutral-800 rounded-lg border border-neutral-700/50"
+      className="flex items-center gap-2.5 px-3 py-2.5 bg-neutral-800 rounded-lg border border-neutral-700/50"
     >
-      <div className="flex items-center gap-3 min-w-0">
-        <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="shrink-0">
-          {item.provisional ? "~" : `#${item.rank}`}
-        </Badge>
-        <div className="min-w-0">
-          <p className="text-bold text-white truncate">{item.competitorName}</p>
+      {/* Rank badge */}
+      <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="shrink-0">
+        {item.provisional ? "~" : `#${item.rank}`}
+      </Badge>
+
+      {/* Avatar */}
+      <UserAvatar src={item.profilePictureUrl} name={item.competitorName} size="sm" />
+
+      {/* Name + stats */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-white truncate">{item.competitorName}</p>
+          {league && <span className="text-xs shrink-0">{league.emoji}</span>}
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-neutral-400">
+          <span>{item.totalRaces} course{item.totalRaces > 1 ? "s" : ""}</span>
+          {item.winStreak > 0 && (
+            <>
+              <span className="text-neutral-600">·</span>
+              <span className="text-yellow-400/80">{item.winStreak} 🔥 d&apos;affilée</span>
+            </>
+          )}
           {item.provisional && (
-            <p className="text-sub text-neutral-500">En calibrage</p>
+            <>
+              <span className="text-neutral-600">·</span>
+              <span className="text-neutral-500 italic">Calibrage</span>
+            </>
           )}
         </div>
       </div>
-      <div className="flex items-center gap-4 text-right shrink-0">
-        <div>
-          <p className="text-bold text-primary-500">{Math.round(item.finalRating)}</p>
-          <p className="text-sub text-neutral-500">ELO</p>
-        </div>
-        <div>
-          <p className="text-regular text-neutral-300">{item.raceCount}</p>
-          <p className="text-sub text-neutral-500">courses</p>
-        </div>
-        {item.winStreak > 0 && (
-          <div>
-            <p className="text-regular text-yellow-400">{item.winStreak}🔥</p>
-            <p className="text-sub text-neutral-500">streak</p>
-          </div>
-        )}
+
+      {/* ELO */}
+      <div className="text-right shrink-0">
+        <p className="text-sm font-bold text-primary-500">{Math.round(item.finalRating)}</p>
+        <p className="text-[10px] text-neutral-500">ELO</p>
       </div>
     </motion.div>
   );
@@ -324,23 +375,28 @@ function BettorRow({
       initial={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: reducedMotion ? 0 : Math.min(index * 0.03, 0.5), duration: 0.3 }}
-      className="flex items-center justify-between p-3 bg-neutral-800 rounded-lg border border-neutral-700/50"
+      className="flex items-center gap-2.5 px-3 py-2.5 bg-neutral-800 rounded-lg border border-neutral-700/50"
     >
-      <div className="flex items-center gap-3 min-w-0">
-        <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="shrink-0">
-          #{item.rank}
-        </Badge>
-        <p className="text-bold text-white truncate">{item.userName}</p>
+      {/* Rank badge */}
+      <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="shrink-0">
+        #{item.rank}
+      </Badge>
+
+      {/* Avatar */}
+      <UserAvatar src={item.profilePictureUrl} name={item.userName} size="sm" />
+
+      {/* Name + paris count */}
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-white truncate">{item.userName}</p>
+        <p className="text-xs text-neutral-400">
+          {item.betsPlaced} pari{item.betsPlaced > 1 ? "s" : ""}
+        </p>
       </div>
-      <div className="flex items-center gap-4 text-right shrink-0">
-        <div>
-          <p className="text-bold text-primary-500">{item.totalPoints.toFixed(1)}</p>
-          <p className="text-sub text-neutral-500">pts</p>
-        </div>
-        <div>
-          <p className="text-regular text-neutral-300">{item.betsPlaced}</p>
-          <p className="text-sub text-neutral-500">paris</p>
-        </div>
+
+      {/* Points */}
+      <div className="text-right shrink-0">
+        <p className="text-sm font-bold text-primary-500">{item.totalPoints.toFixed(1)}</p>
+        <p className="text-[10px] text-neutral-500">pts</p>
       </div>
     </motion.div>
   );
@@ -381,11 +437,21 @@ function HighlightCard({
   );
 }
 
+function formatEstimatedTime(totalRaces: number): string {
+  const totalMinutes = Math.round(totalRaces * 2.5);
+  if (totalMinutes < 60) return `~${totalMinutes} min`;
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return mins > 0 ? `~${hours}h ${String(mins).padStart(2, '0')}min` : `~${hours}h`;
+}
+
 function SlideHighlights({
   highlights,
+  season,
   reducedMotion,
 }: {
   highlights: SeasonHighlights;
+  season: SeasonArchive;
   reducedMotion: boolean;
 }) {
   const hasContent =
@@ -395,7 +461,9 @@ function SlideHighlights({
     highlights.biggestUpset ||
     highlights.longestParticipationStreak ||
     highlights.longestWinStreak ||
-    highlights.mostRaces;
+    highlights.mostRaces ||
+    (highlights.bestRaceScorers && highlights.bestRaceScorers.length > 0) ||
+    season.totalRaces > 0;
 
   if (!hasContent) {
     return (
@@ -429,7 +497,7 @@ function SlideHighlights({
         {highlights.perfectScores.length > 0 && (
           <HighlightCard
             icon={<span className="text-xl">💯</span>}
-            title="Scores Parfaits (60 pts)"
+            title={`Score${highlights.perfectScores.length > 1 ? 's' : ''} Parfait${highlights.perfectScores.length > 1 ? 's' : ''} (60 pts)`}
             delay={(delayIdx++) * 0.1 + 0.1}
             glowClass="animate-glow"
             reducedMotion={reducedMotion}
@@ -454,7 +522,7 @@ function SlideHighlights({
         {highlights.perfectPodiums.length > 0 && (
           <HighlightCard
             icon={<MdEmojiEvents className="text-xl text-yellow-400" />}
-            title="Podiums Parfaits"
+            title={`Podium${highlights.perfectPodiums.length > 1 ? 's' : ''} Parfait${highlights.perfectPodiums.length > 1 ? 's' : ''}`}
             delay={(delayIdx++) * 0.1 + 0.1}
             reducedMotion={reducedMotion}
           >
@@ -528,10 +596,33 @@ function SlideHighlights({
           </HighlightCard>
         )}
 
+        {/* Best Race Scorers (Perfect 60 pts races) */}
+        {highlights.bestRaceScorers && highlights.bestRaceScorers.length > 0 && (
+          <HighlightCard
+            icon={<span className="text-xl">🏎️</span>}
+            title="Courses Parfaites (60 pts)"
+            delay={(delayIdx++) * 0.1 + 0.1}
+            glowClass="animate-glow"
+            reducedMotion={reducedMotion}
+          >
+            <div className="space-y-1.5">
+              {highlights.bestRaceScorers.map((scorer, i) => (
+                <div key={i} className="flex items-center justify-between bg-neutral-700/30 rounded-lg px-3 py-2">
+                  <span className="text-bold text-white">{scorer.competitorName}</span>
+                  <span className="text-sub text-neutral-400">
+                    {scorer.perfectCount} fois
+                  </span>
+                </div>
+              ))}
+            </div>
+          </HighlightCard>
+        )}
+
         {/* Streaks */}
         {(highlights.longestParticipationStreak ||
           highlights.longestWinStreak ||
-          highlights.mostRaces) && (
+          highlights.mostRaces ||
+          season.totalRaces > 0) && (
           <HighlightCard
             icon={<span className="text-xl">🔥</span>}
             title="Séries & Records"
@@ -552,7 +643,7 @@ function SlideHighlights({
               )}
               {highlights.longestWinStreak && (
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sub text-neutral-400">Win streak pilote</span>
+                  <span className="text-sub text-neutral-400">Victoires consécutives (pilote)</span>
                   <span className="text-bold text-white shrink-0">
                     {highlights.longestWinStreak.competitorName} —{" "}
                     <span className="text-yellow-400">
@@ -570,10 +661,172 @@ function SlideHighlights({
                   </span>
                 </div>
               )}
+              {season.totalRaces > 0 && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sub text-neutral-400">Temps de jeu estimé</span>
+                  <span className="text-bold text-emerald-400 shrink-0">
+                    {formatEstimatedTime(season.totalRaces)}
+                  </span>
+                </div>
+              )}
             </div>
           </HighlightCard>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Slide ELO Reset ─────────────────────────────────
+
+function SlideEloReset({
+  competitors,
+  reducedMotion,
+}: {
+  competitors: ArchivedCompetitorRanking[];
+  reducedMotion: boolean;
+}) {
+  const [phase, setPhase] = useState(0);
+
+  const resetData = useMemo(
+    () =>
+      competitors
+        .filter((c) => !c.provisional && c.totalRaces > 0)
+        .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity))
+        .slice(0, 8)
+        .map((c) => {
+          const oldRating = Math.round(c.finalRating);
+          const newRating = Math.round(0.75 * c.finalRating + 0.25 * 1500);
+          return {
+            name: c.competitorName,
+            imageUrl: c.profilePictureUrl,
+            characterUrl: c.characterImageUrl,
+            oldRating,
+            newRating,
+            delta: newRating - oldRating,
+          };
+        }),
+    [competitors]
+  );
+
+  useEffect(() => {
+    if (reducedMotion) {
+      setPhase(3);
+      return;
+    }
+    const t1 = setTimeout(() => setPhase(1), 800);
+    const t2 = setTimeout(() => setPhase(2), 2000);
+    const t3 = setTimeout(() => setPhase(3), 2200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [reducedMotion]);
+
+  return (
+    <div className="flex flex-col h-full px-4">
+      {/* Header */}
+      <motion.div
+        initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reducedMotion ? 0 : 0.4 }}
+        className="text-center mb-4 shrink-0"
+      >
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <MdAutorenew className="text-xl text-primary-400" />
+          <h2 className="text-heading text-white">Reset ELO</h2>
+        </div>
+        <p className="text-sub text-neutral-400 leading-snug">
+          Les ELO sont rapprochés de 1500
+          <br />
+          pour relancer la compétition.
+        </p>
+      </motion.div>
+
+      {/* Rows */}
+      <div className="overflow-y-auto flex-1 space-y-1.5 pb-2 overscroll-contain">
+        {resetData.map((item, i) => (
+          <motion.div
+            key={item.name}
+            initial={reducedMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{
+              delay: reducedMotion ? 0 : Math.min(i * 0.06, 0.5),
+              duration: reducedMotion ? 0 : 0.35,
+            }}
+            className="flex items-center gap-2.5 px-3 py-2.5 bg-neutral-800 rounded-lg border border-neutral-700/50"
+          >
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <UserAvatar src={item.imageUrl} name={item.name} size="sm" />
+              {item.characterUrl && (
+                <img
+                  src={item.characterUrl}
+                  alt=""
+                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                />
+              )}
+            </div>
+
+            {/* Name */}
+            <p className="text-sm font-semibold text-white truncate min-w-0 flex-1">
+              {item.name}
+            </p>
+
+            {/* ELO value */}
+            <div className="text-right shrink-0 flex items-center gap-2">
+              <span className="text-sm font-bold text-primary-500 tabular-nums">
+                {phase >= 1 && !reducedMotion ? (
+                  <CountUp
+                    start={item.oldRating}
+                    end={item.newRating}
+                    duration={1.2}
+                    separator=" "
+                  />
+                ) : reducedMotion ? (
+                  item.newRating
+                ) : (
+                  item.oldRating
+                )}
+              </span>
+
+              {/* Delta badge */}
+              {phase >= 3 && (
+                <motion.span
+                  initial={reducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={
+                    reducedMotion
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 300, damping: 15 }
+                  }
+                  className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
+                    item.delta < 0
+                      ? "bg-error-500/10 text-error-400"
+                      : item.delta > 0
+                        ? "bg-success-500/10 text-success-400"
+                        : "bg-neutral-700 text-neutral-400"
+                  }`}
+                >
+                  {item.delta > 0 ? "▲" : item.delta < 0 ? "▼" : "="}{" "}
+                  {item.delta > 0 ? `+${item.delta}` : item.delta}
+                </motion.span>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Formula */}
+      <motion.p
+        initial={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: reducedMotion ? 0 : 1, duration: 0.5 }}
+        className="text-[11px] text-neutral-500 text-center font-mono mt-2 shrink-0"
+      >
+        Nouvel ELO = 75% ancien + 25% × 1500
+      </motion.p>
     </div>
   );
 }
@@ -704,7 +957,10 @@ export default function SeasonRecapModal({
           rank: c.rank!,
           score: c.finalRating,
           scoreLabel: "ELO",
-          extra: `${c.raceCount} courses`,
+          races: c.totalRaces,
+          winStreak: c.winStreak,
+          imageUrl: c.profilePictureUrl,
+          characterUrl: c.characterImageUrl,
         })),
     [competitors]
   );
@@ -718,7 +974,8 @@ export default function SeasonRecapModal({
           rank: b.rank,
           score: b.totalPoints,
           scoreLabel: "pts",
-          extra: `${b.betsPlaced} paris`,
+          races: b.betsPlaced,
+          imageUrl: b.profilePictureUrl,
         })),
     [bettors]
   );
@@ -743,14 +1000,28 @@ export default function SeasonRecapModal({
         return <SlideTitleStats season={season} monthName={monthName} reducedMotion={reducedMotion} />;
       case 1:
         return <PodiumSlide title="Podium Pilotes" items={competitorPodiumItems} type="competitor" reducedMotion={reducedMotion} />;
-      case 2:
+      case 2: {
+        const activeCompetitors = competitors.filter((c) => c.totalRaces > 0);
+        const confirmed = activeCompetitors.filter((c) => !c.provisional);
+        const provisional = activeCompetitors.filter((c) => c.provisional);
         return (
           <RankingListSlide title="Classement Pilotes">
-            {competitors.map((c, i) => (
+            {confirmed.map((c, i) => (
               <CompetitorRow key={c.id} item={c} index={i} reducedMotion={reducedMotion} />
             ))}
+            {provisional.length > 0 && (
+              <>
+                <p className="text-xs text-neutral-500 uppercase tracking-wider pt-2 pb-1 px-1">
+                  En calibrage
+                </p>
+                {provisional.map((c, i) => (
+                  <CompetitorRow key={c.id} item={c} index={confirmed.length + i} reducedMotion={reducedMotion} />
+                ))}
+              </>
+            )}
           </RankingListSlide>
         );
+      }
       case 3:
         return <PodiumSlide title="Podium Parieurs" items={bettorPodiumItems} type="bettor" reducedMotion={reducedMotion} />;
       case 4:
@@ -762,7 +1033,9 @@ export default function SeasonRecapModal({
           </RankingListSlide>
         );
       case 5:
-        return <SlideHighlights highlights={highlights} reducedMotion={reducedMotion} />;
+        return <SlideHighlights highlights={highlights} season={season} reducedMotion={reducedMotion} />;
+      case 6:
+        return <SlideEloReset competitors={competitors} reducedMotion={reducedMotion} />;
       default:
         return null;
     }

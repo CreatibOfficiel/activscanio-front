@@ -358,7 +358,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
                 </div>
                 <div>
                   <div className="text-neutral-400 text-xs">Courses</div>
-                  <div className="text-white font-medium">{ranking.raceCount}</div>
+                  <div className="text-white font-medium">{ranking.totalRaces}</div>
                 </div>
                 <div>
                   <div className="text-neutral-400 text-xs">Rang moyen</div>

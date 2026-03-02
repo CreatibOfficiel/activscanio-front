@@ -202,7 +202,7 @@ const SeasonDetailPage: FC = () => {
                       <div>
                         <p className="text-bold text-white">{ranking.competitorName}</p>
                         <p className="text-sub text-neutral-400">
-                          {ranking.raceCount} courses · Streak: {ranking.winStreak}
+                          {ranking.totalRaces} courses · Streak: {ranking.winStreak}
                         </p>
                       </div>
                     </div>
