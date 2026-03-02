@@ -852,6 +852,16 @@ export default function SeasonRecapModal({
 
   const monthName = MONTH_NAMES[month - 1] ?? "";
 
+  // Wrap onClose to ensure scroll lock is always cleaned up
+  const handleClose = useCallback(() => {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+    window.scrollTo(0, scrollYRef.current);
+    onClose();
+  }, [onClose]);
+
   // Load data
   useEffect(() => {
     setIsLoading(true);
@@ -901,7 +911,7 @@ export default function SeasonRecapModal({
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
       if (e.key === "ArrowRight") goNext();
       if (e.key === "ArrowLeft") goPrev();
     };
@@ -1049,7 +1059,7 @@ export default function SeasonRecapModal({
       aria-label={`Récap de saison ${monthName} ${year}`}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 animate-fadeIn" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 animate-fadeIn" onClick={handleClose} />
 
       {/* Modal container — glassmorphism matching design system */}
       <div
@@ -1061,7 +1071,7 @@ export default function SeasonRecapModal({
 
         {/* Close button — matching design system pattern */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-3 right-3 z-10 p-2 rounded-xl text-neutral-400 hover:text-white bg-neutral-800/50 border border-neutral-700 hover:bg-neutral-700/80 hover:border-neutral-600 transition-all duration-200"
           aria-label="Fermer le récap"
         >
@@ -1071,6 +1081,7 @@ export default function SeasonRecapModal({
         {/* Content area */}
         <div
           className="flex-1 min-h-0 py-6 overflow-hidden"
+          style={{ touchAction: "pan-y" }}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -1121,7 +1132,7 @@ export default function SeasonRecapModal({
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={onClose}
+                  onClick={handleClose}
                 >
                   Fermer
                 </Button>
