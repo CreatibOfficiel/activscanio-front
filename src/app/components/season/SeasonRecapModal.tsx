@@ -205,8 +205,6 @@ function PodiumSlide({
 
       <div className="flex items-end justify-center gap-3 w-full max-w-xs mt-1">
         {podiumOrder.map((item, i) => {
-          const league = type === "competitor" && item.rank ? getLeagueForRank(item.rank) : null;
-
           return (
             <motion.div
               key={item.name}
@@ -242,15 +240,10 @@ function PodiumSlide({
                 #{item.rank}
               </Badge>
 
-              {/* Name + League */}
+              {/* Name */}
               <p className="font-semibold text-white text-center truncate w-full text-xs leading-tight">
                 {item.name}
               </p>
-              {league && (
-                <span className={`text-[10px] leading-none ${league.textColor}`}>
-                  {league.emoji}
-                </span>
-              )}
 
               {/* Podium column with stats inside */}
               <div
@@ -519,30 +512,45 @@ function SlideHighlights({
         )}
 
         {/* Perfect Podiums */}
-        {highlights.perfectPodiums.length > 0 && (
-          <HighlightCard
-            icon={<MdEmojiEvents className="text-xl text-yellow-400" />}
-            title={`Podium${highlights.perfectPodiums.length > 1 ? 's' : ''} Parfait${highlights.perfectPodiums.length > 1 ? 's' : ''}`}
-            delay={(delayIdx++) * 0.1 + 0.1}
-            reducedMotion={reducedMotion}
-          >
-            <p className="text-regular text-neutral-300 mb-2">
-              {highlights.perfectPodiums.length} podium
-              {highlights.perfectPodiums.length > 1 ? "s" : ""} parfait
-              {highlights.perfectPodiums.length > 1 ? "s" : ""}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {highlights.perfectPodiums.map((pp, i) => (
-                <span
-                  key={i}
-                  className="bg-neutral-700 text-sub text-white px-2.5 py-1 rounded-full border border-neutral-600"
-                >
-                  {pp.userName} (S{pp.week})
-                </span>
-              ))}
-            </div>
-          </HighlightCard>
-        )}
+        {highlights.perfectPodiums.length > 0 && (() => {
+          const grouped = new Map<string, { userName: string; weeks: number[]; count: number }>();
+          for (const pp of highlights.perfectPodiums) {
+            const existing = grouped.get(pp.userName);
+            if (existing) {
+              existing.weeks.push(pp.week);
+              existing.count++;
+            } else {
+              grouped.set(pp.userName, { userName: pp.userName, weeks: [pp.week], count: 1 });
+            }
+          }
+          const entries = Array.from(grouped.values());
+          return (
+            <HighlightCard
+              icon={<MdEmojiEvents className="text-xl text-yellow-400" />}
+              title={`Podium${highlights.perfectPodiums.length > 1 ? 's' : ''} Parfait${highlights.perfectPodiums.length > 1 ? 's' : ''}`}
+              delay={(delayIdx++) * 0.1 + 0.1}
+              reducedMotion={reducedMotion}
+            >
+              <p className="text-regular text-neutral-300 mb-2">
+                {highlights.perfectPodiums.length} podium
+                {highlights.perfectPodiums.length > 1 ? "s" : ""} parfait
+                {highlights.perfectPodiums.length > 1 ? "s" : ""}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {entries.map((entry, i) => (
+                  <span
+                    key={i}
+                    className="bg-neutral-700 text-sub text-white px-2.5 py-1 rounded-full border border-neutral-600"
+                  >
+                    {entry.count > 1
+                      ? `${entry.userName} ×${entry.count}`
+                      : `${entry.userName} (S${entry.weeks[0]})`}
+                  </span>
+                ))}
+              </div>
+            </HighlightCard>
+          );
+        })()}
 
         {/* Highest Bet Score */}
         {highlights.highestBetScore && (
@@ -1009,7 +1017,7 @@ export default function SeasonRecapModal({
       case 0:
         return <SlideTitleStats season={season} monthName={monthName} reducedMotion={reducedMotion} />;
       case 1:
-        return <PodiumSlide title="Podium Pilotes" items={competitorPodiumItems} type="competitor" reducedMotion={reducedMotion} />;
+        return <PodiumSlide title="Ligue des Champions" items={competitorPodiumItems} type="competitor" reducedMotion={reducedMotion} />;
       case 2: {
         const activeCompetitors = competitors.filter((c) => c.totalRaces > 0);
         const confirmed = activeCompetitors.filter((c) => !c.provisional);
@@ -1080,7 +1088,7 @@ export default function SeasonRecapModal({
 
         {/* Content area */}
         <div
-          className="flex-1 min-h-0 py-6 overflow-hidden"
+          className="flex-1 min-h-0 flex flex-col py-6"
           style={{ touchAction: "pan-y" }}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
@@ -1097,7 +1105,7 @@ export default function SeasonRecapModal({
                 animate="center"
                 exit="exit"
                 transition={{ duration: reducedMotion ? 0.15 : 0.3, ease: "easeOut" }}
-                className="h-full"
+                className="flex-1 min-h-0"
               >
                 {renderSlide()}
               </motion.div>

@@ -1,13 +1,15 @@
 /**
  * Season utilities for 4-week fixed seasons (frontend).
  *
- * Season layout (13 seasons per year, aligned on ISO weeks):
- *   Season 1  = weeks 1-4
- *   Season 2  = weeks 5-8
+ * Seasons are 4-week blocks starting from the app launch week (ISO week 7, 2026).
+ *   Season 1 = weeks 7–10
+ *   Season 2 = weeks 11–14
  *   ...
- *   Season 12 = weeks 45-48
- *   Season 13 = weeks 49-53 (absorbs the occasional week 53)
  */
+
+const APP_START_WEEK = 7;
+const APP_START_YEAR = 2026;
+const WEEKS_PER_SEASON = 4;
 
 /** Get ISO week number for a date. */
 function getISOWeek(date: Date): number {
@@ -19,14 +21,25 @@ function getISOWeek(date: Date): number {
   return 1 + Math.round(diff / 604800000);
 }
 
-/** Map an ISO week number (1-53) to a season number (1-13). */
-export function getSeasonNumber(weekNumber: number): number {
-  return Math.min(Math.ceil(weekNumber / 4), 13);
+/** Get the ISO year for a date (the year of the Thursday of that week). */
+function getISOYear(date: Date): number {
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  return target.getFullYear();
+}
+
+/** Map an ISO week number to a season number (1-based, from app start). */
+export function getSeasonNumber(weekNumber: number, year: number = APP_START_YEAR): number {
+  const yearOffset = (year - APP_START_YEAR) * 52;
+  const absoluteWeek = yearOffset + weekNumber - APP_START_WEEK;
+  return Math.floor(absoluteWeek / WEEKS_PER_SEASON) + 1;
 }
 
 /** Get the current season number based on today's date. */
 export function getCurrentSeasonNumber(): number {
-  return getSeasonNumber(getISOWeek(new Date()));
+  const now = new Date();
+  return getSeasonNumber(getISOWeek(now), getISOYear(now));
 }
 
 /** Get a display label like "Saison 3" for a given season number. */
@@ -34,5 +47,5 @@ export function getSeasonLabel(seasonNumber: number): string {
   return `Saison ${seasonNumber}`;
 }
 
-/** Total number of seasons per year. */
-export const TOTAL_SEASONS = 13;
+/** Approximate total seasons per year. */
+export const TOTAL_SEASONS = Math.ceil(52 / WEEKS_PER_SEASON);
