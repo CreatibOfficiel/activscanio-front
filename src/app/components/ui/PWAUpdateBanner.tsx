@@ -1,33 +1,72 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { usePWAUpdate } from '@/app/hooks/usePWAUpdate';
 
-export function PWAUpdateBanner() {
-  const { updateAvailable, updateServiceWorker } = usePWAUpdate();
-  const [countdown, setCountdown] = useState(30);
-  const [dismissed, setDismissed] = useState(false);
+const COUNTDOWN_DURATION = 30;
+const UPDATE_STARTED_KEY = 'pwa-update-started-at';
+const UPDATE_DISMISSED_KEY = 'pwa-update-dismissed';
 
+export function PWAUpdateBanner() {
+  const { updateAvailable, immediateUpdate, updateServiceWorker } = usePWAUpdate();
+
+  // Restore countdown from sessionStorage so navigation doesn't reset it
+  const [countdown, setCountdown] = useState(() => {
+    if (typeof window === 'undefined') return COUNTDOWN_DURATION;
+    const startedAt = sessionStorage.getItem(UPDATE_STARTED_KEY);
+    if (startedAt) {
+      const elapsed = Math.floor((Date.now() - Number(startedAt)) / 1000);
+      return Math.max(0, COUNTDOWN_DURATION - elapsed);
+    }
+    return COUNTDOWN_DURATION;
+  });
+
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem(UPDATE_DISMISSED_KEY) === 'true';
+  });
+
+  const hasTriggeredRef = useRef(false);
+
+  // Trigger update when countdown reaches 0
   useEffect(() => {
-    if (!updateAvailable || dismissed) return;
+    if (countdown === 0 && updateAvailable && !dismissed && !immediateUpdate && !hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
+      updateServiceWorker();
+      setTimeout(() => window.location.reload(), 3000);
+    }
+  }, [countdown, updateAvailable, dismissed, immediateUpdate, updateServiceWorker]);
+
+  // Countdown interval — deps don't include countdown so it runs once
+  useEffect(() => {
+    if (!updateAvailable || dismissed || immediateUpdate || countdown <= 0) return;
 
     const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          updateServiceWorker();
-          // Fallback: si le SW ne déclenche pas le reload après 3s, forcer
-          setTimeout(() => window.location.reload(), 3000);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [updateAvailable, dismissed, updateServiceWorker]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateAvailable, dismissed, immediateUpdate]);
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    sessionStorage.setItem(UPDATE_DISMISSED_KEY, 'true');
+  };
+
+  // Immediate update on fresh load: full-screen loading overlay
+  if (immediateUpdate) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-neutral-900 flex flex-col items-center justify-center gap-4">
+        <div className="w-10 h-10 border-3 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
+        <p className="text-sm text-neutral-300 font-medium">Mise à jour en cours...</p>
+      </div>
+    );
+  }
 
   if (!updateAvailable || dismissed) return null;
+
+  const progress = ((COUNTDOWN_DURATION - countdown) / COUNTDOWN_DURATION) * 100;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-neutral-800 border-b border-primary-500/30 shadow-lg">
@@ -58,7 +97,7 @@ export function PWAUpdateBanner() {
             Mettre à jour
           </button>
           <button
-            onClick={() => setDismissed(true)}
+            onClick={handleDismiss}
             className="p-1.5 text-neutral-400 hover:text-white transition-colors flex-shrink-0 cursor-pointer"
             aria-label="Fermer"
           >
@@ -72,7 +111,7 @@ export function PWAUpdateBanner() {
         <div className="mt-2 h-0.5 bg-neutral-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-primary-500 transition-all duration-1000 ease-linear"
-            style={{ width: `${((30 - countdown) / 30) * 100}%` }}
+            style={{ width: `${progress}%` }}
           />
         </div>
       </div>

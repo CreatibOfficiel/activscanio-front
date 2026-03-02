@@ -4,14 +4,20 @@ import { useEffect, useState, useCallback } from 'react';
 import { Workbox } from 'workbox-window';
 
 interface PWAUpdateState {
+  /** True when a new SW starts waiting during the current session (show banner) */
   updateAvailable: boolean;
+  /** True when a SW was already waiting on page load (apply immediately) */
+  immediateUpdate: boolean;
   updateServiceWorker: () => void;
 }
 
 const UPDATE_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const UPDATE_STARTED_KEY = 'pwa-update-started-at';
+const UPDATE_DISMISSED_KEY = 'pwa-update-dismissed';
 
 export function usePWAUpdate(): PWAUpdateState {
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [immediateUpdate, setImmediateUpdate] = useState(false);
 
   useEffect(() => {
     if (
@@ -24,13 +30,20 @@ export function usePWAUpdate(): PWAUpdateState {
 
     const wb = new Workbox('/sw-custom.js', { scope: '/' });
 
+    // New update detected DURING the session → show banner
     wb.addEventListener('waiting', () => {
-      console.log('[PWA] Nouvelle version disponible');
+      console.log('[PWA] Nouvelle version disponible (in-session)');
+      if (!sessionStorage.getItem(UPDATE_STARTED_KEY)) {
+        sessionStorage.setItem(UPDATE_STARTED_KEY, String(Date.now()));
+      }
+      sessionStorage.removeItem(UPDATE_DISMISSED_KEY);
       setUpdateAvailable(true);
     });
 
     wb.addEventListener('controlling', () => {
       console.log('[PWA] Nouveau SW actif, rechargement...');
+      sessionStorage.removeItem(UPDATE_STARTED_KEY);
+      sessionStorage.removeItem(UPDATE_DISMISSED_KEY);
       window.location.reload();
     });
 
@@ -41,8 +54,13 @@ export function usePWAUpdate(): PWAUpdateState {
         console.log('[PWA] Service worker registered');
 
         if (registration?.waiting) {
-          console.log('[PWA] SW already waiting');
-          setUpdateAvailable(true);
+          // SW was already waiting on load → apply immediately, no banner
+          console.log('[PWA] SW already waiting — mise à jour immédiate');
+          setImmediateUpdate(true);
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          // Fallback if controlling event doesn't fire
+          setTimeout(() => window.location.reload(), 3000);
+          return;
         }
 
         const handleVisibilityChange = () => {
@@ -65,8 +83,9 @@ export function usePWAUpdate(): PWAUpdateState {
   }, []);
 
   const updateServiceWorker = useCallback(() => {
-    // Listen for the new SW to take control, then reload
     navigator.serviceWorker?.addEventListener('controllerchange', () => {
+      sessionStorage.removeItem(UPDATE_STARTED_KEY);
+      sessionStorage.removeItem(UPDATE_DISMISSED_KEY);
       window.location.reload();
     });
 
@@ -74,11 +93,10 @@ export function usePWAUpdate(): PWAUpdateState {
       if (registration?.waiting) {
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       } else {
-        // No waiting SW found, force reload as last resort
         window.location.reload();
       }
     });
   }, []);
 
-  return { updateAvailable, updateServiceWorker };
+  return { updateAvailable, immediateUpdate, updateServiceWorker };
 }
