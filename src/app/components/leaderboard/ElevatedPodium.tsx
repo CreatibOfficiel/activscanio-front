@@ -108,13 +108,13 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends, disableEntryAnimation = f
 
           <div className="w-full h-full skew-x-20 relative z-20 flex items-center pl-7 pr-4 gap-3 [backface-visibility:hidden]">
             {/* Avatar */}
-            <div className="relative flex-shrink-0 rounded-full overflow-hidden">
+            <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0">
               <Image
                 src={competitor.profilePictureUrl}
                 alt={competitor.firstName}
                 width={44}
                 height={44}
-                className="rounded-full object-cover"
+                className="object-cover w-full h-full"
               />
             </div>
 

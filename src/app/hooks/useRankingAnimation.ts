@@ -54,6 +54,27 @@ const SHOWING_OLD_DURATION = 500;
 const CROSSFADE_DURATION = 400;
 const SHUFFLE_DURATION = 1200;
 
+/* -------- Debug logging -------- */
+
+const DEBUG = true; // flip to false to silence logs
+
+function debugLog(label: string, data?: Record<string, unknown>) {
+  if (!DEBUG) return;
+  const ts = new Date().toISOString().slice(11, 23); // HH:mm:ss.SSS
+  if (data) {
+    console.log(`[RankAnim ${ts}] ${label}`, data);
+  } else {
+    console.log(`[RankAnim ${ts}] ${label}`);
+  }
+}
+
+function debugTable(label: string, rows: Array<Record<string, unknown>>) {
+  if (!DEBUG) return;
+  const ts = new Date().toISOString().slice(11, 23);
+  console.log(`[RankAnim ${ts}] ${label}`);
+  console.table(rows);
+}
+
 /* -------- Helpers -------- */
 
 function prefersReducedMotion(): boolean {
@@ -101,7 +122,7 @@ function markPlayedThisSession() {
 function buildCurrentRanksMap(competitors: Competitor[]): Map<string, number> {
   return computeRanksWithTies(
     competitors,
-    (c) => c.conservativeScore ?? 0,
+    (c) => Math.round(c.conservativeScore ?? 0),
     (c) => c.id,
   );
 }
@@ -141,6 +162,16 @@ function hasRankChanges(
     .filter((c) => oldRanks.has(c.id) && newRanks.has(c.id))
     .map((c) => c.id);
 
+  const newOnly = competitors.filter((c) => !oldRanks.has(c.id)).map((c) => c.id);
+  const removedIds = [...oldRanks.keys()].filter((id) => !newRanks.has(id));
+
+  debugLog('hasRankChanges input', {
+    competitorCount: competitors.length,
+    commonCount: commonIds.length,
+    newCompetitors: newOnly,
+    removedFromSnapshot: removedIds,
+  });
+
   // Sort by old rank (tie-break by id for determinism)
   const oldOrder = [...commonIds].sort(
     (a, b) => (oldRanks.get(a)! - oldRanks.get(b)!) || a.localeCompare(b),
@@ -150,11 +181,47 @@ function hasRankChanges(
     (a, b) => (newRanks.get(a)! - newRanks.get(b)!) || a.localeCompare(b),
   );
 
+  // Log per-competitor comparison
+  const comparisonRows = commonIds.map((id) => {
+    const comp = competitors.find((c) => c.id === id);
+    return {
+      id: id.slice(0, 8),
+      name: comp ? `${comp.firstName} ${comp.lastName}` : '?',
+      rawScore: comp?.conservativeScore ?? 'N/A',
+      roundedScore: Math.round(comp?.conservativeScore ?? 0),
+      oldRank: oldRanks.get(id),
+      newRank: newRanks.get(id),
+      rankDelta: (oldRanks.get(id) ?? 0) - (newRanks.get(id) ?? 0),
+    };
+  });
+  debugTable('rank comparison (common competitors)', comparisonRows);
+
   // Compare relative ordering — only animate if someone actually overtook another
+  let changed = false;
+  let firstDiffIdx = -1;
   for (let i = 0; i < oldOrder.length; i++) {
-    if (oldOrder[i] !== newOrder[i]) return true;
+    if (oldOrder[i] !== newOrder[i]) {
+      changed = true;
+      firstDiffIdx = i;
+      break;
+    }
   }
-  return false;
+
+  if (changed) {
+    const diffComp = competitors.find((c) => c.id === oldOrder[firstDiffIdx]);
+    const newComp = competitors.find((c) => c.id === newOrder[firstDiffIdx]);
+    debugLog('RANK CHANGE DETECTED → will animate', {
+      firstDiffPosition: firstDiffIdx,
+      oldOrderAtDiff: `${diffComp?.firstName ?? '?'} (${oldOrder[firstDiffIdx].slice(0, 8)})`,
+      newOrderAtDiff: `${newComp?.firstName ?? '?'} (${newOrder[firstDiffIdx].slice(0, 8)})`,
+      oldOrderIds: oldOrder.map((id) => id.slice(0, 8)),
+      newOrderIds: newOrder.map((id) => id.slice(0, 8)),
+    });
+  } else {
+    debugLog('NO rank changes → skip animation');
+  }
+
+  return changed;
 }
 
 function buildAnimData(
@@ -221,15 +288,19 @@ export function useRankingAnimation({
     (comps: Competitor[], data: CompetitorAnimData[]) => {
       clearTimers();
       setAnimData(data);
+      debugLog('phase → showing-old');
       setPhase('showing-old');
 
       const t1 = setTimeout(() => {
+        debugLog('phase → shuffling');
         setPhase('shuffling');
 
         const t2 = setTimeout(() => {
+          debugLog('phase → crossfading');
           setPhase('crossfading');
 
           const t3 = setTimeout(() => {
+            debugLog('phase → done (saving snapshot + marking session)');
             setPhase('done');
             saveSnapshot(comps);
             if (mode === 'homepage') {
@@ -251,10 +322,23 @@ export function useRankingAnimation({
   // Core: attempt to start animation for a given set of competitors
   const tryAnimate = useCallback(
     (comps: Competitor[], bypassSessionDedup = false) => {
-      if (!enabled || comps.length === 0) return;
+      debugLog('tryAnimate called', {
+        mode,
+        enabled,
+        competitorCount: comps.length,
+        bypassSessionDedup,
+        currentPhase: phaseRef.current,
+        sessionPlayed: hasPlayedThisSession(),
+      });
+
+      if (!enabled || comps.length === 0) {
+        debugLog('EXIT: disabled or no competitors', { enabled, count: comps.length });
+        return;
+      }
 
       // Reduced motion: skip animation, just save
       if (prefersReducedMotion()) {
+        debugLog('EXIT: reduced motion preference');
         saveSnapshot(comps);
         if (mode === 'homepage') markPlayedThisSession();
         return;
@@ -263,6 +347,7 @@ export function useRankingAnimation({
       // If animation is currently running, queue the update
       const currentPhase = phaseRef.current;
       if (currentPhase !== 'idle' && currentPhase !== 'done') {
+        debugLog('QUEUED: animation in progress', { currentPhase });
         pendingCompetitorsRef.current = comps;
         return;
       }
@@ -272,18 +357,39 @@ export function useRankingAnimation({
 
       // No old data: first visit — save and skip
       if (!oldRanks) {
+        debugLog('EXIT: no old snapshot (first visit) → saving snapshot');
         saveSnapshot(comps);
         if (mode === 'homepage') markPlayedThisSession();
         return;
       }
 
+      // Log snapshot age
+      if (mode === 'homepage') {
+        const snap = readSnapshot();
+        if (snap) {
+          const ageMs = Date.now() - snap.timestamp;
+          const ageMins = Math.round(ageMs / 60000);
+          debugLog('snapshot age', {
+            ageMinutes: ageMins,
+            ageHours: Math.round(ageMins / 60 * 10) / 10,
+            savedAt: new Date(snap.timestamp).toISOString(),
+            snapshotCompetitorCount: snap.rankings.length,
+          });
+        }
+      }
+
       // Homepage session dedup (bypass for WebSocket updates)
       if (mode === 'homepage' && !bypassSessionDedup && hasPlayedThisSession()) {
+        debugLog('EXIT: session dedup (already played this session)');
         return;
       }
 
       // Check if rankings actually changed
       if (!hasRankChanges(oldRanks, newRanks, comps)) {
+        // Keep snapshot in sync with what the user sees,
+        // so future comparisons use the correct baseline
+        debugLog('EXIT: no rank changes → saving snapshot to keep in sync');
+        saveSnapshot(comps);
         return;
       }
 
@@ -294,6 +400,22 @@ export function useRankingAnimation({
         if (d.delta !== 0 && !d.isNew) changed.add(d.id);
       });
       setChangedIds(changed);
+
+      debugLog('STARTING ANIMATION', {
+        changedCount: changed.size,
+        changedCompetitors: data
+          .filter((d) => d.delta !== 0 && !d.isNew)
+          .map((d) => ({
+            name: `${d.firstName} ${d.lastName}`,
+            oldRank: d.oldRank,
+            newRank: d.newRank,
+            delta: d.delta,
+            score: d.conservativeScore,
+          })),
+        newCompetitors: data
+          .filter((d) => d.isNew)
+          .map((d) => `${d.firstName} ${d.lastName}`),
+      });
 
       runAnimation(comps, data);
     },
@@ -321,10 +443,15 @@ export function useRankingAnimation({
     const isUpdate = prevCompetitorsRef.current !== competitors && prevCompetitorsRef.current.length > 0;
 
     if (isInitial) {
+      debugLog('main effect: INITIAL load', { competitorCount: competitors.length });
       hasInitializedRef.current = true;
       prevCompetitorsRef.current = competitors;
       tryAnimate(competitors, false);
     } else if (isUpdate) {
+      debugLog('main effect: COMPETITOR UPDATE (WebSocket/refresh)', {
+        competitorCount: competitors.length,
+        prevCount: prevCompetitorsRef.current.length,
+      });
       prevCompetitorsRef.current = competitors;
       // Post-init changes bypass session dedup (likely from WebSocket/refresh)
       tryAnimate(competitors, true);

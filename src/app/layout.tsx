@@ -59,12 +59,12 @@ export default function RootLayout({
           <AppProvider>
             <SoundboardProvider>
             <ResultModalsProvider>
+            {/* PWA Update Banner — outside guard to start SW check immediately */}
+            <PWAUpdateBanner />
+
             <OnboardingGuard>
               {/* Offline Indicator */}
               <OfflineIndicator />
-
-              {/* PWA Update Banner */}
-              <PWAUpdateBanner />
 
               {/* PWA Install Prompt */}
               <PWAInstallPrompt />

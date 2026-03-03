@@ -54,18 +54,18 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
     // Compute ranks with ties
     const confRanks = computeRanksWithTies(
       conf,
-      (c) => c.conservativeScore ?? 0,
+      (c) => Math.round(c.conservativeScore ?? 0),
       (c) => c.id,
     );
     const inactRanks = computeRanksWithTies(
       inact,
-      (c) => c.conservativeScore ?? 0,
+      (c) => Math.round(c.conservativeScore ?? 0),
       (c) => c.id,
       conf.length,
     );
     const calRanks = computeRanksWithTies(
       cal,
-      (c) => c.conservativeScore ?? 0,
+      (c) => Math.round(c.conservativeScore ?? 0),
       (c) => c.id,
       conf.length + inact.length,
     );

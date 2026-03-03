@@ -563,7 +563,10 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] font-bold text-neutral-500 uppercase">Rival le plus proche</p>
                       <p className="text-sm text-neutral-100 font-bold truncate">
-                        {closestRivalData.closest.name} — {closestRivalData.closest.avgGap.toFixed(1)}pts d&apos;écart
+                        {closestRivalData.closest.name}
+                      </p>
+                      <p className="text-xs text-neutral-400">
+                        {closestRivalData.closest.avgGap.toFixed(1)}pts d&apos;écart · {closestRivalData.closest.shared} course{closestRivalData.closest.shared > 1 ? "s" : ""} commune{closestRivalData.closest.shared > 1 ? "s" : ""}
                       </p>
                     </div>
                     <MdChevronRight className="text-neutral-500 text-xl mt-1 transition-transform group-open:rotate-90" />
@@ -578,9 +581,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                       <p className="text-xs text-neutral-500 font-semibold uppercase tracking-wider">
                         Classement par écart de score
                       </p>
-                      {closestRivalData.all.map((r, i) => {
-                        const barWidth = Math.max(5, 100 - (r.avgGap / 15) * 100);
-                        return (
+                      {closestRivalData.all.map((r, i) => (
                           <div key={r.id} className="flex items-center gap-2 text-sm">
                             <span className="text-neutral-500 w-5 text-right shrink-0">
                               {i + 1}.
@@ -589,21 +590,14 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                             <span className={`truncate ${i === 0 ? "text-neutral-100 font-semibold" : "text-neutral-300"}`} style={{ minWidth: 0, flex: "1 1 0" }}>
                               {r.name}
                             </span>
-                            <span className="text-neutral-400 shrink-0 w-14 text-right tabular-nums">
+                            <span className="text-neutral-400 shrink-0 tabular-nums">
                               {r.avgGap.toFixed(1)}pts
                             </span>
-                            <span className="text-neutral-500 shrink-0 w-20 text-right tabular-nums text-xs">
+                            <span className="text-neutral-500 shrink-0 tabular-nums text-xs">
                               {r.shared} course{r.shared > 1 ? "s" : ""}
                             </span>
-                            <div className="w-16 h-2 bg-neutral-700 rounded-full overflow-hidden shrink-0">
-                              <div
-                                className="h-full bg-linear-to-r from-cyan-600 to-blue-400 rounded-full"
-                                style={{ width: `${barWidth}%` }}
-                              />
-                            </div>
                           </div>
-                        );
-                      })}
+                      ))}
                     </div>
                   </div>
                 </details>

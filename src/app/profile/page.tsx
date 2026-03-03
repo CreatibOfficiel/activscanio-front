@@ -71,10 +71,10 @@ const ProfilePage: FC = () => {
     if (!userData?.competitorId || allCompetitors.length === 0) return undefined;
     const confirmed = allCompetitors
       .filter((c) => c.raceCount && c.raceCount > 0 && !c.provisional && !c.inactive)
-      .sort((a, b) => (b.conservativeScore ?? 0) - (a.conservativeScore ?? 0));
+      .sort((a, b) => Math.round(b.conservativeScore ?? 0) - Math.round(a.conservativeScore ?? 0));
     const ranks = computeRanksWithTies(
       confirmed,
-      (c) => c.conservativeScore ?? 0,
+      (c) => Math.round(c.conservativeScore ?? 0),
       (c) => c.id,
     );
     return ranks.get(userData.competitorId);

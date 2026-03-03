@@ -89,13 +89,15 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
       {/* Avatar */}
       <div className="flex-shrink-0 relative">
         {item.imageUrl ? (
-          <Image
-            src={item.imageUrl}
-            alt={item.name}
-            width={44}
-            height={44}
-            className="rounded-full object-cover ring-2 ring-cyan-500/50"
-          />
+          <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-cyan-500/50 flex-shrink-0">
+            <Image
+              src={item.imageUrl}
+              alt={item.name}
+              width={44}
+              height={44}
+              className="object-cover w-full h-full"
+            />
+          </div>
         ) : (
           <div className="w-11 h-11 rounded-full bg-cyan-900/50 ring-2 ring-cyan-500/50 flex items-center justify-center text-lg font-bold text-cyan-200">
             {item.name.charAt(0).toUpperCase()}

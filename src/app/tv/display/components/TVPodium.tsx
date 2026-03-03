@@ -96,16 +96,21 @@ const TVPodium: FC<Props> = ({ items, title, disableEntryAnimation = false }) =>
             className={`ring-2 ${config.border} ring-offset-2 ring-offset-neutral-900 rounded-full overflow-hidden relative`}
           >
             {item.imageUrl ? (
-              <Image
-                src={item.imageUrl}
-                alt={item.name}
-                width={config.avatarSize}
-                height={config.avatarSize}
-                className="rounded-full object-cover"
-              />
+              <div
+                className="rounded-full overflow-hidden"
+                style={{ width: config.avatarSize, height: config.avatarSize }}
+              >
+                <Image
+                  src={item.imageUrl}
+                  alt={item.name}
+                  width={config.avatarSize}
+                  height={config.avatarSize}
+                  className="object-cover w-full h-full"
+                />
+              </div>
             ) : (
               <div
-                className={`flex items-center justify-center bg-neutral-700 text-2xl font-bold text-neutral-300`}
+                className={`rounded-full flex items-center justify-center bg-neutral-700 text-2xl font-bold text-neutral-300`}
                 style={{
                   width: config.avatarSize,
                   height: config.avatarSize,

@@ -37,7 +37,7 @@ const LeaderboardRow: FC<Props> = ({
   // Progress bar calculation (towards next rank)
   const maxScore = 2000; // Approximate max ELO
   const progressPercent = Math.min(
-    ((competitor.conservativeScore ?? 1500) / maxScore) * 100,
+    (Math.round(competitor.conservativeScore ?? 1500) / maxScore) * 100,
     100
   );
 
@@ -61,13 +61,15 @@ const LeaderboardRow: FC<Props> = ({
 
         {/* Avatar with Character Overlay */}
         <div className="relative flex-shrink-0">
-          <Image
-            src={competitor.profilePictureUrl}
-            alt={competitor.firstName}
-            width={40}
-            height={40}
-            className="rounded-full object-cover border border-neutral-700"
-          />
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-neutral-700 flex-shrink-0">
+            <Image
+              src={competitor.profilePictureUrl}
+              alt={competitor.firstName}
+              width={40}
+              height={40}
+              className="object-cover w-full h-full"
+            />
+          </div>
 
           {/* Character Overlay */}
           {competitor.characterVariant?.imageUrl && (

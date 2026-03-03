@@ -51,7 +51,7 @@ const calculateCompetitorTrends = (
 
   const ranksMap = computeRanksWithTies(
     competitors,
-    (c) => c.conservativeScore ?? 0,
+    (c) => Math.round(c.conservativeScore ?? 0),
     (c) => c.id,
   );
 
@@ -124,14 +124,14 @@ export default function Home() {
     // Compute ranks with ties for active confirmed competitors
     const confRanks = computeRanksWithTies(
       conf,
-      (c) => c.conservativeScore ?? 0,
+      (c) => Math.round(c.conservativeScore ?? 0),
       (c) => c.id,
     );
 
     // Compute ranks with ties for inactive (offset by active confirmed count)
     const inactRanks = computeRanksWithTies(
       inact,
-      (c) => c.conservativeScore ?? 0,
+      (c) => Math.round(c.conservativeScore ?? 0),
       (c) => c.id,
       conf.length,
     );
@@ -139,7 +139,7 @@ export default function Home() {
     // Compute ranks with ties for calibrating competitors (offset by confirmed + inactive count)
     const calRanks = computeRanksWithTies(
       cal,
-      (c) => c.conservativeScore ?? 0,
+      (c) => Math.round(c.conservativeScore ?? 0),
       (c) => c.id,
       conf.length + inact.length,
     );

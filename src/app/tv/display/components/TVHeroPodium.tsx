@@ -78,13 +78,18 @@ const TVHeroPodium: FC<Props> = ({ items }) => {
                         <div className={`relative flex items-center justify-center ${!isVertical ? 'w-[40%]' : 'mb-3'}`}>
                             <div className="relative">
                                 {item.imageUrl ? (
-                                    <Image
-                                        src={item.imageUrl}
-                                        alt={item.name}
-                                        width={config.imageSize}
-                                        height={config.imageSize}
-                                        className="rounded-full shadow-[0_5px_15px_rgba(0,0,0,0.4)] object-cover"
-                                    />
+                                    <div
+                                        className="rounded-full overflow-hidden shadow-[0_5px_15px_rgba(0,0,0,0.4)]"
+                                        style={{ width: config.imageSize, height: config.imageSize }}
+                                    >
+                                        <Image
+                                            src={item.imageUrl}
+                                            alt={item.name}
+                                            width={config.imageSize}
+                                            height={config.imageSize}
+                                            className="object-cover w-full h-full"
+                                        />
+                                    </div>
                                 ) : (
                                     <div
                                         className="rounded-full shadow-[0_5px_15px_rgba(0,0,0,0.4)] flex items-center justify-center bg-neutral-800 text-white font-black"
