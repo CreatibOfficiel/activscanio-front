@@ -877,6 +877,7 @@ export default function SeasonRecapModal({
     setIsLoading(true);
     SeasonsRepository.getSeasonRecapData(year, month)
       .then((data) => {
+        if (!data) return;
         setSeason(data.season);
         setCompetitors(data.competitors);
         setBettors(data.bettors);

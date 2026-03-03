@@ -102,7 +102,7 @@ export class SeasonsRepository {
   /**
    * Get specific season
    */
-  static async getSeason(year: number, month: number): Promise<SeasonArchive> {
+  static async getSeason(year: number, month: number): Promise<SeasonArchive | null> {
     try {
       const response = await apiFetch(`${API_BASE_URL}/seasons/${year}/${month}`, {
         headers: {
@@ -114,7 +114,10 @@ export class SeasonsRepository {
         throw new Error(`Failed to fetch season: ${response.statusText}`);
       }
 
-      return await response.json();
+      const text = await response.text();
+      if (!text) return null;
+
+      return JSON.parse(text);
     } catch (error) {
       console.error('Error fetching season:', error);
       throw error;
@@ -239,9 +242,11 @@ export class SeasonsRepository {
   static async getSeasonRecapData(
     year: number,
     month: number
-  ): Promise<SeasonRecapData> {
-    const [season, competitors, bettors, highlights] = await Promise.all([
-      this.getSeason(year, month),
+  ): Promise<SeasonRecapData | null> {
+    const season = await this.getSeason(year, month);
+    if (!season) return null;
+
+    const [competitors, bettors, highlights] = await Promise.all([
       this.getCompetitorRankings(year, month),
       this.getBettorRankings(year, month),
       this.getSeasonHighlights(year, month),
