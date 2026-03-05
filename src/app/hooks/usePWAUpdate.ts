@@ -4,10 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { Workbox } from 'workbox-window';
 
 interface PWAUpdateState {
-  /** True when a new SW starts waiting during the current session (show banner) */
+  /** True when a new SW starts waiting during the current session (fallback banner) */
   updateAvailable: boolean;
-  /** True when a SW was already waiting on page load (apply immediately) */
-  immediateUpdate: boolean;
   updateServiceWorker: () => void;
 }
 
@@ -17,7 +15,6 @@ const UPDATE_DISMISSED_KEY = 'pwa-update-dismissed';
 
 export function usePWAUpdate(): PWAUpdateState {
   const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [immediateUpdate, setImmediateUpdate] = useState(false);
 
   useEffect(() => {
     if (
@@ -30,9 +27,9 @@ export function usePWAUpdate(): PWAUpdateState {
 
     const wb = new Workbox('/sw-custom.js', { scope: '/' });
 
-    // New update detected DURING the session → show banner
+    // Fallback: if skipWaiting somehow doesn't fire, detect waiting SW
     wb.addEventListener('waiting', () => {
-      console.log('[PWA] Nouvelle version disponible (in-session)');
+      console.log('[PWA] Nouvelle version en attente (fallback)');
       if (!sessionStorage.getItem(UPDATE_STARTED_KEY)) {
         sessionStorage.setItem(UPDATE_STARTED_KEY, String(Date.now()));
       }
@@ -40,6 +37,7 @@ export function usePWAUpdate(): PWAUpdateState {
       setUpdateAvailable(true);
     });
 
+    // New SW took control → reload to use new assets
     wb.addEventListener('controlling', () => {
       console.log('[PWA] Nouveau SW actif, rechargement...');
       sessionStorage.removeItem(UPDATE_STARTED_KEY);
@@ -53,15 +51,8 @@ export function usePWAUpdate(): PWAUpdateState {
       .then((registration) => {
         console.log('[PWA] Service worker registered');
 
-        if (registration?.waiting) {
-          // SW was already waiting on load → apply immediately, no banner
-          console.log('[PWA] SW already waiting — mise à jour immédiate');
-          setImmediateUpdate(true);
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          // Fallback if controlling event doesn't fire
-          setTimeout(() => window.location.reload(), 3000);
-          return;
-        }
+        // Force an update check immediately after registration
+        registration?.update();
 
         const handleVisibilityChange = () => {
           const now = Date.now();
@@ -98,5 +89,5 @@ export function usePWAUpdate(): PWAUpdateState {
     });
   }, []);
 
-  return { updateAvailable, immediateUpdate, updateServiceWorker };
+  return { updateAvailable, updateServiceWorker };
 }

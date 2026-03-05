@@ -1,4 +1,6 @@
-import { FC } from 'react';
+'use client';
+
+import { FC, useState } from 'react';
 import Image from 'next/image';
 
 interface UserAvatarProps {
@@ -52,10 +54,11 @@ function getColorFromName(name: string): string {
 }
 
 const UserAvatar: FC<UserAvatarProps> = ({ src, name, size = 'md', className = '' }) => {
+  const [hasError, setHasError] = useState(false);
   const sizeClass = sizeClasses[size];
   const imgSize = imageSizes[size];
 
-  if (src) {
+  if (src && !hasError) {
     return (
       <div className={`${sizeClass} rounded-full overflow-hidden flex-shrink-0 ${className}`}>
         <Image
@@ -64,6 +67,7 @@ const UserAvatar: FC<UserAvatarProps> = ({ src, name, size = 'md', className = '
           width={imgSize}
           height={imgSize}
           className="w-full h-full object-cover"
+          onError={() => setHasError(true)}
         />
       </div>
     );

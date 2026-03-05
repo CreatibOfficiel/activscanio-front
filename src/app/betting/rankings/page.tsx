@@ -163,7 +163,7 @@ const RankingsPage: FC = () => {
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <FlameIndicator streak={topThree[1].currentMonthlyStreak} variant="compact" type="monthly" />
                             {topThree[1].currentWinStreak > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {topThree[1].currentWinStreak}</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full whitespace-nowrap">✅ {topThree[1].currentWinStreak}</span>
                             )}
                           </div>
                         </div>
@@ -190,7 +190,7 @@ const RankingsPage: FC = () => {
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <FlameIndicator streak={topThree[0].currentMonthlyStreak} variant="compact" type="monthly" />
                             {topThree[0].currentWinStreak > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {topThree[0].currentWinStreak}</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full whitespace-nowrap">✅ {topThree[0].currentWinStreak}</span>
                             )}
                           </div>
                         </div>
@@ -217,7 +217,7 @@ const RankingsPage: FC = () => {
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <FlameIndicator streak={topThree[2].currentMonthlyStreak} variant="compact" type="monthly" />
                             {topThree[2].currentWinStreak > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {topThree[2].currentWinStreak}</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full whitespace-nowrap">✅ {topThree[2].currentWinStreak}</span>
                             )}
                           </div>
                         </div>
@@ -265,7 +265,7 @@ const RankingsPage: FC = () => {
                               type="monthly"
                             />
                             {ranking.currentWinStreak > 0 && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {ranking.currentWinStreak}</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full whitespace-nowrap">✅ {ranking.currentWinStreak}</span>
                             )}
                           </div>
                           <span className="text-statistic font-bold text-primary-500">

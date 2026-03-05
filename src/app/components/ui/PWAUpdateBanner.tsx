@@ -8,7 +8,7 @@ const UPDATE_STARTED_KEY = 'pwa-update-started-at';
 const UPDATE_DISMISSED_KEY = 'pwa-update-dismissed';
 
 export function PWAUpdateBanner() {
-  const { updateAvailable, immediateUpdate, updateServiceWorker } = usePWAUpdate();
+  const { updateAvailable, updateServiceWorker } = usePWAUpdate();
 
   // Restore countdown from sessionStorage so navigation doesn't reset it
   const [countdown, setCountdown] = useState(() => {
@@ -30,16 +30,16 @@ export function PWAUpdateBanner() {
 
   // Trigger update when countdown reaches 0
   useEffect(() => {
-    if (countdown === 0 && updateAvailable && !dismissed && !immediateUpdate && !hasTriggeredRef.current) {
+    if (countdown === 0 && updateAvailable && !dismissed && !hasTriggeredRef.current) {
       hasTriggeredRef.current = true;
       updateServiceWorker();
       setTimeout(() => window.location.reload(), 3000);
     }
-  }, [countdown, updateAvailable, dismissed, immediateUpdate, updateServiceWorker]);
+  }, [countdown, updateAvailable, dismissed, updateServiceWorker]);
 
   // Countdown interval — deps don't include countdown so it runs once
   useEffect(() => {
-    if (!updateAvailable || dismissed || immediateUpdate || countdown <= 0) return;
+    if (!updateAvailable || dismissed || countdown <= 0) return;
 
     const interval = setInterval(() => {
       setCountdown((prev) => Math.max(0, prev - 1));
@@ -47,22 +47,12 @@ export function PWAUpdateBanner() {
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateAvailable, dismissed, immediateUpdate]);
+  }, [updateAvailable, dismissed]);
 
   const handleDismiss = () => {
     setDismissed(true);
     sessionStorage.setItem(UPDATE_DISMISSED_KEY, 'true');
   };
-
-  // Immediate update on fresh load: full-screen loading overlay
-  if (immediateUpdate) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-neutral-900 flex flex-col items-center justify-center gap-4">
-        <div className="w-10 h-10 border-3 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
-        <p className="text-sm text-neutral-300 font-medium">Mise à jour en cours...</p>
-      </div>
-    );
-  }
 
   if (!updateAvailable || dismissed) return null;
 
