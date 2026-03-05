@@ -6,7 +6,7 @@ import { BettorRanking } from '@/app/models/CompetitorOdds';
 import { Card, Badge, PageHeader, UserAvatar } from '@/app/components/ui';
 import { FlameIndicator } from '@/app/components/achievements';
 import { getCurrentSeasonNumber, getSeasonLabel, TOTAL_SEASONS } from '@/app/utils/season-utils';
-import { MdTrendingUp, MdChevronLeft, MdChevronRight } from 'react-icons/md';
+import { MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
 const RankingsPage: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -143,108 +143,96 @@ const RankingsPage: FC = () => {
             {/* Podium */}
             {topThree.length > 0 && (
               <div className="mb-8">
-                <div className="flex items-end justify-center gap-4 mb-4">
+                <div className="max-w-sm mx-auto grid grid-cols-3 items-end gap-2 px-2">
                   {/* 2nd place */}
                   {topThree[1] && (
-                    <div className="flex flex-col items-center flex-1">
-                      <Badge variant="silver" size="lg" className="mb-2">
-                        2ème
-                      </Badge>
+                    <div className="flex flex-col items-center mt-8">
                       <Card
                         variant="default"
-                        className="w-full p-4 bg-silver-500/10 border-silver-500"
+                        className="max-w-[120px] mx-auto w-full p-3 bg-silver-500/10 border-silver-500"
                       >
                         <div className="text-center">
-                          <UserAvatar src={topThree[1].profilePictureUrl} name={topThree[1].userName} size="xl" className="mx-auto mb-2" />
-                          <h3 className="text-bold text-white mb-1">
-                            {topThree[1].userName}
+                          <span className="text-2xl">🥈</span>
+                          <UserAvatar src={topThree[1].profilePictureUrl} name={topThree[1].userName} size="lg" className="mx-auto my-1.5" />
+                          <h3 className="text-sm font-bold text-white truncate">
+                            {topThree[1].firstName ?? topThree[1].userName}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-silver-500 mb-2">
-                            <MdTrendingUp />
-                            <span className="text-statistic font-bold">
-                              {topThree[1].totalPoints.toFixed(1)}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center gap-1">
+                          <span className="text-statistic font-bold text-silver-500">
+                            {topThree[1].totalPoints.toFixed(1)}
+                          </span>
+                          <div className="flex items-center justify-center gap-1 mt-1">
                             <FlameIndicator streak={topThree[1].currentMonthlyStreak} variant="compact" type="monthly" />
                             {topThree[1].currentWinStreak > 0 && (
-                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{topThree[1].currentWinStreak}W</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {topThree[1].currentWinStreak}</span>
                             )}
                           </div>
                         </div>
                       </Card>
-                      <div className="w-full h-24 bg-silver-500/20 rounded-t-lg mt-2"></div>
                     </div>
                   )}
 
                   {/* 1st place */}
                   {topThree[0] && (
-                    <div className="flex flex-col items-center flex-1">
-                      <Badge variant="gold" size="lg" className="mb-2">
-                        🏆 1er
-                      </Badge>
+                    <div className="flex flex-col items-center">
                       <Card
                         variant="primary"
-                        className="w-full p-4 bg-gold-500/10 border-gold-500"
+                        className="max-w-[140px] mx-auto w-full p-3 bg-gold-500/10 border-gold-500"
                       >
                         <div className="text-center">
-                          <UserAvatar src={topThree[0].profilePictureUrl} name={topThree[0].userName} size="2xl" className="mx-auto mb-2" />
-                          <h3 className="text-heading text-white mb-1">
-                            {topThree[0].userName}
+                          <span className="text-3xl">🏆</span>
+                          <UserAvatar src={topThree[0].profilePictureUrl} name={topThree[0].userName} size="xl" className="mx-auto my-1.5" />
+                          <h3 className="text-sm font-bold text-white truncate">
+                            {topThree[0].firstName ?? topThree[0].userName}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-gold-500 mb-2">
-                            <MdTrendingUp />
-                            <span className="text-statistic font-bold text-2xl">
-                              {topThree[0].totalPoints.toFixed(1)}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center gap-1">
+                          <span className="text-statistic font-bold text-2xl text-gold-500">
+                            {topThree[0].totalPoints.toFixed(1)}
+                          </span>
+                          <div className="flex items-center justify-center gap-1 mt-1">
                             <FlameIndicator streak={topThree[0].currentMonthlyStreak} variant="compact" type="monthly" />
                             {topThree[0].currentWinStreak > 0 && (
-                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{topThree[0].currentWinStreak}W</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {topThree[0].currentWinStreak}</span>
                             )}
                           </div>
                         </div>
                       </Card>
-                      <div className="w-full h-32 bg-gold-500/20 rounded-t-lg mt-2"></div>
                     </div>
                   )}
 
                   {/* 3rd place */}
                   {topThree[2] && (
-                    <div className="flex flex-col items-center flex-1">
-                      <Badge variant="bronze" size="lg" className="mb-2">
-                        3ème
-                      </Badge>
+                    <div className="flex flex-col items-center mt-12">
                       <Card
                         variant="default"
-                        className="w-full p-4 bg-bronze-500/10 border-bronze-500"
+                        className="max-w-[120px] mx-auto w-full p-3 bg-bronze-500/10 border-bronze-500"
                       >
                         <div className="text-center">
-                          <UserAvatar src={topThree[2].profilePictureUrl} name={topThree[2].userName} size="xl" className="mx-auto mb-2" />
-                          <h3 className="text-bold text-white mb-1">
-                            {topThree[2].userName}
+                          <span className="text-2xl">🥉</span>
+                          <UserAvatar src={topThree[2].profilePictureUrl} name={topThree[2].userName} size="lg" className="mx-auto my-1.5" />
+                          <h3 className="text-sm font-bold text-white truncate">
+                            {topThree[2].firstName ?? topThree[2].userName}
                           </h3>
-                          <div className="flex items-center justify-center gap-1 text-bronze-500 mb-2">
-                            <MdTrendingUp />
-                            <span className="text-statistic font-bold">
-                              {topThree[2].totalPoints.toFixed(1)}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center gap-1">
+                          <span className="text-statistic font-bold text-bronze-500">
+                            {topThree[2].totalPoints.toFixed(1)}
+                          </span>
+                          <div className="flex items-center justify-center gap-1 mt-1">
                             <FlameIndicator streak={topThree[2].currentMonthlyStreak} variant="compact" type="monthly" />
                             {topThree[2].currentWinStreak > 0 && (
-                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{topThree[2].currentWinStreak}W</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {topThree[2].currentWinStreak}</span>
                             )}
                           </div>
                         </div>
                       </Card>
-                      <div className="w-full h-16 bg-bronze-500/20 rounded-t-lg mt-2"></div>
                     </div>
                   )}
                 </div>
               </div>
             )}
+
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-4 mb-6 text-[11px] text-neutral-500">
+              <span className="inline-flex items-center gap-1">🔥 = série de paris</span>
+              <span className="inline-flex items-center gap-1">✅ = victoires d&apos;affilée</span>
+            </div>
 
             {/* Other rankings */}
             {others.length > 0 && (
@@ -252,24 +240,24 @@ const RankingsPage: FC = () => {
                 <h2 className="text-heading text-white mb-4">Autres classés</h2>
                 <div className="space-y-2">
                   {others.map((ranking) => (
-                    <Card key={ranking.userId} className="p-4" hover>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                    <Card key={ranking.userId} className="p-3" hover>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
                           <Badge variant="default" size="md">
                             #{ranking.rank}
                           </Badge>
-                          <UserAvatar src={ranking.profilePictureUrl} name={ranking.userName} size="lg" />
-                          <div>
-                            <h3 className="text-bold text-white">
+                          <UserAvatar src={ranking.profilePictureUrl} name={ranking.userName} size="md" />
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-bold text-white truncate">
                               {ranking.userName}
                             </h3>
                             <p className="text-sub text-neutral-500">
-                              {getSeasonLabel(selectedSeason)} {selectedYear}
+                              {ranking.betsPlaced} paris · {ranking.winRate}%
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 shrink-0">
                           <div className="flex items-center gap-1">
                             <FlameIndicator
                               streak={ranking.currentMonthlyStreak}
@@ -277,18 +265,12 @@ const RankingsPage: FC = () => {
                               type="monthly"
                             />
                             {ranking.currentWinStreak > 0 && (
-                              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{ranking.currentWinStreak}W</span>
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">✅ {ranking.currentWinStreak}</span>
                             )}
                           </div>
-                          <div className="text-right">
-                            <div className="flex items-center gap-1 text-primary-500">
-                              <MdTrendingUp />
-                              <span className="text-statistic font-bold">
-                                {ranking.totalPoints.toFixed(1)}
-                              </span>
-                            </div>
-                            <p className="text-sub text-neutral-500">points</p>
-                          </div>
+                          <span className="text-statistic font-bold text-primary-500">
+                            {ranking.totalPoints.toFixed(1)}
+                          </span>
                         </div>
                       </div>
                     </Card>

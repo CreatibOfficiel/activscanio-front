@@ -20,6 +20,10 @@ const FlameIndicator: FC<FlameIndicatorProps> = ({
   type = 'monthly',
   className = '',
 }) => {
+  if (variant === 'compact' && streak === 0) {
+    return null;
+  }
+
   // Determine flame icon based on streak length
   const getFlameIcon = () => {
     if (streak === 0) return '🔵'; // No streak
@@ -61,12 +65,15 @@ const FlameIndicator: FC<FlameIndicatorProps> = ({
   if (variant === 'compact') {
     return (
       <div
-        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full bg-neutral-800/50 border border-neutral-700 ${className}`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 ${className}`}
         title={`${streak} ${getLabel()}`}
       >
-        <span className="text-sm">{getFlameIcon()}</span>
-        <span className={`text-sm font-semibold ${getFlameColor()}`}>
+        <span className="text-xs leading-none">🔥</span>
+        <span className={`text-xs font-bold ${getFlameColor()}`}>
           {streak}
+        </span>
+        <span className="text-[10px] text-orange-400/70 font-medium">
+          {type === 'monthly' ? 'sem.' : 'cons.'}
         </span>
       </div>
     );
