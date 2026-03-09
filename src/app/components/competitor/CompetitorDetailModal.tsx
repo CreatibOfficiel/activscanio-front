@@ -291,8 +291,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
     return count;
   }, [allRaces, competitor.id]);
 
-  // Podium count
-  const podiumCount = positions.filter((p) => p <= 3).length;
 
   // Max score for progress bar
   const maxScore = 60;
@@ -556,7 +554,10 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] font-bold text-neutral-500 uppercase">Pire ennemi</p>
                       <p className="text-sm text-neutral-100 font-bold truncate">
-                        {rivalData.worst.name} (bat {rivalData.worst.losses}/{rivalData.worst.shared}x)
+                        {rivalData.worst.name}
+                      </p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">
+                        Gagne {Math.round(rivalData.worst.ratio * 100)}% du temps ({rivalData.worst.losses}/{rivalData.worst.shared} courses en commun)
                       </p>
                     </div>
                     <MdChevronRight className="text-neutral-500 text-xl mt-1 transition-transform group-open:rotate-90" />
@@ -664,8 +665,8 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
               {positions.length > 0 && (
                 <StatCard
                   icon="🏆"
-                  title="Podiums"
-                  value={`${podiumCount} top-3 sur ${positions.length} courses`}
+                  title="Podiums cette saison"
+                  value={`${positions.filter((p) => p <= 3).length} top-3 sur ${positions.length} courses`}
                 />
               )}
 
