@@ -19,6 +19,7 @@
     "@uiw/react-heat-map": "^2.3.3",
     "browser-image-compression": "^2.0.2",
     "canvas-confetti": "^1.9.4",
+    "exifr": "^7.1.3",
     "glicko2": "^1.2.1",
     "idb-keyval": "^6.2.2",
     "lucide-react": "^0.562.0",

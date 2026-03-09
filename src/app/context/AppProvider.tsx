@@ -160,6 +160,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     };
     const created = await racesRepo.createRace(newEvent, token!);
     await idbDel("raceImage");
+    await idbDel("racePhotoTimestamp");
     setRaceEvents((prev) => [created, ...prev]);
     await refreshCompetitors();
     return created;

@@ -2,13 +2,23 @@
 
 import { NextPage } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import { RaceResult } from "@/app/models/RaceResult";
 import RaceResultEloSummary from "@/app/components/elo/RaceResultEloSummary";
-import { MdArrowBack } from "react-icons/md";
+import Modal from "@/app/components/ui/Modal";
+import { MdArrowBack, MdWarning } from "react-icons/md";
 import { toast } from "sonner";
+import { get as idbGet, del as idbDel } from "idb-keyval";
+import { RacesRepository } from "@/app/repositories/RacesRepository";
+import { useAuth } from "@clerk/nextjs";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const racesRepo = new RacesRepository(API_BASE_URL);
+
+const STALE_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
 
 const parseCompetitorIds = (idsParam: string | null): string[] => {
   return idsParam ? idsParam.split(",") : [];
@@ -44,14 +54,24 @@ const buildScoreSetupUrl = (
   return `/races/score-setup?${params.toString()}`;
 };
 
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 const RaceSummaryPage: NextPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addRaceEvent, allCompetitors } = useContext(AppContext);
+  const { getToken } = useAuth();
 
   const [selectedCompetitors, setSelectedCompetitors] = useState<Competitor[]>([]);
   const [results, setResults] = useState<RaceResult[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showStaleWarning, setShowStaleWarning] = useState(false);
+  const [staleMessage, setStaleMessage] = useState("");
 
   useEffect(() => {
     const ids = searchParams.get("ids");
@@ -65,17 +85,77 @@ const RaceSummaryPage: NextPage = () => {
     setResults(raceResults);
   }, [searchParams, allCompetitors]);
 
-  const handleValidate = async () => {
-    if (isSubmitting) return;
+  const checkStaleRace = useCallback(async (): Promise<boolean> => {
+    try {
+      const token = await getToken();
+      const latest = await racesRepo.fetchLatestToday(token ?? undefined);
+      if (!latest) return false; // No race today — no warning
+
+      const lastRaceDate = new Date(latest.date);
+
+      // Try EXIF timestamp first
+      const photoTimestamp = await idbGet<string>("racePhotoTimestamp");
+      if (photoTimestamp) {
+        const photoDate = new Date(photoTimestamp);
+        if (!isNaN(photoDate.getTime()) && photoDate < lastRaceDate) {
+          setStaleMessage(
+            `Cette photo a été prise à ${formatTime(photoDate)}, mais une course a été ajoutée à ${formatTime(lastRaceDate)}. L'ELO sera calculé dans l'ordre d'ajout, pas dans l'ordre réel.`
+          );
+          return true;
+        }
+        return false;
+      }
+
+      // No EXIF — fallback: warn if last race was > 1h ago
+      const elapsed = Date.now() - lastRaceDate.getTime();
+      if (elapsed > STALE_THRESHOLD_MS) {
+        const hours = Math.floor(elapsed / (60 * 60 * 1000));
+        const minutes = Math.floor((elapsed % (60 * 60 * 1000)) / (60 * 1000));
+        const timeAgo =
+          hours > 0
+            ? `${hours}h${minutes > 0 ? `${String(minutes).padStart(2, "0")}` : ""}`
+            : `${minutes} min`;
+        setStaleMessage(
+          `La dernière course a été ajoutée il y a ${timeAgo} (à ${formatTime(lastRaceDate)}). Si d'autres courses ont eu lieu entre-temps, l'ELO sera faussé.`
+        );
+        return true;
+      }
+
+      return false;
+    } catch {
+      // Don't block race creation on network errors
+      return false;
+    }
+  }, [getToken]);
+
+  const submitRace = async () => {
     setIsSubmitting(true);
     try {
       await addRaceEvent(results);
       sessionStorage.removeItem("raceImage");
+      idbDel("racePhotoTimestamp");
       toast.success("Course ajoutée avec succès !");
       router.push("/");
     } catch {
       setIsSubmitting(false);
     }
+  };
+
+  const handleValidate = async () => {
+    if (isSubmitting) return;
+
+    const isStale = await checkStaleRace();
+    if (isStale) {
+      setShowStaleWarning(true);
+      return;
+    }
+
+    await submitRace();
+  };
+
+  const handleConfirmStale = async () => {
+    setShowStaleWarning(false);
+    await submitRace();
   };
 
   const handleBack = () => {
@@ -109,6 +189,37 @@ const RaceSummaryPage: NextPage = () => {
           {isSubmitting ? "Envoi..." : "Valider"}
         </button>
       </div>
+
+      {/* Stale race warning modal */}
+      <Modal
+        isOpen={showStaleWarning}
+        onClose={() => setShowStaleWarning(false)}
+        title="Course en retard ?"
+        size="sm"
+        showCloseButton={false}
+      >
+        <div className="space-y-4">
+          <div className="flex gap-3 items-start">
+            <MdWarning className="text-amber-400 text-2xl shrink-0 mt-0.5" />
+            <p className="text-sm text-neutral-300">{staleMessage}</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowStaleWarning(false)}
+              className="flex-1 h-10 rounded font-semibold bg-neutral-700 text-neutral-200 hover:bg-neutral-600 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleConfirmStale}
+              disabled={isSubmitting}
+              className="flex-1 h-10 rounded font-semibold bg-amber-500 text-neutral-900 hover:bg-amber-400 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? "Envoi..." : "Valider quand même"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

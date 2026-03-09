@@ -19,6 +19,7 @@ import {
 import { Button } from "@/app/components/ui";
 import Spinner from "@/app/components/ui/Spinner";
 import imageCompression from "browser-image-compression";
+import exifr from "exifr";
 import { set as idbSet, del as idbDel } from "idb-keyval";
 import { toast } from "sonner";
 
@@ -164,6 +165,19 @@ const AddRaceContent = () => {
 
     const originalFile = files[0];
 
+    // Extract EXIF timestamp before compression (compression strips EXIF)
+    try {
+      const exif = await exifr.parse(originalFile, ["DateTimeOriginal"]);
+      const photoDate = exif?.DateTimeOriginal;
+      if (photoDate instanceof Date && !isNaN(photoDate.getTime())) {
+        await idbSet("racePhotoTimestamp", photoDate.toISOString());
+      } else {
+        await idbDel("racePhotoTimestamp");
+      }
+    } catch {
+      await idbDel("racePhotoTimestamp");
+    }
+
     // Create preview URL
     const previewUrl = URL.createObjectURL(originalFile);
     setCapturedImageUrl(previewUrl);
@@ -252,6 +266,7 @@ const AddRaceContent = () => {
   const handleManualEntry = () => {
     // Clear any stored image since we're going manual
     idbDel("raceImage");
+    idbDel("racePhotoTimestamp");
     setStep("PLAYER_SELECTION");
   };
 

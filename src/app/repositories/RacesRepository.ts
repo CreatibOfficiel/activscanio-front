@@ -77,6 +77,20 @@ export class RacesRepository {
     }
   }
 
+  // GET /races/latest-today
+  async fetchLatestToday(authToken?: string): Promise<{ date: string } | null> {
+    const headers: HeadersInit = {};
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    const res = await apiFetch(`${this.baseUrl}/races/latest-today`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      return data ?? null;
+    }
+    return null;
+  }
+
   // GET /races/:raceId/similar
   async fetchSimilarRaces(raceId: string, authToken?: string): Promise<RaceEvent[]> {
     const headers: HeadersInit = {};
