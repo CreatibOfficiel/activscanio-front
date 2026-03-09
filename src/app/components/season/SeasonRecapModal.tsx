@@ -1116,7 +1116,7 @@ export default function SeasonRecapModal({
 
         {/* Navigation — using Button component */}
         {!isLoading && (
-          <div className="shrink-0 px-4 pb-4 pt-2 border-t border-neutral-700/50">
+          <div className="shrink-0 px-4 pb-4 pt-2 border-t border-neutral-700/50 bg-neutral-900/80 backdrop-blur-sm">
             <div className="flex items-center justify-between gap-3">
               <Button
                 variant="ghost"
