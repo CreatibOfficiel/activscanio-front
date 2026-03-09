@@ -703,17 +703,15 @@ function SlideEloReset({
         .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity))
         .slice(0, 8)
         .map((c) => {
-          const oldScore = Math.round(c.finalRating - 2 * c.finalRd);
-          const newRating = 0.75 * c.finalRating + 0.25 * 1500;
-          const newRd = Math.min(c.finalRd + 50, 350);
-          const newScore = Math.round(newRating - 2 * newRd);
+          const oldRating = Math.round(c.finalRating);
+          const newRating = Math.round(0.75 * c.finalRating + 0.25 * 1500);
           return {
             name: c.competitorName,
             imageUrl: c.profilePictureUrl,
             characterUrl: c.characterImageUrl,
-            oldRating: oldScore,
-            newRating: newScore,
-            delta: newScore - oldScore,
+            oldRating,
+            newRating,
+            delta: newRating - oldRating,
           };
         }),
     [competitors]
@@ -1108,7 +1106,7 @@ export default function SeasonRecapModal({
                 animate="center"
                 exit="exit"
                 transition={{ duration: reducedMotion ? 0.15 : 0.3, ease: "easeOut" }}
-                className="flex-1 min-h-0"
+                className="flex-1 min-h-0 flex flex-col"
               >
                 {renderSlide()}
               </motion.div>
