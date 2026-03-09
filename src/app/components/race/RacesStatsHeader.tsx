@@ -8,9 +8,11 @@ import { formatCompetitorName } from "@/app/utils/formatters";
 
 interface Props {
   stats: RaceStats;
+  totalRaces?: number;
+  weeklyRaces?: number;
 }
 
-const RacesStatsHeader: FC<Props> = ({ stats }) => {
+const RacesStatsHeader: FC<Props> = ({ stats, totalRaces, weeklyRaces }) => {
   return (
     <div className="px-4 pt-6 pb-4">
       {/* Title */}
@@ -22,25 +24,25 @@ const RacesStatsHeader: FC<Props> = ({ stats }) => {
         <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700">
           <div className="flex items-center gap-2 mb-1">
             <MdFlag className="text-primary-500 text-lg" />
-            <span className="text-sub text-neutral-400">Total</span>
+            <span className="text-sub text-neutral-400">Nb. total <span className="text-neutral-500">(all time)</span></span>
           </div>
-          <p className="text-statistic text-neutral-100">{stats.totalRaces}</p>
+          <p className="text-statistic text-neutral-100">{totalRaces ?? stats.totalRaces}</p>
         </div>
 
         {/* This week */}
         <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700">
           <div className="flex items-center gap-2 mb-1">
             <MdCalendarToday className="text-primary-500 text-lg" />
-            <span className="text-sub text-neutral-400">Semaine</span>
+            <span className="text-sub text-neutral-400">Nb. cette sem.</span>
           </div>
-          <p className="text-statistic text-neutral-100">{stats.weeklyRaces}</p>
+          <p className="text-statistic text-neutral-100">{weeklyRaces ?? stats.weeklyRaces}</p>
         </div>
 
         {/* Most active player */}
         <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700">
           <div className="flex items-center gap-2 mb-1">
             <MdEmojiEvents className="text-gold-500 text-lg" />
-            <span className="text-sub text-neutral-400">Plus actif</span>
+            <span className="text-sub text-neutral-400">Plus actif <span className="text-neutral-500">(all time)</span></span>
           </div>
           {stats.mostActivePlayer ? (
             <div className="flex items-center gap-2">

@@ -6,7 +6,7 @@ import { MdClose, MdFilterList, MdKeyboardArrowDown } from "react-icons/md";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 
-export type PeriodFilter = "all" | "today" | "week" | "month";
+export type PeriodFilter = "all" | "today" | "week" | "season";
 
 export interface FilterState {
   period: PeriodFilter;
@@ -23,7 +23,7 @@ const periodOptions: { value: PeriodFilter; label: string }[] = [
   { value: "all", label: "Tout" },
   { value: "today", label: "Aujourd'hui" },
   { value: "week", label: "Cette semaine" },
-  { value: "month", label: "Cette saison" },
+  { value: "season", label: "Cette saison" },
 ];
 
 const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {

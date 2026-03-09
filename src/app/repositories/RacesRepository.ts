@@ -2,6 +2,12 @@ import { RaceEvent } from "../models/RaceEvent";
 import { RecentRaceInfo } from "../models/RecentRaceInfo";
 import { apiFetch } from '../utils/api-fetch';
 
+export interface PaginatedRacesResponse {
+  races: RaceEvent[];
+  nextCursor: string | null;
+  total: number;
+}
+
 export class RacesRepository {
   constructor(private baseUrl: string) {}
 
@@ -75,6 +81,36 @@ export class RacesRepository {
         `Error fetching best score for competitor ${competitorId}: ${errMsg}`
       );
     }
+  }
+
+  // GET /races/paginated
+  async fetchPaginated(params: {
+    limit?: number;
+    cursor?: string;
+    period?: string;
+    competitorId?: string;
+  }): Promise<PaginatedRacesResponse> {
+    const url = new URL(`${this.baseUrl}/races/paginated`);
+    if (params.limit) url.searchParams.set("limit", String(params.limit));
+    if (params.cursor) url.searchParams.set("cursor", params.cursor);
+    if (params.period) url.searchParams.set("period", params.period);
+    if (params.competitorId) url.searchParams.set("competitorId", params.competitorId);
+
+    const res = await apiFetch(url.toString());
+    if (res.ok) {
+      return await res.json();
+    }
+    const errMsg = await res.text();
+    throw new Error(`Error fetching paginated races: ${errMsg}`);
+  }
+
+  // GET /races/count
+  async fetchStats(): Promise<{ total: number; weekly: number }> {
+    const res = await apiFetch(`${this.baseUrl}/races/count`);
+    if (res.ok) {
+      return await res.json();
+    }
+    return { total: 0, weekly: 0 };
   }
 
   // GET /races/latest-today

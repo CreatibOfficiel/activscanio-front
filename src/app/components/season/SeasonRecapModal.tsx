@@ -16,6 +16,7 @@ import {
   type ArchivedBettorRanking,
   type SeasonHighlights,
 } from "@/app/repositories/SeasonsRepository";
+import { formatSeasonDateRange } from "@/app/utils/season-utils";
 import {
   MdChevronLeft,
   MdChevronRight,
@@ -34,11 +35,6 @@ interface SeasonRecapModalProps {
   month: number;
   onClose: () => void;
 }
-
-const MONTH_NAMES = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
-];
 
 const TOTAL_SLIDES = 7;
 
@@ -95,11 +91,9 @@ function SlidesSkeleton() {
 
 function SlideTitleStats({
   season,
-  monthName,
   reducedMotion,
 }: {
   season: SeasonArchive;
-  monthName: string;
   reducedMotion: boolean;
 }) {
   const motionProps = (delay: number) =>
@@ -122,14 +116,14 @@ function SlideTitleStats({
         {...motionProps(0.2)}
         className="text-title text-white text-center"
       >
-        {monthName} {season.year}
+        Saison {season.seasonNumber}
       </motion.h2>
 
       <motion.p
         {...motionProps(0.35)}
         className="text-regular text-neutral-400 text-center"
       >
-        Récap de saison
+        {formatSeasonDateRange(season.seasonNumber)}
       </motion.p>
 
       <div className="grid grid-cols-2 gap-3 w-full max-w-xs mt-2">
@@ -858,8 +852,6 @@ export default function SeasonRecapModal({
   const scrollYRef = useRef(0);
   const reducedMotion = useReducedMotion() ?? false;
 
-  const monthName = MONTH_NAMES[month - 1] ?? "";
-
   // Wrap onClose to ensure scroll lock is always cleaned up
   const handleClose = useCallback(() => {
     document.body.style.position = "";
@@ -1016,7 +1008,7 @@ export default function SeasonRecapModal({
 
     switch (currentSlide) {
       case 0:
-        return <SlideTitleStats season={season} monthName={monthName} reducedMotion={reducedMotion} />;
+        return <SlideTitleStats season={season} reducedMotion={reducedMotion} />;
       case 1:
         return <PodiumSlide title="Ligue des Champions" items={competitorPodiumItems} type="competitor" reducedMotion={reducedMotion} />;
       case 2: {
@@ -1065,7 +1057,7 @@ export default function SeasonRecapModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={`Récap de saison ${monthName} ${year}`}
+      aria-label={`Récap de saison ${month} — ${year}`}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 animate-fadeIn" onClick={handleClose} />

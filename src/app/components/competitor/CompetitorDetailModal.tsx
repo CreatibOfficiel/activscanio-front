@@ -14,7 +14,7 @@ import { TrendDirection } from "../leaderboard/TrendIndicator";
 import DuelChallengeForm from "../duel/DuelChallengeSheet";
 import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
 import { BettingRepository } from "@/app/repositories/BettingRepository";
-import { getCurrentSeasonNumber } from "@/app/utils/season-utils";
+import { getCurrentSeasonNumber, getSeasonDateRange } from "@/app/utils/season-utils";
 import { MdClose, MdSportsKabaddi, MdChevronRight } from "react-icons/md";
 
 /* ------------------------------------------------------------------ */
@@ -279,10 +279,12 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
     };
   }, [allRaces, allCompetitors, competitor.id]);
 
-  // Season wins — count rank12 === 1 from this season's races
+  // Season wins — count rank12 === 1 from current season's races only
   const seasonWins = useMemo(() => {
+    const { start } = getSeasonDateRange(getCurrentSeasonNumber());
     let count = 0;
     for (const race of allRaces) {
+      if (new Date(race.date) < start) continue;
       const result = race.results.find(
         (r) => r.competitorId === competitor.id
       );
@@ -539,11 +541,13 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
 
               {/* Play streak */}
               {(competitor.playStreak ?? 0) > 0 && (
-                <StatCard
-                  icon="📆"
-                  title="Streak de jeu"
-                  value={`${competitor.playStreak}j consécutifs (record : ${competitor.bestPlayStreak}j)`}
-                />
+                <div className="col-span-1 sm:col-span-2">
+                  <StatCard
+                    icon="📆"
+                    title="Streak de jeu"
+                    value={`${competitor.playStreak}j consécutifs (record : ${competitor.bestPlayStreak}j)`}
+                  />
+                </div>
               )}
 
               {/* Rival — expandable */}

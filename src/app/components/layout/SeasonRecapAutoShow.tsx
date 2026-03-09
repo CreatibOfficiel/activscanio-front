@@ -8,7 +8,7 @@ export default function SeasonRecapAutoShow() {
   const pathname = usePathname();
   const { showRecap, recapMonth, recapYear, closeRecap } = useSeasonRecap();
 
-  if (pathname?.startsWith("/tv")) return null;
+  if (pathname?.startsWith("/tv") || pathname?.startsWith("/sign-in") || pathname?.startsWith("/sign-up")) return null;
   if (!showRecap || !recapMonth || !recapYear) return null;
 
   return (

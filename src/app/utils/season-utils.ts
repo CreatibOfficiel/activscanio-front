@@ -59,7 +59,7 @@ export function getSeasonWeeks(seasonNumber: number): { start: number; end: numb
  * Get the Monday of a given ISO week.
  * ISO week 1 contains January 4th; weeks start on Monday.
  */
-function getMondayOfWeek(year: number, week: number): Date {
+export function getMondayOfWeek(year: number, week: number): Date {
   const jan4 = new Date(Date.UTC(year, 0, 4));
   const jan4Day = (jan4.getUTCDay() + 6) % 7; // Monday=0
   const firstMonday = new Date(Date.UTC(year, 0, 4 - jan4Day));
@@ -78,6 +78,35 @@ export function getCurrentSeasonEndDate(now?: Date): Date {
   const sunday = new Date(monday.getTime() + 6 * 86400000);
   sunday.setUTCHours(23, 59, 59, 999);
   return sunday;
+}
+
+/** Get the start and end dates for a given season number. */
+export function getSeasonDateRange(seasonNumber: number): { start: Date; end: Date } {
+  const { start: startWeek, end: endWeek } = getSeasonWeeks(seasonNumber);
+  const start = getMondayOfWeek(APP_START_YEAR, startWeek);
+  const endMonday = getMondayOfWeek(APP_START_YEAR, endWeek);
+  const end = new Date(endMonday.getTime() + 6 * 86400000); // Sunday
+  return { start, end };
+}
+
+const SHORT_MONTHS = [
+  "janv.", "fév.", "mars", "avr.", "mai", "juin",
+  "juil.", "août", "sept.", "oct.", "nov.", "déc.",
+];
+
+/** Format a season date range like "10 fév. — 9 mars 2026". */
+export function formatSeasonDateRange(seasonNumber: number): string {
+  const { start, end } = getSeasonDateRange(seasonNumber);
+  const startDay = start.getUTCDate();
+  const startMonth = SHORT_MONTHS[start.getUTCMonth()];
+  const endDay = end.getUTCDate();
+  const endMonth = SHORT_MONTHS[end.getUTCMonth()];
+  const endYear = end.getUTCFullYear();
+
+  if (start.getUTCMonth() === end.getUTCMonth()) {
+    return `${startDay} — ${endDay} ${endMonth} ${endYear}`;
+  }
+  return `${startDay} ${startMonth} — ${endDay} ${endMonth} ${endYear}`;
 }
 
 /** Approximate total seasons per year. */
