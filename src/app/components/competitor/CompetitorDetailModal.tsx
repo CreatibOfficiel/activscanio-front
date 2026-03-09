@@ -660,22 +660,23 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 />
               )}
 
-              {/* Consistency */}
-              {positions.length >= 3 && (
-                <StatCard
-                  icon="📊"
-                  title="Régularité"
-                  value={consistencyLabel(positions)}
-                  subtitle={`Positions : ${formatPositions(positions)}`}
-                />
-              )}
-
               {/* Podiums */}
               {positions.length > 0 && (
                 <StatCard
                   icon="🏆"
                   title="Podiums"
                   value={`${podiumCount} top-3 sur ${positions.length} courses`}
+                />
+              )}
+
+              {/* Consistency — full width (3 lines of content) */}
+              {positions.length >= 3 && (
+                <StatCard
+                  icon="📊"
+                  title="Régularité"
+                  value={consistencyLabel(positions)}
+                  subtitle={`Positions : ${formatPositions(positions)}`}
+                  className="col-span-1 sm:col-span-2"
                 />
               )}
 
@@ -790,13 +791,14 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
 /*  StatCard sub-component                                             */
 /* ------------------------------------------------------------------ */
 
-const StatCard: FC<{ icon: string; title: string; value: string; subtitle?: string }> = ({
+const StatCard: FC<{ icon: string; title: string; value: string; subtitle?: string; className?: string }> = ({
   icon,
   title,
   value,
   subtitle,
+  className,
 }) => (
-  <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl p-3 flex items-start gap-3">
+  <div className={`bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl p-3 flex items-start gap-3 ${className ?? ""}`}>
     <span className="text-xl mt-0.5">{icon}</span>
     <div className="min-w-0">
       <p className="text-[10px] font-bold text-neutral-500 uppercase">{title}</p>
