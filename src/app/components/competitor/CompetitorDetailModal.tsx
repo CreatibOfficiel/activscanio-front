@@ -459,7 +459,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                         />
                         {!isPodium && (
                           <div className="absolute inset-0 flex items-center justify-center pt-1">
-                            <span className="text-white font-black text-lg drop-shadow-[0_2px_10px_rgba(0,0,0,1)]">
+                            <span className="text-white font-black text-lg [text-shadow:_0_0_4px_rgb(0_0_0),_0_0_8px_rgb(0_0_0),_0_1px_2px_rgb(0_0_0)]">
                               {pos}
                             </span>
                           </div>
@@ -678,7 +678,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                         />
                         {!isPodium && (
                           <div className="absolute inset-0 flex items-center justify-center pt-0.5">
-                            <span className="text-white font-black text-xs drop-shadow-[0_1px_4px_rgba(0,0,0,1)]">
+                            <span className="text-white font-black text-xs [text-shadow:_0_0_4px_rgb(0_0_0),_0_0_8px_rgb(0_0_0),_0_1px_2px_rgb(0_0_0)]">
                               {race.rank12}
                             </span>
                           </div>
