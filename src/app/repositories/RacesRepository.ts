@@ -105,12 +105,22 @@ export class RacesRepository {
   }
 
   // GET /races/count
-  async fetchStats(): Promise<{ total: number; weekly: number }> {
+  async fetchStats(): Promise<{
+    total: number;
+    weekly: number;
+    mostActive: {
+      competitorId: string;
+      firstName: string;
+      lastName: string;
+      profilePictureUrl: string;
+      raceCount: number;
+    } | null;
+  }> {
     const res = await apiFetch(`${this.baseUrl}/races/count`);
     if (res.ok) {
       return await res.json();
     }
-    return { total: 0, weekly: 0 };
+    return { total: 0, weekly: 0, mostActive: null };
   }
 
   // GET /races/latest-today

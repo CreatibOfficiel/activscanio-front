@@ -15,7 +15,6 @@ import DateSeparator from "../components/race/DateSeparator";
 import SkeletonRaceCard from "../components/race/SkeletonRaceCard";
 import { Button, Countdown } from "../components/ui";
 import { MdAdd, MdFlag } from "react-icons/md";
-import { useRaceStats } from "../hooks/useRaceStats";
 import { useInfiniteRaces } from "../hooks/useInfiniteRaces";
 import { RacesRepository } from "../repositories/RacesRepository";
 
@@ -42,7 +41,11 @@ const groupRacesByDate = (
 
 const RacesPage: NextPage = () => {
   const { isLoading: isContextLoading, allCompetitors } = useContext(AppContext);
-  const [raceCountStats, setRaceCountStats] = useState<{ total: number; weekly: number } | undefined>(undefined);
+  const [headerStats, setHeaderStats] = useState<{
+    total: number;
+    weekly: number;
+    mostActive: { firstName: string; lastName: string; profilePictureUrl: string; raceCount: number } | null;
+  } | undefined>(undefined);
   const [filters, setFilters] = useState<FilterState>({
     period: "all",
     competitorId: null,
@@ -51,19 +54,13 @@ const RacesPage: NextPage = () => {
 
   // Fetch all-time stats for header
   useEffect(() => {
-    racesRepo.fetchStats().then(setRaceCountStats).catch(() => {});
+    racesRepo.fetchStats().then(setHeaderStats).catch(() => {});
   }, []);
 
   // Infinite scroll
   const { races, total, isLoading, isLoadingMore, hasMore, loadMore } = useInfiniteRaces({
     period: filters.period,
     competitorId: filters.competitorId,
-  });
-
-  // Stats based on loaded races
-  const raceStats = useRaceStats({
-    races,
-    competitors: allCompetitors,
   });
 
   // Intersection observer sentinel for infinite scroll
@@ -137,7 +134,7 @@ const RacesPage: NextPage = () => {
   return (
     <div className="min-h-screen bg-neutral-900 pb-[calc(6rem+env(safe-area-inset-bottom))]">
       {/* Stats Header */}
-      <RacesStatsHeader stats={raceStats} totalRaces={raceCountStats?.total} weeklyRaces={raceCountStats?.weekly} />
+      <RacesStatsHeader totalRaces={headerStats?.total} weeklyRaces={headerStats?.weekly} mostActive={headerStats?.mostActive} />
 
       {/* Season countdown */}
       <div className="px-4 pb-3">
