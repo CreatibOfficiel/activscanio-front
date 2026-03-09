@@ -279,6 +279,18 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
     };
   }, [allRaces, allCompetitors, competitor.id]);
 
+  // Season wins — count rank12 === 1 from this season's races
+  const seasonWins = useMemo(() => {
+    let count = 0;
+    for (const race of allRaces) {
+      const result = race.results.find(
+        (r) => r.competitorId === competitor.id
+      );
+      if (result && result.rank12 === 1) count++;
+    }
+    return count;
+  }, [allRaces, competitor.id]);
+
   // Podium count
   const podiumCount = positions.filter((p) => p <= 3).length;
 
@@ -315,11 +327,12 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
               {!isOwnCompetitor && (
                 <button
                   onClick={() => setStep("challenge")}
-                  className="p-2 rounded-xl text-primary-400 hover:text-primary-300 bg-primary-500/10 border border-primary-500/30 hover:bg-primary-500/20 transition-all duration-200 shadow-sm group"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-primary-400 hover:text-primary-300 bg-primary-500/10 border border-primary-500/30 hover:bg-primary-500/20 transition-all duration-200 shadow-sm group text-xs font-bold"
                   aria-label="Défier"
                   title="Défier ce pilote"
                 >
-                  <MdSportsKabaddi className="text-xl transition-transform duration-200 group-hover:scale-110" />
+                  <MdSportsKabaddi className="text-lg transition-transform duration-200 group-hover:scale-110" />
+                  Défier
                 </button>
               )}
               <EditCompetitorButton competitor={competitor} />
@@ -400,9 +413,8 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
             </div>
           </div>
 
-          {/* ---- STATS TILES (4 Quadrants) ---- */}
+          {/* ---- LIVE STATS (ELO & Rang) ---- */}
           <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl mt-2 overflow-hidden">
-            {/* Top Row: Elo & Rank */}
             <div className="grid grid-cols-2 divide-x divide-neutral-700/50 py-2.5">
               <div className="flex items-baseline justify-center gap-2">
                 <span className={`text-2xl font-black ${currentRank === 1 ? 'text-yellow-400' : currentRank === 2 ? 'text-slate-300' : currentRank === 3 ? 'text-orange-500' : 'text-neutral-100'}`}>
@@ -417,19 +429,55 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Rang</span>
               </div>
             </div>
+          </div>
 
-            {/* Horizontal Divider */}
-            <div className="h-px bg-neutral-700/50 w-full" />
-
-            {/* Bottom Row: Races & Wins */}
-            <div className="grid grid-cols-2 divide-x divide-neutral-700/50 py-2.5">
-              <div className="flex items-baseline justify-center gap-2">
-                <span className="text-2xl font-black text-neutral-100">{totalRaces}</span>
-                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Courses</span>
+          {/* ---- SEASON + ALL-TIME STATS ---- */}
+          <div className="space-y-2">
+            {/* Cette saison */}
+            {(competitor.currentMonthRaceCount ?? 0) > 0 && (
+              <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl overflow-hidden">
+                <div className="px-3 pt-2 pb-1">
+                  <span className="text-[10px] font-bold text-primary-400 uppercase tracking-widest">Cette saison</span>
+                </div>
+                <div className="grid grid-cols-3 divide-x divide-neutral-700/50 py-2">
+                  <div className="flex flex-col items-center">
+                    <span className="text-xl font-black text-neutral-100">{competitor.currentMonthRaceCount}</span>
+                    <span className="text-[10px] font-bold text-neutral-500 uppercase">Courses</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xl font-black text-neutral-100">
+                      {competitor.avgRank12 != null ? competitor.avgRank12.toFixed(1) : "--"}
+                    </span>
+                    <span className="text-[10px] font-bold text-neutral-500 uppercase">Pos. moy</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xl font-black text-neutral-100">{seasonWins}</span>
+                    <span className="text-[10px] font-bold text-neutral-500 uppercase">Victoires</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-baseline justify-center gap-2">
-                <span className="text-2xl font-black text-neutral-100">{wins}</span>
-                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Victoires</span>
+            )}
+
+            {/* All-time */}
+            <div className="bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl overflow-hidden">
+              <div className="px-3 pt-2 pb-1">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">All-time</span>
+              </div>
+              <div className="grid grid-cols-3 divide-x divide-neutral-700/50 py-2">
+                <div className="flex flex-col items-center">
+                  <span className="text-xl font-black text-neutral-100">{totalRaces}</span>
+                  <span className="text-[10px] font-bold text-neutral-500 uppercase">Courses</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-xl font-black text-neutral-100">
+                    {competitor.lifetimeAvgRank != null ? competitor.lifetimeAvgRank.toFixed(1) : "--"}
+                  </span>
+                  <span className="text-[10px] font-bold text-neutral-500 uppercase">Pos. moy</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-xl font-black text-neutral-100">{wins}</span>
+                  <span className="text-[10px] font-bold text-neutral-500 uppercase">Victoires</span>
+                </div>
               </div>
             </div>
           </div>
@@ -631,15 +679,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 />
               )}
 
-              {/* Activity this season */}
-              {competitor.currentMonthRaceCount != null && (
-                <StatCard
-                  icon="📅"
-                  title="Activité cette saison"
-                  value={`${competitor.currentMonthRaceCount} course${competitor.currentMonthRaceCount > 1 ? "s" : ""
-                    }`}
-                />
-              )}
             </div>
           </div>
 
