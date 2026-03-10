@@ -2,6 +2,7 @@
 
 import { NextPage } from "next";
 import { useContext, useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { getSeasonEndDate } from "../tv/display/utils/deadlines";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,11 +17,9 @@ import SkeletonRaceCard from "../components/race/SkeletonRaceCard";
 import { Button, Countdown } from "../components/ui";
 import { MdAdd, MdFlag } from "react-icons/md";
 import { useInfiniteRaces } from "../hooks/useInfiniteRaces";
-import { RacesRepository } from "../repositories/RacesRepository";
+import { authenticatedFetch } from "../utils/authenticated-fetch";
 
-const racesRepo = new RacesRepository(
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
-);
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 const groupRacesByDate = (
   races: RaceEvent[],
@@ -41,6 +40,7 @@ const groupRacesByDate = (
 
 const RacesPage: NextPage = () => {
   const { isLoading: isContextLoading, allCompetitors } = useContext(AppContext);
+  const { getToken } = useAuth();
   const [headerStats, setHeaderStats] = useState<{
     total: number;
     weekly: number;
@@ -54,8 +54,11 @@ const RacesPage: NextPage = () => {
 
   // Fetch all-time stats for header
   useEffect(() => {
-    racesRepo.fetchStats().then(setHeaderStats).catch(() => {});
-  }, []);
+    authenticatedFetch(getToken, `${API_URL}/races/count`)
+      .then((res) => (res.ok ? res.json() : { total: 0, weekly: 0, mostActive: null }))
+      .then(setHeaderStats)
+      .catch(() => {});
+  }, [getToken]);
 
   // Infinite scroll
   const { races, total, isLoading, isLoadingMore, hasMore, loadMore } = useInfiniteRaces({
