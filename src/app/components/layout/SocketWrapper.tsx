@@ -143,6 +143,7 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
         type: data.type,
         lostValue: data.lostValue,
         lostAt: data.lostAt,
+        missedDays: data.missedDays,
       }]);
     });
 

@@ -111,6 +111,15 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
                 <p className="text-sm text-neutral-400">
                   <span className="font-bold text-amber-400">{playLoss.lostValue}</span> jours consécutifs — tu peux recommencer maintenant !
                 </p>
+                {playLoss.missedDays && playLoss.missedDays.length > 0 && (
+                  <p className="text-xs text-neutral-500 mt-2">
+                    Jour{playLoss.missedDays.length > 1 ? 's' : ''} manqué{playLoss.missedDays.length > 1 ? 's' : ''} :{' '}
+                    {playLoss.missedDays.map((d) => {
+                      const date = new Date(d + 'T12:00:00');
+                      return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                    }).join(', ')}
+                  </p>
+                )}
               </div>
             )}
           </div>

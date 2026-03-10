@@ -40,6 +40,7 @@ interface StreakLostData {
   type: 'betting' | 'play';
   lostValue: number;
   lostAt: string;
+  missedDays?: string[];
 }
 
 interface PerfectScoreData {

@@ -6,7 +6,7 @@ import { ResultModalsProvider } from "./context/ResultModalsContext";
 import { BottomNav, Sidebar } from "./components/layout";
 import MainContent from "./components/layout/MainContent";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
-import { PWAUpdateBanner } from "./components/ui/PWAUpdateBanner";
+
 import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
 import OfflineIndicator from "./components/ui/OfflineIndicator";
 import { SoundboardModal, ShakeDetector } from "./components/soundboard";
@@ -59,9 +59,6 @@ export default function RootLayout({
           <AppProvider>
             <SoundboardProvider>
             <ResultModalsProvider>
-            {/* PWA Update Banner — outside guard to start SW check immediately */}
-            <PWAUpdateBanner />
-
             <OnboardingGuard>
               {/* Offline Indicator */}
               <OfflineIndicator />

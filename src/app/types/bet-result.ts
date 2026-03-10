@@ -25,9 +25,10 @@ export interface StreakLossPayload {
   type: 'betting' | 'play';
   lostValue: number;
   lostAt: string | Date;
+  missedDays?: string[];
 }
 
 export interface StreakLossesResponse {
   bettingStreakLoss: { lostValue: number; lostAt: string } | null;
-  playStreakLoss: { lostValue: number; lostAt: string } | null;
+  playStreakLoss: { lostValue: number; lostAt: string; missedDays?: string[] } | null;
 }

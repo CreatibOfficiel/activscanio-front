@@ -42,6 +42,7 @@ export default function ResultModalsInitializer() {
               type: 'play',
               lostValue: streakLosses.playStreakLoss.lostValue,
               lostAt: streakLosses.playStreakLoss.lostAt,
+              missedDays: streakLosses.playStreakLoss.missedDays,
             });
           }
           if (losses.length > 0) {
