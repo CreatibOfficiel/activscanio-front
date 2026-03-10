@@ -1064,7 +1064,7 @@ export default function SeasonRecapModal({
 
       {/* Modal container — glassmorphism matching design system */}
       <div
-        className="relative w-full max-w-md max-h-[90vh] bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-slideUp"
+        className="relative w-full max-w-md h-[85vh] max-h-[700px] bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-slideUp"
         style={{ boxShadow: "0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.02)" }}
       >
         {/* Progress bar */}
@@ -1110,15 +1110,18 @@ export default function SeasonRecapModal({
         {!isLoading && (
           <div className="shrink-0 px-4 pb-4 pt-2 border-t border-neutral-700/50 bg-neutral-900/80 backdrop-blur-sm">
             <div className="flex items-center justify-between gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={goPrev}
-                disabled={currentSlide === 0}
-                leftIcon={<MdChevronLeft size={18} />}
-              >
-                Précédent
-              </Button>
+              {currentSlide > 0 ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={goPrev}
+                  leftIcon={<MdChevronLeft size={18} />}
+                >
+                  Précédent
+                </Button>
+              ) : (
+                <div />
+              )}
 
               {currentSlide < TOTAL_SLIDES - 1 ? (
                 <Button

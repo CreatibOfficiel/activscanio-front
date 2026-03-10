@@ -30,6 +30,7 @@ import DuelCard from '@/app/components/duel/DuelCard';
 import { MdSportsMma, MdCameraAlt, MdAutoAwesome } from 'react-icons/md';
 import { SeasonsRepository } from '@/app/repositories/SeasonsRepository';
 import SeasonRecapModal from '@/app/components/season/SeasonRecapModal';
+import { getSeasonLabel } from '@/app/utils/season-utils';
 
 const BettingPage: FC = () => {
   const { getToken } = useAuth();
@@ -205,37 +206,35 @@ const BettingPage: FC = () => {
 
         {/* Season Recap Banner */}
         {showRecapBanner && recapMonth > 0 && (
-          <div
-            onClick={() => setShowRecapModal(true)}
-            className="relative bg-gradient-to-r from-purple-600/20 to-primary-600/20 border border-purple-500/30 rounded-xl p-3 cursor-pointer hover:border-purple-500/50 transition-colors"
-          >
+          <div className="relative">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 dismissRecapBanner();
               }}
-              className="absolute top-2 right-2 text-neutral-500 hover:text-white text-xs p-1"
+              className="absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full bg-neutral-700 border border-neutral-600 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-600 transition-colors text-xs"
               aria-label="Fermer"
             >
               ✕
             </button>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
-                <MdAutoAwesome className="text-xl text-purple-400" />
+            <div
+              onClick={() => setShowRecapModal(true)}
+              className="bg-gradient-to-r from-purple-600/20 to-primary-600/20 border border-purple-500/30 rounded-xl p-3 cursor-pointer hover:border-purple-500/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+                  <MdAutoAwesome className="text-xl text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">
+                    Le récap de la {getSeasonLabel(recapMonth)} est disponible !
+                  </p>
+                  <p className="text-xs text-neutral-400">
+                    Découvrez les highlights de la saison passée
+                  </p>
+                </div>
+                <span className="text-purple-400 text-sm shrink-0">→</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">
-                  Le récap de {
-                    ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-                    ][recapMonth - 1]
-                  } est disponible !
-                </p>
-                <p className="text-xs text-neutral-400">
-                  Découvrez les highlights de la saison passée
-                </p>
-              </div>
-              <span className="text-purple-400 text-sm shrink-0">→</span>
             </div>
           </div>
         )}
@@ -384,7 +383,7 @@ const BettingPage: FC = () => {
                 <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center mb-2">
                   <MdEmojiEvents className="text-2xl text-yellow-400" />
                 </div>
-                <p className="text-sub text-neutral-400 mb-1">Mon rang</p>
+                <p className="text-sub text-neutral-400 mb-1">Mon rang cette saison</p>
                 {userRanking ? (
                   <p className="text-statistic font-bold text-white">#{userRanking.rank}</p>
                 ) : (
