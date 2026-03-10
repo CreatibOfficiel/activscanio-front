@@ -57,7 +57,7 @@ function ProgressBar({
   current: number;
 }) {
   return (
-    <div className="flex gap-1 pl-4 pr-14 pt-3" role="progressbar" aria-valuenow={current + 1} aria-valuemin={1} aria-valuemax={total}>
+    <div className="flex gap-1 flex-1 min-w-0" role="progressbar" aria-valuenow={current + 1} aria-valuemin={1} aria-valuemax={total}>
       {Array.from({ length: total }).map((_, i) => (
         <div key={i} className="flex-1 h-[3px] rounded-full bg-white/15 overflow-hidden">
           <div
@@ -274,7 +274,7 @@ function RankingListSlide({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col h-full px-3">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden px-3">
       <motion.h2
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -283,7 +283,7 @@ function RankingListSlide({
       >
         {title}
       </motion.h2>
-      <div className="overflow-y-auto flex-1 space-y-1.5 pb-4 overscroll-contain">
+      <div className="overflow-y-auto flex-1 min-h-0 space-y-1.5 pb-4 overscroll-contain">
         {children}
       </div>
     </div>
@@ -327,13 +327,7 @@ function CompetitorRow({
           {item.winStreak > 0 && (
             <>
               <span className="text-neutral-600">·</span>
-              <span className="text-yellow-400/80">{item.winStreak} 🔥 d&apos;affilée</span>
-            </>
-          )}
-          {item.provisional && (
-            <>
-              <span className="text-neutral-600">·</span>
-              <span className="text-neutral-500 italic">Calibrage</span>
+              <span className="text-yellow-400/80">{item.winStreak} victoire{item.winStreak > 1 ? "s" : ""} d&apos;affilée 🔥</span>
             </>
           )}
         </div>
@@ -469,7 +463,7 @@ function SlideHighlights({
   let delayIdx = 0;
 
   return (
-    <div className="flex flex-col h-full px-4">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden px-4">
       <motion.h2
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -479,7 +473,7 @@ function SlideHighlights({
         Moments Forts
       </motion.h2>
 
-      <div className="overflow-y-auto flex-1 space-y-3 pb-4 overscroll-contain">
+      <div className="overflow-y-auto flex-1 min-h-0 space-y-3 pb-4 overscroll-contain">
         {/* Perfect Scores (60 pts) */}
         {highlights.perfectScores.length > 0 && (
           <HighlightCard
@@ -1023,7 +1017,7 @@ export default function SeasonRecapModal({
             {provisional.length > 0 && (
               <>
                 <p className="text-xs text-neutral-500 uppercase tracking-wider pt-2 pb-1 px-1">
-                  En calibrage
+                  Non classés
                 </p>
                 {provisional.map((c, i) => (
                   <CompetitorRow key={c.id} item={c} index={confirmed.length + i} reducedMotion={reducedMotion} />
@@ -1067,21 +1061,25 @@ export default function SeasonRecapModal({
         className="relative w-full max-w-md h-[85vh] max-h-[700px] bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-slideUp"
         style={{ boxShadow: "0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.02)" }}
       >
-        {/* Progress bar */}
-        {!isLoading && <ProgressBar total={TOTAL_SLIDES} current={currentSlide} />}
-
-        {/* Close button — matching design system pattern */}
-        <button
-          onClick={handleClose}
-          className="absolute top-3 right-3 z-10 p-2 rounded-xl text-neutral-400 hover:text-white bg-neutral-800/50 border border-neutral-700 hover:bg-neutral-700/80 hover:border-neutral-600 transition-all duration-200"
-          aria-label="Fermer le récap"
-        >
-          <MdClose size={18} />
-        </button>
+        {/* Header: progress bar + close button aligned */}
+        <div className="shrink-0 flex items-center gap-2 px-4 pt-3">
+          {!isLoading ? (
+            <ProgressBar total={TOTAL_SLIDES} current={currentSlide} />
+          ) : (
+            <div className="flex-1" />
+          )}
+          <button
+            onClick={handleClose}
+            className="shrink-0 p-2 rounded-xl text-neutral-400 hover:text-white bg-neutral-800/50 border border-neutral-700 hover:bg-neutral-700/80 hover:border-neutral-600 transition-all duration-200"
+            aria-label="Fermer le récap"
+          >
+            <MdClose size={18} />
+          </button>
+        </div>
 
         {/* Content area */}
         <div
-          className="flex-1 min-h-0 flex flex-col py-6"
+          className="flex-1 min-h-0 flex flex-col overflow-hidden py-6"
           style={{ touchAction: "pan-y" }}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
@@ -1098,7 +1096,7 @@ export default function SeasonRecapModal({
                 animate="center"
                 exit="exit"
                 transition={{ duration: reducedMotion ? 0.15 : 0.3, ease: "easeOut" }}
-                className="flex-1 min-h-0 flex flex-col"
+                className="h-full min-h-0 flex flex-col overflow-hidden"
               >
                 {renderSlide()}
               </motion.div>
