@@ -28,6 +28,9 @@ import {
   MdPerson,
   MdFlag,
   MdAutorenew,
+  MdLeaderboard,
+  MdCasino,
+  MdAutoAwesome,
 } from "react-icons/md";
 
 interface SeasonRecapModalProps {
@@ -36,7 +39,14 @@ interface SeasonRecapModalProps {
   onClose: () => void;
 }
 
-const TOTAL_SLIDES = 7;
+type SlideKey =
+  | "title"
+  | "competitor-podium"
+  | "competitor-ranking"
+  | "bettor-podium"
+  | "bettor-ranking"
+  | "highlights"
+  | "elo-reset";
 
 function getRankBadgeVariant(
   rank: number | null
@@ -186,16 +196,19 @@ function PodiumSlide({
   const avatarBorders = ["border-gray-300", "border-yellow-500", "border-amber-600"];
   const charSizes = ["w-5 h-5", "w-6 h-6", "w-5 h-5"];
 
+  const TitleIcon = type === "competitor" ? MdEmojiEvents : MdCasino;
+
   return (
     <div className="flex flex-col items-center justify-center h-full gap-2 px-3">
-      <motion.h2
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="text-heading text-white text-center"
+        className="flex items-center justify-center gap-2"
       >
-        {title}
-      </motion.h2>
+        <TitleIcon className="text-xl text-primary-400" />
+        <h2 className="text-heading text-white text-center">{title}</h2>
+      </motion.div>
 
       <div className="flex items-end justify-center gap-3 w-full max-w-xs mt-1">
         {podiumOrder.map((item, i) => {
@@ -252,9 +265,9 @@ function PodiumSlide({
                     {item.races} {type === "competitor" ? `course${item.races > 1 ? "s" : ""}` : `pari${item.races > 1 ? "s" : ""}`}
                   </p>
                 )}
-                {(item.winStreak ?? 0) > 0 && (
-                  <p className="text-[10px] text-yellow-400/80">
-                    {item.winStreak} 🔥 d&apos;affilée
+                {(item.winStreak ?? 0) > 1 && (
+                  <p className="text-[10px] text-yellow-400/80 leading-tight">
+                    {item.winStreak} 🔥
                   </p>
                 )}
               </div>
@@ -262,27 +275,38 @@ function PodiumSlide({
           );
         })}
       </div>
+
+      {podiumOrder.some((c) => (c.winStreak ?? 0) > 1) && (
+        <p className="text-[10px] text-neutral-500 text-center mt-2">
+          🔥 ={" "}
+          {type === "competitor" ? "victoires" : "paris gagnés"}{" "}
+          d&apos;affilée
+        </p>
+      )}
     </div>
   );
 }
 
 function RankingListSlide({
   title,
+  icon: Icon = MdLeaderboard,
   children,
 }: {
   title: string;
+  icon?: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden px-3">
-      <motion.h2
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="text-heading text-white text-center mb-3 shrink-0"
+        className="flex items-center justify-center gap-2 mb-3 shrink-0"
       >
-        {title}
-      </motion.h2>
+        <Icon className="text-xl text-primary-400" />
+        <h2 className="text-heading text-white text-center">{title}</h2>
+      </motion.div>
       <div className="overflow-y-auto flex-1 min-h-0 space-y-1.5 pb-4 overscroll-contain">
         {children}
       </div>
@@ -324,10 +348,10 @@ function CompetitorRow({
         </div>
         <div className="flex items-center gap-1.5 text-xs text-neutral-400">
           <span>{item.totalRaces} course{item.totalRaces > 1 ? "s" : ""}</span>
-          {item.winStreak > 0 && (
+          {item.winStreak > 1 && (
             <>
               <span className="text-neutral-600">·</span>
-              <span className="text-yellow-400/80">{item.winStreak} victoire{item.winStreak > 1 ? "s" : ""} d&apos;affilée 🔥</span>
+              <span className="text-yellow-400/80">{item.winStreak} victoires d&apos;affilée 🔥</span>
             </>
           )}
         </div>
@@ -383,37 +407,91 @@ function BettorRow({
   );
 }
 
+type HighlightAccent = "gold" | "amber" | "emerald" | "orange" | "blue";
+
+const ACCENT_STYLES: Record<
+  HighlightAccent,
+  { border: string; iconBg: string; iconText: string; ring: string }
+> = {
+  gold: {
+    border: "border-l-yellow-400/70",
+    iconBg: "bg-yellow-400/15",
+    iconText: "text-yellow-300",
+    ring: "ring-1 ring-yellow-400/20",
+  },
+  amber: {
+    border: "border-l-amber-500/70",
+    iconBg: "bg-amber-500/15",
+    iconText: "text-amber-300",
+    ring: "ring-1 ring-amber-500/20",
+  },
+  emerald: {
+    border: "border-l-emerald-500/70",
+    iconBg: "bg-emerald-500/15",
+    iconText: "text-emerald-300",
+    ring: "ring-1 ring-emerald-500/20",
+  },
+  orange: {
+    border: "border-l-orange-500/70",
+    iconBg: "bg-orange-500/15",
+    iconText: "text-orange-300",
+    ring: "ring-1 ring-orange-500/20",
+  },
+  blue: {
+    border: "border-l-blue-500/70",
+    iconBg: "bg-blue-500/15",
+    iconText: "text-blue-300",
+    ring: "ring-1 ring-blue-500/20",
+  },
+};
+
 function HighlightCard({
   icon,
   title,
+  subtitle,
+  accent = "blue",
   children,
   delay,
-  glowClass,
   reducedMotion,
 }: {
   icon: React.ReactNode;
   title: string;
+  subtitle?: string;
+  accent?: HighlightAccent;
   children: React.ReactNode;
   delay: number;
-  glowClass?: string;
   reducedMotion: boolean;
 }) {
+  const styles = ACCENT_STYLES[accent];
   return (
     <motion.div
-      initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={
         reducedMotion
           ? { duration: 0.15 }
-          : { delay, type: "spring", stiffness: 200, damping: 18 }
+          : { delay, type: "spring", stiffness: 240, damping: 22 }
       }
-      className={`bg-neutral-800 rounded-xl p-4 border border-neutral-700 ${glowClass ?? ""}`}
+      className={`relative bg-neutral-800/70 rounded-xl border border-neutral-700/60 border-l-4 ${styles.border} ${styles.ring} overflow-hidden`}
     >
-      <div className="flex items-center gap-2 mb-2">
-        {icon}
-        <h3 className="text-bold text-neutral-300">{title}</h3>
+      <div className="flex items-center gap-2.5 px-3.5 pt-3 pb-2">
+        <div
+          className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${styles.iconBg} ${styles.iconText}`}
+        >
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[13px] font-bold text-neutral-100 leading-tight truncate">
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="text-[11px] text-neutral-500 leading-tight truncate">
+              {subtitle}
+            </p>
+          )}
+        </div>
       </div>
-      {children}
+      <div className="px-3.5 pb-3">{children}</div>
     </motion.div>
   );
 }
@@ -451,7 +529,10 @@ function SlideHighlights({
       <div className="flex flex-col items-center justify-center h-full px-6">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
           <p className="text-6xl mb-4">🔮</p>
-          <h2 className="text-heading text-white mb-2">Moments Forts</h2>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <MdAutoAwesome className="text-xl text-primary-400" />
+            <h2 className="text-heading text-white">Moments Forts</h2>
+          </div>
           <p className="text-regular text-neutral-400">
             Pas encore de highlights pour cette saison.
           </p>
@@ -464,34 +545,36 @@ function SlideHighlights({
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden px-4">
-      <motion.h2
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="text-heading text-white text-center mb-4 shrink-0"
+        className="flex items-center justify-center gap-2 mb-4 shrink-0"
       >
-        Moments Forts
-      </motion.h2>
+        <MdAutoAwesome className="text-xl text-primary-400" />
+        <h2 className="text-heading text-white text-center">Moments Forts</h2>
+      </motion.div>
 
       <div className="overflow-y-auto flex-1 min-h-0 space-y-3 pb-4 overscroll-contain">
         {/* Perfect Scores (60 pts) */}
         {highlights.perfectScores.length > 0 && (
           <HighlightCard
-            icon={<span className="text-xl">💯</span>}
-            title={`Score${highlights.perfectScores.length > 1 ? 's' : ''} Parfait${highlights.perfectScores.length > 1 ? 's' : ''} (60 pts)`}
-            delay={(delayIdx++) * 0.1 + 0.1}
-            glowClass="animate-glow"
+            icon={<span className="text-base">💯</span>}
+            title={`Score${highlights.perfectScores.length > 1 ? 's' : ''} Parfait${highlights.perfectScores.length > 1 ? 's' : ''}`}
+            subtitle="60 pts en une semaine"
+            accent="gold"
+            delay={(delayIdx++) * 0.08 + 0.1}
             reducedMotion={reducedMotion}
           >
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {highlights.perfectScores.map((ps, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between bg-linear-to-r from-gold-500/15 to-transparent rounded-lg px-3 py-2 border-l-2 border-gold-500"
+                  className="flex items-center justify-between bg-yellow-400/[0.06] rounded-md px-2.5 py-1.5"
                 >
-                  <span className="text-bold text-yellow-300">{ps.userName}</span>
-                  <span className="text-sub text-neutral-400">
-                    Semaine {ps.week} — {ps.points} pts
+                  <span className="text-[13px] font-semibold text-yellow-200">{ps.userName}</span>
+                  <span className="text-[11px] text-neutral-500 tabular-nums">
+                    S{ps.week} · {ps.points} pts
                   </span>
                 </div>
               ))}
@@ -514,25 +597,22 @@ function SlideHighlights({
           const entries = Array.from(grouped.values());
           return (
             <HighlightCard
-              icon={<MdEmojiEvents className="text-xl text-yellow-400" />}
+              icon={<MdEmojiEvents className="text-base" />}
               title={`Podium${highlights.perfectPodiums.length > 1 ? 's' : ''} Parfait${highlights.perfectPodiums.length > 1 ? 's' : ''}`}
-              delay={(delayIdx++) * 0.1 + 0.1}
+              subtitle={`${highlights.perfectPodiums.length} sur la saison`}
+              accent="gold"
+              delay={(delayIdx++) * 0.08 + 0.1}
               reducedMotion={reducedMotion}
             >
-              <p className="text-regular text-neutral-300 mb-2">
-                {highlights.perfectPodiums.length} podium
-                {highlights.perfectPodiums.length > 1 ? "s" : ""} parfait
-                {highlights.perfectPodiums.length > 1 ? "s" : ""}
-              </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {entries.map((entry, i) => (
                   <span
                     key={i}
-                    className="bg-neutral-700 text-sub text-white px-2.5 py-1 rounded-full border border-neutral-600"
+                    className="bg-neutral-700/60 text-[11px] text-neutral-200 px-2 py-0.5 rounded-full border border-neutral-600/60"
                   >
                     {entry.count > 1
                       ? `${entry.userName} ×${entry.count}`
-                      : `${entry.userName} (S${entry.weeks[0]})`}
+                      : `${entry.userName} · S${entry.weeks[0]}`}
                   </span>
                 ))}
               </div>
@@ -543,23 +623,20 @@ function SlideHighlights({
         {/* Highest Bet Score */}
         {highlights.highestBetScore && (
           <HighlightCard
-            icon={<MdTrendingUp className="text-xl text-emerald-400" />}
-            title="Plus gros score"
-            delay={(delayIdx++) * 0.1 + 0.1}
+            icon={<MdTrendingUp className="text-base" />}
+            title="Plus gros score de pari"
+            subtitle={`Semaine ${highlights.highestBetScore.week}`}
+            accent="emerald"
+            delay={(delayIdx++) * 0.08 + 0.1}
             reducedMotion={reducedMotion}
           >
             <div className="flex items-center justify-between">
-              <span className="text-bold text-white">
+              <span className="text-[13px] font-semibold text-white truncate">
                 {highlights.highestBetScore.userName}
               </span>
-              <div className="text-right">
-                <span className="text-statistic text-emerald-400">
-                  {highlights.highestBetScore.points} pts
-                </span>
-                <p className="text-sub text-neutral-500">
-                  Semaine {highlights.highestBetScore.week}
-                </p>
-              </div>
+              <span className="text-lg font-bold text-emerald-400 tabular-nums shrink-0">
+                {highlights.highestBetScore.points} pts
+              </span>
             </div>
           </HighlightCard>
         )}
@@ -567,27 +644,28 @@ function SlideHighlights({
         {/* Biggest Upset */}
         {highlights.biggestUpset && (
           <HighlightCard
-            icon={<span className="text-xl">🎲</span>}
+            icon={<span className="text-base">🎲</span>}
             title="Plus gros upset"
-            delay={(delayIdx++) * 0.1 + 0.1}
+            subtitle={`Semaine ${highlights.biggestUpset.week}`}
+            accent="orange"
+            delay={(delayIdx++) * 0.08 + 0.1}
             reducedMotion={reducedMotion}
           >
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-bold text-white">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold text-white truncate">
                   {highlights.biggestUpset.userName}
-                </span>
-                <span className="text-statistic text-orange-400">
-                  x{highlights.biggestUpset.odd.toFixed(1)}
-                </span>
+                </p>
+                <p className="text-[11px] text-neutral-500 truncate">
+                  a misé sur{" "}
+                  <span className="text-neutral-300">
+                    {highlights.biggestUpset.competitorName}
+                  </span>
+                </p>
               </div>
-              <p className="text-sub text-neutral-400">
-                A misé correctement sur{" "}
-                <span className="text-neutral-200">
-                  {highlights.biggestUpset.competitorName}
-                </span>{" "}
-                (Semaine {highlights.biggestUpset.week})
-              </p>
+              <span className="text-lg font-bold text-orange-400 tabular-nums shrink-0">
+                ×{highlights.biggestUpset.odd.toFixed(1)}
+              </span>
             </div>
           </HighlightCard>
         )}
@@ -595,18 +673,24 @@ function SlideHighlights({
         {/* Best Race Scorers (Perfect 60 pts races) */}
         {highlights.bestRaceScorers && highlights.bestRaceScorers.length > 0 && (
           <HighlightCard
-            icon={<span className="text-xl">🏎️</span>}
-            title="Courses Parfaites (60 pts)"
-            delay={(delayIdx++) * 0.1 + 0.1}
-            glowClass="animate-glow"
+            icon={<span className="text-base">🏎️</span>}
+            title="Courses Parfaites"
+            subtitle="60 pts sur une course"
+            accent="gold"
+            delay={(delayIdx++) * 0.08 + 0.1}
             reducedMotion={reducedMotion}
           >
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {highlights.bestRaceScorers.map((scorer, i) => (
-                <div key={i} className="flex items-center justify-between bg-neutral-700/30 rounded-lg px-3 py-2">
-                  <span className="text-bold text-white">{scorer.competitorName}</span>
-                  <span className="text-sub text-neutral-400">
-                    {scorer.perfectCount} fois
+                <div
+                  key={i}
+                  className="flex items-center justify-between bg-yellow-400/[0.06] rounded-md px-2.5 py-1.5"
+                >
+                  <span className="text-[13px] font-semibold text-yellow-200 truncate">
+                    {scorer.competitorName}
+                  </span>
+                  <span className="text-[11px] text-neutral-500 tabular-nums shrink-0">
+                    ×{scorer.perfectCount}
                   </span>
                 </div>
               ))}
@@ -620,47 +704,58 @@ function SlideHighlights({
           highlights.mostRaces ||
           season.totalRaces > 0) && (
           <HighlightCard
-            icon={<span className="text-xl">🔥</span>}
+            icon={<span className="text-base">🔥</span>}
             title="Séries & Records"
-            delay={(delayIdx++) * 0.1 + 0.1}
+            accent="amber"
+            delay={(delayIdx++) * 0.08 + 0.1}
             reducedMotion={reducedMotion}
           >
-            <div className="space-y-2.5">
+            <div className="divide-y divide-neutral-700/40">
               {highlights.longestParticipationStreak && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sub text-neutral-400">Participations consécutives</span>
-                  <span className="text-bold text-white shrink-0">
-                    {highlights.longestParticipationStreak.userName} —{" "}
-                    <span className="text-primary-400">
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                    Participations
+                  </span>
+                  <span className="text-[12px] text-neutral-200 truncate text-right">
+                    {highlights.longestParticipationStreak.userName}{" "}
+                    <span className="text-primary-400 font-bold tabular-nums">
                       {highlights.longestParticipationStreak.streak} sem.
                     </span>
                   </span>
                 </div>
               )}
               {highlights.longestWinStreak && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sub text-neutral-400">Victoires consécutives (pilote)</span>
-                  <span className="text-bold text-white shrink-0">
-                    {highlights.longestWinStreak.competitorName} —{" "}
-                    <span className="text-yellow-400">
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                    Victoires d&apos;affilée
+                  </span>
+                  <span className="text-[12px] text-neutral-200 truncate text-right">
+                    {highlights.longestWinStreak.competitorName}{" "}
+                    <span className="text-amber-400 font-bold tabular-nums">
                       {highlights.longestWinStreak.streak}🔥
                     </span>
                   </span>
                 </div>
               )}
               {highlights.mostRaces && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sub text-neutral-400">Plus de courses</span>
-                  <span className="text-bold text-white shrink-0">
-                    {highlights.mostRaces.competitorName} —{" "}
-                    <span className="text-blue-400">{highlights.mostRaces.count}</span>
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                    Plus de courses
+                  </span>
+                  <span className="text-[12px] text-neutral-200 truncate text-right">
+                    {highlights.mostRaces.competitorName}{" "}
+                    <span className="text-blue-400 font-bold tabular-nums">
+                      {highlights.mostRaces.count}
+                    </span>
                   </span>
                 </div>
               )}
               {season.totalRaces > 0 && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sub text-neutral-400">Temps de jeu estimé</span>
-                  <span className="text-bold text-emerald-400 shrink-0">
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                    Temps de jeu
+                  </span>
+                  <span className="text-[12px] text-emerald-400 font-bold tabular-nums">
                     {formatEstimatedTime(season.totalRaces)}
                   </span>
                 </div>
@@ -916,11 +1011,11 @@ export default function SeasonRecapModal({
 
   const goNext = useCallback(() => {
     setCurrentSlide((prev) => {
-      if (prev >= TOTAL_SLIDES - 1) return prev;
+      if (prev >= totalSlides - 1) return prev;
       setDirection(1);
       return prev + 1;
     });
-  }, []);
+  }, [totalSlides]);
 
   const goPrev = useCallback(() => {
     setCurrentSlide((prev) => {
@@ -985,6 +1080,30 @@ export default function SeasonRecapModal({
     [bettors]
   );
 
+  // Build the active slide list dynamically. Bettor slides are skipped
+  // entirely when no bets were placed during the season.
+  const activeSlides = useMemo<SlideKey[]>(() => {
+    const slides: SlideKey[] = [
+      "title",
+      "competitor-podium",
+      "competitor-ranking",
+    ];
+    if (bettors.length > 0) {
+      slides.push("bettor-podium", "bettor-ranking");
+    }
+    slides.push("highlights", "elo-reset");
+    return slides;
+  }, [bettors]);
+
+  const totalSlides = activeSlides.length;
+
+  // If we hop to a season with fewer slides, clamp currentSlide.
+  useEffect(() => {
+    if (currentSlide > totalSlides - 1) {
+      setCurrentSlide(totalSlides - 1);
+    }
+  }, [totalSlides, currentSlide]);
+
   const slideVariants = reducedMotion
     ? {
         enter: { opacity: 0 },
@@ -1000,12 +1119,14 @@ export default function SeasonRecapModal({
   const renderSlide = () => {
     if (!season || !highlights) return null;
 
-    switch (currentSlide) {
-      case 0:
+    const slideKey = activeSlides[currentSlide];
+
+    switch (slideKey) {
+      case "title":
         return <SlideTitleStats season={season} reducedMotion={reducedMotion} />;
-      case 1:
+      case "competitor-podium":
         return <PodiumSlide title="Ligue des Champions" items={competitorPodiumItems} type="competitor" reducedMotion={reducedMotion} />;
-      case 2: {
+      case "competitor-ranking": {
         const activeCompetitors = competitors.filter((c) => c.totalRaces > 0);
         const confirmed = activeCompetitors.filter((c) => !c.provisional);
         const provisional = activeCompetitors.filter((c) => c.provisional);
@@ -1027,9 +1148,9 @@ export default function SeasonRecapModal({
           </RankingListSlide>
         );
       }
-      case 3:
+      case "bettor-podium":
         return <PodiumSlide title="Podium Parieurs" items={bettorPodiumItems} type="bettor" reducedMotion={reducedMotion} />;
-      case 4:
+      case "bettor-ranking":
         return (
           <RankingListSlide title="Classement Parieurs">
             {bettors.map((b, i) => (
@@ -1037,9 +1158,9 @@ export default function SeasonRecapModal({
             ))}
           </RankingListSlide>
         );
-      case 5:
+      case "highlights":
         return <SlideHighlights highlights={highlights} season={season} reducedMotion={reducedMotion} />;
-      case 6:
+      case "elo-reset":
         return <SlideEloReset competitors={competitors} reducedMotion={reducedMotion} />;
       default:
         return null;
@@ -1064,7 +1185,7 @@ export default function SeasonRecapModal({
         {/* Header: progress bar + close button aligned */}
         <div className="shrink-0 flex items-center gap-2 px-4 pt-3">
           {!isLoading ? (
-            <ProgressBar total={TOTAL_SLIDES} current={currentSlide} />
+            <ProgressBar total={totalSlides} current={currentSlide} />
           ) : (
             <div className="flex-1" />
           )}
@@ -1121,7 +1242,7 @@ export default function SeasonRecapModal({
                 <div />
               )}
 
-              {currentSlide < TOTAL_SLIDES - 1 ? (
+              {currentSlide < totalSlides - 1 ? (
                 <Button
                   variant="primary"
                   size="sm"

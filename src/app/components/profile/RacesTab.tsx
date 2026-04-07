@@ -167,39 +167,43 @@ const RacesTab: FC<RacesTabProps> = ({
       )}
 
       {/* Win Streaks Section */}
-      {((competitor.winStreak ?? 0) > 0 || (competitor.bestWinStreak ?? 0) > 0) && (
+      {((competitor.winStreak ?? 0) > 1 || (competitor.bestWinStreak ?? 0) > 1) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-orange-500">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <MdLocalFireDepartment className="text-orange-400" />
-              <span>Streak de victoires</span>
-            </h3>
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-5xl mb-2">🔥</div>
-                <div className="text-4xl font-bold text-orange-400">
-                  {competitor.winStreak ?? 0}
+          {(competitor.winStreak ?? 0) > 1 && (
+            <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-orange-500">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <MdLocalFireDepartment className="text-orange-400" />
+                <span>Streak de victoires</span>
+              </h3>
+              <div className="flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-5xl mb-2">🔥</div>
+                  <div className="text-4xl font-bold text-orange-400">
+                    {competitor.winStreak ?? 0}
+                  </div>
+                  <p className="text-sm text-neutral-400 mt-1">victoires consécutives</p>
                 </div>
-                <p className="text-sm text-neutral-400 mt-1">victoires consécutives</p>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-orange-500">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <MdStar className="text-orange-400" />
-              <span>Record de victoires</span>
-            </h3>
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-5xl mb-2">🏆</div>
-                <div className="text-4xl font-bold text-orange-400">
-                  {competitor.bestWinStreak ?? 0}
+          {(competitor.bestWinStreak ?? 0) > 1 && (
+            <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-orange-500">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <MdStar className="text-orange-400" />
+                <span>Record de victoires</span>
+              </h3>
+              <div className="flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-5xl mb-2">🏆</div>
+                  <div className="text-4xl font-bold text-orange-400">
+                    {competitor.bestWinStreak ?? 0}
+                  </div>
+                  <p className="text-sm text-neutral-400 mt-1">victoires consécutives</p>
                 </div>
-                <p className="text-sm text-neutral-400 mt-1">victoires consécutives</p>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

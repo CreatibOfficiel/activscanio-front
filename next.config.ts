@@ -12,14 +12,14 @@ const withPWA = withPWAInit({
     skipWaiting: true,
     clientsClaim: true,
     runtimeCaching: [
+      // Pages (HTML / Next.js routes): always go to the network.
+      // We previously cached pages with NetworkFirst, but that caused
+      // workbox `no-response` errors on slow Railway cold-starts when
+      // the cache was empty. The app does not need offline page support
+      // (static assets below are still cached for PWA install + perf).
       {
         urlPattern: /^https?:\/\/[^\/]+\/(?!api|_next\/static).*/i,
-        handler: "NetworkFirst",
-        options: {
-          cacheName: "pages-cache",
-          expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
-          networkTimeoutSeconds: 10,
-        },
+        handler: "NetworkOnly",
       },
       {
         urlPattern: /^https?:.*\.(png|jpg|jpeg|webp|svg|gif|js|css)$/i,

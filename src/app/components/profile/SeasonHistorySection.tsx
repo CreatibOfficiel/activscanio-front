@@ -369,14 +369,12 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
               </div>
 
               {/* Win Streak indicator */}
-              {ranking.winStreak > 0 && (
+              {ranking.winStreak > 1 && (
                 <div className="mt-2 pt-2 border-t border-neutral-700/50">
                   <div className="flex items-center gap-1 text-xs text-orange-400">
                     <span>🔥</span>
                     <span>
-                      Meilleure série: {ranking.winStreak} victoire
-                      {ranking.winStreak > 1 ? 's' : ''} consécutive
-                      {ranking.winStreak > 1 ? 's' : ''}
+                      Meilleure série: {ranking.winStreak} victoires consécutives
                     </span>
                   </div>
                 </div>

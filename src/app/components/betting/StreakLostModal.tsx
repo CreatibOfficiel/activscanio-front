@@ -52,6 +52,11 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
     router.push('/betting');
   };
 
+  const handlePlay = () => {
+    onClose();
+    router.push('/races');
+  };
+
   if (!mounted) return null;
 
   const modalContent = (
@@ -131,12 +136,26 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
 
           {/* CTAs */}
           <div className="flex flex-col gap-2">
-            <button
-              onClick={handleBet}
-              className="w-full py-3 px-6 rounded-xl font-semibold text-sm bg-amber-500 hover:bg-amber-400 text-neutral-900 transition-colors"
-            >
-              Placer mon prono
-            </button>
+            {bettingLoss && (
+              <button
+                onClick={handleBet}
+                className="w-full py-3 px-6 rounded-xl font-semibold text-sm bg-amber-500 hover:bg-amber-400 text-neutral-900 transition-colors"
+              >
+                Placer mon prono
+              </button>
+            )}
+            {playLoss && (
+              <button
+                onClick={handlePlay}
+                className={`w-full py-3 px-6 rounded-xl font-semibold text-sm transition-colors ${
+                  bettingLoss
+                    ? 'bg-neutral-700 hover:bg-neutral-600 text-neutral-100'
+                    : 'bg-amber-500 hover:bg-amber-400 text-neutral-900'
+                }`}
+              >
+                Jouer une course
+              </button>
+            )}
             <button
               onClick={onClose}
               className="w-full py-2.5 px-6 rounded-xl font-semibold text-sm bg-neutral-700 hover:bg-neutral-600 text-neutral-400 transition-colors"

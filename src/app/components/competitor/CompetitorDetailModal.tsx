@@ -530,12 +530,11 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Win streak */}
-              {(competitor.winStreak ?? 0) > 0 && (
+              {(competitor.winStreak ?? 0) > 1 && (
                 <StatCard
                   icon="🔥"
                   title="Série en cours"
-                  value={`${competitor.winStreak} victoire${(competitor.winStreak ?? 0) > 1 ? "s" : ""
-                    } d'affilée${(competitor.bestWinStreak ?? 0) > 0 ? ` (record : ${competitor.bestWinStreak}v)` : ""}`}
+                  value={`${competitor.winStreak} victoires d'affilée${(competitor.bestWinStreak ?? 0) > 0 ? ` (record : ${competitor.bestWinStreak}v)` : ""}`}
                 />
               )}
 
