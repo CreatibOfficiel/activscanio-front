@@ -6,11 +6,12 @@ import Image from 'next/image';
 interface UserAvatarProps {
   src?: string | null;
   name: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   className?: string;
 }
 
 const sizeClasses = {
+  xs: 'w-7 h-7 text-[10px]',
   sm: 'w-8 h-8 text-xs',
   md: 'w-10 h-10 text-sm',
   lg: 'w-14 h-14 text-base',
@@ -19,6 +20,7 @@ const sizeClasses = {
 };
 
 const imageSizes = {
+  xs: 28,
   sm: 32,
   md: 40,
   lg: 56,

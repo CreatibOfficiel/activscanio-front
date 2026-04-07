@@ -3,6 +3,7 @@
 import { FC, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Button from "../ui/Button";
+import UserAvatar from "../ui/UserAvatar";
 import { DuelRepository } from "@/app/repositories/DuelRepository";
 import { toast } from "sonner";
 
@@ -72,17 +73,12 @@ const DuelChallengeForm: FC<DuelChallengeFormProps> = ({
 
       {/* Opponent info */}
       <div className="flex flex-col items-center gap-2">
-        {competitorAvatar ? (
-          <img
-            src={competitorAvatar}
-            alt={competitorName}
-            className="w-16 h-16 rounded-full object-cover border-2 border-neutral-600"
-          />
-        ) : (
-          <div className="w-16 h-16 rounded-full bg-neutral-700 flex items-center justify-center text-2xl">
-            ?
-          </div>
-        )}
+        <UserAvatar
+          src={competitorAvatar}
+          name={competitorName}
+          size="xl"
+          className="border-2 border-neutral-600"
+        />
         <p className="text-bold text-white">{competitorName}</p>
       </div>
 

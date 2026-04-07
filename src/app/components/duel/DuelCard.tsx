@@ -4,6 +4,7 @@ import { FC } from "react";
 import { Duel, DuelStatus } from "@/app/models/Duel";
 import Card from "../ui/Card";
 import Badge from "../ui/Badge";
+import UserAvatar from "../ui/UserAvatar";
 import DuelCountdown from "./DuelCountdown";
 
 interface DuelCardProps {
@@ -53,15 +54,11 @@ const DuelCard: FC<DuelCardProps> = ({
         {/* Players */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            {duel.challengerUser?.profilePictureUrl ? (
-              <img
-                src={duel.challengerUser.profilePictureUrl}
-                alt=""
-                className="w-7 h-7 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-neutral-700" />
-            )}
+            <UserAvatar
+              src={duel.challengerUser?.profilePictureUrl}
+              name={formatName(duel.challengerUser)}
+              size="xs"
+            />
             <span className="text-sm font-medium text-white truncate">
               {formatName(duel.challengerUser)}
             </span>
@@ -70,15 +67,11 @@ const DuelCard: FC<DuelCardProps> = ({
           <span className="text-neutral-500 text-xs">vs</span>
 
           <div className="flex items-center gap-1.5">
-            {duel.challengedUser?.profilePictureUrl ? (
-              <img
-                src={duel.challengedUser.profilePictureUrl}
-                alt=""
-                className="w-7 h-7 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-neutral-700" />
-            )}
+            <UserAvatar
+              src={duel.challengedUser?.profilePictureUrl}
+              name={formatName(duel.challengedUser)}
+              size="xs"
+            />
             <span className="text-sm font-medium text-white truncate">
               {formatName(duel.challengedUser)}
             </span>

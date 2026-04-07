@@ -2,7 +2,6 @@
 
 import { FC, useContext, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useUser } from "@clerk/nextjs";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
@@ -103,7 +102,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
   const { getRecentRacesOfCompetitor, getBestScoreOfCompetitor, allRaces, allCompetitors } =
     useContext(AppContext);
   const { userData } = useCurrentUserData();
-  const { user } = useUser();
 
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [bestScore, setBestScore] = useState<number | null>(null);

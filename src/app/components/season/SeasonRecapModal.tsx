@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import CountUp from "react-countup";
@@ -234,9 +235,11 @@ function PodiumSlide({
                   className={`border-2 ${avatarBorders[i]}`}
                 />
                 {item.characterUrl && (
-                  <img
+                  <Image
                     src={item.characterUrl}
                     alt=""
+                    width={i === 1 ? 24 : 20}
+                    height={i === 1 ? 24 : 20}
                     className={`absolute -bottom-1 -right-1 ${charSizes[i]} object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]`}
                   />
                 )}
@@ -852,9 +855,11 @@ function SlideEloReset({
             <div className="relative shrink-0">
               <UserAvatar src={item.imageUrl} name={item.name} size="sm" />
               {item.characterUrl && (
-                <img
+                <Image
                   src={item.characterUrl}
                   alt=""
+                  width={16}
+                  height={16}
                   className="absolute -bottom-0.5 -right-0.5 w-4 h-4 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
                 />
               )}
@@ -1009,44 +1014,6 @@ export default function SeasonRecapModal({
     return () => window.removeEventListener("keydown", handler);
   });
 
-  const goNext = useCallback(() => {
-    setCurrentSlide((prev) => {
-      if (prev >= totalSlides - 1) return prev;
-      setDirection(1);
-      return prev + 1;
-    });
-  }, [totalSlides]);
-
-  const goPrev = useCallback(() => {
-    setCurrentSlide((prev) => {
-      if (prev <= 0) return prev;
-      setDirection(-1);
-      return prev - 1;
-    });
-  }, []);
-
-  // Touch handlers — diagonal-aware swipe detection
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStart.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-  }, []);
-
-  const onTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      const deltaX = e.changedTouches[0].clientX - touchStart.current.x;
-      const deltaY = e.changedTouches[0].clientY - touchStart.current.y;
-
-      // Only trigger horizontal swipe if deltaX dominates and threshold met
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-        if (deltaX < 0) goNext();
-        else goPrev();
-      }
-    },
-    [goNext, goPrev]
-  );
-
   // Build podium items
   const competitorPodiumItems = useMemo(
     () =>
@@ -1103,6 +1070,44 @@ export default function SeasonRecapModal({
       setCurrentSlide(totalSlides - 1);
     }
   }, [totalSlides, currentSlide]);
+
+  const goNext = useCallback(() => {
+    setCurrentSlide((prev) => {
+      if (prev >= totalSlides - 1) return prev;
+      setDirection(1);
+      return prev + 1;
+    });
+  }, [totalSlides]);
+
+  const goPrev = useCallback(() => {
+    setCurrentSlide((prev) => {
+      if (prev <= 0) return prev;
+      setDirection(-1);
+      return prev - 1;
+    });
+  }, []);
+
+  // Touch handlers — diagonal-aware swipe detection
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStart.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  }, []);
+
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const deltaX = e.changedTouches[0].clientX - touchStart.current.x;
+      const deltaY = e.changedTouches[0].clientY - touchStart.current.y;
+
+      // Only trigger horizontal swipe if deltaX dominates and threshold met
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX < 0) goNext();
+        else goPrev();
+      }
+    },
+    [goNext, goPrev]
+  );
 
   const slideVariants = reducedMotion
     ? {

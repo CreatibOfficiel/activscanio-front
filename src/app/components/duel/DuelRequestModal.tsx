@@ -4,6 +4,7 @@ import { FC, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
+import UserAvatar from "../ui/UserAvatar";
 import DuelCountdown from "./DuelCountdown";
 import { DuelRepository } from "@/app/repositories/DuelRepository";
 import { toast } from "sonner";
@@ -77,17 +78,12 @@ const DuelRequestModal: FC<DuelRequestModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} size="sm" closeOnBackdropClick={false}>
       <div className="flex flex-col items-center gap-4 py-2">
         {/* Challenger avatar */}
-        {challenger.profilePictureUrl ? (
-          <img
-            src={challenger.profilePictureUrl}
-            alt={challengerName}
-            className="w-20 h-20 rounded-full object-cover border-2 border-primary-500"
-          />
-        ) : (
-          <div className="w-20 h-20 rounded-full bg-neutral-700 flex items-center justify-center text-3xl">
-            ?
-          </div>
-        )}
+        <UserAvatar
+          src={challenger.profilePictureUrl}
+          name={challengerName}
+          size="2xl"
+          className="border-2 border-primary-500"
+        />
 
         <div className="text-center">
           <p className="text-heading text-white">{challengerName}</p>
