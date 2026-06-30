@@ -91,7 +91,7 @@ const Player: FC<PlayerProps> = ({ user, won, resolved, align }) => {
             won
               ? "ring-2 ring-success-500"
               : lost
-                ? "opacity-50 grayscale ring-2 ring-neutral-700"
+                ? "ring-2 ring-error-500/60 opacity-80"
                 : "ring-2 ring-neutral-600"
           } ${won ? "scale-105" : ""}`}
         >
@@ -103,18 +103,18 @@ const Player: FC<PlayerProps> = ({ user, won, resolved, align }) => {
       </div>
       <span
         className={`max-w-[96px] truncate text-sm font-semibold ${
-          lost ? "text-neutral-500" : "text-neutral-100"
+          lost ? "text-neutral-400" : "text-neutral-100"
         }`}
       >
         {formatName(user)}
       </span>
       {resolved && (
         <span
-          className={`text-[11px] font-medium ${
-            won ? "text-success-500" : "text-neutral-600"
+          className={`text-[11px] font-semibold ${
+            won ? "text-success-500" : "text-error-500"
           }`}
         >
-          {won ? "▲ gagné" : "défait"}
+          {won ? "▲ Gagné" : "▼ Défait"}
         </span>
       )}
     </div>
