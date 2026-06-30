@@ -151,47 +151,51 @@ const DuelCard: FC<DuelCardProps> = ({
   };
 
   return (
-    <Card className="p-3">
-      <div className="flex items-center justify-between gap-3">
-        {/* Players */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <UserAvatar
-              src={duel.challengerUser?.profilePictureUrl}
-              name={formatName(duel.challengerUser)}
-              size="xs"
-            />
-            <span className="text-sm font-medium text-white truncate">
-              {formatName(duel.challengerUser)}
-            </span>
-          </div>
+    <Card className="relative p-3">
+      {/* Status badge — top right, out of content flow */}
+      <div className="absolute right-3 top-3">
+        <Badge variant={variant} size="sm">
+          {label}
+        </Badge>
+      </div>
 
-          <span className="text-neutral-500 text-xs">vs</span>
+      {/* Player A */}
+      <div className="flex items-center gap-2.5 pr-20">
+        <UserAvatar
+          src={duel.challengerUser?.profilePictureUrl}
+          name={formatName(duel.challengerUser)}
+          size="sm"
+        />
+        <span className="text-sm font-semibold text-white truncate">
+          {formatName(duel.challengerUser)}
+        </span>
+      </div>
 
-          <div className="flex items-center gap-1.5">
-            <UserAvatar
-              src={duel.challengedUser?.profilePictureUrl}
-              name={formatName(duel.challengedUser)}
-              size="xs"
-            />
-            <span className="text-sm font-medium text-white truncate">
-              {formatName(duel.challengedUser)}
-            </span>
-          </div>
-        </div>
+      {/* VS + stake divider */}
+      <div className="my-2 flex items-center gap-3">
+        <span className="h-px flex-1 bg-neutral-700" />
+        <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-primary-400">
+          <span className="text-[10px] font-bold text-neutral-500">VS</span>
+          <span>{stakeLabel(duel)}</span>
+        </span>
+        <span className="h-px flex-1 bg-neutral-700" />
+      </div>
 
-        {/* Stake + Status */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-bold text-primary-400">{stakeLabel(duel)}</span>
-          <Badge variant={variant} size="sm">
-            {label}
-          </Badge>
-        </div>
+      {/* Player B */}
+      <div className="flex items-center gap-2.5">
+        <UserAvatar
+          src={duel.challengedUser?.profilePictureUrl}
+          name={formatName(duel.challengedUser)}
+          size="sm"
+        />
+        <span className="text-sm font-semibold text-white truncate">
+          {formatName(duel.challengedUser)}
+        </span>
       </div>
 
       {/* Condition line */}
       {condition && (
-        <p className="mt-1.5 text-xs text-neutral-400">⚡ {condition}</p>
+        <p className="mt-2 text-xs text-neutral-400">⚡ {condition}</p>
       )}
 
       {/* Result row for resolved/settled duels */}

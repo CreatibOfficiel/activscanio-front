@@ -29,7 +29,6 @@ export const STAKE_OPTIONS: {
   label: string;
 }[] = [
   { type: StakeType.BEER, emoji: '🍺', label: 'Une bière' },
-  { type: StakeType.PINT, emoji: '🍻', label: 'Une pinte' },
   { type: StakeType.MARS, emoji: '🍫', label: 'Un Mars' },
   { type: StakeType.MEAL, emoji: '🍽️', label: 'Un repas' },
   { type: StakeType.CUSTOM, emoji: '🎯', label: 'Autre…' },

@@ -26,9 +26,9 @@ const CONDITION_OPTIONS: {
   label: string;
   needsValue: boolean;
 }[] = [
-  { type: DuelConditionType.MARGIN_GREATER, label: "Je gagne avec + de X pts d'écart", needsValue: true },
-  { type: DuelConditionType.MARGIN_BETWEEN, label: "Il y a au moins X pts d'écart entre nous", needsValue: true },
-  { type: DuelConditionType.EXACT_TIE, label: "On finit à égalité", needsValue: false },
+  { type: DuelConditionType.MARGIN_GREATER, label: "Écart en ma faveur", needsValue: true },
+  { type: DuelConditionType.MARGIN_BETWEEN, label: "Écart minimum", needsValue: true },
+  { type: DuelConditionType.EXACT_TIE, label: "Égalité", needsValue: false },
 ];
 
 const conditionPreview = (
@@ -99,7 +99,8 @@ const DuelChallengeForm: FC<DuelChallengeFormProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col gap-5">
+      {/* Back button */}
       <button
         onClick={onCancel}
         className="self-start flex items-center gap-1.5 text-sm text-neutral-400 hover:text-neutral-200 transition-colors"
@@ -108,6 +109,7 @@ const DuelChallengeForm: FC<DuelChallengeFormProps> = ({
         <span>Retour</span>
       </button>
 
+      {/* Opponent */}
       <div className="flex flex-col items-center gap-2">
         <UserAvatar
           src={competitorAvatar}
@@ -118,25 +120,28 @@ const DuelChallengeForm: FC<DuelChallengeFormProps> = ({
         <p className="text-bold text-white">{competitorName}</p>
       </div>
 
-      {/* Stake selection — real-world items */}
-      <div className="w-full">
-        <p className="text-sub text-neutral-400 mb-2 text-center">Qu&apos;est-ce qu&apos;on parie ?</p>
-        <div className="grid grid-cols-5 gap-2">
+      {/* Stake selection — 2-col grid of cards */}
+      <div>
+        <p className="text-sub text-neutral-400 mb-2">Qu&apos;est-ce qu&apos;on parie ?</p>
+        <div role="radiogroup" aria-label="Enjeu" className="grid grid-cols-2 gap-2">
           {STAKE_OPTIONS.map((option) => (
-            <button
+            <label
               key={option.type}
-              onClick={() => setStakeType(option.type)}
-              className={`flex flex-col items-center gap-1 py-2 rounded-lg transition-all ${
-                stakeType === option.type
-                  ? "bg-primary-500 text-neutral-900 ring-2 ring-primary-400"
-                  : "bg-neutral-700 text-neutral-200 hover:bg-neutral-600"
-              }`}
+              className="flex items-center gap-2.5 min-h-[52px] px-3 py-2.5 rounded-xl border border-neutral-700 bg-neutral-800/60 cursor-pointer transition-all has-[:checked]:border-primary-500 has-[:checked]:bg-primary-500/10 has-[:checked]:ring-1 has-[:checked]:ring-primary-500 active:scale-[0.98]"
             >
-              <span className="text-xl">{option.emoji}</span>
-              <span className="text-[10px] leading-tight text-center">
+              <input
+                type="radio"
+                name="stake"
+                value={option.type}
+                checked={stakeType === option.type}
+                onChange={() => setStakeType(option.type)}
+                className="sr-only"
+              />
+              <span className="text-xl leading-none">{option.emoji}</span>
+              <span className="text-sm font-medium text-neutral-200 truncate">
                 {option.label}
               </span>
-            </button>
+            </label>
           ))}
         </div>
         {isCustom && (
@@ -146,45 +151,68 @@ const DuelChallengeForm: FC<DuelChallengeFormProps> = ({
             onChange={(e) => setCustomLabel(e.target.value)}
             maxLength={40}
             placeholder="Un café, un kebab, le ménage…"
-            className="mt-2 w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-primary-500"
+            className="mt-2 w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-primary-500"
           />
         )}
       </div>
 
-      {/* Optional condition / prono */}
-      <div className="w-full">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={conditionOn}
-            onChange={(e) => setConditionOn(e.target.checked)}
-            className="accent-primary-500"
-          />
-          <span className="text-sub text-neutral-300">Ajouter une condition (prono)</span>
+      {/* Optional condition — styled toggle */}
+      <div>
+        <label className="flex items-center justify-between gap-3 min-h-[44px] cursor-pointer select-none">
+          <span className="text-sm font-medium text-neutral-200">
+            Ajouter une condition (prono)
+          </span>
+          <span className="relative inline-flex shrink-0">
+            <input
+              type="checkbox"
+              role="switch"
+              checked={conditionOn}
+              onChange={(e) => setConditionOn(e.target.checked)}
+              className="sr-only peer"
+            />
+            <span className="block w-11 h-6 rounded-full bg-neutral-700 transition-colors duration-200 peer-checked:bg-primary-500 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:duration-200 peer-checked:after:translate-x-5" />
+          </span>
         </label>
 
         {conditionOn && (
-          <div className="mt-2 flex flex-col gap-2">
-            <select
-              value={conditionType}
-              onChange={(e) => setConditionType(e.target.value as DuelConditionType)}
-              className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary-500"
+          <div className="mt-3 flex flex-col gap-3">
+            {/* Segmented control — condition type */}
+            <div
+              role="radiogroup"
+              aria-label="Type de condition"
+              className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-neutral-800"
             >
               {CONDITION_OPTIONS.map((c) => (
-                <option key={c.type} value={c.type}>
+                <label
+                  key={c.type}
+                  className="relative flex items-center justify-center min-h-[44px] px-1 text-center rounded-lg text-xs font-medium text-neutral-400 cursor-pointer transition-colors has-[:checked]:bg-neutral-700 has-[:checked]:text-white has-[:checked]:shadow-sm hover:text-neutral-200"
+                >
+                  <input
+                    type="radio"
+                    name="conditionType"
+                    value={c.type}
+                    checked={conditionType === c.type}
+                    onChange={() => setConditionType(c.type)}
+                    className="sr-only"
+                  />
                   {c.label}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
+
             {needsValue && (
-              <input
-                type="number"
-                min={1}
-                value={conditionValue}
-                onChange={(e) => setConditionValue(Number(e.target.value))}
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary-500"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  value={conditionValue}
+                  onChange={(e) => setConditionValue(Number(e.target.value))}
+                  className="w-24 bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary-500"
+                />
+                <span className="text-sm text-neutral-400">points d&apos;écart</span>
+              </div>
             )}
+
             <p className="text-xs text-primary-300 bg-primary-500/10 rounded-lg px-3 py-2">
               {conditionPreview(conditionType, conditionValue)}
             </p>
