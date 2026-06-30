@@ -18,7 +18,9 @@ interface DuelRequestModalProps {
     lastName: string;
     profilePictureUrl?: string;
   };
-  stake: number;
+  stakeEmoji?: string;
+  stakeLabel?: string;
+  conditionText?: string;
   expiresAt: string;
   onResponded?: () => void;
 }
@@ -28,7 +30,9 @@ const DuelRequestModal: FC<DuelRequestModalProps> = ({
   onClose,
   duelId,
   challenger,
-  stake,
+  stakeEmoji,
+  stakeLabel,
+  conditionText,
   expiresAt,
   onResponded,
 }) => {
@@ -43,7 +47,7 @@ const DuelRequestModal: FC<DuelRequestModalProps> = ({
       if (!token) return;
 
       await DuelRepository.acceptDuel(duelId, token);
-      toast.success(`Duel accepte ! ${stake} pts en jeu.`);
+      toast.success(`Défi accepté ! La course de la semaine tranchera.`);
       onResponded?.();
       onClose();
     } catch (error) {
@@ -91,11 +95,19 @@ const DuelRequestModal: FC<DuelRequestModalProps> = ({
         </div>
 
         <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl px-6 py-3 text-center">
-          <p className="text-statistic text-primary-400">{stake} pts</p>
+          <p className="text-statistic text-primary-400">
+            {stakeEmoji ?? "🎯"} {stakeLabel ?? ""}
+          </p>
           <p className="text-sub text-neutral-400">en jeu</p>
         </div>
 
-        <DuelCountdown expiresAt={expiresAt} label="Temps pour repondre" />
+        {conditionText && (
+          <p className="text-xs text-primary-300 bg-primary-500/10 rounded-lg px-3 py-2 text-center">
+            ⚡ {conditionText}
+          </p>
+        )}
+
+        <DuelCountdown expiresAt={expiresAt} label="Temps pour répondre" />
 
         <div className="w-full flex gap-3">
           <Button

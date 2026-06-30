@@ -12,7 +12,6 @@ import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters
 import { TrendDirection } from "../leaderboard/TrendIndicator";
 import DuelChallengeForm from "../duel/DuelChallengeSheet";
 import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
-import { BettingRepository } from "@/app/repositories/BettingRepository";
 import { getCurrentSeasonNumber, getSeasonDateRange } from "@/app/utils/season-utils";
 import { MdClose, MdSportsKabaddi, MdChevronRight } from "react-icons/md";
 
@@ -107,7 +106,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
   const [bestScore, setBestScore] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [step, setStep] = useState<"detail" | "challenge">("detail");
-  const [userPoints, setUserPoints] = useState<number | undefined>(undefined);
 
   const isOwnCompetitor = userData?.competitorId === competitor.id;
 
@@ -130,18 +128,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
       setIsLoaded(true);
     })();
   }, [competitor.id, isOpen, getRecentRacesOfCompetitor, getBestScoreOfCompetitor]);
-
-  /* ---------- fetch user points for duel stakes ---------- */
-  useEffect(() => {
-    if (!isOpen || !userData?.id) return;
-    const now = new Date();
-    BettingRepository.getMonthlyRankings(getCurrentSeasonNumber(), now.getFullYear())
-      .then((res) => {
-        const myRanking = res.rankings.find((r) => r.userId === userData?.id);
-        setUserPoints(myRanking?.totalPoints ?? 0);
-      })
-      .catch(() => setUserPoints(0));
-  }, [isOpen, userData?.id]);
 
   /* ---------- derived data ---------- */
   const shortName = formatCompetitorName(
@@ -308,7 +294,6 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
           competitorId={competitor.id}
           competitorName={shortName}
           competitorAvatar={competitor.profilePictureUrl}
-          userPoints={userPoints}
           onSuccess={onClose}
           onCancel={() => setStep("detail")}
         />

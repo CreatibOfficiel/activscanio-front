@@ -1,5 +1,5 @@
 import { apiFetch } from '../utils/api-fetch';
-import { Duel } from '../models/Duel';
+import { Duel, CreateDuelParams, DuelBalance } from '../models/Duel';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -11,7 +11,7 @@ export interface PaginatedDuelResponse {
 export class DuelRepository {
   static async createDuel(
     challengedCompetitorId: string,
-    stake: number,
+    params: CreateDuelParams,
     token: string,
   ): Promise<Duel> {
     const response = await apiFetch(`${API_BASE_URL}/duels`, {
@@ -20,7 +20,7 @@ export class DuelRepository {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ challengedCompetitorId, stake }),
+      body: JSON.stringify({ challengedCompetitorId, ...params }),
     });
 
     if (!response.ok) {
@@ -124,5 +124,67 @@ export class DuelRepository {
         (errorData as { message?: string }).message || `Failed to cancel duel: ${response.statusText}`,
       );
     }
+  }
+
+  static async uploadProof(
+    duelId: string,
+    photoFile: File,
+    token: string,
+  ): Promise<Duel> {
+    const formData = new FormData();
+    formData.append('photo', photoFile);
+
+    const response = await apiFetch(`${API_BASE_URL}/duels/${duelId}/proof`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+      timeoutMs: 30_000, // longer timeout for file upload
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        (errorData as { message?: string }).message ||
+          `Failed to upload proof: ${response.statusText}`,
+      );
+    }
+
+    return await response.json();
+  }
+
+  static async undoProof(duelId: string, token: string): Promise<Duel> {
+    const response = await apiFetch(`${API_BASE_URL}/duels/${duelId}/proof`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        (errorData as { message?: string }).message ||
+          `Failed to undo proof: ${response.statusText}`,
+      );
+    }
+
+    return await response.json();
+  }
+
+  static async getBalances(token: string): Promise<DuelBalance[]> {
+    const response = await apiFetch(`${API_BASE_URL}/duels/balances`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch balances: ${response.statusText}`);
+    }
+
+    return await response.json();
   }
 }

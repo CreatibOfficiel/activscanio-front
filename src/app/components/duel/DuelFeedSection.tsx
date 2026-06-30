@@ -58,7 +58,7 @@ const DuelFeedSection: FC<DuelFeedSectionProps> = ({ currentUserId }) => {
   if (duels.length === 0) {
     return (
       <p className="text-center text-neutral-500 py-8 text-regular">
-        Aucun duel termine pour le moment
+        Aucun défi terminé pour le moment
       </p>
     );
   }

@@ -44,7 +44,7 @@ const MyDuelsSection: FC<MyDuelsSectionProps> = ({ currentUserId }) => {
       const token = await getToken();
       if (!token) return;
       await DuelRepository.acceptDuel(duelId, token);
-      toast.success("Duel accepte !");
+      toast.success("Défi accepté !");
       await loadDuels();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erreur";
@@ -57,7 +57,7 @@ const MyDuelsSection: FC<MyDuelsSectionProps> = ({ currentUserId }) => {
       const token = await getToken();
       if (!token) return;
       await DuelRepository.declineDuel(duelId, token);
-      toast("Duel refuse");
+      toast("Défi refusé");
       await loadDuels();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erreur";
@@ -70,7 +70,7 @@ const MyDuelsSection: FC<MyDuelsSectionProps> = ({ currentUserId }) => {
       const token = await getToken();
       if (!token) return;
       await DuelRepository.cancelDuel(duelId, token);
-      toast("Duel annule");
+      toast("Défi annulé");
       await loadDuels();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erreur";
@@ -93,8 +93,12 @@ const MyDuelsSection: FC<MyDuelsSectionProps> = ({ currentUserId }) => {
     (d) => d.status === DuelStatus.PENDING && d.challengerUser?.clerkId === currentUserId,
   );
   const accepted = duels.filter((d) => d.status === DuelStatus.ACCEPTED);
+  const toSettle = duels.filter(
+    (d) => d.status === DuelStatus.AWAITING_SETTLEMENT,
+  );
   const history = duels.filter(
     (d) =>
+      d.status === DuelStatus.SETTLED ||
       d.status === DuelStatus.RESOLVED ||
       d.status === DuelStatus.CANCELLED ||
       d.status === DuelStatus.DECLINED,
@@ -103,7 +107,7 @@ const MyDuelsSection: FC<MyDuelsSectionProps> = ({ currentUserId }) => {
   if (duels.length === 0) {
     return (
       <p className="text-center text-neutral-500 py-8 text-regular">
-        Aucun duel pour le moment. Defie quelqu&apos;un depuis le classement !
+        Aucun défi pour le moment. Défie quelqu&apos;un depuis le classement !
       </p>
     );
   }
@@ -149,6 +153,25 @@ const MyDuelsSection: FC<MyDuelsSectionProps> = ({ currentUserId }) => {
         </div>
       )}
 
+      {/* Awaiting settlement - debts to pay */}
+      {toSettle.length > 0 && (
+        <div>
+          <h3 className="text-bold text-amber-400 mb-2">
+            À régler ({toSettle.length})
+          </h3>
+          <div className="flex flex-col gap-2">
+            {toSettle.map((duel) => (
+              <DuelCard
+                key={duel.id}
+                duel={duel}
+                currentUserId={currentUserId}
+                onChange={loadDuels}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Accepted - waiting for race */}
       {accepted.length > 0 && (
         <div>
@@ -169,7 +192,13 @@ const MyDuelsSection: FC<MyDuelsSectionProps> = ({ currentUserId }) => {
           <h3 className="text-bold text-neutral-400 mb-2">Historique</h3>
           <div className="flex flex-col gap-2">
             {history.slice(0, 10).map((duel) => (
-              <DuelCard key={duel.id} duel={duel} currentUserId={currentUserId} compact />
+              <DuelCard
+                key={duel.id}
+                duel={duel}
+                currentUserId={currentUserId}
+                onChange={loadDuels}
+                compact
+              />
             ))}
           </div>
         </div>

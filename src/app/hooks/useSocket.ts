@@ -59,7 +59,11 @@ export interface DuelReceivedData {
     lastName: string;
     profilePictureUrl?: string;
   };
-  stake: number;
+  stakeType: string;
+  stakeEmoji?: string;
+  stakeLabel?: string;
+  conditionType?: string | null;
+  conditionValue?: number | null;
   expiresAt: string;
 }
 
@@ -370,7 +374,14 @@ export const subscribeToDuelDeclined = (
  * Subscribe to duel resolved events (both users)
  */
 export const subscribeToDuelResolved = (
-  callback: (data: { duelId: string; winnerUserId: string; loserUserId: string; stake: number }) => void,
+  callback: (data: {
+    duelId: string;
+    winnerUserId: string;
+    loserUserId: string;
+    stakeType?: string;
+    stakeEmoji?: string;
+    stakeLabel?: string;
+  }) => void,
 ): (() => void) | undefined => {
   if (!socket) return;
 
@@ -378,6 +389,43 @@ export const subscribeToDuelResolved = (
 
   return () => {
     socket?.off('duel:resolved', callback);
+  };
+};
+
+/**
+ * Subscribe to duel settled events (proof uploaded — both users + feed)
+ */
+export const subscribeToDuelSettled = (
+  callback: (data: {
+    duelId: string;
+    winnerUserId: string;
+    loserUserId: string;
+    stakeEmoji?: string;
+    stakeLabel?: string;
+    proofPhotoUrl?: string;
+  }) => void,
+): (() => void) | undefined => {
+  if (!socket) return;
+
+  socket.on('duel:settled', callback);
+
+  return () => {
+    socket?.off('duel:settled', callback);
+  };
+};
+
+/**
+ * Subscribe to duel unsettled events (proof undone — both users + feed)
+ */
+export const subscribeToDuelUnsettled = (
+  callback: (data: { duelId: string }) => void,
+): (() => void) | undefined => {
+  if (!socket) return;
+
+  socket.on('duel:unsettled', callback);
+
+  return () => {
+    socket?.off('duel:unsettled', callback);
   };
 };
 

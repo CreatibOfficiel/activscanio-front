@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated, subscribeToStreakLost, subscribeToDuelReceived, subscribeToDuelAccepted, subscribeToDuelDeclined, subscribeToDuelResolved, subscribeToDuelCancelled, subscribeToLiveBetResolved, DuelReceivedData } from '@/app/hooks/useSocket';
+import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated, subscribeToStreakLost, subscribeToDuelReceived, subscribeToDuelAccepted, subscribeToDuelDeclined, subscribeToDuelResolved, subscribeToDuelCancelled, subscribeToDuelSettled, subscribeToDuelUnsettled, subscribeToLiveBetResolved, DuelReceivedData } from '@/app/hooks/useSocket';
 import { useApp } from '@/app/context/AppContext';
 import { useResultModals } from '@/app/context/ResultModalsContext';
 import { toast } from 'sonner';
@@ -9,6 +9,23 @@ import DuelRequestModal from '@/app/components/duel/DuelRequestModal';
 
 interface SocketWrapperProps {
   userId?: string;
+}
+
+function describeCondition(
+  type?: string | null,
+  value?: number | null,
+): string | undefined {
+  const v = value ?? 0;
+  switch (type) {
+    case 'margin_greater':
+      return `Le challenger gagne si écart > ${v} pts`;
+    case 'margin_between':
+      return `Écart ≥ ${v} pts entre les deux`;
+    case 'exact_tie':
+      return `Pari sur une égalité`;
+    default:
+      return undefined;
+  }
 }
 
 export default function SocketWrapper({ userId }: SocketWrapperProps) {
@@ -154,26 +171,38 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
 
     // Duel accepted
     const unsubscribeDuelAccepted = subscribeToDuelAccepted(() => {
-      toast.success('Duel accepte ! En attente de la prochaine course.', { duration: 4000 });
+      toast.success('Défi accepté ! La course de la semaine tranchera.', { duration: 4000 });
     });
 
     // Duel declined
     const unsubscribeDuelDeclined = subscribeToDuelDeclined(() => {
-      toast('Duel refuse', { duration: 3000 });
+      toast('Défi refusé', { duration: 3000 });
     });
 
     // Duel resolved — event is targeted, so we just show a toast
     const unsubscribeDuelResolved = subscribeToDuelResolved((data) => {
-      toast.info(`Duel termine ! Mise: ${data.stake} pts`, {
+      const stake = `${data.stakeEmoji ?? ''}${data.stakeLabel ? ` ${data.stakeLabel}` : ''}`.trim();
+      toast.info(`Défi terminé ! ${stake}`.trim(), {
         duration: 5000,
-        description: 'Consultez vos duels pour les details.',
+        description: 'Va voir tes défis pour les détails.',
       });
     });
 
     // Duel cancelled
     const unsubscribeDuelCancelled = subscribeToDuelCancelled((data) => {
-      const reason = data.reason === 'expired' ? 'Temps ecoule' : data.reason === 'absent' ? 'Absent de la course' : 'Annule';
-      toast(`Duel annule : ${reason}`, { duration: 4000 });
+      const reason = data.reason === 'deadline' ? 'Délai dépassé' : data.reason === 'tie' ? 'Égalité' : 'Annulé';
+      toast(`Défi annulé : ${reason}`, { duration: 4000 });
+    });
+
+    // Duel settled (proof uploaded)
+    const unsubscribeDuelSettled = subscribeToDuelSettled((data) => {
+      const stake = `${data.stakeEmoji ?? ''}${data.stakeLabel ? ` ${data.stakeLabel}` : ''}`.trim();
+      toast.success(`Défi réglé ! ${stake}`.trim(), { duration: 4000 });
+    });
+
+    // Duel unsettled (proof undone)
+    const unsubscribeDuelUnsettled = subscribeToDuelUnsettled(() => {
+      toast('Règlement annulé', { duration: 3000 });
     });
 
     // Live bet resolved
@@ -208,6 +237,8 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribeDuelDeclined?.();
       unsubscribeDuelResolved?.();
       unsubscribeDuelCancelled?.();
+      unsubscribeDuelSettled?.();
+      unsubscribeDuelUnsettled?.();
       unsubscribeLiveBetResolved?.();
     };
   }, [socket, isConnected, refreshCompetitors, enqueueBetResult, enqueueStreakLoss, userId]);
@@ -234,7 +265,9 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
           onClose={() => setPendingDuel(null)}
           duelId={pendingDuel.duelId}
           challenger={pendingDuel.challenger}
-          stake={pendingDuel.stake}
+          stakeEmoji={pendingDuel.stakeEmoji}
+          stakeLabel={pendingDuel.stakeLabel}
+          conditionText={describeCondition(pendingDuel.conditionType, pendingDuel.conditionValue)}
           expiresAt={pendingDuel.expiresAt}
           onResponded={handleDuelResponded}
         />
