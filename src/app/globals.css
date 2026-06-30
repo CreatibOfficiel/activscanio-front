@@ -344,6 +344,28 @@
     animation: shrink linear forwards;
   }
 
+  @keyframes duelIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .animate-duelIn {
+    animation: duelIn 0.22s ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-duelIn {
+      animation: none;
+    }
+  }
+
   /* Pulse Glow for Epic/Legendary Achievements */
   @keyframes pulse-glow-epic {
 
