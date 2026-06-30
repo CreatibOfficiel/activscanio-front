@@ -63,7 +63,7 @@ const Sidebar: FC = () => {
   const navItems = [
     { href: '/', label: 'Classement', icon: MdLeaderboard },
     { href: '/races', label: 'Courses', icon: MdFlag, activePaths: ['/races'] },
-    { href: '/betting', label: 'Paris', icon: MdCasino, activePaths: ['/betting'] },
+    { href: '/betting', label: 'Défis', icon: MdCasino, activePaths: ['/betting'] },
     { href: '/profile', label: 'Profil', icon: MdPerson, activePaths: ['/profile', '/achievements'] },
   ];
 
