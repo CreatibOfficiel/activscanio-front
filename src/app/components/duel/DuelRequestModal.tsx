@@ -137,7 +137,7 @@ const DuelRequestModal: FC<DuelRequestModalProps> = ({
 
         {/* Headline */}
         <h2 className="mt-5 text-center text-xl font-bold text-white">
-          <span className="text-primary-400">{challengerName}</span> te défie en duel
+          <span className="text-primary-400">{challengerName}</span> te défie
         </h2>
 
         {/* Stake hero */}
@@ -181,7 +181,7 @@ const DuelRequestModal: FC<DuelRequestModalProps> = ({
             ) : (
               <>
                 <MdCheck size={20} />
-                Accepter le duel
+                Accepter le défi
               </>
             )}
           </button>

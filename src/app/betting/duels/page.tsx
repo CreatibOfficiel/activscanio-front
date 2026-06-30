@@ -11,7 +11,7 @@ const DuelsPage: FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-      <h1 className="text-title text-white">Duels</h1>
+      <h1 className="text-title text-white">Défis</h1>
 
       {/* Tabs */}
       <div className="flex bg-neutral-800 rounded-lg p-1 gap-1">
@@ -23,7 +23,7 @@ const DuelsPage: FC = () => {
               : "text-neutral-400 hover:text-neutral-200"
           }`}
         >
-          Mes duels
+          Mes défis
         </button>
         <button
           onClick={() => setActiveTab("feed")}
