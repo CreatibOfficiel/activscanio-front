@@ -4,9 +4,11 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { UsersRepository } from '@/app/repositories/UsersRepository';
+import { useOnboarding } from '@/app/context/OnboardingContext';
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { isLoaded, getToken } = useAuth();
+  const { setHasCompletedOnboarding } = useOnboarding();
   const router = useRouter();
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
@@ -47,6 +49,8 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
       const userData = await UsersRepository.getMe(token);
       consecutiveErrors.current = 0;
 
+      setHasCompletedOnboarding(userData.hasCompletedOnboarding);
+
       if (userData.hasCompletedOnboarding) {
         hasPassedOnboarding.current = true;
         if (pathname.startsWith('/onboarding')) {
@@ -73,7 +77,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
       setError('Impossible de contacter le serveur. Vérifie ta connexion.');
       setIsChecking(false);
     }
-  }, [isLoaded, pathname, router]);
+  }, [isLoaded, pathname, router, setHasCompletedOnboarding]);
 
   useEffect(() => {
     checkOnboarding();

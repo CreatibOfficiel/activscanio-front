@@ -28,15 +28,15 @@ function markRecapSeen(month: number, year: number): void {
   );
 }
 
-export function useSeasonRecap() {
+export function useSeasonRecap(enabled: boolean = true) {
   const [showRecap, setShowRecap] = useState(false);
   const [recapMonth, setRecapMonth] = useState<number | null>(null);
   const [recapYear, setRecapYear] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
 
-  // Auto-detect on mount
+  // Auto-detect on mount, only once the caller says it's safe (authenticated + onboarded)
   useEffect(() => {
-    if (checked) return;
+    if (!enabled || checked) return;
 
     const { month, year } = getPreviousSeason();
 
@@ -59,7 +59,7 @@ export function useSeasonRecap() {
       .finally(() => {
         setChecked(true);
       });
-  }, [checked]);
+  }, [enabled, checked]);
 
   const openRecap = useCallback((month: number, year: number) => {
     setRecapMonth(month);

@@ -6,6 +6,7 @@ import { ResultModalsProvider } from "./context/ResultModalsContext";
 import { BottomNav, Sidebar } from "./components/layout";
 import MainContent from "./components/layout/MainContent";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
+import { OnboardingProvider } from "./context/OnboardingContext";
 
 import { PWAInstallPrompt } from "./components/ui/PWAInstallPrompt";
 import OfflineIndicator from "./components/ui/OfflineIndicator";
@@ -59,6 +60,7 @@ export default function RootLayout({
           <AppProvider>
             <SoundboardProvider>
             <ResultModalsProvider>
+            <OnboardingProvider>
             <OnboardingGuard>
               {/* Offline Indicator */}
               <OfflineIndicator />
@@ -115,6 +117,7 @@ export default function RootLayout({
                 <BottomNav />
               </AuthLayout>
             </OnboardingGuard>
+            </OnboardingProvider>
             </ResultModalsProvider>
             <SoundboardModal />
             <ShakeDetector />
