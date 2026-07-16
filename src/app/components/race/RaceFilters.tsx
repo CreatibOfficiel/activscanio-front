@@ -2,6 +2,7 @@
 
 import { FC, useState } from "react";
 import Image from "next/image";
+import UserAvatar, { getColorFromName } from "@/app/components/ui/UserAvatar";
 import { MdClose, MdFilterList, MdKeyboardArrowDown } from "react-icons/md";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
@@ -95,13 +96,23 @@ const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
               {selectedCompetitor ? (
                 <>
                   <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
-                    <Image
-                      src={selectedCompetitor.profilePictureUrl}
-                      alt=""
-                      width={20}
-                      height={20}
-                      className="object-cover w-full h-full"
-                    />
+                    {selectedCompetitor.profilePictureUrl ? (
+                      <Image
+                        src={selectedCompetitor.profilePictureUrl}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      <div
+                        className={`w-full h-full flex items-center justify-center text-[8px] font-bold text-white ${getColorFromName(
+                          `${selectedCompetitor.firstName} ${selectedCompetitor.lastName}`,
+                        )}`}
+                      >
+                        {selectedCompetitor.firstName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <span className="truncate">
                     {formatCompetitorName(selectedCompetitor.firstName, selectedCompetitor.lastName)}
@@ -159,15 +170,11 @@ const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
                       : "text-neutral-300"
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                    <Image
-                      src={competitor.profilePictureUrl}
-                      alt=""
-                      width={32}
-                      height={32}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
+                  <UserAvatar
+                    src={competitor.profilePictureUrl}
+                    name={`${competitor.firstName} ${competitor.lastName}`}
+                    size="sm"
+                  />
                   <span className="truncate">
                     {formatCompetitorName(competitor.firstName, competitor.lastName)}
                   </span>

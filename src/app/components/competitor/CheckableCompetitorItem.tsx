@@ -1,5 +1,5 @@
 import { FC } from "react";
-import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { Competitor } from "@/app/models/Competitor";
 import { MdCheck } from "react-icons/md";
 import { formatCompetitorName } from "@/app/utils/formatters";
@@ -25,15 +25,12 @@ const CheckableCompetitorItem: FC<Props> = ({
       `}
       onClick={() => toggleSelection(competitor)}
     >
-      <div className="w-10 h-10 rounded-full overflow-hidden ml-1 mr-3 flex-shrink-0">
-        <Image
-          src={competitor.profilePictureUrl}
-          alt={competitor.firstName}
-          width={40}
-          height={40}
-          className="object-cover w-full h-full"
-        />
-      </div>
+      <UserAvatar
+        src={competitor.profilePictureUrl}
+        name={`${competitor.firstName} ${competitor.lastName}`}
+        size="md"
+        className="ml-1 mr-3"
+      />
 
       <span className="text-base text-neutral-100">{shortName}</span>
 

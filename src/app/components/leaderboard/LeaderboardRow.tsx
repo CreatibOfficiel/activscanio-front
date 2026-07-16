@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import RankBadge from "./RankBadge";
+import UserAvatar from "../ui/UserAvatar";
 import TrendIndicator, { TrendDirection } from "./TrendIndicator";
 import CompetitorDetailModal from "../competitor/CompetitorDetailModal";
 
@@ -61,15 +62,12 @@ const LeaderboardRow: FC<Props> = ({
 
         {/* Avatar with Character Overlay */}
         <div className="relative flex-shrink-0">
-          <div className="w-10 h-10 rounded-full overflow-hidden border border-neutral-700 flex-shrink-0">
-            <Image
-              src={competitor.profilePictureUrl}
-              alt={competitor.firstName}
-              width={40}
-              height={40}
-              className="object-cover w-full h-full"
-            />
-          </div>
+          <UserAvatar
+            src={competitor.profilePictureUrl}
+            name={`${competitor.firstName} ${competitor.lastName}`}
+            size="md"
+            className="border border-neutral-700"
+          />
 
           {/* Character Overlay */}
           {competitor.characterVariant?.imageUrl && (

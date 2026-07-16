@@ -2,6 +2,7 @@
 
 import { FC, useState } from "react";
 import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import CompetitorDetailModal from "../competitor/CompetitorDetailModal";
@@ -109,12 +110,11 @@ const ElevatedPodium: FC<Props> = ({ topThree, trends, disableEntryAnimation = f
           <div className="w-full h-full skew-x-20 relative z-20 flex items-center pl-7 pr-4 gap-3 [backface-visibility:hidden]">
             {/* Avatar */}
             <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0">
-              <Image
+              <UserAvatar
                 src={competitor.profilePictureUrl}
-                alt={competitor.firstName}
-                width={44}
-                height={44}
-                className="object-cover w-full h-full"
+                name={`${competitor.firstName} ${competitor.lastName}`}
+                size="md"
+                className="w-full h-full"
               />
             </div>
 

@@ -2,6 +2,7 @@
 
 import { FC } from "react";
 import Image from "next/image";
+import { getInitials, getColorFromName } from "@/app/components/ui/UserAvatar";
 import { FaCrown } from "react-icons/fa";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
@@ -21,13 +22,23 @@ const WinnerHighlight: FC<Props> = ({ competitor, score, rank12 }) => {
         {/* Avatar with crown */}
         <div className="relative flex-shrink-0">
           <div className="w-14 h-14 rounded-xl ring-2 ring-gold-500 shadow-lg shadow-gold-500/30 overflow-hidden animate-gold-pulse">
-            <Image
-              src={competitor.profilePictureUrl}
-              alt={displayName}
-              width={56}
-              height={56}
-              className="object-cover w-full h-full"
-            />
+            {competitor.profilePictureUrl ? (
+              <Image
+                src={competitor.profilePictureUrl}
+                alt={displayName}
+                width={56}
+                height={56}
+                className="object-cover w-full h-full"
+              />
+            ) : (
+              <div
+                className={`w-full h-full flex items-center justify-center font-bold text-white ${getColorFromName(
+                  `${competitor.firstName} ${competitor.lastName}`,
+                )}`}
+              >
+                {getInitials(`${competitor.firstName} ${competitor.lastName}`)}
+              </div>
+            )}
           </div>
           {/* Crown icon */}
           <div className="absolute -top-2 -right-2 animate-crown-bounce">

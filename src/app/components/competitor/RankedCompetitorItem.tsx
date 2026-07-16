@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState } from "react";
-import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import CompetitorDetailModal from "./CompetitorDetailModal";
 import EditCompetitorButton from "./EditCompetitorButton";
@@ -26,15 +26,11 @@ const RankedCompetitorItem: FC<Props> = ({ competitor }) => {
           className="flex items-center gap-3 flex-grow"
           onClick={() => setShowModal(true)}
         >
-          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-            <Image
-              src={competitor.profilePictureUrl}
-              alt={competitor.firstName}
-              width={32}
-              height={32}
-              className="object-cover w-full h-full"
-            />
-          </div>
+          <UserAvatar
+            src={competitor.profilePictureUrl}
+            name={`${competitor.firstName} ${competitor.lastName}`}
+            size="sm"
+          />
 
           <div className="flex flex-col">
             <span className="text-neutral-200 text-base font-semibold">

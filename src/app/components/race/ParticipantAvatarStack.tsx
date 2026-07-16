@@ -1,7 +1,7 @@
 "use client";
 
 import { FC } from "react";
-import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 
@@ -39,12 +39,11 @@ const ParticipantAvatarStack: FC<Props> = ({ participants, maxVisible = 3 }) => 
             className="relative w-8 h-8 rounded-full ring-2 ring-neutral-800 overflow-hidden"
             style={{ zIndex: maxVisible - idx }}
           >
-            <Image
+            <UserAvatar
               src={p.competitor.profilePictureUrl}
-              alt={formatCompetitorName(p.competitor.firstName, p.competitor.lastName)}
-              width={32}
-              height={32}
-              className="object-cover w-full h-full"
+              name={`${p.competitor.firstName} ${p.competitor.lastName}`}
+              size="sm"
+              className="w-full h-full"
             />
           </div>
         ))}

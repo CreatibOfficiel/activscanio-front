@@ -2,6 +2,7 @@
 
 import { FC } from "react";
 import Image from "next/image";
+import { getInitials, getColorFromName } from "@/app/components/ui/UserAvatar";
 import { Competitor, getDisplayScore } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 
@@ -44,13 +45,23 @@ const PodiumCard: FC<PodiumCardProps> = ({
       `}
     >
       <div className="w-full flex-shrink-0">
-        <Image
-          src={competitor.profilePictureUrl}
-          alt={competitor.firstName}
-          width={300}
-          height={200}
-          className="w-full aspect-[3/2] rounded-lg object-cover"
-        />
+        {competitor.profilePictureUrl ? (
+          <Image
+            src={competitor.profilePictureUrl}
+            alt={competitor.firstName}
+            width={300}
+            height={200}
+            className="w-full aspect-[3/2] rounded-lg object-cover"
+          />
+        ) : (
+          <div
+            className={`w-full aspect-[3/2] rounded-lg flex items-center justify-center text-2xl font-bold text-white ${getColorFromName(
+              `${competitor.firstName} ${competitor.lastName}`,
+            )}`}
+          >
+            {getInitials(`${competitor.firstName} ${competitor.lastName}`)}
+          </div>
+        )}
       </div>
 
       <div className="p-4 flex flex-col items-center text-center text-black flex-grow">

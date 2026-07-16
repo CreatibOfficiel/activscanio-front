@@ -2,6 +2,7 @@
 
 import { FC } from "react";
 import Image from "next/image";
+import { getInitials, getColorFromName } from "@/app/components/ui/UserAvatar";
 import { MdFlag, MdCalendarToday, MdEmojiEvents } from "react-icons/md";
 import { formatCompetitorName } from "@/app/utils/formatters";
 
@@ -53,13 +54,23 @@ const RacesStatsHeader: FC<Props> = ({ totalRaces, weeklyRaces, mostActive }) =>
           {mostActive ? (
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                <Image
-                  src={mostActive.profilePictureUrl}
-                  alt={formatCompetitorName(mostActive.firstName, mostActive.lastName)}
-                  width={24}
-                  height={24}
-                  className="object-cover w-full h-full"
-                />
+                {mostActive.profilePictureUrl ? (
+                  <Image
+                    src={mostActive.profilePictureUrl}
+                    alt={formatCompetitorName(mostActive.firstName, mostActive.lastName)}
+                    width={24}
+                    height={24}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div
+                    className={`w-full h-full flex items-center justify-center text-[9px] font-bold text-white ${getColorFromName(
+                      `${mostActive.firstName} ${mostActive.lastName}`,
+                    )}`}
+                  >
+                    {getInitials(`${mostActive.firstName} ${mostActive.lastName}`)}
+                  </div>
+                )}
               </div>
               <span className="text-regular text-neutral-100 truncate">
                 {formatCompetitorName(mostActive.firstName, mostActive.lastName)}

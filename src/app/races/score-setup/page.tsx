@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppContext } from "@/app/context/AppContext";
-import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { MdArrowBack, MdOutlineCheckCircle, MdImage, MdExpandMore } from "react-icons/md";
 import { get as idbGet } from "idb-keyval";
 import { toast } from "sonner";
@@ -188,15 +188,11 @@ const ScoreSetupPage: NextPage = () => {
               <div className="flex items-center justify-between">
                 {/* Avatar + name */}
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden">
-                    <Image
-                      src={competitor.profilePictureUrl}
-                      alt={competitor.firstName}
-                      width={40}
-                      height={40}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
+                  <UserAvatar
+                    src={competitor.profilePictureUrl}
+                    name={`${competitor.firstName} ${competitor.lastName}`}
+                    size="md"
+                  />
                   <span className="text-base font-medium text-neutral-100 truncate max-w-[140px]">
                     {competitor.firstName} {competitor.lastName.slice(0, 3)}.
                   </span>
