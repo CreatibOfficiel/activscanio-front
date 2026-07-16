@@ -7,6 +7,7 @@ import { Competitor } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
 import EditCompetitorButton from "./EditCompetitorButton";
 import Modal from "../ui/Modal";
+import UserAvatar from "../ui/UserAvatar";
 import Skeleton from "../ui/Skeleton";
 import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
 import { TrendDirection } from "../leaderboard/TrendIndicator";
@@ -340,12 +341,11 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 `}
               >
                 <div className="w-full h-full rounded-full bg-neutral-900 p-1 overflow-hidden">
-                  <Image
+                  <UserAvatar
                     src={competitor.profilePictureUrl}
-                    alt={shortName}
-                    width={80}
-                    height={80}
-                    className="object-cover w-full h-full rounded-full"
+                    name={`${competitor.firstName} ${competitor.lastName}`}
+                    size="2xl"
+                    className="w-full h-full"
                   />
                 </div>
               </div>

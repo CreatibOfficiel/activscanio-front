@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useContext, useEffect, useState, useCallback } from "react";
-import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { AppContext } from "@/app/context/AppContext";
 import { RaceEvent } from "@/app/models/RaceEvent";
 import { Competitor } from "@/app/models/Competitor";
@@ -199,12 +199,11 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                   if (!comp) return null;
                   return (
                     <div key={comp.id} className="flex flex-col items-center gap-1">
-                      <Image
+                      <UserAvatar
                         src={comp.profilePictureUrl}
-                        alt={comp.firstName}
-                        width={64}
-                        height={64}
-                        className="rounded-full object-cover ring-2 ring-gold-500"
+                        name={`${comp.firstName} ${comp.lastName}`}
+                        size="xl"
+                        className="ring-2 ring-gold-500"
                       />
                       <p className="text-lg font-bold text-white">
                         {formatCompetitorName(comp.firstName, comp.lastName)}
@@ -253,12 +252,10 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
                     <Badge variant={variant} size="sm" className="w-7 text-center">
                       {res.rank12}
                     </Badge>
-                    <Image
+                    <UserAvatar
                       src={comp.profilePictureUrl}
-                      alt={comp.firstName}
-                      width={36}
-                      height={36}
-                      className="rounded-full object-cover"
+                      name={`${comp.firstName} ${comp.lastName}`}
+                      size="sm"
                     />
                     <span className="text-sm text-neutral-200 flex-1 min-w-0 truncate">
                       {formatCompetitorName(comp.firstName, comp.lastName)}

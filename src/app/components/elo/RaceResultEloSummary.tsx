@@ -1,7 +1,7 @@
 "use client";
 
 import { FC } from "react";
-import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import { Competitor } from "@/app/models/Competitor";
 import { RaceResult } from "@/app/models/RaceResult";
 import { EloCalculator } from "@/app/utils/EloCalculator";
@@ -76,12 +76,10 @@ const RaceResultEloSummary: FC<Props> = ({ results, selectedCompetitors }) => {
                 <tr>
                   <td className="py-2 w-full">
                     <div className="flex items-center gap-3 w-full">
-                      <Image
+                      <UserAvatar
                         src={comp.profilePictureUrl}
-                        alt={comp.firstName}
-                        width={32}
-                        height={32}
-                        className="rounded-full object-cover"
+                        name={`${comp.firstName} ${comp.lastName}`}
+                        size="sm"
                       />
                       <div className="flex-1">
                         <p className="text-neutral-200 font-medium">{shortName}</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState } from "react";
-import Image from "next/image";
+import UserAvatar from "@/app/components/ui/UserAvatar";
 import {
   Competitor,
   getDisplayScore,
@@ -57,12 +57,10 @@ const ScrollablePodiumView: FC<Props> = ({ topThreeCompetitors }) => {
             )}`}
           >
             <div className="flex items-center gap-4">
-              <Image
+              <UserAvatar
                 src={competitor.profilePictureUrl}
-                alt={competitor.firstName}
-                width={56}
-                height={56}
-                className="rounded-lg object-cover"
+                name={`${competitor.firstName} ${competitor.lastName}`}
+                size="lg"
               />
               <div className="flex flex-col">
                 <span className="text-black font-medium text-lg whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">

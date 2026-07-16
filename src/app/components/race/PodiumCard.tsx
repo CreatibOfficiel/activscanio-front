@@ -49,7 +49,7 @@ const PodiumCard: FC<PodiumCardProps> = ({
           alt={competitor.firstName}
           width={300}
           height={200}
-          className="w-full rounded-lg object-cover"
+          className="w-full aspect-[3/2] rounded-lg object-cover"
         />
       </div>
 

@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import Image from 'next/image';
 import { formatCompetitorName } from '@/app/utils/formatters';
 import RankBadge from './RankBadge';
+import UserAvatar from '@/app/components/ui/UserAvatar';
 import { CompetitorAnimData } from '@/app/hooks/useRankingAnimation';
 
 interface Props {
@@ -30,7 +31,6 @@ const RankingTransitionCard: FC<Props> = ({
   const score = Math.round(competitor.conservativeScore);
 
   const isTV = variant === 'tv';
-  const avatarSize = isTV ? 64 : 40;
 
   // Glow color based on rank change direction
   const glowClass = !isChanged
@@ -65,12 +65,11 @@ const RankingTransitionCard: FC<Props> = ({
 
       {/* Avatar */}
       <div className="flex-shrink-0 relative">
-        <Image
+        <UserAvatar
           src={competitor.profilePictureUrl}
-          alt={competitor.firstName}
-          width={avatarSize}
-          height={avatarSize}
-          className={`rounded-full object-cover ${isTV ? 'ring-2 ring-cyan-500/50' : ''}`}
+          name={`${competitor.firstName} ${competitor.lastName}`}
+          size={isTV ? 'xl' : 'md'}
+          className={isTV ? 'ring-2 ring-cyan-500/50' : ''}
         />
 
         {/* Character variant small overlay for TV */}
