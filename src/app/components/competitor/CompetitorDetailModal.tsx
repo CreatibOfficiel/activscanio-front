@@ -1,7 +1,8 @@
 "use client";
 
-import { FC, useContext, useEffect, useMemo, useState } from "react";
+import { FC, Suspense, lazy, useContext, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
 import { AppContext } from "@/app/context/AppContext";
 import { Competitor } from "@/app/models/Competitor";
 import { RecentRaceInfo } from "@/app/models/RecentRaceInfo";
@@ -15,6 +16,9 @@ import DuelChallengeForm from "../duel/DuelChallengeSheet";
 import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
 import { getCurrentSeasonNumber, getSeasonDateRange } from "@/app/utils/season-utils";
 import { MdClose, MdSportsKabaddi, MdChevronRight } from "react-icons/md";
+
+// Lazy: keeps recharts out of the leaderboard bundle (same pattern as RacesTab).
+const EloProgressChart = lazy(() => import("../stats/EloProgressChart"));
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -102,6 +106,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
   const { getRecentRacesOfCompetitor, getBestScoreOfCompetitor, allRaces, allCompetitors } =
     useContext(AppContext);
   const { userData } = useCurrentUserData();
+  const { getToken } = useAuth();
 
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [bestScore, setBestScore] = useState<number | null>(null);
@@ -767,6 +772,22 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
               </p>
             </div>
           </details>
+
+          {/* ---- ELO PROGRESSION ---- */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-[0.2em] text-center">
+              Progression ELO
+            </h3>
+            <div className="p-4 bg-neutral-900/40 border-2 border-neutral-700 rounded-2xl">
+              <Suspense fallback={<Skeleton variant="rounded" height={300} />}>
+                <EloProgressChart
+                  competitorId={competitor.id}
+                  period="30d"
+                  getToken={getToken}
+                />
+              </Suspense>
+            </div>
+          </div>
         </div>
       )}
 
