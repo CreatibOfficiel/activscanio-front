@@ -28,31 +28,31 @@ const RacesStatsHeader: FC<Props> = ({ totalRaces, weeklyRaces, mostActive }) =>
       {/* Stats cards */}
       <div className="grid grid-cols-3 gap-3">
         {/* Total races */}
-        <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700">
+        <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700 flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <MdFlag className="text-primary-500 text-lg" />
             <span className="text-sub text-neutral-400">Nb. total <span className="text-neutral-500">(all time)</span></span>
           </div>
-          <p className="text-statistic text-neutral-100">{totalRaces ?? "-"}</p>
+          <p className="text-statistic text-neutral-100 mt-auto">{totalRaces ?? "-"}</p>
         </div>
 
         {/* This week */}
-        <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700">
+        <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700 flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <MdCalendarToday className="text-primary-500 text-lg" />
             <span className="text-sub text-neutral-400">Nb. cette sem.</span>
           </div>
-          <p className="text-statistic text-neutral-100">{weeklyRaces ?? "-"}</p>
+          <p className="text-statistic text-neutral-100 mt-auto">{weeklyRaces ?? "-"}</p>
         </div>
 
         {/* Most active player */}
-        <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700">
+        <div className="bg-neutral-800 rounded-xl p-3 border border-neutral-700 flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <MdEmojiEvents className="text-gold-500 text-lg" />
             <span className="text-sub text-neutral-400">Plus actif <span className="text-neutral-500">(all time)</span></span>
           </div>
           {mostActive ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-auto">
               <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
                 {mostActive.profilePictureUrl ? (
                   <Image
@@ -77,7 +77,7 @@ const RacesStatsHeader: FC<Props> = ({ totalRaces, weeklyRaces, mostActive }) =>
               </span>
             </div>
           ) : (
-            <p className="text-regular text-neutral-500">-</p>
+            <p className="text-regular text-neutral-500 mt-auto">-</p>
           )}
         </div>
       </div>
