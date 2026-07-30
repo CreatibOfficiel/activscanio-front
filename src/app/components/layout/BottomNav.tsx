@@ -10,6 +10,9 @@ import {
   MdPerson,
 } from "react-icons/md";
 import { useSoundboard } from "../../context/SoundboardContext";
+import { BOTTOM_NAV_HIDDEN_PATHS } from "@/app/config/routes";
+import { matchesAnyPath } from "@/app/utils/path-matching";
+import { isActiveRoute } from "@/app/utils/is-active-route";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -24,30 +27,10 @@ export default function BottomNav() {
     // Otherwise, normal navigation to classement
   }, [state.isUnlocked, open]);
 
-  // Hide navigation during onboarding and task flows (race creation, betting, competitor management)
-  const hiddenPaths = [
-    '/onboarding',
-    '/races/add',
-    '/races/score-setup',
-    '/races/summary',
-    '/betting/place-bet',
-    '/betting/live/create',
-    '/competitors/add',
-    '/competitors/edit',
-    '/tv',
-  ];
-  if (hiddenPaths.some(path => pathname.startsWith(path))) {
+  // Hide navigation during onboarding and task flows
+  if (matchesAnyPath(pathname, BOTTOM_NAV_HIDDEN_PATHS)) {
     return null;
   }
-
-  // Check if current path matches item or any of its sub-paths
-  const isActiveRoute = (href: string, activePaths?: string[]) => {
-    if (pathname === href) return true;
-    if (activePaths) {
-      return activePaths.some(path => pathname.startsWith(path));
-    }
-    return false;
-  };
 
   const items = [
     { href: "/", icon: MdLeaderboard, label: "Classement" },
@@ -68,7 +51,7 @@ export default function BottomNav() {
       >
         {items.map((item) => {
           const Icon = item.icon;
-          const isActive = isActiveRoute(item.href, item.activePaths);
+          const isActive = isActiveRoute(pathname, item.href, item.activePaths);
           const isLeaderboard = item.href === "/";
 
           return (

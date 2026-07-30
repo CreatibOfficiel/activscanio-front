@@ -5,6 +5,8 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { UsersRepository } from '@/app/repositories/UsersRepository';
 import { useOnboarding } from '@/app/context/OnboardingContext';
+import { ONBOARDING_EXEMPT_PATHS } from '@/app/config/routes';
+import { matchesAnyPath } from '@/app/utils/path-matching';
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { isLoaded, getToken } = useAuth();
@@ -29,7 +31,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const isPublicPath = ['/tv/display', '/sign-in', '/sign-up'].some(path => pathname.startsWith(path));
+    const isPublicPath = matchesAnyPath(pathname, ONBOARDING_EXEMPT_PATHS);
     if (isPublicPath) {
       setIsChecking(false);
       return;
