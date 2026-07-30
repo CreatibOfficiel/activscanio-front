@@ -1,13 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { PUBLIC_ROUTE_MATCHERS } from "@/app/config/routes";
 
 // Public routes (no auth required)
-const isPublicRoute = createRouteMatcher([
-  "/tv/display",
-  "/api/webhooks/clerk",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-]);
+const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_MATCHERS]);
 
 export default clerkMiddleware(async (auth, request) => {
   if (isPublicRoute(request)) return NextResponse.next();

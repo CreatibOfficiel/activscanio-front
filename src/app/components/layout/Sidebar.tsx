@@ -7,6 +7,9 @@ import { MdLeaderboard, MdFlag, MdSportsMma, MdPerson } from 'react-icons/md';
 import { toast } from 'sonner';
 import { useSoundboard } from '../../context/SoundboardContext';
 import { useEasterEgg } from '../../hooks/useEasterEgg';
+import { SIDEBAR_HIDDEN_PATHS } from '@/app/config/routes';
+import { matchesAnyPath } from '@/app/utils/path-matching';
+import { isActiveRoute } from '@/app/utils/is-active-route';
 
 const Sidebar: FC = () => {
   const pathname = usePathname();
@@ -45,20 +48,10 @@ const Sidebar: FC = () => {
     }
   }, [state.isUnlocked, open, handleTap]);
 
-  // Hide navigation during onboarding and task flows (race creation)
-  const hiddenPaths = ['/onboarding', '/races/add', '/races/score-setup', '/races/summary', '/tv'];
-  if (hiddenPaths.some(path => pathname.startsWith(path))) {
+  // Hide navigation during onboarding and task flows
+  if (matchesAnyPath(pathname, SIDEBAR_HIDDEN_PATHS)) {
     return null;
   }
-
-  // Check if current path matches item or any of its sub-paths
-  const isActiveRoute = (href: string, activePaths?: string[]) => {
-    if (pathname === href) return true;
-    if (activePaths) {
-      return activePaths.some(path => pathname.startsWith(path));
-    }
-    return false;
-  };
 
   const navItems = [
     { href: '/', label: 'Classement', icon: MdLeaderboard },
@@ -96,7 +89,7 @@ const Sidebar: FC = () => {
         {/* Navigation Links */}
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => {
-            const isActive = isActiveRoute(item.href, item.activePaths);
+            const isActive = isActiveRoute(pathname, item.href, item.activePaths);
             const Icon = item.icon;
 
             return (

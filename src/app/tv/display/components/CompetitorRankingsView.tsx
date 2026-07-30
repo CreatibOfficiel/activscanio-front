@@ -7,10 +7,11 @@ import TVLeaderboardRow from "./TVLeaderboardRow";
 import TVHeroCountdown from "./TVHeroCountdown";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
-import { computeRanksWithTies } from "@/app/utils/rankings";
-import { groupByLeague } from "@/app/utils/leagues";
 import { LeagueDivider } from "@/app/components/leaderboard";
+import { useLeaderboardSegmentation } from "@/app/hooks/useLeaderboardSegmentation";
 import { getRaceSeasonEndDate } from "../utils/deadlines";
+
+const SEGMENTATION_OPTIONS = { excludePodiumFromLeagues: true };
 
 interface Props {
   rankings: Competitor[];
@@ -20,96 +21,35 @@ interface Props {
 export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
   const raceSeasonEndDate = useMemo(() => getRaceSeasonEndDate(), []);
 
-  const { confirmed, inactive, calibrating, maxScore, confirmedRanks, inactiveRanks, calibratingRanks, top3, leagueGroups, podiumItems } = useMemo(() => {
-    if (!rankings || rankings.length === 0) {
-      return {
-        confirmed: [] as Competitor[],
-        inactive: [] as Competitor[],
-        calibrating: [] as Competitor[],
-        maxScore: 0,
-        confirmedRanks: new Map<string, number>(),
-        inactiveRanks: new Map<string, number>(),
-        calibratingRanks: new Map<string, number>(),
-        top3: [] as Competitor[],
-        leagueGroups: [] as { league: import("@/app/utils/leagues").LeagueConfig; items: Competitor[] }[],
-        podiumItems: [] as Array<{ id: string; name: string; imageUrl: string; score: number; scoreLabel: string; subtitle: string; rank: number }>,
-      };
-    }
+  const {
+    confirmed, inactive, calibrating, maxScore,
+    confirmedRanks, inactiveRanks, calibratingRanks,
+    topThree: top3, leagueGroups,
+  } = useLeaderboardSegmentation(rankings, SEGMENTATION_OPTIONS);
 
-    // Only competitors with at least one race
-    const withRaces = [...rankings]
-      .filter((c) => c.raceCount && c.raceCount > 0)
-      .sort((a, b) => (b.conservativeScore ?? 0) - (a.conservativeScore ?? 0));
+  // Display formatting for the hero podium: names, subtitles and score labels
+  // are presentation concerns, so they stay out of the shared segmentation.
+  const podiumItems = useMemo(
+    () =>
+      top3.map((competitor) => {
+        const avgRank = competitor.avgRank12
+          ? `Pos. moy. ${competitor.avgRank12.toFixed(1)}`
+          : null;
+        const races = `${competitor.raceCount || 0} course${(competitor.raceCount || 0) !== 1 ? "s" : ""}`;
 
-    // Split confirmed active vs confirmed inactive vs calibrating
-    const conf = withRaces.filter((c) => !c.provisional && !c.inactive);
-    const inact = withRaces.filter((c) => !c.provisional && c.inactive);
-    const cal = withRaces.filter((c) => c.provisional);
-
-    // Calculate max score for progress bars
-    const max = withRaces.length > 0
-      ? Math.max(...withRaces.map((c) => c.conservativeScore ?? 0))
-      : 0;
-
-    // Compute ranks with ties
-    const confRanks = computeRanksWithTies(
-      conf,
-      (c) => Math.round(c.conservativeScore ?? 0),
-      (c) => c.id,
-    );
-    const inactRanks = computeRanksWithTies(
-      inact,
-      (c) => Math.round(c.conservativeScore ?? 0),
-      (c) => c.id,
-      conf.length,
-    );
-    const calRanks = computeRanksWithTies(
-      cal,
-      (c) => Math.round(c.conservativeScore ?? 0),
-      (c) => c.id,
-      conf.length + inact.length,
-    );
-
-    const t3 = conf.slice(0, 3);
-
-    const groups = groupByLeague(
-      conf,
-      (c) => c.id,
-      confRanks,
-      true, // exclude Champions (podium)
-    );
-
-    const items = t3.map((competitor) => {
-      const avgRank = competitor.avgRank12
-        ? `Pos. moy. ${competitor.avgRank12.toFixed(1)}`
-        : null;
-      const races = `${competitor.raceCount || 0} course${(competitor.raceCount || 0) !== 1 ? "s" : ""}`;
-
-      return {
-        id: competitor.id,
-        name: formatCompetitorName(competitor.firstName, competitor.lastName),
-        imageUrl: competitor.profilePictureUrl,
-        characterImageUrl: competitor.characterVariant?.imageUrl,
-        score: Math.round(competitor.conservativeScore ?? 0),
-        scoreLabel: "ELO",
-        subtitle: avgRank ? `${avgRank} · ${races}` : races,
-        rank: confRanks.get(competitor.id) ?? 1,
-      };
-    });
-
-    return {
-      confirmed: conf,
-      inactive: inact,
-      calibrating: cal,
-      maxScore: max,
-      confirmedRanks: confRanks,
-      inactiveRanks: inactRanks,
-      calibratingRanks: calRanks,
-      top3: t3,
-      leagueGroups: groups,
-      podiumItems: items,
-    };
-  }, [rankings]);
+        return {
+          id: competitor.id,
+          name: formatCompetitorName(competitor.firstName, competitor.lastName),
+          imageUrl: competitor.profilePictureUrl,
+          characterImageUrl: competitor.characterVariant?.imageUrl,
+          score: Math.round(competitor.conservativeScore ?? 0),
+          scoreLabel: "ELO",
+          subtitle: avgRank ? `${avgRank} · ${races}` : races,
+          rank: confirmedRanks.get(competitor.id) ?? 1,
+        };
+      }),
+    [top3, confirmedRanks],
+  );
 
   // Real trend based on previousDayRank snapshot
   const getTrend = (

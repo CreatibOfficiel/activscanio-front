@@ -74,6 +74,7 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
 
   return (
     <div
+      data-testid="tv-row"
       className={`flex items-center gap-3 py-2 px-4 rounded-xl relative overflow-hidden
                   border border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.15)]
                   bg-linear-to-r from-cyan-950/40 via-blue-950/30 to-fuchsia-950/30
@@ -82,7 +83,10 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
       style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
     >
       {/* Rank */}
-      <div className={`w-12 text-xl italic text-center ${getRankStyle()} drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]`}>
+      <div
+        data-testid="tv-row-rank"
+        className={`w-12 text-xl italic text-center ${getRankStyle()} drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]`}
+      >
         {item.rank}
       </div>
 
@@ -120,7 +124,7 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
 
       {/* Name and subtitle */}
       <div className="flex-grow min-w-0">
-        <h4 className="text-base font-bold text-white truncate leading-tight">{item.name}</h4>
+        <h4 data-testid="tv-row-name" className="text-base font-bold text-white truncate leading-tight">{item.name}</h4>
         {item.subtitle && (
           <p className="text-[10px] text-neutral-400 truncate leading-tight">{item.subtitle}</p>
         )}
@@ -129,6 +133,7 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
         {item.maxScore && (
           <div className="mt-1 h-1 bg-neutral-700/50 rounded-full overflow-hidden">
             <div
+              data-testid="tv-row-progress"
               className="h-full bg-linear-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-700 animate-progress-fill"
               style={{ width: `${progressPercent}%` }}
             />
@@ -149,7 +154,14 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
       </div>
 
       {/* Trend */}
-      <div className="w-14 flex justify-center scale-90" title={item.trend ? `Tendance (vs précédent)` : undefined}>{getTrendIcon()}</div>
+      <div
+        data-testid="tv-row-trend"
+        data-trend={item.trend ?? 'none'}
+        className="w-14 flex justify-center scale-90"
+        title={item.trend ? `Tendance (vs précédent)` : undefined}
+      >
+        {getTrendIcon()}
+      </div>
     </div>
   );
 };

@@ -81,11 +81,19 @@ const Modal: FC<ModalProps> = ({
       const handleTabKey = (e: KeyboardEvent) => {
         if (e.key !== 'Tab' || !modalRef.current) return;
 
-        const focusableElements = modalRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        // Skip disabled and hidden controls: if the last node in the DOM is
+        // not actually focusable, the wrap never triggers and focus escapes
+        // the dialog.
+        const focusableElements = Array.from(
+          modalRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
         );
-        const firstElement = focusableElements[0] as HTMLElement;
-        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
 
         if (e.shiftKey && document.activeElement === firstElement) {
           lastElement?.focus();
@@ -106,9 +114,13 @@ const Modal: FC<ModalProps> = ({
       // Unlock scroll
       document.body.style.overflow = '';
 
-      // Restore previous focus
-      if (previousFocusRef.current) {
-        previousFocusRef.current.focus();
+      // Restore previous focus. Guarded so this branch, which also runs on the
+      // very first render of a closed modal, only acts after a real open —
+      // and never on a node that has since been unmounted.
+      const previous = previousFocusRef.current;
+      previousFocusRef.current = null;
+      if (previous && document.contains(previous)) {
+        previous.focus();
       }
     }
   }, [isOpen]);
@@ -131,7 +143,7 @@ const Modal: FC<ModalProps> = ({
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={ariaLabelledBy || title ? 'modal-title' : undefined}
+        aria-labelledby={ariaLabelledBy ?? (title ? 'modal-title' : undefined)}
         aria-describedby={ariaDescribedBy}
         tabIndex={-1}
         className={`

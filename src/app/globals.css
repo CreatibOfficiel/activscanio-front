@@ -222,27 +222,11 @@
 
 /* Animations and keyframes for the design system */
 @layer utilities {
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  /*
+   * `fadeIn` and `slideUp` live in styles/animations.css, which is loaded
+   * outside any cascade layer and therefore always wins over this one.
+   * The duplicates that used to sit here were dead code.
+   */
 
   @keyframes slideDown {
     from {
@@ -310,14 +294,6 @@
     100% {
       width: 0%;
     }
-  }
-
-  .animate-fadeIn {
-    animation: fadeIn 0.2s ease-out;
-  }
-
-  .animate-slideUp {
-    animation: slideUp 0.3s ease-out;
   }
 
   .animate-slideDown {

@@ -36,7 +36,8 @@ describe('ShareAchievementButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLocalStorage.clear();
-    mockLocalStorage.setItem('clerk_token', 'mock-token');
+    // The bearer token comes from Clerk's getToken(), mocked globally in
+    // jest.setup.js to resolve to 'mock-token' — not from localStorage.
     // Ensure NEXT_PUBLIC_API_URL is not set so component uses default
     delete process.env.NEXT_PUBLIC_API_URL;
   });
@@ -65,8 +66,10 @@ describe('ShareAchievementButton', () => {
     fireEvent.click(shareButton);
 
     expect(screen.getByText('Share Achievement')).toBeInTheDocument();
+    // The component renders &ldquo;/&rdquo;, so the rendered text carries
+    // curly quotes rather than straight ones.
     expect(
-      screen.getByText(/Share your "First Bet" achievement/),
+      screen.getByText(/Share your “First Bet” achievement/),
     ).toBeInTheDocument();
   });
 
@@ -308,7 +311,7 @@ describe('ShareAchievementButton', () => {
     fireEvent.click(shareButton);
 
     expect(
-      screen.getByText(/Share your "First™ Bet® 🎯" achievement/),
+      screen.getByText(/Share your “First™ Bet® 🎯” achievement/),
     ).toBeInTheDocument();
   });
 

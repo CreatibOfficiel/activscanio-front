@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-
-const PUBLIC_PATHS = ["/sign-in", "/sign-up"];
+import { AUTH_CHROME_PATHS } from "@/app/config/routes";
+import { matchesAnyPath } from "@/app/utils/path-matching";
 
 /**
  * Renders children only on authenticated routes (i.e. NOT sign-in/sign-up).
@@ -13,7 +13,7 @@ const PUBLIC_PATHS = ["/sign-in", "/sign-up"];
  */
 export function AuthLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return null;
+  if (matchesAnyPath(pathname, AUTH_CHROME_PATHS)) return null;
   return <>{children}</>;
 }
 
@@ -22,6 +22,6 @@ export function AuthLayout({ children }: { children: ReactNode }) {
  */
 export function PublicLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  if (!PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return null;
+  if (!matchesAnyPath(pathname, AUTH_CHROME_PATHS)) return null;
   return <>{children}</>;
 }

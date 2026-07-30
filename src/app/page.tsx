@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import { AppContext } from "./context/AppContext";
-import { Competitor } from "./models/Competitor";
 import { StreakWarningStatus } from "./models/Achievement";
 import { AchievementsRepository } from "./repositories/AchievementsRepository";
 import { Button, Countdown } from "./components/ui";
@@ -17,65 +16,12 @@ import {
   LeaderboardRow,
   LeagueDivider,
 } from "./components/leaderboard";
-import { TrendDirection } from "./components/leaderboard/TrendIndicator";
-import { computeRanksWithTies } from "./utils/rankings";
-import { groupByLeague } from "./utils/leagues";
 import { usePullToRefresh } from "./hooks/usePullToRefresh";
 import { useRankingAnimation } from "./hooks/useRankingAnimation";
 import RankingAnimationOverlay from "./components/leaderboard/RankingAnimationOverlay";
+import { useLeaderboardSegmentation } from "./hooks/useLeaderboardSegmentation";
 
-const sortByConservativeScore = (competitors: Competitor[]): Competitor[] => {
-  return [...competitors].sort((a, b) => {
-    if (a.conservativeScore === undefined && b.conservativeScore === undefined)
-      return 0;
-    if (a.conservativeScore === undefined) return 1;
-    if (b.conservativeScore === undefined) return -1;
-    return b.conservativeScore - a.conservativeScore;
-  });
-};
-
-/**
- * Calculate real trend data based on previousDayRank.
- * Compares the previous day rank with current rank to determine direction.
- *
- * @param competitors - Sorted array of competitors (by conservativeScore DESC)
- * @returns Map of competitor ID to trend data
- */
-const calculateCompetitorTrends = (
-  competitors: Competitor[]
-): Map<string, { direction: TrendDirection; value?: number }> => {
-  const trends = new Map<
-    string,
-    { direction: TrendDirection; value?: number }
-  >();
-
-  const ranksMap = computeRanksWithTies(
-    competitors,
-    (c) => Math.round(c.conservativeScore ?? 0),
-    (c) => c.id,
-  );
-
-  competitors.forEach((competitor) => {
-    const currentRank = ranksMap.get(competitor.id) ?? 0;
-    const previousRank = competitor.previousDayRank;
-
-    if (previousRank != null) {
-      const change = previousRank - currentRank;
-
-      if (change > 0) {
-        trends.set(competitor.id, { direction: "up", value: change });
-      } else if (change < 0) {
-        trends.set(competitor.id, { direction: "down", value: Math.abs(change) });
-      } else {
-        trends.set(competitor.id, { direction: "stable" });
-      }
-    } else {
-      trends.set(competitor.id, { direction: "stable" });
-    }
-  });
-
-  return trends;
-};
+const SEGMENTATION_OPTIONS = { excludePodiumFromLeagues: true };
 
 export default function Home() {
   const { isLoading, allCompetitors, refreshCompetitors } = useContext(AppContext);
@@ -112,59 +58,10 @@ export default function Home() {
     fetchWarnings();
   }, [isSignedIn, getToken]);
 
-  const { confirmed, inactive, calibrating, topThree, leagueGroups, trends, confirmedRanks, inactiveRanks, calibratingRanks } = useMemo(() => {
-    const allWithRaces = allCompetitors.filter((c) => c.raceCount && c.raceCount > 0);
-    const sorted = sortByConservativeScore(allWithRaces);
-
-    // Split confirmed active vs confirmed inactive vs calibrating
-    const conf = sorted.filter((c) => !c.provisional && !c.inactive);
-    const inact = sorted.filter((c) => !c.provisional && c.inactive);
-    const cal = sorted.filter((c) => c.provisional);
-
-    // Compute ranks with ties for active confirmed competitors
-    const confRanks = computeRanksWithTies(
-      conf,
-      (c) => Math.round(c.conservativeScore ?? 0),
-      (c) => c.id,
-    );
-
-    // Compute ranks with ties for inactive (offset by active confirmed count)
-    const inactRanks = computeRanksWithTies(
-      inact,
-      (c) => Math.round(c.conservativeScore ?? 0),
-      (c) => c.id,
-      conf.length,
-    );
-
-    // Compute ranks with ties for calibrating competitors (offset by confirmed + inactive count)
-    const calRanks = computeRanksWithTies(
-      cal,
-      (c) => Math.round(c.conservativeScore ?? 0),
-      (c) => c.id,
-      conf.length + inact.length,
-    );
-
-    const trendData = calculateCompetitorTrends(conf);
-
-    const leagueGrps = groupByLeague(
-      conf,
-      (c) => c.id,
-      confRanks,
-      true, // exclude Champions (podium)
-    );
-
-    return {
-      confirmed: conf,
-      inactive: inact,
-      calibrating: cal,
-      topThree: conf.slice(0, 3),
-      leagueGroups: leagueGrps,
-      trends: trendData,
-      confirmedRanks: confRanks,
-      inactiveRanks: inactRanks,
-      calibratingRanks: calRanks,
-    };
-  }, [allCompetitors]);
+  const {
+    confirmed, inactive, calibrating, topThree,
+    leagueGroups, trends, confirmedRanks, inactiveRanks, calibratingRanks,
+  } = useLeaderboardSegmentation(allCompetitors, SEGMENTATION_OPTIONS);
 
   const {
     animationPhase,
