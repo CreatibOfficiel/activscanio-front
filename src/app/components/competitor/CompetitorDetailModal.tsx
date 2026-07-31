@@ -12,10 +12,8 @@ import UserAvatar from "../ui/UserAvatar";
 import Skeleton from "../ui/Skeleton";
 import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters";
 import { TrendDirection } from "../leaderboard/TrendIndicator";
-import DuelChallengeForm from "../duel/DuelChallengeSheet";
-import { useCurrentUserData } from "@/app/hooks/useCurrentUserData";
 import { getCurrentSeasonNumber, getSeasonDateRange } from "@/app/utils/season-utils";
-import { MdClose, MdSportsKabaddi, MdChevronRight } from "react-icons/md";
+import { MdClose, MdChevronRight } from "react-icons/md";
 
 // Lazy: keeps recharts out of the leaderboard bundle (same pattern as RacesTab).
 const EloProgressChart = lazy(() => import("../stats/EloProgressChart"));
@@ -105,20 +103,11 @@ const DetailSkeleton: FC = () => (
 const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: rankProp, trend: trendProp }) => {
   const { getRecentRacesOfCompetitor, getBestScoreOfCompetitor, allRaces, allCompetitors } =
     useContext(AppContext);
-  const { userData } = useCurrentUserData();
   const { getToken } = useAuth();
 
   const [recentRaces, setRecentRaces] = useState<RecentRaceInfo[]>([]);
   const [bestScore, setBestScore] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [step, setStep] = useState<"detail" | "challenge">("detail");
-
-  const isOwnCompetitor = userData?.competitorId === competitor.id;
-
-  /* ---------- reset step on close ---------- */
-  useEffect(() => {
-    if (!isOpen) setStep("detail");
-  }, [isOpen]);
 
   /* ---------- load recent races + best score ---------- */
   useEffect(() => {
@@ -295,15 +284,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
       size="xl"
       className="!max-w-2xl"
     >
-      {step === "challenge" ? (
-        <DuelChallengeForm
-          competitorId={competitor.id}
-          competitorName={shortName}
-          competitorAvatar={competitor.profilePictureUrl}
-          onSuccess={onClose}
-          onCancel={() => setStep("detail")}
-        />
-      ) : !isLoaded ? (
+      {!isLoaded ? (
         <DetailSkeleton />
       ) : (
         <div className="space-y-5">
@@ -311,19 +292,8 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
           <div
             className="-m-4 sm:-m-6 mb-0 p-6 pb-5 rounded-t-2xl"
           >
-            {/* Close / Edit / Duel buttons */}
+            {/* Close / Edit buttons */}
             <div className="flex justify-end gap-2 mb-3">
-              {!isOwnCompetitor && (
-                <button
-                  onClick={() => setStep("challenge")}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-primary-400 hover:text-primary-300 bg-primary-500/10 border border-primary-500/30 hover:bg-primary-500/20 transition-all duration-200 shadow-sm group text-xs font-bold"
-                  aria-label="Défier"
-                  title="Défier ce pilote"
-                >
-                  <MdSportsKabaddi className="text-lg transition-transform duration-200 group-hover:scale-110" />
-                  Défier
-                </button>
-              )}
               <EditCompetitorButton competitor={competitor} />
               <button
                 onClick={onClose}

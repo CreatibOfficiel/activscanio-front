@@ -1,43 +1,20 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToBetFinalized, subscribeToPerfectScore, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToRankingsUpdated, subscribeToStreakLost, subscribeToDuelReceived, subscribeToDuelAccepted, subscribeToDuelDeclined, subscribeToDuelResolved, subscribeToDuelCancelled, subscribeToDuelSettled, subscribeToDuelUnsettled, subscribeToLiveBetResolved, DuelReceivedData } from '@/app/hooks/useSocket';
+import { useEffect } from 'react';
+import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToStreakLost } from '@/app/hooks/useSocket';
 import { useApp } from '@/app/context/AppContext';
 import { useResultModals } from '@/app/context/ResultModalsContext';
 import { toast } from 'sonner';
-import DuelRequestModal from '@/app/components/duel/DuelRequestModal';
 
 interface SocketWrapperProps {
   userId?: string;
 }
 
-function describeCondition(
-  type?: string | null,
-  value?: number | null,
-): string | undefined {
-  const v = value ?? 0;
-  switch (type) {
-    case 'margin_greater':
-      return `Le challenger gagne si écart > ${v} pts`;
-    case 'margin_between':
-      return `Écart ≥ ${v} pts entre les deux`;
-    case 'exact_tie':
-      return `Pari sur une égalité`;
-    default:
-      return undefined;
-  }
-}
 
 export default function SocketWrapper({ userId }: SocketWrapperProps) {
   const { socket, isConnected } = useSocket(userId);
   const { refreshCompetitors } = useApp();
-  const { enqueueBetResult, enqueueStreakLoss } = useResultModals();
-
-  const [pendingDuel, setPendingDuel] = useState<DuelReceivedData | null>(null);
-
-  const handleDuelResponded = useCallback(() => {
-    setPendingDuel(null);
-  }, []);
+  const { enqueueStreakLoss } = useResultModals();
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -74,39 +51,6 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
         {
           duration: 5000,
           description: 'Succès perdu - Continuez à jouer pour le récupérer !',
-        }
-      );
-    });
-
-    // Bet finalized — enqueue modal instead of toast
-    const unsubscribeBet = subscribeToBetFinalized((bet) => {
-      enqueueBetResult({
-        betId: bet.betId,
-        weekId: bet.weekId,
-        status: bet.status,
-        pointsEarned: bet.pointsEarned,
-        isPerfectPodium: bet.isPerfectPodium,
-        perfectPodiumBonus: bet.perfectPodiumBonus,
-        correctPicks: bet.correctPicks,
-        totalPicks: bet.totalPicks,
-        hasBoost: bet.hasBoost,
-        picks: bet.picks,
-      });
-    });
-
-    // Perfect score celebration
-    const unsubscribePerfectScore = subscribeToPerfectScore((data) => {
-      toast.success(
-        '🏆 SCORE PARFAIT ! 60 POINTS ! 🎉',
-        {
-          duration: 10000,
-          description: data.imageUrl
-            ? 'Cliquez pour voir votre image !'
-            : 'Félicitations pour votre score parfait !',
-          action: data.imageUrl ? {
-            label: 'Voir l\'image',
-            onClick: () => window.open(data.imageUrl, '_blank'),
-          } : undefined,
         }
       );
     });
@@ -149,75 +93,14 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       refreshCompetitors();
     });
 
-    // Rankings updated (broadcast) — triggers ranking animation
-    const unsubscribeRankings = subscribeToRankingsUpdated(() => {
-      refreshCompetitors();
-    });
-
     // Streak lost — enqueue modal
     const unsubscribeStreak = subscribeToStreakLost((data) => {
       enqueueStreakLoss([{
-        type: data.type,
+        type: data.type === 'play' ? 'play' : 'participation',
         lostValue: data.lostValue,
         lostAt: data.lostAt,
         missedDays: data.missedDays,
       }]);
-    });
-
-    // Duel received — show modal
-    const unsubscribeDuelReceived = subscribeToDuelReceived((data) => {
-      setPendingDuel(data);
-    });
-
-    // Duel accepted
-    const unsubscribeDuelAccepted = subscribeToDuelAccepted(() => {
-      toast.success('Défi accepté ! La course de la semaine tranchera.', { duration: 4000 });
-    });
-
-    // Duel declined
-    const unsubscribeDuelDeclined = subscribeToDuelDeclined(() => {
-      toast('Défi refusé', { duration: 3000 });
-    });
-
-    // Duel resolved — event is targeted, so we just show a toast
-    const unsubscribeDuelResolved = subscribeToDuelResolved((data) => {
-      const stake = `${data.stakeEmoji ?? ''}${data.stakeLabel ? ` ${data.stakeLabel}` : ''}`.trim();
-      toast.info(`Défi terminé ! ${stake}`.trim(), {
-        duration: 5000,
-        description: 'Va voir tes défis pour les détails.',
-      });
-    });
-
-    // Duel cancelled
-    const unsubscribeDuelCancelled = subscribeToDuelCancelled((data) => {
-      const reason = data.reason === 'deadline' ? 'Délai dépassé' : data.reason === 'tie' ? 'Égalité' : 'Annulé';
-      toast(`Défi annulé : ${reason}`, { duration: 4000 });
-    });
-
-    // Duel settled (proof uploaded)
-    const unsubscribeDuelSettled = subscribeToDuelSettled((data) => {
-      const stake = `${data.stakeEmoji ?? ''}${data.stakeLabel ? ` ${data.stakeLabel}` : ''}`.trim();
-      toast.success(`Défi réglé ! ${stake}`.trim(), { duration: 4000 });
-    });
-
-    // Duel unsettled (proof undone)
-    const unsubscribeDuelUnsettled = subscribeToDuelUnsettled(() => {
-      toast('Règlement annulé', { duration: 3000 });
-    });
-
-    // Live bet resolved
-    const unsubscribeLiveBetResolved = subscribeToLiveBetResolved((data) => {
-      if (data.status === 'won') {
-        toast.success(
-          `🎉 Pari live gagné ! +${data.pointsEarned ?? 0} pts`,
-          { duration: 6000 },
-        );
-      } else if (data.status === 'lost') {
-        toast.error(
-          `😔 Pari live perdu : ${data.pointsEarned ?? 0} pts`,
-          { duration: 5000 },
-        );
-      }
     });
 
     // Cleanup all subscriptions on unmount
@@ -225,23 +108,12 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
       unsubscribeAchievements?.();
       unsubscribeLevelUp?.();
       unsubscribeRevoked?.();
-      unsubscribeBet?.();
-      unsubscribePerfectScore?.();
       unsubscribeRace?.();
       unsubscribeResults?.();
       unsubscribeCompetitor?.();
-      unsubscribeRankings?.();
       unsubscribeStreak?.();
-      unsubscribeDuelReceived?.();
-      unsubscribeDuelAccepted?.();
-      unsubscribeDuelDeclined?.();
-      unsubscribeDuelResolved?.();
-      unsubscribeDuelCancelled?.();
-      unsubscribeDuelSettled?.();
-      unsubscribeDuelUnsettled?.();
-      unsubscribeLiveBetResolved?.();
     };
-  }, [socket, isConnected, refreshCompetitors, enqueueBetResult, enqueueStreakLoss, userId]);
+  }, [socket, isConnected, refreshCompetitors, enqueueStreakLoss, userId]);
 
   // Refresh data when app returns to foreground (iOS PWA fix)
   useEffect(() => {
@@ -258,20 +130,6 @@ export default function SocketWrapper({ userId }: SocketWrapperProps) {
 
   return (
     <>
-      {/* Duel request modal - shown when a duel is received via WebSocket */}
-      {pendingDuel && (
-        <DuelRequestModal
-          isOpen={!!pendingDuel}
-          onClose={() => setPendingDuel(null)}
-          duelId={pendingDuel.duelId}
-          challenger={pendingDuel.challenger}
-          stakeEmoji={pendingDuel.stakeEmoji}
-          stakeLabel={pendingDuel.stakeLabel}
-          conditionText={describeCondition(pendingDuel.conditionType, pendingDuel.conditionValue)}
-          expiresAt={pendingDuel.expiresAt}
-          onResponded={handleDuelResponded}
-        />
-      )}
 
       {/* Connection status indicator (development only) */}
       {process.env.NODE_ENV === 'development' && userId && (

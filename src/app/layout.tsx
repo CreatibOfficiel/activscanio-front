@@ -13,8 +13,8 @@ import OfflineIndicator from "./components/ui/OfflineIndicator";
 import { SoundboardModal, ShakeDetector } from "./components/soundboard";
 import SocketProvider from "./components/layout/SocketProvider";
 import SeasonRecapAutoShow from "./components/layout/SeasonRecapAutoShow";
-import ResultModalsRenderer from "./components/betting/ResultModalsRenderer";
-import ResultModalsInitializer from "./components/layout/ResultModalsInitializer";
+import StreakLostModalRenderer from "./components/achievements/StreakLostModalRenderer";
+import StreakLossInitializer from "./components/layout/StreakLossInitializer";
 import { ReactNode } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthLayout, PublicLayout } from "./components/layout/AuthLayoutSwitch";
@@ -23,7 +23,7 @@ import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: "MushroomBet",
-  description: "MushroomBet est une application de classement de courses avec système de paris et statistiques en temps réel.",
+  description: "MushroomBet est une application de classement de courses avec classements Mario Kart",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -75,8 +75,8 @@ export default function RootLayout({
               <SeasonRecapAutoShow />
 
               {/* Result modals (bet results + streak losses) */}
-              <ResultModalsRenderer />
-              <ResultModalsInitializer />
+              <StreakLostModalRenderer />
+              <StreakLossInitializer />
 
               {/* Toast notifications */}
               <Toaster
