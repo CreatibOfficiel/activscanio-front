@@ -3,6 +3,16 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
+/**
+ * Connection logging, off in production.
+ *
+ * Useful locally when the socket will not connect; noise in a shipped
+ * console, where nobody reads it and it leaks the user id.
+ */
+const debug = (...args: unknown[]) => {
+  if (process.env.NODE_ENV !== 'production') console.log(...args);
+};
+
 interface Achievement {
   icon: string;
   name: string;
@@ -67,7 +77,7 @@ export const useSocket = (userId?: string) => {
 
   const scheduleReconnect = useCallback(() => {
     if (reconnectAttempt >= RECONNECTION_CONFIG.maxAttempts) {
-      console.log('❌ Max reconnection attempts reached');
+      debug('❌ Max reconnection attempts reached');
       return;
     }
 
@@ -77,7 +87,7 @@ export const useSocket = (userId?: string) => {
       RECONNECTION_CONFIG.maxDelay
     );
 
-    console.log(`🔄 Scheduling reconnection attempt ${reconnectAttempt + 1} in ${Math.round(delay)}ms`);
+    debug(`🔄 Scheduling reconnection attempt ${reconnectAttempt + 1} in ${Math.round(delay)}ms`);
 
     clearReconnectTimeout();
     reconnectTimeoutRef.current = setTimeout(() => {
@@ -103,14 +113,14 @@ export const useSocket = (userId?: string) => {
       });
 
       socket.on('connect', () => {
-        console.log('✅ Socket connected:', socket?.id);
+        debug('✅ Socket connected:', socket?.id);
         setIsConnected(true);
         setReconnectAttempt(0);
         clearReconnectTimeout();
       });
 
       socket.on('disconnect', (reason) => {
-        console.log('❌ Socket disconnected:', reason);
+        debug('❌ Socket disconnected:', reason);
         setIsConnected(false);
         hasRegistered.current = false;
 
@@ -132,12 +142,12 @@ export const useSocket = (userId?: string) => {
 
     // Register user when socket is connected and userId is available
     if (socket && isConnected && userId && !hasRegistered.current) {
-      console.log(`📝 Registering user: ${userId}`);
+      debug(`📝 Registering user: ${userId}`);
       socket.emit('register', userId);
       hasRegistered.current = true;
 
       socket.once('registered', (data: unknown) => {
-        console.log('✅ User registered:', data);
+        debug('✅ User registered:', data);
       });
     }
 

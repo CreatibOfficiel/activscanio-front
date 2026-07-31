@@ -56,7 +56,16 @@ const SHUFFLE_DURATION = 1200;
 
 /* -------- Debug logging -------- */
 
-const DEBUG = true; // flip to false to silence logs
+/**
+ * Off in production.
+ *
+ * These logs are genuinely useful when the four-phase animation
+ * misbehaves — they print the full rank comparison table — but they ran in
+ * production, filling the console on every page load with data nobody was
+ * reading. Tied to the build rather than a hand-flipped constant, which is
+ * what let it ship enabled.
+ */
+const DEBUG = process.env.NODE_ENV !== 'production';
 
 function debugLog(label: string, data?: Record<string, unknown>) {
   if (!DEBUG) return;
