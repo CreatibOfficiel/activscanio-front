@@ -10,7 +10,13 @@ interface CardProps {
   loading?: boolean;
   role?: string;
   tabIndex?: number;
+  /**
+   * Deprecated in React, and never fires for Space — which role="checkbox"
+   * and role="radio" both promise. Prefer onKeyDown for anything
+   * interactive; kept because several callers still pass it.
+   */
   onKeyPress?: (e: React.KeyboardEvent) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
   'aria-label'?: string;
   'aria-checked'?: boolean;
   'aria-describedby'?: string;
@@ -27,6 +33,7 @@ const Card: FC<CardProps> = ({
   role,
   tabIndex,
   onKeyPress,
+  onKeyDown,
   'aria-label': ariaLabel,
   'aria-checked': ariaChecked,
   'aria-describedby': ariaDescribedBy,
@@ -72,6 +79,7 @@ const Card: FC<CardProps> = ({
         className={`text-left w-full rounded-lg border ${variants[variant]} ${hoverClass} ${cursorClass} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${className}`}
         {...(tabIndex !== undefined && { tabIndex })}
         {...(onKeyPress && { onKeyPress })}
+        {...(onKeyDown && { onKeyDown })}
         {...ariaProps}
       >
         {content}
@@ -84,6 +92,7 @@ const Card: FC<CardProps> = ({
       className={`rounded-lg border ${variants[variant]} ${hoverClass} ${className}`}
       {...(tabIndex !== undefined && { tabIndex })}
       {...(onKeyPress && { onKeyPress })}
+        {...(onKeyDown && { onKeyDown })}
       {...ariaProps}
     >
       {content}

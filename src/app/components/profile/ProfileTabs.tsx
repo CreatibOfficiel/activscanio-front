@@ -2,7 +2,12 @@
 
 import { FC, KeyboardEvent, useMemo } from 'react';
 
-export type ProfileTab = 'overview' | 'stats' | 'races' | 'achievements';
+export type ProfileTab =
+  | 'overview'
+  | 'stats'
+  | 'races'
+  | 'achievements'
+  | 'ping-pong';
 
 interface Tab {
   id: ProfileTab;
@@ -12,8 +17,11 @@ interface Tab {
 
 const ALL_TABS: Tab[] = [
   { id: 'overview', label: 'Aperçu', icon: '📋' },
-  { id: 'stats', label: 'Paris', icon: '🎲' },
+  // Labelled "Paris" with a 🎲 until the betting system was removed. The tab
+  // renders StatsTab, which shows profile statistics and no bets at all.
+  { id: 'stats', label: 'Statistiques', icon: '📊' },
   { id: 'races', label: 'Courses', icon: '🏎️' },
+  { id: 'ping-pong', label: 'Ping-pong', icon: '🏓' },
   { id: 'achievements', label: 'Succès', icon: '🏆' },
 ];
 
@@ -21,6 +29,12 @@ interface ProfileTabsProps {
   activeTab: ProfileTab;
   onTabChange: (tab: ProfileTab) => void;
   showRacesTab?: boolean;
+  /**
+   * Needs BOTH that the user follows ping-pong and that they have a linked
+   * competitor: the ping-pong API is keyed on `competitorId`, so a follower
+   * without one opens a tab that can only apologise.
+   */
+  showPingpongTab?: boolean;
   className?: string;
 }
 
@@ -34,12 +48,16 @@ const ProfileTabs: FC<ProfileTabsProps> = ({
   activeTab,
   onTabChange,
   showRacesTab = false,
+  showPingpongTab = false,
   className = '',
 }) => {
-  // Filter tabs based on showRacesTab prop
   const visibleTabs = useMemo(() => {
-    return ALL_TABS.filter((tab) => tab.id !== 'races' || showRacesTab);
-  }, [showRacesTab]);
+    return ALL_TABS.filter((tab) => {
+      if (tab.id === 'races') return showRacesTab;
+      if (tab.id === 'ping-pong') return showPingpongTab;
+      return true;
+    });
+  }, [showRacesTab, showPingpongTab]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
     let newIndex = index;
@@ -72,11 +90,12 @@ const ProfileTabs: FC<ProfileTabsProps> = ({
     >
       {visibleTabs.map((tab, index) => {
         const isActive = activeTab === tab.id;
-        // Determine tab color for stats (green) and races (blue)
+        // Determine tab color for stats (green), races (blue), ping-pong (orange)
         const getTabColors = () => {
           if (!isActive) return 'text-neutral-400 hover:text-white hover:bg-neutral-700/50';
           if (tab.id === 'stats') return 'bg-emerald-500 text-neutral-900 shadow-lg';
           if (tab.id === 'races') return 'bg-blue-500 text-neutral-900 shadow-lg';
+          if (tab.id === 'ping-pong') return 'bg-orange-500 text-neutral-900 shadow-lg';
           return 'bg-primary-500 text-neutral-900 shadow-lg';
         };
 

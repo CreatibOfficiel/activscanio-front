@@ -60,6 +60,21 @@ describe('Modal — focus management', () => {
     outsideButton.remove();
   });
 
+  it('moves focus into a modal that is open on its first render', () => {
+    // The portal does not exist yet when the focus effect first runs, so the
+    // focus call hit a null ref and focus stayed on document.body — outside a
+    // trap that was still armed, letting Tab walk the page behind the
+    // backdrop. Modals opened after mount were fine, which hid this.
+    render(
+      <Modal isOpen onClose={jest.fn()} title="Ouverte d'emblée">
+        <button>action</button>
+      </Modal>,
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.contains(document.activeElement)).toBe(true);
+  });
+
   it('restores focus to the trigger after being closed', async () => {
     const user = userEvent.setup();
 
@@ -161,6 +176,127 @@ describe('Modal — focus trap', () => {
 
     fireEvent.keyDown(document, { key: 'Tab' });
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+
+/**
+ * The sheet placement.
+ *
+ * Bottom anchoring is a styling change, but it arrived as a variant here
+ * precisely so it inherits the behaviour above rather than reimplementing it.
+ * These re-assert the contract under the variant, because a future change to
+ * the placement branch could quietly break it for sheets only.
+ */
+describe('Modal — sheet placement', () => {
+  it('is still a dialog with an accessible name', () => {
+    render(
+      <Modal isOpen onClose={jest.fn()} placement="sheet" title="Ajouter">
+        <p>content</p>
+      </Modal>,
+    );
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('Ajouter');
+  });
+
+  it('still closes on Escape', () => {
+    const onClose = jest.fn();
+    render(
+      <Modal isOpen onClose={onClose} placement="sheet" title="Ajouter">
+        <p>content</p>
+      </Modal>,
+    );
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('still closes on a backdrop press', () => {
+    const onClose = jest.fn();
+    render(
+      <Modal isOpen onClose={onClose} placement="sheet" title="Ajouter">
+        <p>content</p>
+      </Modal>,
+    );
+    fireEvent.click(screen.getByRole('presentation'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('still traps Tab inside', () => {
+    render(
+      <Modal isOpen onClose={jest.fn()} placement="sheet" showCloseButton={false}>
+        <button>premier</button>
+        <button>dernier</button>
+      </Modal>,
+    );
+
+    const first = screen.getByRole('button', { name: 'premier' });
+    const last = screen.getByRole('button', { name: 'dernier' });
+
+    last.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(first);
+  });
+
+  it('still restores focus to the trigger on close', async () => {
+    const user = userEvent.setup();
+
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Ouvrir</button>
+          <Modal
+            isOpen={open}
+            onClose={() => setOpen(false)}
+            placement="sheet"
+            title="Ajouter"
+          >
+            <p>content</p>
+          </Modal>
+        </>
+      );
+    }
+
+    render(<Harness />);
+    const trigger = screen.getByRole('button', { name: 'Ouvrir' });
+    await user.click(trigger);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('still locks and releases the page scroll', () => {
+    const { rerender } = render(
+      <Modal isOpen onClose={jest.fn()} placement="sheet" title="Ajouter">
+        <p>content</p>
+      </Modal>,
+    );
+    expect(document.body.style.overflow).toBe('hidden');
+
+    rerender(
+      <Modal isOpen={false} onClose={jest.fn()} placement="sheet" title="Ajouter">
+        <p>content</p>
+      </Modal>,
+    );
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('anchors to the bottom rather than centring', () => {
+    render(
+      <Modal isOpen onClose={jest.fn()} placement="sheet" title="Ajouter">
+        <p>content</p>
+      </Modal>,
+    );
+    expect(screen.getByRole('presentation').className).toContain('items-end');
+  });
+
+  it('leaves the centred placement alone by default', () => {
+    render(
+      <Modal isOpen onClose={jest.fn()} title="Ajouter">
+        <p>content</p>
+      </Modal>,
+    );
+    expect(screen.getByRole('presentation').className).toContain('items-center');
   });
 });
 

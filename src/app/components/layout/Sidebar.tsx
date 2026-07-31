@@ -3,7 +3,8 @@
 import { FC, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MdLeaderboard, MdFlag, MdPerson } from 'react-icons/md';
+import { MdLeaderboard, MdFlag, MdPerson,
+  MdSportsTennis } from 'react-icons/md';
 import { toast } from 'sonner';
 import { useSoundboard } from '../../context/SoundboardContext';
 import { useEasterEgg } from '../../hooks/useEasterEgg';
@@ -56,6 +57,7 @@ const Sidebar: FC = () => {
   const navItems = [
     { href: '/', label: 'Classement', icon: MdLeaderboard },
     { href: '/races', label: 'Courses', icon: MdFlag, activePaths: ['/races'] },
+    { href: '/pingpong', label: 'Ping-Pong', icon: MdSportsTennis, activePaths: ['/pingpong'] },
     { href: '/profile', label: 'Profil', icon: MdPerson, activePaths: ['/profile', '/achievements'] },
   ];
 

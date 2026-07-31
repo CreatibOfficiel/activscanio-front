@@ -14,7 +14,7 @@ import {
   SeasonsRepository,
   type SeasonArchive,
   type ArchivedCompetitorRanking,
-  type ArchivedBettorRanking,
+  type ArchivedPingpongRanking,
   type SeasonHighlights,
 } from "@/app/repositories/SeasonsRepository";
 import { formatSeasonDateRange } from "@/app/utils/season-utils";
@@ -44,8 +44,8 @@ type SlideKey =
   | "title"
   | "competitor-podium"
   | "competitor-ranking"
-  | "bettor-podium"
-  | "bettor-ranking"
+  | "pingpong-podium"
+  | "pingpong-ranking"
   | "highlights"
   | "elo-reset";
 
@@ -141,8 +141,8 @@ function SlideTitleStats({
         {[
           { label: "Pilotes", value: season.totalCompetitors, icon: <MdFlag className="text-primary-400" /> },
           { label: "Courses", value: season.totalRaces, icon: <MdSportsScore className="text-emerald-400" /> },
-          { label: "Paris", value: season.totalBets, icon: <MdStar className="text-yellow-400" /> },
-          { label: "Parieurs", value: season.totalBettors, icon: <MdPerson className="text-blue-400" /> },
+          { label: "Matchs", value: season.totalPingpongMatches ?? 0, icon: <MdStar className="text-yellow-400" /> },
+          { label: "Pongistes", value: season.totalPingpongPlayers ?? 0, icon: <MdPerson className="text-blue-400" /> },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -180,7 +180,7 @@ function PodiumSlide({
     imageUrl?: string | null;
     characterUrl?: string | null;
   }[];
-  type: "competitor" | "bettor";
+  type: "competitor" | "pingpong";
   reducedMotion: boolean;
 }) {
   // Reorder: 2nd, 1st, 3rd
@@ -369,12 +369,12 @@ function CompetitorRow({
   );
 }
 
-function BettorRow({
+function PingpongRow({
   item,
   index,
   reducedMotion,
 }: {
-  item: ArchivedBettorRanking;
+  item: ArchivedPingpongRanking;
   index: number;
   reducedMotion: boolean;
 }) {
@@ -385,26 +385,34 @@ function BettorRow({
       transition={{ delay: reducedMotion ? 0 : Math.min(index * 0.03, 0.5), duration: 0.3 }}
       className="flex items-center gap-2.5 px-3 py-2.5 bg-neutral-800 rounded-lg border border-neutral-700/50"
     >
-      {/* Rank badge */}
-      <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="shrink-0">
-        #{item.rank}
-      </Badge>
+      {/* Rank badge — a calibrating player finished the season unranked. */}
+      {item.rank === null ? (
+        <Badge variant="default" size="sm" className="shrink-0">
+          —
+        </Badge>
+      ) : (
+        <Badge variant={getRankBadgeVariant(item.rank)} size="sm" className="shrink-0">
+          #{item.rank}
+        </Badge>
+      )}
 
       {/* Avatar */}
-      <UserAvatar src={item.profilePictureUrl} name={item.userName} size="sm" />
+      <UserAvatar src={null} name={item.playerName} size="sm" />
 
-      {/* Name + paris count */}
+      {/* Name + win/loss record */}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-white truncate">{item.userName}</p>
+        <p className="text-sm font-semibold text-white truncate">{item.playerName}</p>
         <p className="text-xs text-neutral-400">
-          {item.betsPlaced} pari{item.betsPlaced > 1 ? "s" : ""}
+          {item.wins}V · {item.losses}D
         </p>
       </div>
 
-      {/* Points */}
+      {/* Final rating */}
       <div className="text-right shrink-0">
-        <p className="text-sm font-bold text-primary-500">{item.totalPoints.toFixed(1)}</p>
-        <p className="text-[10px] text-neutral-500">pts</p>
+        <p className="text-sm font-bold text-primary-500">
+          {Math.round(item.finalRating)}
+        </p>
+        <p className="text-[10px] text-neutral-500">elo</p>
       </div>
     </motion.div>
   );
@@ -938,7 +946,7 @@ export default function SeasonRecapModal({
   const [isLoading, setIsLoading] = useState(true);
   const [season, setSeason] = useState<SeasonArchive | null>(null);
   const [competitors, setCompetitors] = useState<ArchivedCompetitorRanking[]>([]);
-  const [bettors, setBettors] = useState<ArchivedBettorRanking[]>([]);
+  const [pingpong, setPingpong] = useState<ArchivedPingpongRanking[]>([]);
   const [highlights, setHighlights] = useState<SeasonHighlights | null>(null);
   const [direction, setDirection] = useState(0);
   const touchStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -964,7 +972,7 @@ export default function SeasonRecapModal({
         if (!data) return;
         setSeason(data.season);
         setCompetitors(data.competitors);
-        setBettors(data.bettors);
+        setPingpong(data.pingpong);
         setHighlights(data.highlights);
       })
       .catch((err) => {
@@ -1032,35 +1040,39 @@ export default function SeasonRecapModal({
     [competitors]
   );
 
-  const bettorPodiumItems = useMemo(
+  const pingpongPodiumItems = useMemo(
     () =>
-      bettors
-        .filter((b) => b.rank <= 3)
-        .map((b) => ({
-          name: b.userName,
-          rank: b.rank,
-          score: b.totalPoints,
-          scoreLabel: "pts",
-          races: b.betsPlaced,
-          imageUrl: b.profilePictureUrl,
+      pingpong
+        // rank is null for anyone still calibrating when the season closed.
+        .filter((p): p is ArchivedPingpongRanking & { rank: number } =>
+          p.rank !== null && p.rank <= 3
+        )
+        .map((p) => ({
+          name: p.playerName,
+          rank: p.rank,
+          score: p.finalRating,
+          scoreLabel: "elo",
+          races: p.totalMatches,
+          imageUrl: null,
         })),
-    [bettors]
+    [pingpong]
   );
 
-  // Build the active slide list dynamically. Bettor slides are skipped
-  // entirely when no bets were placed during the season.
+  // Build the active slide list dynamically. Ping-pong slides are skipped
+  // entirely for seasons where nobody played — including every season
+  // archived before the sport existed.
   const activeSlides = useMemo<SlideKey[]>(() => {
     const slides: SlideKey[] = [
       "title",
       "competitor-podium",
       "competitor-ranking",
     ];
-    if (bettors.length > 0) {
-      slides.push("bettor-podium", "bettor-ranking");
+    if (pingpong.length > 0) {
+      slides.push("pingpong-podium", "pingpong-ranking");
     }
     slides.push("highlights", "elo-reset");
     return slides;
-  }, [bettors]);
+  }, [pingpong]);
 
   const totalSlides = activeSlides.length;
 
@@ -1153,13 +1165,13 @@ export default function SeasonRecapModal({
           </RankingListSlide>
         );
       }
-      case "bettor-podium":
-        return <PodiumSlide title="Podium Parieurs" items={bettorPodiumItems} type="bettor" reducedMotion={reducedMotion} />;
-      case "bettor-ranking":
+      case "pingpong-podium":
+        return <PodiumSlide title="Podium Ping-Pong" items={pingpongPodiumItems} type="pingpong" reducedMotion={reducedMotion} />;
+      case "pingpong-ranking":
         return (
-          <RankingListSlide title="Classement Parieurs">
-            {bettors.map((b, i) => (
-              <BettorRow key={b.userId} item={b} index={i} reducedMotion={reducedMotion} />
+          <RankingListSlide title="Classement Ping-Pong">
+            {pingpong.map((p, i) => (
+              <PingpongRow key={p.id} item={p} index={i} reducedMotion={reducedMotion} />
             ))}
           </RankingListSlide>
         );

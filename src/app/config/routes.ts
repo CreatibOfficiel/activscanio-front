@@ -19,6 +19,7 @@
 export const BOTTOM_NAV_HIDDEN_PATHS = [
   '/onboarding',
   '/races/add',
+  '/pingpong/add',
   '/races/score-setup',
   '/races/summary',
   '/competitors/add',
@@ -30,6 +31,7 @@ export const BOTTOM_NAV_HIDDEN_PATHS = [
 export const SIDEBAR_HIDDEN_PATHS = [
   '/onboarding',
   '/races/add',
+  '/pingpong/add',
   '/races/score-setup',
   '/races/summary',
   '/tv',
@@ -45,6 +47,7 @@ export const SIDEBAR_HIDDEN_PATHS = [
 export const FULLSCREEN_PATHS = [
   '/onboarding',
   '/races/add',
+  '/pingpong/add',
   '/races/score-setup',
   '/races/summary',
   '/tv',

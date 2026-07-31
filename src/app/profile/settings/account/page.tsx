@@ -1,15 +1,48 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import Link from 'next/link';
 import { useClerk, useUser } from '@clerk/nextjs';
+import SportChoiceCards, {
+  SportChoice,
+  toSportPreference,
+} from '../../../components/sport/SportChoiceCards';
+import { useSportPreference } from '../../../hooks/useSportPreference';
 
 const AccountSettingsPage: FC = () => {
   const { signOut, openUserProfile } = useClerk();
   const { user } = useUser();
+  const { showsMarioKart, showsPingpong, saving, change } =
+    useSportPreference();
+  const [emptyChoice, setEmptyChoice] = useState(false);
 
   const handleSignOut = async () => {
     await signOut({ redirectUrl: '/' });
+  };
+
+  /**
+   * Save the new choice, unless it is empty.
+   *
+   * Onboarding can let someone hold "neither" for as long as they like,
+   * because its Continue button stays disabled until the answer is valid.
+   * This screen saves on change, so there is no later moment to validate at
+   * and the guard has to sit on the write.
+   *
+   * The refusal is shown rather than swallowed: a box that unticks and then
+   * quietly does nothing reads as a save that failed. Because the boxes are
+   * driven straight off the hook, not writing also means the box stays
+   * ticked, which is what makes the message accurate.
+   */
+  const handleSportChange = async (next: SportChoice) => {
+    const preference = toSportPreference(next);
+
+    if (!preference) {
+      setEmptyChoice(true);
+      return;
+    }
+
+    setEmptyChoice(false);
+    await change(preference);
   };
 
   return (
@@ -97,6 +130,38 @@ const AccountSettingsPage: FC = () => {
             />
           </svg>
         </button>
+
+        {/* Sport preference */}
+        <section
+          aria-labelledby="sport-preference-heading"
+          className="p-4 rounded-xl bg-neutral-800 border border-neutral-700 space-y-3"
+        >
+          <div>
+            <h2
+              id="sport-preference-heading"
+              className="text-bold text-white"
+            >
+              Sports suivis
+            </h2>
+            <p className="text-sub text-neutral-400">
+              Choisis ce que tu veux voir dans l&apos;app
+            </p>
+          </div>
+
+          <SportChoiceCards
+            marioKart={showsMarioKart}
+            pingpong={showsPingpong}
+            onChange={handleSportChange}
+            className={saving ? 'opacity-60' : ''}
+          />
+
+          {emptyChoice && (
+            <p role="alert" className="text-sub text-warning-400">
+              Garde au moins un sport : sans ça, il n&apos;y a plus rien à
+              afficher.
+            </p>
+          )}
+        </section>
 
         {/* Sign Out */}
         <button

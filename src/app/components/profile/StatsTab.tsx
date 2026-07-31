@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, lazy, Suspense, useState, useMemo } from 'react';
+import { FC, useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { MdCasino, MdStar, MdEmojiEvents, MdTrendingUp, MdRocketLaunch, MdCalendarMonth, MdCheckCircle, MdPercent, MdDiamond, MdMilitaryTech } from 'react-icons/md';
 import { UserStats } from '../../models/Achievement';
@@ -10,25 +10,12 @@ import StatCard from '../ui/StatCard';
 import { StreakIndicator } from '../achievements';
 
 // Lazy load chart components for performance
-const XPProgressChart = lazy(() => import('../stats/XPProgressChart'));
-const WinRateChart = lazy(() => import('../stats/WinRateChart'));
-const ComparisonCard = lazy(() => import('../stats/ComparisonCard'));
-const AdvancedStatsPanel = lazy(() => import('../stats/AdvancedStatsPanel'));
 
 interface StatsTabProps {
   stats: UserStats;
-  getToken?: () => Promise<string | null>;
   className?: string;
 }
 
-// Loading skeleton for charts
-const ChartSkeleton: FC<{ height?: string }> = ({ height = 'h-64' }) => (
-  <div className={`${height} bg-neutral-900 rounded-lg animate-pulse`}>
-    <div className="flex items-center justify-center h-full text-neutral-600">
-      Chargement...
-    </div>
-  </div>
-);
 
 /**
  * StatsTab Component
@@ -43,7 +30,6 @@ const ChartSkeleton: FC<{ height?: string }> = ({ height = 'h-64' }) => (
  */
 const StatsTab: FC<StatsTabProps> = ({
   stats,
-  getToken,
   className = '',
 }) => {
   const [period, setPeriod] = useState<TimePeriod>('all');
@@ -301,67 +287,9 @@ const StatsTab: FC<StatsTabProps> = ({
         />
       </motion.div>
 
-      {/* XP Progression Chart */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span className="text-emerald-400">📈</span>
-          <span>Progression XP</span>
-        </h3>
-        <Suspense fallback={<ChartSkeleton />}>
-          <XPProgressChart
-            userId={stats.userId}
-            period="30d"
-            getToken={getToken}
-            className=""
-          />
-        </Suspense>
-      </div>
 
-      {/* Win Rate Chart */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span className="text-emerald-400">📉</span>
-          <span>Évolution du Win Rate</span>
-        </h3>
-        <Suspense fallback={<ChartSkeleton />}>
-          <WinRateChart
-            userId={stats.userId}
-            days={30}
-            getToken={getToken}
-            className=""
-          />
-        </Suspense>
-      </div>
 
-      {/* Comparison Card */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span className="text-emerald-400">⚖️</span>
-          <span>Comparaison</span>
-        </h3>
-        <Suspense fallback={<ChartSkeleton height="h-48" />}>
-          <ComparisonCard
-            userId={stats.userId}
-            getToken={getToken}
-            className=""
-          />
-        </Suspense>
-      </div>
 
-      {/* Advanced Stats Panel */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <span className="text-emerald-400">🔬</span>
-          <span>Analyse Avancée</span>
-        </h3>
-        <Suspense fallback={<ChartSkeleton height="h-72" />}>
-          <AdvancedStatsPanel
-            userId={stats.userId}
-            getToken={getToken}
-            className=""
-          />
-        </Suspense>
-      </div>
     </div>
   );
 };

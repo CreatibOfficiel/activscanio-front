@@ -19,6 +19,7 @@ describe('BOTTOM_NAV_HIDDEN_PATHS', () => {
     expect([...BOTTOM_NAV_HIDDEN_PATHS]).toEqual([
       '/onboarding',
       '/races/add',
+      '/pingpong/add',
       '/races/score-setup',
       '/races/summary',
       '/competitors/add',
@@ -49,6 +50,7 @@ describe('SIDEBAR_HIDDEN_PATHS', () => {
     expect([...SIDEBAR_HIDDEN_PATHS]).toEqual([
       '/onboarding',
       '/races/add',
+      '/pingpong/add',
       '/races/score-setup',
       '/races/summary',
       '/tv',
@@ -69,6 +71,7 @@ describe('FULLSCREEN_PATHS', () => {
     expect([...FULLSCREEN_PATHS]).toEqual([
       '/onboarding',
       '/races/add',
+      '/pingpong/add',
       '/races/score-setup',
       '/races/summary',
       '/tv',

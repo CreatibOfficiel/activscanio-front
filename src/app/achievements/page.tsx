@@ -77,7 +77,7 @@ const AchievementsPage: FC = () => {
   // Filter achievements client-side
   const filteredAchievements = useMemo(() => {
     return achievements.filter((a) => {
-      if (selectedDomain !== 'all' && (a.domain || AchievementDomain.BETTING) !== selectedDomain) return false;
+      if (selectedDomain !== 'all' && (a.domain || AchievementDomain.RACING) !== selectedDomain) return false;
       if (selectedCategory !== 'all' && a.category !== selectedCategory) return false;
       if (selectedRarity !== 'all' && a.rarity !== selectedRarity) return false;
       if (selectedStatus === 'unlocked' && !a.isUnlocked) return false;
@@ -208,8 +208,8 @@ const AchievementsPage: FC = () => {
                 <Tabs.List className="inline-flex p-0.5 rounded-lg bg-neutral-900 border border-neutral-700">
                   {([
                     { value: 'all' as FilterDomain, label: 'Tous', icon: '📋' },
-                    { value: AchievementDomain.BETTING as FilterDomain, label: 'Paris', icon: '🎰' },
                     { value: AchievementDomain.RACING as FilterDomain, label: 'Courses', icon: '🏁' },
+                    { value: AchievementDomain.PINGPONG as FilterDomain, label: 'Ping-Pong', icon: '🏓' },
                   ]).map(({ value, label, icon }) => (
                     <Tabs.Trigger
                       key={value}

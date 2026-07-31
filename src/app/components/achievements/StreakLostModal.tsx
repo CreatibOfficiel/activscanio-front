@@ -16,7 +16,7 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
 
-  const bettingLoss = losses.find((l) => l.type === 'participation');
+  const participationLoss = losses.find((l) => l.type === 'participation');
   const playLoss = losses.find((l) => l.type === 'play');
   const isMultiple = losses.length > 1;
 
@@ -46,11 +46,6 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
     }, 400);
     return () => clearTimeout(timer);
   }, [showContent]);
-
-  const handleBet = () => {
-    onClose();
-    router.push('/betting');
-  };
 
   const handlePlay = () => {
     onClose();
@@ -87,7 +82,7 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
           <p className="text-sm text-neutral-400 mb-5">
             {isMultiple
               ? 'Tu as perdu tes flammes de paris et de jeu'
-              : bettingLoss
+              : participationLoss
                 ? 'Ta flamme de paris s\'est éteinte'
                 : 'Ta série de jeu s\'est arrêtée'
             }
@@ -95,14 +90,14 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
 
           {/* Loss cards */}
           <div className="space-y-3 mb-5">
-            {bettingLoss && (
+            {participationLoss && (
               <div className="p-4 rounded-xl bg-neutral-700/30 border border-neutral-700/50 text-left">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg opacity-50">🔥</span>
                   <span className="text-sm font-semibold text-neutral-200">Flamme de paris</span>
                 </div>
                 <p className="text-sm text-neutral-400">
-                  Tu étais sur une série de <span className="font-bold text-amber-400">{bettingLoss.lostValue}</span> semaine{bettingLoss.lostValue > 1 ? 's' : ''} — impressionnant !
+                  Tu étais sur une série de <span className="font-bold text-amber-400">{participationLoss.lostValue}</span> semaine{participationLoss.lostValue > 1 ? 's' : ''} — impressionnant !
                 </p>
               </div>
             )}
@@ -136,22 +131,13 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
 
           {/* CTAs */}
           <div className="flex flex-col gap-2">
-            {bettingLoss && (
-              <button
-                onClick={handleBet}
-                className="w-full py-3 px-6 rounded-xl font-semibold text-sm bg-amber-500 hover:bg-amber-400 text-neutral-900 transition-colors"
-              >
-                Placer mon prono
-              </button>
-            )}
-            {playLoss && (
+            {/* Both kinds of streak are repaired the same way: by racing.
+                The participation streak used to send people to /betting,
+                a route that no longer exists. */}
+            {(playLoss || participationLoss) && (
               <button
                 onClick={handlePlay}
-                className={`w-full py-3 px-6 rounded-xl font-semibold text-sm transition-colors ${
-                  bettingLoss
-                    ? 'bg-neutral-700 hover:bg-neutral-600 text-neutral-100'
-                    : 'bg-amber-500 hover:bg-amber-400 text-neutral-900'
-                }`}
+                className="w-full py-3 px-6 rounded-xl font-semibold text-sm bg-amber-500 hover:bg-amber-400 text-neutral-900 transition-colors"
               >
                 Jouer une course
               </button>
