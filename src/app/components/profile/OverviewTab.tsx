@@ -5,26 +5,17 @@ import Link from 'next/link';
 import {
   MdEmojiEvents,
   MdStar,
-  MdCasino,
   MdCheckCircle,
   MdDirectionsCar,
   MdSpeed,
   MdLocalFireDepartment,
 } from 'react-icons/md';
 import { UserStats, UserAchievement } from '../../models/Achievement';
+import type { CompetitorStats } from '../../profile/page';
 import { AchievementGrid } from '../achievements';
 import StatCard from '../ui/StatCard';
 
 // Type for competitor stats
-interface CompetitorStats {
-  conservativeScore: number;
-  raceCount: number;
-  avgRank12: number;
-  totalWins: number;
-  winStreak: number;
-  bestWinStreak: number;
-}
-
 interface OverviewTabProps {
   stats: UserStats;
   recentAchievements: UserAchievement[];
@@ -68,46 +59,50 @@ const OverviewTab: FC<OverviewTabProps> = ({
       aria-labelledby="tab-overview"
       className={`space-y-6 ${className}`}
     >
-      {/* Monthly Betting Performance */}
-      <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <MdCasino className="text-emerald-400" />
-          <span>Mes paris cette saison</span>
-        </h3>
+      {/* Attendance, which is the one number nobody else can move. A rank
+          is zero-sum; a play streak is yours alone. */}
+      {competitorStats && (
+        <div className="p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-emerald-500">
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <MdLocalFireDepartment className="text-emerald-400" />
+            <span>Ma régularité</span>
+          </h3>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard
-            label="Placés"
-            value={stats.monthlyBetsPlaced}
-            icon={<MdCasino className="text-emerald-400" />}
-            variant="compact"
-            animated
-          />
-          <StatCard
-            label="Gagnés"
-            value={stats.monthlyBetsWon}
-            icon={<MdCheckCircle className="text-success-400" />}
-            colorClass="text-success-400"
-            variant="compact"
-            animated
-          />
-          <StatCard
-            label="Points"
-            value={Math.round(stats.monthlyPoints)}
-            icon={<MdStar className="text-primary-400" />}
-            colorClass="text-primary-400"
-            variant="compact"
-            animated
-          />
-          <StatCard
-            label="Rang"
-            value={stats.monthlyRank ? `#${stats.monthlyRank}` : '-'}
-            icon={<MdEmojiEvents className="text-gold-500" />}
-            colorClass="text-gold-500"
-            variant="compact"
-          />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatCard
+              label="Série en cours"
+              value={competitorStats.playStreak}
+              icon={<MdLocalFireDepartment className="text-emerald-400" />}
+              variant="compact"
+              animated
+            />
+            <StatCard
+              label="Record"
+              value={competitorStats.bestPlayStreak}
+              icon={<MdEmojiEvents className="text-gold-500" />}
+              colorClass="text-gold-500"
+              variant="compact"
+              animated
+            />
+            <StatCard
+              label="Victoires"
+              value={competitorStats.totalWins}
+              icon={<MdCheckCircle className="text-success-400" />}
+              colorClass="text-success-400"
+              variant="compact"
+              animated
+            />
+            <StatCard
+              label="Courses"
+              value={competitorStats.raceCount}
+              icon={<MdStar className="text-primary-400" />}
+              colorClass="text-primary-400"
+              variant="compact"
+              animated
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Races Section - Only shown for players with competitor stats */}
       {competitorStats && (
