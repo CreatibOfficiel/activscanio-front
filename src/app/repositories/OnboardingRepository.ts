@@ -1,11 +1,21 @@
 import { CompetitorWithAvailability } from '../models/Competitor';
 import { BaseCharacter, CharacterVariant, BaseCharacterWithAvailability } from '../models/Character';
 import { apiFetch } from '../utils/api-fetch';
+import { SportPreference } from './UsersRepository';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export interface CompleteOnboardingDto {
-  isSpectator?: boolean;
+  /**
+   * Which sport the user plays. Decides server-side whether a Mario Kart
+   * character is required — it is meaningless to a ping-pong-only player.
+   *
+   * Replaces the old `isSpectator` flag, which assigned a betting-era role
+   * meaning "does not compete". Sent with the completion request rather
+   * than in a follow-up call: a second request that fails would leave
+   * someone onboarded with the wrong preference and no way to retry.
+   */
+  sportPreference?: SportPreference;
   existingCompetitorId?: string;
   newCompetitor?: {
     firstName: string;

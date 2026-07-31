@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { MdSearch, MdPerson, MdPersonAdd, MdArrowBack, MdCheck, MdSportsEsports, MdColorLens, MdLock } from 'react-icons/md';
 import Image from 'next/image';
 import { useDebounce } from '@/app/hooks/useDebounce';
+import type { SportPreference } from '@/app/repositories/UsersRepository';
 
 enum OnboardingStep {
   ROLE_SELECTION = 'role',
@@ -20,12 +21,15 @@ enum OnboardingStep {
   CREATE_COMPETITOR = 'create',
 }
 
-const ONBOARDING_STORAGE_KEY = 'onboarding-progress';
+// Bumped when the saved shape changed: a session stored mid-flow before
+// the sport question replaced the betting one restores undefined flags and
+// lands the user on a step that no longer makes sense.
+const ONBOARDING_STORAGE_KEY = 'onboarding-progress-v2';
 
 interface OnboardingProgress {
   step: OnboardingStep;
-  wantsToPlay: boolean;
-  wantsToBet: boolean;
+  wantsMarioKart: boolean;
+  wantsPingpong: boolean;
   selectedCompetitorId?: string;
   selectedCompetitorFirstName?: string;
   selectedCompetitorLastName?: string;
@@ -65,9 +69,26 @@ const OnboardingPage: FC = () => {
   const [step, setStep] = useState<OnboardingStep>(savedProgress?.step ?? OnboardingStep.ROLE_SELECTION);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [wantsToPlay, setWantsToPlay] = useState(savedProgress?.wantsToPlay ?? false);
-  const [wantsToBet, setWantsToBet] = useState(savedProgress?.wantsToBet ?? false);
-  const isBettorOnly = wantsToBet && !wantsToPlay;
+  const [wantsMarioKart, setWantsMarioKart] = useState(savedProgress?.wantsMarioKart ?? false);
+  const [wantsPingpong, setWantsPingpong] = useState(savedProgress?.wantsPingpong ?? false);
+  /**
+   * A Mario Kart character is a racing concept. Someone who only plays
+   * ping-pong still needs a competitor identity — matches are recorded
+   * against one — but picking a kart character would be meaningless, so
+   * those two steps are skipped.
+   *
+   * This replaces `skipsCharacter`, which conflated "skips character
+   * selection" with "does not compete". A ping-pong player competes.
+   */
+  const skipsCharacter = wantsPingpong && !wantsMarioKart;
+
+  /** Derived at the edge: "both" is not a concept the form carries. */
+  const sportPreference: SportPreference =
+    wantsMarioKart && wantsPingpong
+      ? 'both'
+      : wantsPingpong
+        ? 'ping-pong'
+        : 'mario-kart';
 
   // Search state for competitors
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,8 +129,8 @@ const OnboardingPage: FC = () => {
   useEffect(() => {
     saveOnboardingProgress({
       step,
-      wantsToPlay,
-      wantsToBet,
+      wantsMarioKart,
+      wantsPingpong,
       selectedCompetitorId: selectedCompetitor?.id,
       selectedCompetitorFirstName: selectedCompetitor?.firstName,
       selectedCompetitorLastName: selectedCompetitor?.lastName,
@@ -118,7 +139,7 @@ const OnboardingPage: FC = () => {
       selectedBaseCharacterId: selectedBaseCharacter?.id,
       selectedVariantId,
     });
-  }, [step, wantsToPlay, wantsToBet, selectedCompetitor, newCompetitorFirstName, newCompetitorLastName, selectedBaseCharacter, selectedVariantId]);
+  }, [step, wantsMarioKart, wantsPingpong, selectedCompetitor, newCompetitorFirstName, newCompetitorLastName, selectedBaseCharacter, selectedVariantId]);
 
   // Load base characters with availability status on mount
   useEffect(() => {
@@ -301,7 +322,7 @@ const OnboardingPage: FC = () => {
     }
     setSelectedCompetitor(competitor);
 
-    if (isBettorOnly) {
+    if (skipsCharacter) {
       // Bettor path: complete onboarding directly with competitor link
       try {
         setIsSubmitting(true);
@@ -309,11 +330,11 @@ const OnboardingPage: FC = () => {
         if (!token) throw new Error('Token non disponible');
 
         await OnboardingRepository.completeOnboarding(
-          { isSpectator: true, existingCompetitorId: competitor.id },
+          { sportPreference, existingCompetitorId: competitor.id },
           token
         );
         clearOnboardingProgress();
-        toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses !');
+        toast.success('Bienvenue ! Ton profil est prêt.');
         router.push('/');
       } catch (error) {
         console.error('Error completing onboarding as bettor:', error);
@@ -352,8 +373,8 @@ const OnboardingPage: FC = () => {
 
   const handleBackToRoleSelection = () => {
     setStep(OnboardingStep.ROLE_SELECTION);
-    setWantsToPlay(false);
-    setWantsToBet(false);
+    setWantsMarioKart(false);
+    setWantsPingpong(false);
     setSelectedCompetitor(null);
     setNewCompetitorFirstName('');
     setNewCompetitorLastName('');
@@ -393,7 +414,7 @@ const OnboardingPage: FC = () => {
       return;
     }
 
-    if (isBettorOnly) {
+    if (skipsCharacter) {
       // Bettor path: complete onboarding directly with new competitor
       try {
         setIsSubmitting(true);
@@ -402,7 +423,7 @@ const OnboardingPage: FC = () => {
 
         await OnboardingRepository.completeOnboarding(
           {
-            isSpectator: true,
+            sportPreference,
             newCompetitor: {
               firstName,
               lastName,
@@ -412,7 +433,7 @@ const OnboardingPage: FC = () => {
           token
         );
         clearOnboardingProgress();
-        toast.success('Bienvenue ! Vous pouvez maintenant parier sur les courses !');
+        toast.success('Bienvenue ! Ton profil est prêt.');
         router.push('/');
       } catch (error) {
         console.error('Error completing onboarding as bettor:', error);
@@ -468,7 +489,7 @@ const OnboardingPage: FC = () => {
 
   // Get current step number for progress indicator
   const stepNumber = useMemo(() => {
-    if (isBettorOnly) {
+    if (skipsCharacter) {
       switch (step) {
         case OnboardingStep.ROLE_SELECTION: return 1;
         case OnboardingStep.COMPETITOR_SEARCH:
@@ -484,10 +505,10 @@ const OnboardingPage: FC = () => {
       case OnboardingStep.VARIANT_SELECT: return 4;
       default: return 1;
     }
-  }, [step, isBettorOnly]);
+  }, [step, skipsCharacter]);
 
   const selectableVariantsCount = selectedBaseCharacter?.variants.filter(isVariantSelectable).length ?? 0;
-  const totalSteps = isBettorOnly ? 2 : (selectedBaseCharacter && selectableVariantsCount > 1 ? 4 : 3);
+  const totalSteps = skipsCharacter ? 2 : (selectedBaseCharacter && selectableVariantsCount > 1 ? 4 : 3);
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 pb-24">
@@ -496,8 +517,8 @@ const OnboardingPage: FC = () => {
         <div className="mb-8 text-center">
           <h1 className="text-title mb-2">Bienvenue {user?.firstName} !</h1>
           <p className="text-regular text-neutral-300">
-            {isBettorOnly
-              ? 'Identifiez-vous pour commencer à parier'
+            {skipsCharacter
+              ? 'Identifiez-vous pour rejoindre le classement'
               : 'Créez votre profil de pilote pour participer aux courses'}
           </p>
 
@@ -529,15 +550,22 @@ const OnboardingPage: FC = () => {
                 {/* Option Joueur */}
                 <Card
                   className={`p-4 cursor-pointer transition-all duration-200 ${
-                    wantsToPlay
+                    wantsMarioKart
                       ? 'border-primary-500 bg-primary-500/10'
                       : 'hover:border-neutral-600 hover:bg-neutral-800'
                   }`}
-                  onClick={() => setWantsToPlay(!wantsToPlay)}
+                  onClick={() => setWantsMarioKart(!wantsMarioKart)}
                   role="checkbox"
-                  aria-checked={wantsToPlay}
+                  aria-checked={wantsMarioKart}
                   tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && setWantsToPlay(!wantsToPlay)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      // Space scrolls the page by default, and the checkbox
+                      // role promises it toggles.
+                      e.preventDefault();
+                      setWantsMarioKart(!wantsMarioKart);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-3xl shrink-0">🎮</div>
@@ -548,11 +576,11 @@ const OnboardingPage: FC = () => {
                       </p>
                     </div>
                     <div className={`w-6 h-6 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
-                      wantsToPlay
+                      wantsMarioKart
                         ? 'border-primary-500 bg-primary-500'
                         : 'border-neutral-600'
                     }`}>
-                      {wantsToPlay && <MdCheck className="text-white text-sm" />}
+                      {wantsMarioKart && <MdCheck className="text-white text-sm" />}
                     </div>
                   </div>
                 </Card>
@@ -560,30 +588,37 @@ const OnboardingPage: FC = () => {
                 {/* Option Parieur */}
                 <Card
                   className={`p-4 cursor-pointer transition-all duration-200 ${
-                    wantsToBet
+                    wantsPingpong
                       ? 'border-primary-500 bg-primary-500/10'
                       : 'hover:border-neutral-600 hover:bg-neutral-800'
                   }`}
-                  onClick={() => setWantsToBet(!wantsToBet)}
+                  onClick={() => setWantsPingpong(!wantsPingpong)}
                   role="checkbox"
-                  aria-checked={wantsToBet}
+                  aria-checked={wantsPingpong}
                   tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && setWantsToBet(!wantsToBet)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      // Space scrolls the page by default, and the checkbox
+                      // role promises it toggles.
+                      e.preventDefault();
+                      setWantsPingpong(!wantsPingpong);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="text-3xl shrink-0">🎲</div>
+                    <div className="text-3xl shrink-0">🏓</div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-bold text-white">Je parie</h3>
+                      <h3 className="text-bold text-white">Je joue au ping-pong</h3>
                       <p className="text-sub text-neutral-400">
-                        Miser sur les résultats
+                        Matchs 1 contre 1
                       </p>
                     </div>
                     <div className={`w-6 h-6 rounded-md border-2 shrink-0 flex items-center justify-center transition-all duration-200 ${
-                      wantsToBet
+                      wantsPingpong
                         ? 'border-primary-500 bg-primary-500'
                         : 'border-neutral-600'
                     }`}>
-                      {wantsToBet && <MdCheck className="text-white text-sm" />}
+                      {wantsPingpong && <MdCheck className="text-white text-sm" />}
                     </div>
                   </div>
                 </Card>
@@ -593,7 +628,7 @@ const OnboardingPage: FC = () => {
                 variant="primary"
                 fullWidth
                 className="mt-6"
-                disabled={!wantsToPlay && !wantsToBet}
+                disabled={!wantsMarioKart && !wantsPingpong}
                 onClick={() => setStep(OnboardingStep.COMPETITOR_SEARCH)}
               >
                 Continuer
@@ -607,10 +642,10 @@ const OnboardingPage: FC = () => {
           <div className="space-y-6 animate-slideUp">
             <Card className="p-6">
               <h2 className="text-heading text-white mb-4">
-                {isBettorOnly ? 'Qui êtes-vous ?' : 'Trouver votre profil'}
+                {skipsCharacter ? 'Qui êtes-vous ?' : 'Trouver votre profil'}
               </h2>
               <p className="text-sub text-neutral-300 mb-4">
-                {isBettorOnly
+                {skipsCharacter
                   ? 'Sélectionnez votre profil pour que les autres sachent qui parie'
                   : 'Sélectionnez votre profil dans la liste ci-dessous'}
               </p>
@@ -1144,7 +1179,7 @@ const OnboardingPage: FC = () => {
                     loading={isSubmitting}
                     disabled={isSubmitting}
                   >
-                    {isBettorOnly ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}
+                    {skipsCharacter ? 'Terminer' : 'Continuer'} avec {selectedCompetitor.firstName}
                   </Button>
                 )}
                 <div className="flex gap-2">
@@ -1183,7 +1218,7 @@ const OnboardingPage: FC = () => {
                   loading={isSubmitting}
                   disabled={!newCompetitorFirstName.trim() || !newCompetitorLastName.trim() || isSubmitting}
                 >
-                  {isBettorOnly ? 'Terminer' : 'Continuer'}
+                  {skipsCharacter ? 'Terminer' : 'Continuer'}
                 </Button>
               </div>
             )}
