@@ -5,6 +5,7 @@ export type { ProfileTab } from './ProfileTabs';
 export { default as OverviewTab } from './OverviewTab';
 export { default as StatsTab } from './StatsTab';
 export { default as RacesTab } from './RacesTab';
+export { default as PingpongTab } from './PingpongTab';
 export { default as AchievementsTab } from './AchievementsTab';
 export { default as AchievementShowcase } from './AchievementShowcase';
 export { default as LevelRewardsPanel } from './LevelRewardsPanel';

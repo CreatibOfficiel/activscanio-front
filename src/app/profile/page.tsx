@@ -17,12 +17,14 @@ import {
   StatsTab,
   AchievementsTab,
   RacesTab,
+  PingpongTab,
   CharacterSelectModal,
 } from '../components/profile';
 import { StreakWarningBanner } from '../components/achievements';
 import { formatCompetitorName } from '../utils/formatters';
 import { AppContext } from '../context/AppContext';
 import { computeRanksWithTies } from '../utils/rankings';
+import { useSportPreference } from '../hooks/useSportPreference';
 
 // Type for competitor stats used in profile
 export interface CompetitorStats {
@@ -45,11 +47,17 @@ const ProfilePage: FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { allCompetitors } = useContext(AppContext);
+  const { showsPingpong } = useSportPreference();
 
   // Get initial tab from URL query param
   const getInitialTab = (): ProfileTab => {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'stats' || tabParam === 'achievements' || tabParam === 'races') {
+      return tabParam;
+    }
+    // Accepted here so the tab is reachable by link; the render branch below
+    // still requires a competitor id before mounting anything.
+    if (tabParam === 'ping-pong') {
       return tabParam;
     }
     return 'overview';
@@ -309,6 +317,7 @@ const ProfilePage: FC = () => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           showRacesTab={userData?.role === 'player'}
+          showPingpongTab={showsPingpong && Boolean(userData?.competitorId)}
         />
 
         {/* Tab Content */}
@@ -337,6 +346,9 @@ const ProfilePage: FC = () => {
               competitorId={userData.competitorId}
               getToken={getToken}
             />
+          )}
+          {activeTab === 'ping-pong' && userData?.competitorId && (
+            <PingpongTab competitorId={userData.competitorId} />
           )}
         </div>
       </div>
