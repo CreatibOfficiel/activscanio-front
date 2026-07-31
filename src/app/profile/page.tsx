@@ -9,6 +9,8 @@ import { UserStats, UserAchievement, StreakWarningStatus } from '../models/Achie
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
 import { UsersRepository, UserData } from '../repositories/UsersRepository';
 import { CompetitorsRepository } from '../repositories/CompetitorsRepository';
+import type { Competitor } from '../models/Competitor';
+import { PersonalBestsSection } from '../components/profile';
 import {
   ProfileHeader,
   ProfileTabs,
@@ -66,6 +68,7 @@ const ProfilePage: FC = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [competitorStats, setCompetitorStats] = useState<CompetitorStats | null>(null);
+  const [competitor, setCompetitor] = useState<Competitor | null>(null);
   const [recentAchievements, setRecentAchievements] = useState<UserAchievement[]>([]);
   const [streakWarnings, setStreakWarnings] = useState<StreakWarningStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,6 +126,10 @@ const ProfilePage: FC = () => {
           try {
             const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
             const competitor = await competitorsRepo.fetchCompetitorById(userDataResult.competitorId);
+            // Kept whole as well: PersonalBestsSection reads recentPositions
+            // and lifetimeAvgRank, neither of which survives the reduction
+            // to CompetitorStats below.
+            setCompetitor(competitor);
             setCompetitorStats({
               conservativeScore: competitor.conservativeScore ?? Math.round(competitor.rating - 2 * competitor.rd),
               raceCount: competitor.raceCount || 0,
@@ -330,7 +337,13 @@ const ProfilePage: FC = () => {
             />
           )}
           {activeTab === 'stats' && (
-            <StatsTab stats={stats} competitorStats={competitorStats} />
+            <>
+              <PersonalBestsSection
+                competitor={competitor}
+                stats={competitorStats}
+              />
+              <StatsTab stats={stats} competitorStats={competitorStats} />
+            </>
           )}
           {activeTab === 'achievements' && (
             <AchievementsTab
