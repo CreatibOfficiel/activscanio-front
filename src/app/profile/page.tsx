@@ -330,10 +330,7 @@ const ProfilePage: FC = () => {
             />
           )}
           {activeTab === 'stats' && (
-            <StatsTab
-              stats={stats}
-              getToken={getToken}
-            />
+            <StatsTab stats={stats} />
           )}
           {activeTab === 'achievements' && (
             <AchievementsTab
