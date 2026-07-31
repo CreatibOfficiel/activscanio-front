@@ -37,9 +37,31 @@ function toScore(set: DraftSet): SetScore {
  * numbers that then fail validation while the user is still typing.
  */
 export function useMatchEntry() {
-  const [playerAId, setPlayerAId] = useState<string | null>(null);
-  const [playerBId, setPlayerBId] = useState<string | null>(null);
+  /**
+   * Both sides in one piece of state.
+   *
+   * Two separate `useState` calls would be the obvious shape, and swapping
+   * them is what breaks: a swap would have to read the current values from
+   * render scope, so two swaps batched into one update — a double tap on the
+   * control — would both see the pre-swap pair and the second would repeat
+   * the first instead of undoing it. One state means the swap is a single
+   * functional update that always sees the value it is replacing.
+   */
+  const [sides, setSides] = useState<{ a: string | null; b: string | null }>({
+    a: null,
+    b: null,
+  });
+  const { a: playerAId, b: playerBId } = sides;
   const [sets, setSets] = useState<DraftSet[]>([EMPTY_SET, EMPTY_SET]);
+
+  const setPlayerAId = useCallback(
+    (id: string | null) => setSides((current) => ({ ...current, a: id })),
+    [],
+  );
+  const setPlayerBId = useCallback(
+    (id: string | null) => setSides((current) => ({ ...current, b: id })),
+    [],
+  );
 
   /** The first two sets, once both are actually filled in. */
   const firstTwo = useMemo(
@@ -99,15 +121,21 @@ export function useMatchEntry() {
     [],
   );
 
+  /**
+   * Mirror the whole match: both players and every score column.
+   *
+   * Both updates read from their updater argument rather than from render
+   * scope, so the function never closes over a value it is replacing and two
+   * swaps batched into one update cancel out. See the note on `sides` for
+   * why the two ids share one piece of state.
+   */
   const swapSides = useCallback(() => {
-    setPlayerAId(playerBId);
-    setPlayerBId(playerAId);
+    setSides((current) => ({ a: current.b, b: current.a }));
     setSets((current) => current.map((set) => ({ a: set.b, b: set.a })));
-  }, [playerAId, playerBId]);
+  }, []);
 
   const reset = useCallback(() => {
-    setPlayerAId(null);
-    setPlayerBId(null);
+    setSides({ a: null, b: null });
     setSets([EMPTY_SET, EMPTY_SET]);
   }, []);
 

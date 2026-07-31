@@ -319,6 +319,34 @@ describe('useMatchEntry', () => {
       expect(result.current.sets[0]).toEqual({ a: '5', b: '11' });
       expect(result.current.winner).toBe('B');
     });
+
+    it('is its own undo, even twice within one batch', () => {
+      // Two swaps must cancel out. If swapSides reads playerAId/playerBId
+      // from render scope instead of from the setState updater, both calls
+      // in a single batch see the pre-swap values: A is set to p2 and B to
+      // p1 twice over, so the second swap is a no-op and the pair ends up
+      // reversed rather than restored. The scores, which already use a
+      // functional update, would meanwhile have swapped back — leaving the
+      // players and their columns out of step, which is the state that
+      // silently records a match backwards.
+      const { result } = renderHook(() => useMatchEntry());
+      act(() => {
+        result.current.setPlayerA('p1');
+        result.current.setPlayerB('p2');
+      });
+      act(() => {
+        setScore(result.current, 0, '11', '5');
+      });
+
+      act(() => {
+        result.current.swapSides();
+        result.current.swapSides();
+      });
+
+      expect(result.current.playerAId).toBe('p1');
+      expect(result.current.playerBId).toBe('p2');
+      expect(result.current.sets[0]).toEqual({ a: '11', b: '5' });
+    });
   });
 
   describe('reset', () => {
