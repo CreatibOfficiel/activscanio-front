@@ -2,13 +2,27 @@ import { apiFetch } from '../utils/api-fetch';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+/**
+ * Which sport a user follows.
+ *
+ * Separate from `role`, which already means three things at once. Mirrors
+ * SportPreference in the API.
+ */
+export type SportPreference = 'mario-kart' | 'ping-pong' | 'both';
+
 export interface UserData {
   id: string;
   clerkId: string;
   email: string;
   firstName: string;
   lastName: string;
+  /** 'bettor' is a legacy value: betting is gone, but old rows still carry it. */
   role: 'pending' | 'bettor' | 'player';
+  /**
+   * Optional because a user record written before the column existed comes
+   * back without it. Callers must default it rather than assume a value.
+   */
+  sportPreference?: SportPreference;
   hasCompletedOnboarding: boolean;
   competitorId?: string;
   competitor?: {
@@ -77,6 +91,39 @@ export class UsersRepository {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `Failed to change character: ${response.statusText}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Change which sport the current user follows.
+   *
+   * Its own endpoint rather than the generic PATCH :id, whose body accepts
+   * role and competitorId too.
+   */
+  static async changeSportPreference(
+    sportPreference: SportPreference,
+    authToken: string,
+  ): Promise<UserData> {
+    const response = await apiFetch(
+      `${API_BASE_URL}/users/me/sport-preference`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ sportPreference }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message ||
+          `Failed to change sport preference: ${response.statusText}`,
+      );
     }
 
     return await response.json();
