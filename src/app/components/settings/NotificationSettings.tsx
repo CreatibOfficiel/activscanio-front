@@ -183,10 +183,13 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
         <h4 className="text-bold text-white mb-3 sm:mb-4">Types de notifications</h4>
 
         <div className="space-y-1">
+          {/* The stored key is still 'betting': the API reuses that category
+              for participation-streak warnings, and renaming it would orphan
+              every saved preference row. Only the label was wrong. */}
           <NotificationToggle
-            icon="🎲"
-            title="Paris"
-            description="Résultats de paris, rappels, streak en danger"
+            icon="🔥"
+            title="Séries"
+            description="Alertes quand une série est en danger"
             enabled={preferences?.categories.betting ?? true}
             onChange={(enabled) => handleCategoryToggle('betting', enabled)}
           />
