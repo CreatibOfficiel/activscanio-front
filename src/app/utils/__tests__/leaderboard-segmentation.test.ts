@@ -15,6 +15,9 @@ function competitor(overrides: Partial<Competitor> & { id: string }): Competitor
     rd: 50,
     vol: 0.06,
     raceCount: 10,
+    // Recent by default: an arrow now belongs to whoever actually raced, so
+    // a fixture without a date would produce no movement at all.
+    lastRaceDate: new Date().toISOString(),
     ...overrides,
   } as Competitor;
 }
@@ -179,7 +182,10 @@ describe('segmentLeaderboard — parity with the shipped homepage logic', () => 
     );
   });
 
-  it('produces the same trends', () => {
+  // Trends deliberately diverge from the reference implementation now: it
+  // predates the activity gate and hands an arrow to anyone whose rank moved,
+  // including people who did not race. The other parity assertions still hold.
+  it.skip('produces the same trends', () => {
     expect(Object.fromEntries(actual.trends)).toEqual(
       Object.fromEntries(legacy.trends),
     );
@@ -278,6 +284,22 @@ describe('segmentLeaderboard — behaviour', () => {
     const result = segmentLeaderboard(FIXTURE);
     // 'f' was 5th, is now 6th.
     expect(result.trends.get('f')).toEqual({ direction: 'down', value: 1 });
+  });
+
+  it('reports "stable" for a competitor who did not race', () => {
+    // The point of the gate: they lost a place because someone else won.
+    // An arrow would blame them for a race they were not in.
+    const result = segmentLeaderboard([
+      ...FIXTURE.filter((c) => c.id !== 'f'),
+      competitor({
+        id: 'f',
+        conservativeScore: 1600,
+        previousDayRank: 5,
+        lastRaceDate: '2026-01-01T12:00:00Z',
+      }),
+    ]);
+
+    expect(result.trends.get('f')).toEqual({ direction: 'stable' });
   });
 
   it('reports "stable" when previousDayRank is null', () => {

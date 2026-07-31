@@ -1,4 +1,5 @@
 import { Competitor } from '@/app/models/Competitor';
+import { rankMovement } from './rank-movement';
 import { computeRanksWithTies } from './rankings';
 import { groupByLeague, LeagueConfig } from './leagues';
 import { TrendDirection } from '@/app/components/leaderboard/TrendIndicator';
@@ -61,6 +62,18 @@ function sortByConservativeScore(competitors: Competitor[]): Competitor[] {
   });
 }
 
+/**
+ * Movement arrows, for the competitors who earned them.
+ *
+ * Only someone who raced recently gets an arrow. Roughly half the rank
+ * changes in a pool this size happen to people who did not play: someone
+ * else wins, overtakes them, and their row would sprout a red arrow for a
+ * day they were not there.
+ *
+ * The passive climber loses their arrow too, which is the honest cost —
+ * their rank number still moves on screen, and that is the fact; the arrow
+ * only claims a reason, which in their case was somebody else's race.
+ */
 function computeTrends(
   confirmed: Competitor[],
   ranks: Map<string, number>,
@@ -68,22 +81,18 @@ function computeTrends(
   const trends = new Map<string, LeaderboardTrend>();
 
   confirmed.forEach((competitor) => {
-    const currentRank = ranks.get(competitor.id) ?? 0;
-    const previousRank = competitor.previousDayRank;
+    const movement = rankMovement({
+      rank: ranks.get(competitor.id) ?? null,
+      previousRank: competitor.previousDayRank,
+      lastActiveAt: competitor.lastRaceDate,
+    });
 
-    if (previousRank == null) {
-      trends.set(competitor.id, { direction: 'stable' });
-      return;
-    }
-
-    const change = previousRank - currentRank;
-    if (change > 0) {
-      trends.set(competitor.id, { direction: 'up', value: change });
-    } else if (change < 0) {
-      trends.set(competitor.id, { direction: 'down', value: Math.abs(change) });
-    } else {
-      trends.set(competitor.id, { direction: 'stable' });
-    }
+    trends.set(
+      competitor.id,
+      movement
+        ? { direction: movement.direction, value: movement.places }
+        : { direction: 'stable' },
+    );
   });
 
   return trends;

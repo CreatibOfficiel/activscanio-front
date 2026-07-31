@@ -179,9 +179,19 @@ describe('PingpongRow', () => {
     );
   });
 
-  describe('weekly movement', () => {
-    it('shows a climb when the rank improved since Monday', () => {
-      render(<PingpongRow player={player({ rank: 2, previousWeekRank: 5 })} />);
+  describe('movement', () => {
+    // The arrow belongs to the player, not the table: it appears only for
+    // someone who played. Roughly half the rank changes in a 25-person pool
+    // happen to people who were not there.
+    const TODAY = new Date().toISOString();
+    const LONG_AGO = '2026-01-01T12:00:00Z';
+
+    it('shows a climb for someone who played and gained', () => {
+      render(
+        <PingpongRow
+          player={player({ rank: 2, previousDayRank: 5, lastMatchAt: TODAY })}
+        />,
+      );
 
       expect(screen.getByTestId('pingpong-trend')).toHaveAttribute(
         'data-direction',
@@ -189,8 +199,12 @@ describe('PingpongRow', () => {
       );
     });
 
-    it('shows a fall when the rank worsened', () => {
-      render(<PingpongRow player={player({ rank: 6, previousWeekRank: 3 })} />);
+    it('shows a fall for someone who played and lost ground', () => {
+      render(
+        <PingpongRow
+          player={player({ rank: 6, previousDayRank: 3, lastMatchAt: TODAY })}
+        />,
+      );
 
       expect(screen.getByTestId('pingpong-trend')).toHaveAttribute(
         'data-direction',
@@ -198,37 +212,49 @@ describe('PingpongRow', () => {
       );
     });
 
-    it('shows nothing when the rank held', () => {
-      // A stable arrow on most rows every week is visual noise.
-      render(<PingpongRow player={player({ rank: 4, previousWeekRank: 4 })} />);
-
-      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
-    });
-
-    it('shows nothing for a player who held no rank last week', () => {
-      // Null means "was unranked", not "was last". Treating it as a climb
-      // from the bottom would invent a movement that never happened.
-      render(<PingpongRow player={player({ rank: 3, previousWeekRank: null })} />);
-
-      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
-    });
-
-    it('shows nothing for a player with no rank now', () => {
+    it('shows nothing for someone overtaken while away', () => {
+      // The case the rule exists for: they lost a place because someone
+      // else won. Blaming them for it would be a lie.
       render(
         <PingpongRow
-          player={player({ rank: null, provisional: true, previousWeekRank: 2 })}
+          player={player({ rank: 6, previousDayRank: 5, lastMatchAt: LONG_AGO })}
         />,
       );
 
       expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
     });
 
-    it('reads the weekly rank, never the daily one', () => {
-      // previousDayRank exists on the row but is deliberately unused: a
-      // daily delta in a 25-player pool is sampling noise.
+    it('shows nothing for a passive climb either', () => {
+      // Symmetric, and the honest cost. Their rank number still changes on
+      // screen; the arrow would claim a reason that was not theirs.
       render(
         <PingpongRow
-          player={player({ rank: 2, previousWeekRank: 2, previousDayRank: 9 })}
+          player={player({ rank: 4, previousDayRank: 5, lastMatchAt: LONG_AGO })}
+        />,
+      );
+
+      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
+    });
+
+    it('shows nothing when the rank held', () => {
+      render(
+        <PingpongRow
+          player={player({ rank: 4, previousDayRank: 4, lastMatchAt: TODAY })}
+        />,
+      );
+
+      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
+    });
+
+    it('shows nothing for an unranked player', () => {
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            previousDayRank: 2,
+            lastMatchAt: TODAY,
+          })}
         />,
       );
 
