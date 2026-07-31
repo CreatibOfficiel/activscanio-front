@@ -71,15 +71,17 @@ const HelpPage: FC = () => {
           <div className="p-4 rounded-xl bg-neutral-800 border border-neutral-700">
             <div className="text-2xl mb-2">💡</div>
             <p className="text-sm text-neutral-300">
-              Pariez <span className="text-primary-400 font-semibold">le lundi</span> avant
-              minuit pour participer !
+              Il faut{' '}
+              <span className="text-primary-400 font-semibold">8 matchs</span>{' '}
+              de ping-pong pour décrocher un rang au classement
             </p>
           </div>
           <div className="p-4 rounded-xl bg-neutral-800 border border-neutral-700">
             <div className="text-2xl mb-2">🚀</div>
             <p className="text-sm text-neutral-300">
-              Votre <span className="text-warning-500 font-semibold">boost x2</span> se
-              réinitialise à chaque nouvelle saison
+              Les deux classements sont{' '}
+              <span className="text-warning-500 font-semibold">séparés</span> :
+              un bon pilote peut être dernier à la table
             </p>
           </div>
         </div>

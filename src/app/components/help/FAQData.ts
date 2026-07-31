@@ -23,201 +23,164 @@ export const faqSections: FAQSection[] = [
     icon: '🎮',
     title: 'Comment ça marche',
     summary:
-      'Mushroom Bet est une app de paris entre amis sur Mario Kart. Chaque semaine, pariez sur le podium des courses et gagnez des points !',
+      "Deux sports, deux classements séparés. Mario Kart en courses, ping-pong en matchs 1 contre 1. Vous choisissez ce que vous suivez.",
     points: [
-      'Pariez sur qui sera 1er, 2ème et 3ème de la semaine',
-      'Gagnez des points si vos prédictions sont correctes',
-      'Montez de niveau et débloquez des succès',
-      "Suivez votre progression et comparez-vous à vos amis",
+      'Enregistrez vos courses Mario Kart et vos matchs de ping-pong',
+      'Chaque sport a son propre classement et son propre ELO',
+      'Montez de niveau et débloquez des succès dans les deux',
+      'Les saisons durent 4 semaines et se terminent par un récap',
     ],
+    technicalDetails: `Les deux classements sont indépendants.
+
+Un très bon pilote Mario Kart peut être dernier au ping-pong, et
+l'inverse. Les ratings ne sont ni comparables ni additionnés : ils
+mesurent deux choses différentes sur deux échelles différentes.
+
+Vous pouvez suivre un seul sport ou les deux. Le choix se fait à
+l'inscription et se modifie à tout moment depuis votre compte.`,
   },
   {
-    id: 'seasons-weeks',
+    id: 'seasons',
     icon: '📅',
-    title: 'Saisons & Semaines',
+    title: 'Saisons',
     summary:
-      "Les paris fonctionnent par semaine, du lundi au dimanche. La première semaine de chaque saison est une période de calibration (pas de paris).",
+      'Une saison dure 4 semaines. À la fin, tout est archivé et un soft reset resserre les écarts pour que la saison suivante reste ouverte.',
     points: [
-      "Nouvelle semaine de paris chaque lundi à minuit",
-      "1ère semaine de la saison = Calibration (pas de paris, ELO se stabilise)",
-      "2ème semaine et + = Paris ouverts le lundi, de 00h00 à minuit",
-      "Mardi au dimanche = Surprise ! Les courses continuent mais les paris sont fermés",
-      "Les résultats et points sont calculés le dimanche à 20h",
-      "Archive en fin de saison avec soft reset ELO",
+      'Nouvelle saison toutes les 4 semaines',
+      'Classements des deux sports archivés en fin de saison',
+      'Soft reset ELO : les écarts se resserrent, l’ordre reste',
+      'Vos saisons passées restent consultables depuis votre profil',
     ],
-    technicalDetails: `Cycle hebdomadaire automatique :
-• Semaines ISO (lundi = jour 1)
-• CALIBRATION : 1ère semaine de la saison (pas de paris)
-• OPEN : lundi 00:00 → mardi 00:00 UTC (lundi minuit)
-• CLOSED : mardi 00:00 → dimanche 20:00 (6 jours d'incertitude)
-• FINALIZED : dimanche 20:00+ (résultats disponibles)
+    technicalDetails: `Archivage de fin de saison :
+• Classement Mario Kart et classement ping-pong archivés ensemble
+• Les joueurs non classés sont archivés aussi, sans rang
+• Rien n'est perdu : l'historique complet reste consultable
 
 Soft reset en début de saison :
 • Rating = 0.75 × ancien + 0.25 × 1500
-• RD augmente légèrement (+50, max 350)
-• L'écart entre joueurs se resserre mais l'ordre reste`,
+• RD augmente légèrement (+50, plafonné à 350)
+• Exemple : 1800 → 1725, 1200 → 1275
+• L'écart se resserre (600 → 450) mais l'ordre reste`,
   },
   {
-    id: 'betting-system',
-    icon: '🎯',
-    title: 'Système de paris',
+    id: 'pingpong-rules',
+    icon: '🏓',
+    title: 'Règles du ping-pong',
     summary:
-      "Pariez sur le podium (top 3) de la semaine. Plus la cote d'un joueur est élevée, plus vous gagnez de points s'il finit à la position prédite.",
+      'Un match se joue au meilleur des 3 sets. Un set se gagne à 11 points, avec 2 points d’écart au-delà de 10-10.',
     points: [
-      "Choisissez 3 joueurs pour le podium : 1er, 2ème, 3ème",
-      "Chaque joueur a une cote qui détermine vos gains potentiels",
-      "Utilisez votre boost x2 sur un pick pour doubler ses points (1 boost par saison !)",
-      "Podium parfait (3/3 correct) = tous vos points doublés !",
+      'Match au meilleur des 3 sets : le premier à 2 sets gagne',
+      'Un set se gagne à 11 points',
+      'À 10-10, il faut 2 points d’écart : 12-10, 13-11, etc.',
+      'Si chacun gagne un set, on joue le troisième',
+      'Les scores sont vérifiés à la saisie : un score impossible est refusé',
     ],
-    technicalDetails: `Calcul des points :
-Points par pick = cote × (boost ? 2 : 1) si correct, sinon 0
+    technicalDetails: `Scores de set acceptés :
+• 11-0 à 11-9 : victoire nette
+• Au-delà de 11, exactement 2 points d'écart : 12-10, 13-11, 14-12…
+• Un score comme 12-9 ou 11-11 est refusé
 
-Bonus podium parfait :
-Si 3/3 picks corrects → total × 2.0
+Structure du match :
+• Minimum 2 sets, maximum 3
+• Le match s'arrête dès qu'un joueur a 2 sets
+• Un troisième set saisi après un 2-0 est refusé
 
-Minimum garanti : 0.1 pts par pick correct
-
-Exemple :
-• 1er correct (cote 2.5) = 2.5 pts
-• 2ème correct (cote 3.0) avec boost = 6.0 pts
-• 3ème incorrect (cote 1.8) = 0 pts
-Total = 8.5 pts`,
+Ces règles suivent le règlement ITTF, sauf la longueur du match :
+en compétition officielle on joue au meilleur des 5 ou 7 sets, ce qui
+serait trop long pour une pause déjeuner.`,
   },
   {
-    id: 'boost',
-    icon: '🚀',
-    title: 'Le Boost x2',
-    summary:
-      "Le boost est un bonus spécial qui double les points d'un de vos picks. Utilisez-le stratégiquement car vous n'en avez qu'un seul par saison !",
-    points: [
-      "1 boost disponible par saison de 4 semaines",
-      "Applicable sur n'importe lequel de vos 3 picks",
-      "Double les points gagnés si le pick est correct",
-      "Le boost est réinitialisé au début de chaque saison",
-      "Conseil : Utilisez-le sur un pick à cote élevée pour maximiser les gains !",
-    ],
-    technicalDetails: `Règles du boost :
-• Limite : 1 boost par saison de 4 semaines
-• Réinitialisation : début de chaque saison
-• Multiplicateur : ×2 sur les points du pick boosté
-• Cumulable avec le bonus podium parfait
-
-Exemple de calcul optimal :
-Pick boosté (cote 5.0) correct = 10 pts
-+ Bonus parfait (×2) = 20 pts au total pour ce pick`,
-  },
-  {
-    id: 'live-betting',
-    icon: '📸',
-    title: 'Paris en direct',
-    summary:
-      "En plus des paris hebdomadaires, vous pouvez parier sur le gagnant de chaque course en direct ! Prenez une photo de l'écran de sélection des karts comme preuve, et l'IA détecte automatiquement les joueurs présents.",
-    points: [
-      "Choisissez UN gagnant parmi les compétiteurs (avec leurs cotes)",
-      "Prenez en photo l'écran de sélection des karts comme preuve anti-triche",
-      "L'IA détecte les joueurs sur la photo (30s pour vérifier/corriger)",
-      "Le pari est résolu automatiquement quand la course suivante est ajoutée",
-      "Vous devez avoir assez de points pour couvrir la cote (pas de pari à crédit !)",
-      "Gagné = +cote en points, Perdu = -cote en points (plancher à 0)",
-      "Le pari expire après 15 minutes sans course correspondante",
-    ],
-    technicalDetails: `Flow complet :
-1. Choix du gagnant + cote verrouillée
-2. Photo de l'écran kart → statut DETECTING
-3. IA analyse la photo (détection des personnages)
-4. Timer 30s pour confirmer/corriger les joueurs → statut ACTIVE
-5. Attente de la prochaine course avec ≥75% des mêmes joueurs
-6. Résolution : WON (+cote) ou LOST (-cote)
-
-Annulation automatique :
-• Timeout 15 min sans course correspondante
-• Joueurs détectés ne matchent pas (< 75% overlap)
-• Détection échouée (aucun personnage reconnu)
-
-Points :
-• Mêmes points que le classement saisonnier des parieurs
-• Gagné : totalPoints + oddAtBet
-• Perdu : totalPoints - oddAtBet (minimum 0)
-• Les cotes utilisées sont celles de la semaine en cours (oddFirst)`,
-  },
-  {
-    id: 'best-odds-guaranteed',
-    icon: '🎯',
-    title: 'Best Odds Guaranteed',
-    summary:
-      'Tu obtiens toujours la meilleure cote entre le moment de ton pari et la clôture !',
-    points: [
-      'Si la cote monte après ton pari, tu gagnes au meilleur prix',
-      'Si la cote baisse, tu gardes ta cote initiale',
-      'Tu ne peux jamais être perdant par rapport au timing',
-      'Applicable à tous les paris automatiquement',
-    ],
-    technicalDetails: `Exemple :
-• Tu paries sur Alice 1ère à 2.5
-• La cote monte à 3.0 avant la clôture
-• Si Alice gagne, tu es payé à 3.0 (meilleure cote)
-
-Autre exemple :
-• Tu paries sur Bob 2ème à 4.0
-• La cote baisse à 3.2
-• Si Bob est 2ème, tu es payé à 4.0 (ta cote initiale)
-
-Le BOG est calculé automatiquement lors de la finalisation des paris.
-La cote utilisée est stockée pour chaque pick et visible dans l'historique.`,
-  },
-  {
-    id: 'odds',
+    id: 'pingpong-elo',
     icon: '📊',
-    title: 'Calcul des cotes',
+    title: 'Classement ping-pong',
     summary:
-      "Les cotes sont disponibles dès le lundi matin et évoluent après chaque course. Elles utilisent un modèle statistique (Plackett-Luce) et une simulation Monte Carlo pour estimer la probabilité de chaque joueur à chaque position du podium.",
+      'Le niveau est calculé avec Glicko-2 après chaque match. Battre plus fort que soi rapporte plus, et le classement tient compte de l’incertitude.',
     points: [
-      "Cotes disponibles dès l'ouverture de la semaine (pas besoin d'attendre des courses)",
-      "Cote différente pour chaque position : 1er, 2ème, 3ème",
-      "Cotes dynamiques : recalculées automatiquement après chaque course",
-      "Cote verrouillée : votre pari garde la cote au moment où vous pariez (+ Best Odds Guaranteed)",
-      "Les favoris (ELO élevé, RD bas) ont les cotes les plus basses",
-      "Les outsiders (ELO bas ou incertitude élevée) ont les cotes les plus hautes",
-      "Joueurs en calibration (< 5 courses) ou inactifs (< 2 courses en 30j) non pariables",
+      'Rating = votre niveau estimé (démarre à 1500)',
+      'RD = incertitude sur ce niveau (démarre à 350, baisse en jouant)',
+      'Le classement utilise le score conservateur : Rating − 2×RD',
+      'Le score des sets ne change rien : seul le vainqueur compte',
+      'Sans match pendant une semaine, l’incertitude remonte doucement',
     ],
-    technicalDetails: `Algorithme Plackett-Luce + Monte Carlo :
+    technicalDetails: `Algorithme : Glicko-2, réglé différemment de Mario Kart.
 
-1. Force Plackett-Luce :
-   • mu = (rating - 1500) / 173.72  (échelle logistique)
-   • phi = RD / 173.72
-   • g(phi) = 1 / sqrt(1 + 3×phi² / pi²)  (atténuation Glicko-2)
-   • alpha = exp(mu × g(phi))
-   → Plus le rating est élevé et le RD bas, plus alpha est grand
+Valeurs initiales :
+• Rating : 1500
+• RD (incertitude) : 350
+• Volatilité : 0.06
 
-2. Probabilité de victoire (softmax) :
-   • P_win(i) = alpha_i / somme(alpha_j)
+Deux réglages diffèrent de Mario Kart :
+• TAU 0.35 au lieu de 0.5 — le ping-pong est plus prévisible qu'une
+  course, où une carapace bleue peut renverser un classement
+• RD minimum 50 au lieu de 30 — au bureau on progresse vite, le
+  système doit rester capable de suivre
 
-3. Simulation Monte Carlo (50 000 runs) :
-   • Pour chaque simulation, on tire un podium aléatoire
-   • Tirage proportionnel à alpha (sans remise)
-   • P(1er), P(2ème), P(3ème) = fréquence observée / 50 000
+Pourquoi le score des sets ne compte pas :
+Aucune fédération n'en tient compte, ni l'USATT, ni le classement
+allemand TTR, ni l'ITTF. Gagner 11-9 ou 11-2 prouve la même chose :
+que vous avez gagné.
 
-4. Conversion en cotes décimales :
-   • Cote = 1 / probabilité
-   • Bornée entre 1.1x et 50x
+Score conservateur = Rating − 2×RD
+→ le niveau minimum dont on est raisonnablement sûr
+→ un joueur peu testé ne double pas un joueur confirmé sur un coup
+  de chance
 
-Quand les cotes changent :
-• Lundi 00:05 : cotes initiales (basées sur l'historique ELO)
-• Après chaque course : recalcul automatique (ELO mis à jour)
-• Dimanche 20:00 : dernier recalcul avant finalisation`,
+Inactivité :
+Après 7 jours sans match, l'incertitude repart à la hausse chaque
+semaine. Un rating qu'on n'a pas vérifié depuis trois mois mérite
+moins de confiance.`,
+  },
+  {
+    id: 'pingpong-ranking-rules',
+    icon: '✅',
+    title: 'Apparaître au classement',
+    summary:
+      'Tout le monde est visible dès le premier match. Il faut 8 matchs pour recevoir un rang, le temps que le niveau se stabilise.',
+    points: [
+      'Vous apparaissez dès votre premier match, sans rang',
+      'Le rang arrive après 8 matchs, quand le niveau est fiable',
+      'Jouer toujours contre les mêmes ne vous exclut pas',
+      'Après 14 jours sans jouer, le rang est mis en pause',
+      'Le nombre d’adversaires différents est affiché comme information',
+    ],
+    technicalDetails: `Le seul filtre : la calibration.
+• 8 matchs pondérés pour recevoir un rang
+• Ou un RD retombé sous 150
+
+Pourquoi « pondérés » :
+Rejouer la même personne compte de moins en moins. Sur une semaine,
+les 3 premiers matchs contre quelqu'un comptent plein, les 3 suivants
+pour moitié, au-delà pour rien. On ne peut donc pas sortir de
+calibration en enchaînant les matchs contre un seul adversaire.
+
+Ce qui ne bloque PAS l'accès au classement :
+Le nombre d'adversaires différents. Une version précédente cachait les
+joueurs qui n'avaient pas affronté 4 personnes différentes en 3
+semaines. Cette règle a été retirée : dans un bureau, jouer trois
+parties le midi avec les deux mêmes collègues fait neuf matchs sans
+jamais apparaître. Elle punissait les plus assidus.
+
+Aucun système sérieux ne filtre là-dessus : la FIDE demande 5 parties
+contre des joueurs classés sans exiger qu'ils soient différents,
+l'USATT n'a aucun minimum, Lichess filtre sur 30 parties et
+l'incertitude. Le farming est déjà traité par la pondération.
+
+Inactivité :
+• 14 jours sans match : rang en pause, joueur toujours visible
+• 180 jours : le joueur passe en archive`,
   },
   {
     id: 'elo-ranking',
     icon: '📈',
-    title: 'Classement ELO (Glicko-2)',
+    title: 'Classement Mario Kart (Glicko-2)',
     summary:
-      "Votre niveau est calculé après chaque course avec l'algorithme Glicko-2. Un soft reset (75/25) est appliqué chaque saison pour garder la compétition intéressante.",
+      'Votre niveau est calculé après chaque course avec Glicko-2. Un soft reset (75/25) est appliqué chaque saison pour garder la compétition ouverte.',
     points: [
-      "Rating = votre niveau estimé (démarre à 1500)",
-      "RD = incertitude sur votre niveau (diminue avec plus de courses)",
-      "Gagner contre des joueurs forts rapporte plus de points",
-      "Soft reset saisonnier : 75% ancien rating + 25% de 1500",
-      "Le score conservateur (Rating - 2×RD) est utilisé pour le classement",
+      'Rating = votre niveau estimé (démarre à 1500)',
+      'RD = incertitude sur votre niveau (diminue avec plus de courses)',
+      'Gagner contre des joueurs forts rapporte plus de points',
+      'Soft reset saisonnier : 75% ancien rating + 25% de 1500',
+      'Le score conservateur (Rating − 2×RD) est utilisé pour le classement',
     ],
     technicalDetails: `Algorithme : Glicko-2 (évolution du système ELO)
 
@@ -237,112 +200,103 @@ Calcul après course :
 • 4 joueurs = 6 matchs (chacun contre chacun)
 • Mise à jour du rating selon résultats + force adversaires
 
-Score conservateur = Rating - 2×RD
+Score conservateur = Rating − 2×RD
 → Représente le niveau minimum avec 95% de confiance
 → Utilisé pour les classements officiels`,
-  },
-  {
-    id: 'eligibility',
-    icon: '✅',
-    title: 'Éligibilité des joueurs',
-    summary:
-      "Pour être pariable, un joueur doit être actif et avoir suffisamment d'historique. Cela évite les « snipers » qui arrivent ponctuellement.",
-    points: [
-      "Calibration : 5 courses minimum à vie pour être pariable",
-      "Activité : 2 courses minimum dans les 30 derniers jours",
-      "Badge « En calibration (X/5) » affiché pour nouveaux joueurs",
-      "Badge « Inactif » pour joueurs sans activité récente",
-      "Pas besoin d'avoir couru cette semaine : les cotes se basent sur tout l'historique",
-    ],
-    technicalDetails: `Règles d'éligibilité (toutes requises) :
-
-1. Calibration initiale
-   • Minimum 5 courses à vie (totalLifetimeRaces)
-   • Ce compteur ne reset JAMAIS
-   • But : éviter de parier sur des joueurs sans historique
-
-2. Présence récente (fenêtre glissante de 30 jours)
-   • Minimum 2 courses dans les 30 derniers jours
-   • Fenêtre calculée à partir d'aujourd'hui
-   • But : éviter les « snipers » qui débarquent après une longue absence
-
-Ordre de vérification : Calibration → Activité
-Premier échec = raison affichée dans l'interface`,
   },
   {
     id: 'form-streaks',
     icon: '🔥',
     title: 'Forme & Séries',
     summary:
-      "La forme est calculée pour les parieurs (vos paris) ET pour les pilotes (leurs courses). Enchaînez les victoires pour maintenir une série !",
+      'Enchaînez les victoires pour maintenir une série. La forme se mesure par rapport à votre propre moyenne, pas à celle des autres.',
     points: [
-      "Forme du parieur : calculée sur vos 5 derniers paris",
-      "Forme du pilote : comparaison à sa propre moyenne historique",
-      "Badge « En forme 🔥 » si un pilote joue mieux que d'habitude",
-      "Badge « En difficulté 📉 » si un pilote joue moins bien que d'habitude",
-      "Les longues séries débloquent des succès spéciaux",
+      'Série de victoires : victoires consécutives, dans chaque sport',
+      'Badge « En forme 🔥 » si vous jouez mieux que d’habitude',
+      'Badge « En difficulté 📉 » si vous jouez moins bien que d’habitude',
+      'Les longues séries débloquent des succès spéciaux',
     ],
-    technicalDetails: `Forme du parieur :
-• Fenêtre : 5 derniers paris
-• Victoire = au moins 1 pick correct sur 3
-• Parfait = 3/3 picks corrects
-• Streak : victoires consécutives
-
-Forme du pilote (logique relative) :
+    technicalDetails: `Forme du pilote (logique relative) :
 • Comparaison : moyenne des 5 dernières courses vs moyenne historique
-• Badge « En forme » si moyenne récente < moyenne historique - 0.5
-• Badge « En difficulté » si moyenne récente > moyenne historique + 0.5
-• Un joueur peut être en forme même avec des positions moyennes, tant qu'il fait mieux que d'habitude !
+• « En forme » si moyenne récente < moyenne historique − 0.5
+• « En difficulté » si moyenne récente > moyenne historique + 0.5
+• Un joueur peut être en forme avec des positions moyennes, tant
+  qu'il fait mieux que d'habitude
 
-Bonus XP associés aux séries :
-• 3+ victoires : bonus streak
-• 5+ victoires : bonus super streak
-• Parfait streak : bonus multiplicateur`,
+Séries de ping-pong :
+• Série en cours : victoires consécutives
+• Meilleure série : le record, jamais remis à zéro`,
+  },
+  {
+    id: 'achievements',
+    icon: '🏅',
+    title: 'Succès',
+    summary:
+      'Des succès pour chaque sport. Certains se déclenchent sur des compteurs, d’autres sur la forme d’un match précis.',
+    points: [
+      'Succès de volume : nombre de courses, de matchs, de victoires',
+      'Succès de série : enchaîner les victoires',
+      'Succès de match : gagner un set 11-0, remonter après un set perdu',
+      'Les plus rares peuvent rester des mois sans être décrochés',
+    ],
+    technicalDetails: `Deux familles de succès.
+
+Les succès de compteur se calculent sur vos totaux : nombre de matchs,
+victoires, meilleure série, niveau atteint.
+
+Les succès de match se lisent dans le déroulé d'une partie précise.
+On peut avoir trois cents victoires sans jamais avoir gagné un set
+11-0. Ils sont rejoués depuis l'historique des matchs, donc un succès
+ajouté plus tard se débloque rétroactivement sur vos anciens matchs.
+
+Quelques-uns au ping-pong :
+• La Bulle : gagner un set 11-0
+• Crème Fraîche : en encaisser un 0-11
+• Retour des Enfers : perdre le premier set et gagner le match
+• Le Tombeur : battre quelqu'un classé 150 points au-dessus
+• Le Casse : premier set perdu, puis deux sets arrachés au-delà de
+  10-10 — le plus rare de tous`,
   },
   {
     id: 'podium-rewards',
     icon: '🏆',
     title: 'Podium & Classement',
     summary:
-      "Le classement est basé sur le score conservateur (ELO - 2×RD). Il faut avoir participé à au moins 1 course dans la période pour être classé.",
+      'Le classement est basé sur le score conservateur (ELO − 2×RD), dans les deux sports.',
     points: [
-      "Classement par semaine, saison ou depuis le début",
-      "Score conservateur = niveau minimum probable",
-      "Participation requise : au moins 1 course dans la période",
-      "Plus vous jouez, plus votre RD diminue et votre classement devient stable",
+      'Classement par semaine, saison ou depuis le début',
+      'Score conservateur = niveau minimum probable',
+      'Plus vous jouez, plus votre RD diminue et votre classement se stabilise',
+      'Les deux sports ont leur podium, jamais mélangés',
     ],
     technicalDetails: `Critères de classement (dans l'ordre) :
-1. Score conservateur (rating - 2×RD)
+1. Score conservateur (rating − 2×RD)
 2. Rating brut (en cas d'égalité)
 3. RD (plus bas = mieux, en cas d'égalité)
-4. Nombre de courses (plus = mieux)
+4. Nombre de parties (plus = mieux)
 
 Filtrage par période :
-• Semaine : courses des 7 derniers jours
-• Saison : courses de la saison en cours
-• Tout : toutes les courses
-
-Seuls les joueurs avec raceCount > 0
-apparaissent dans le classement.`,
+• Semaine : parties des 7 derniers jours
+• Saison : parties de la saison en cours
+• Tout : toutes les parties`,
   },
   {
     id: 'xp-levels',
     icon: '✨',
     title: 'XP & Niveaux',
     summary:
-      "Gagnez de l'XP en plaçant des paris, en obtenant des résultats corrects et en maintenant des séries. Montez de niveau pour débloquer des récompenses !",
+      'Gagnez de l’XP en jouant et en débloquant des succès. Montez de niveau pour débloquer des titres et des badges.',
     points: [
-      "XP gagné : paris placés, picks corrects, podiums parfaits",
-      "Bonus XP pour les séries de victoires",
-      "Chaque niveau nécessite plus d'XP que le précédent",
-      "Les niveaux débloquent des titres et badges",
+      'XP gagné à chaque succès débloqué',
+      'Plus le succès est rare, plus il rapporte',
+      'Chaque niveau nécessite plus d’XP que le précédent',
+      'Les niveaux débloquent des titres et badges',
     ],
-    technicalDetails: `Sources d'XP :
-• Pari placé : +10 XP
-• Pick correct : +25 XP
-• Podium parfait : +100 XP
-• Série de 3+ : bonus +50 XP
-• Série de 5+ : bonus +100 XP
+    technicalDetails: `XP par rareté de succès :
+• Commun : le plus courant, gain modeste
+• Rare : demande de la régularité
+• Épique : demande un vrai niveau
+• Légendaire : peut rester des mois sans être décroché
 
 Formule de niveau :
 XP requis(n) = 100 × n × (n + 1) / 2
