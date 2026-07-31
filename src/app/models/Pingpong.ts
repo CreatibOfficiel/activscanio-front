@@ -89,13 +89,23 @@ export interface PingpongHeadToHead {
   matches: PingpongMatch[];
 }
 
+/**
+ * One day's rating, for the history chart.
+ *
+ * Field names mirror the API entity exactly. An earlier version of this
+ * interface declared `recordedAt` and `conservativeScore`, neither of which
+ * the API sends — a chart reading them would have plotted `undefined`
+ * without any error, because the response is cast rather than parsed.
+ */
 export interface PingpongEloSnapshot {
   id: string;
   playerId: string;
+  /** ISO date, day precision. One snapshot per player per day. */
+  date: string;
   rating: number;
   rd: number;
-  conservativeScore: number;
-  recordedAt: string;
+  vol: number;
+  matchCount: number;
 }
 
 /* -------- Request payloads -------- */
