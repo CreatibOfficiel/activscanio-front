@@ -12,7 +12,9 @@ interface Tab {
 
 const ALL_TABS: Tab[] = [
   { id: 'overview', label: 'Aperçu', icon: '📋' },
-  { id: 'stats', label: 'Paris', icon: '🎲' },
+  // Labelled "Paris" with a 🎲 until the betting system was removed. The tab
+  // renders StatsTab, which shows profile statistics and no bets at all.
+  { id: 'stats', label: 'Statistiques', icon: '📊' },
   { id: 'races', label: 'Courses', icon: '🏎️' },
   { id: 'achievements', label: 'Succès', icon: '🏆' },
 ];
