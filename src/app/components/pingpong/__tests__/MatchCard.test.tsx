@@ -1,15 +1,18 @@
 import { render, screen, within } from '@testing-library/react';
 import MatchCard from '../MatchCard';
-import { PingpongMatch, PingpongPlayer } from '../../../models/Pingpong';
+import { PingpongMatch, PingpongMatchPlayer } from '../../../models/Pingpong';
 
 /**
  * One recorded ping-pong match.
  *
- * The card exists because `GET /pingpong/matches` returns identifiers and
- * nothing else — no names, no avatars, the controller does a bare find()
- * with no relations. Every name on screen is joined client-side against the
- * leaderboard, so the tests below that assert a name is present are really
- * asserting that the join works.
+ * The card reads both players off the match itself: `GET /pingpong/matches`
+ * eager-loads the relations and embeds `playerA` / `playerB`. There is no
+ * leaderboard lookup and no client-side join, so the tests below that assert
+ * a name is present are asserting the card reads the embedded player.
+ *
+ * Either side can still be null — a player row the API could not load,
+ * archived or deleted. That must render a placeholder rather than
+ * "undefined", and must never take the card down with it.
  *
  * The card is always read from A's side. `sets` come from the API in A's
  * point of view, and the alternative — mirroring them per viewer — makes the
@@ -18,34 +21,15 @@ import { PingpongMatch, PingpongPlayer } from '../../../models/Pingpong';
  * labelled, so no reader has to work out whose 11 they are looking at.
  */
 describe('MatchCard', () => {
-  function player(overrides: Partial<PingpongPlayer> = {}): PingpongPlayer {
+  function player(
+    overrides: Partial<PingpongMatchPlayer> = {},
+  ): PingpongMatchPlayer {
     return {
       id: 'p1',
       competitorId: 'c1',
       firstName: 'Marc',
       lastName: 'Dupont',
       profilePictureUrl: '',
-      rating: 1620,
-      rd: 55,
-      vol: 0.06,
-      conservativeScore: 1510,
-      matchCount: 24,
-      weightedMatchCount: 20,
-      wins: 15,
-      losses: 9,
-      setsWon: 38,
-      setsLost: 27,
-      currentStreak: 3,
-      bestStreak: 6,
-      lastMatchAt: '2026-03-14T12:00:00Z',
-      previousDayRank: null,
-      provisional: false,
-      inactive: false,
-      archived: false,
-      isRankingEligible: true,
-      distinctOpponents21d: 5,
-      diversityScore21d: 0.9,
-      rank: 2,
       ...overrides,
     };
   }
@@ -55,6 +39,8 @@ describe('MatchCard', () => {
       id: 'm1',
       playerAId: 'p1',
       playerBId: 'p2',
+      playerA: player({ id: 'p1', firstName: 'Marc', lastName: 'Dupont' }),
+      playerB: player({ id: 'p2', firstName: 'Léa', lastName: 'Bernard' }),
       winnerId: 'p1',
       sets: [
         { a: 11, b: 7 },
@@ -72,59 +58,56 @@ describe('MatchCard', () => {
     };
   }
 
-  /** The leaderboard slice the card joins against. */
-  const PLAYERS = new Map<string, PingpongPlayer>([
-    ['p1', player({ id: 'p1', firstName: 'Marc', lastName: 'Dupont' })],
-    ['p2', player({ id: 'p2', firstName: 'Léa', lastName: 'Bernard' })],
-  ]);
-
-  describe('the id → player join', () => {
+  describe('the embedded players', () => {
     it('names both players', () => {
-      // The API sends playerAId and playerBId and nothing else. A name on
-      // screen can only have come from the leaderboard lookup.
-      render(<MatchCard match={match()} players={PLAYERS} />);
+      // Straight off the match. No second request, no map to key wrongly.
+      render(<MatchCard match={match()} />);
 
       expect(screen.getByTestId('match-player-a')).toHaveTextContent(/Marc/);
       expect(screen.getByTestId('match-player-b')).toHaveTextContent(/Léa/);
     });
 
-    it('joins on PingpongPlayer.id, not competitorId', () => {
-      // The two ids differ and the match carries the player id. Keying the
-      // map by competitorId would miss every row.
-      const byPlayerId = new Map<string, PingpongPlayer>([
-        ['pp-a', player({ id: 'pp-a', competitorId: 'comp-a', firstName: 'Marc' })],
-        ['pp-b', player({ id: 'pp-b', competitorId: 'comp-b', firstName: 'Léa' })],
-      ]);
-
+    it('reads the name from the embedded player and not from an id', () => {
+      // The ids and the embedded players are independent here, so a card
+      // that rendered an id would pass the test above and fail this one.
       render(
         <MatchCard
-          match={match({ playerAId: 'pp-a', playerBId: 'pp-b', winnerId: 'pp-a' })}
-          players={byPlayerId}
+          match={match({
+            playerAId: 'pp-a',
+            playerBId: 'pp-b',
+            winnerId: 'pp-a',
+            playerA: player({
+              id: 'pp-a',
+              competitorId: 'comp-a',
+              firstName: 'Marc',
+            }),
+            playerB: player({
+              id: 'pp-b',
+              competitorId: 'comp-b',
+              firstName: 'Léa',
+            }),
+          })}
         />,
       );
 
       expect(screen.getByTestId('match-player-a')).toHaveTextContent(/Marc/);
       expect(screen.getByTestId('match-player-b')).toHaveTextContent(/Léa/);
+      expect(screen.getByTestId('match-card')).not.toHaveTextContent('pp-a');
     });
 
-    it('renders a readable placeholder for a player missing from the leaderboard', () => {
-      // An archived or deleted player is absent from the board while their
-      // matches remain. The card must degrade, not crash.
-      render(
-        <MatchCard
-          match={match({ playerBId: 'ghost' })}
-          players={PLAYERS}
-        />,
-      );
+    it('renders a readable placeholder for a player the API could not load', () => {
+      // An archived or deleted player comes back null while their matches
+      // remain. The card must degrade, not crash.
+      render(<MatchCard match={match({ playerB: null })} />);
 
       const b = screen.getByTestId('match-player-b');
       expect(b).toHaveTextContent(/joueur inconnu/i);
       expect(b).not.toHaveTextContent(/undefined/i);
-      expect(b).not.toHaveTextContent('ghost');
+      expect(b).not.toHaveTextContent(/null/i);
     });
 
     it('renders both sides as placeholders when neither player is known', () => {
-      render(<MatchCard match={match()} players={new Map()} />);
+      render(<MatchCard match={match({ playerA: null, playerB: null })} />);
 
       expect(screen.getByTestId('match-player-a')).toHaveTextContent(
         /joueur inconnu/i,
@@ -133,11 +116,38 @@ describe('MatchCard', () => {
         /joueur inconnu/i,
       );
     });
+
+    it('falls back to the placeholder when the competitor is missing', () => {
+      // The API sends empty names for a player row whose competitor could
+      // not be loaded. A blank space where a name belongs looks like a bug.
+      render(
+        <MatchCard
+          match={match({
+            playerB: player({ id: 'p2', firstName: '', lastName: '' }),
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('match-player-b')).toHaveTextContent(
+        /joueur inconnu/i,
+      );
+    });
+
+    it('still marks the winner when that player is missing', () => {
+      // `winnerId` is compared against the flat ids, which survive a null
+      // relation. A nameless winner is still the winner.
+      render(<MatchCard match={match({ playerA: null })} />);
+
+      expect(screen.getByTestId('match-player-a')).toHaveAttribute(
+        'data-winner',
+        'true',
+      );
+    });
   });
 
   describe('sets', () => {
     it('shows every set in the order played', () => {
-      render(<MatchCard match={match()} players={PLAYERS} />);
+      render(<MatchCard match={match()} />);
 
       const sets = screen.getAllByTestId('match-set');
       expect(sets).toHaveLength(3);
@@ -155,7 +165,6 @@ describe('MatchCard', () => {
               { a: 11, b: 9 },
             ],
           })}
-          players={PLAYERS}
         />,
       );
 
@@ -175,7 +184,6 @@ describe('MatchCard', () => {
             ],
             winnerId: 'p2',
           })}
-          players={PLAYERS}
         />,
       );
 
@@ -188,7 +196,7 @@ describe('MatchCard', () => {
       // Without this, "11-7" is ambiguous to anyone who did not record it.
       // The names are in the DOM order the columns are in, and the group
       // carries a label naming both sides for a screen reader.
-      render(<MatchCard match={match()} players={PLAYERS} />);
+      render(<MatchCard match={match()} />);
 
       const label = screen.getByTestId('match-sets').getAttribute('aria-label');
       expect(label).toMatch(/Marc/);
@@ -198,7 +206,7 @@ describe('MatchCard', () => {
 
     it('shows the set tally', () => {
       // 2-1 in sets is the result; the individual scores are the detail.
-      render(<MatchCard match={match()} players={PLAYERS} />);
+      render(<MatchCard match={match()} />);
 
       expect(screen.getByTestId('match-set-tally')).toHaveTextContent('2');
       expect(screen.getByTestId('match-set-tally')).toHaveTextContent('1');
@@ -208,7 +216,7 @@ describe('MatchCard', () => {
   describe('the winner', () => {
     it('marks player A when A won', () => {
       render(
-        <MatchCard match={match({ winnerId: 'p1' })} players={PLAYERS} />,
+        <MatchCard match={match({ winnerId: 'p1' })} />,
       );
 
       expect(screen.getByTestId('match-player-a')).toHaveAttribute(
@@ -235,7 +243,6 @@ describe('MatchCard', () => {
             ratingBBefore: 1532,
             ratingBAfter: 1544,
           })}
-          players={PLAYERS}
         />,
       );
 
@@ -251,7 +258,7 @@ describe('MatchCard', () => {
 
     it('says who won in words, not only in colour', () => {
       // Colour alone fails WCAG 1.4.1 and fails anyone reading a screenshot.
-      render(<MatchCard match={match()} players={PLAYERS} />);
+      render(<MatchCard match={match()} />);
 
       expect(
         within(screen.getByTestId('match-player-a')).getByTestId(
@@ -266,7 +273,6 @@ describe('MatchCard', () => {
       render(
         <MatchCard
           match={match({ ratingABefore: 1608, ratingAAfter: 1620 })}
-          players={PLAYERS}
         />,
       );
 
@@ -278,7 +284,6 @@ describe('MatchCard', () => {
       render(
         <MatchCard
           match={match({ ratingBBefore: 1540, ratingBAfter: 1532 })}
-          players={PLAYERS}
         />,
       );
 
@@ -291,7 +296,6 @@ describe('MatchCard', () => {
       render(
         <MatchCard
           match={match({ ratingABefore: 1608.2, ratingAAfter: 1619.8 })}
-          players={PLAYERS}
         />,
       );
 
@@ -304,7 +308,6 @@ describe('MatchCard', () => {
       render(
         <MatchCard
           match={match({ ratingBBefore: 1500, ratingBAfter: 1503 })}
-          players={PLAYERS}
         />,
       );
 
@@ -324,7 +327,7 @@ describe('MatchCard', () => {
     it('says the rating was not counted instead of showing a bare +0', () => {
       // ratingFrozen means the gap was wide enough that the ratings were
       // pinned. "+0" with no explanation reads as a bug in the maths.
-      render(<MatchCard match={frozen} players={PLAYERS} />);
+      render(<MatchCard match={frozen} />);
 
       expect(screen.getByTestId('match-frozen')).toBeInTheDocument();
       expect(screen.getByTestId('match-frozen')).toHaveTextContent(
@@ -333,7 +336,7 @@ describe('MatchCard', () => {
     });
 
     it('hides the zero deltas it would otherwise show', () => {
-      render(<MatchCard match={frozen} players={PLAYERS} />);
+      render(<MatchCard match={frozen} />);
 
       expect(screen.queryByTestId('match-delta-a')).not.toBeInTheDocument();
       expect(screen.queryByTestId('match-delta-b')).not.toBeInTheDocument();
@@ -341,7 +344,7 @@ describe('MatchCard', () => {
 
     it('still shows the scores and the winner', () => {
       // The match was played and won; only the rating consequence is absent.
-      render(<MatchCard match={frozen} players={PLAYERS} />);
+      render(<MatchCard match={frozen} />);
 
       expect(screen.getAllByTestId('match-set')).toHaveLength(3);
       expect(screen.getByTestId('match-player-a')).toHaveAttribute(
@@ -351,7 +354,7 @@ describe('MatchCard', () => {
     });
 
     it('shows no frozen notice on a normal match', () => {
-      render(<MatchCard match={match()} players={PLAYERS} />);
+      render(<MatchCard match={match()} />);
 
       expect(screen.queryByTestId('match-frozen')).not.toBeInTheDocument();
     });
@@ -364,7 +367,6 @@ describe('MatchCard', () => {
       render(
         <MatchCard
           match={match({ appliedWeight: 0.4 })}
-          players={PLAYERS}
         />,
       );
 
@@ -373,7 +375,7 @@ describe('MatchCard', () => {
 
     it('says nothing about weight on a full-weight match', () => {
       render(
-        <MatchCard match={match({ appliedWeight: 1 })} players={PLAYERS} />,
+        <MatchCard match={match({ appliedWeight: 1 })} />,
       );
 
       expect(screen.queryByTestId('match-weight')).not.toBeInTheDocument();
@@ -384,7 +386,6 @@ describe('MatchCard', () => {
       render(
         <MatchCard
           match={match({ ratingFrozen: true, appliedWeight: 0.4 })}
-          players={PLAYERS}
         />,
       );
 
@@ -393,7 +394,7 @@ describe('MatchCard', () => {
   });
 
   it('dates the match', () => {
-    render(<MatchCard match={match()} players={PLAYERS} />);
+    render(<MatchCard match={match()} />);
 
     expect(screen.getByTestId('match-date')).not.toBeEmptyDOMElement();
   });

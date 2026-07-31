@@ -144,6 +144,21 @@ export interface PingpongEloSnapshot {
   matchCount: number;
 }
 
+/**
+ * Someone who can be picked for a match, whether or not they have played.
+ *
+ * `playerId` is null until their first match, which is when enrolment
+ * happens. The entry form sends `competitorId`; the API enrols both sides
+ * before recording.
+ */
+export interface SelectablePlayer {
+  competitorId: string;
+  firstName: string;
+  lastName: string;
+  profilePictureUrl: string;
+  playerId: string | null;
+}
+
 /* -------- Request payloads -------- */
 
 export interface RecordMatchPayload {

@@ -82,6 +82,10 @@ describe('PingpongTab', () => {
       id,
       playerAId: aId,
       playerBId: bId,
+      // Embedded by the API. This view derives its records from the ids and
+      // the leaderboard, so the names here are only along for the ride.
+      playerA: { id: aId, competitorId: `c-${aId}`, firstName: aId, lastName: '', profilePictureUrl: '' },
+      playerB: { id: bId, competitorId: `c-${bId}`, firstName: bId, lastName: '', profilePictureUrl: '' },
       winnerId,
       sets: [
         { a: 11, b: 9 },

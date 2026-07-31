@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { MdSportsTennis } from 'react-icons/md';
-import { PingpongMatch, PingpongPlayer } from '../../models/Pingpong';
+import { PingpongMatch } from '../../models/Pingpong';
 import { pingpongRepository } from '../../repositories/PingpongRepository';
 import { getDateLabel } from '../../utils/formatters';
 import MatchCard from '../../components/pingpong/MatchCard';
@@ -16,52 +16,37 @@ const MATCH_LIMIT = 50;
 /**
  * The ping-pong match history.
  *
- * Two requests, one join. `GET /pingpong/matches` returns `playerAId` and
- * `playerBId` and nothing else — the controller does a bare find() with no
- * relations, so no name and no avatar ever comes back with a match. The
- * names are taken from the leaderboard and joined here on
- * `PingpongPlayer.id`.
+ * One request. `GET /pingpong/matches` eager-loads the player relations and
+ * embeds both sides on every match, so the page reads names straight off the
+ * rows it already has. It used to fetch the leaderboard as well and join on
+ * `PingpongPlayer.id` here — two responses for one screen, and the same join
+ * rewritten in every consumer of the endpoint.
  *
- * The alternative, one request per player per match, is N+1 on a list that
- * routinely runs to fifty rows; the leaderboard is a single response that
- * already contains every player who has ever recorded a match. Fixing the
- * controller to eager-load the relations would be better still, and would
- * let this page drop the second fetch, but the join has to exist meanwhile.
- *
- * A player absent from the leaderboard — archived after six months idle, or
- * deleted — still has matches. Those rows stay, with a placeholder name:
- * dropping them would silently shorten everyone's history.
+ * A player the API could not resolve — archived after six months idle, or
+ * deleted — comes back null while their matches remain. Those rows stay,
+ * with a placeholder name: dropping them would silently shorten everyone's
+ * history.
  *
  * The layout follows /races: grouped under date separators, newest first,
  * skeletons rather than a spinner while loading.
  */
 export default function PingpongMatchesPage() {
   const [matches, setMatches] = useState<PingpongMatch[]>([]);
-  const [players, setPlayers] = useState<PingpongPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // Both at once: they are independent, and awaiting them in sequence
-      // would double the time to first paint for no gain.
-      const [loadedMatches, loadedPlayers] = await Promise.all([
-        pingpongRepository.fetchRecentMatches(MATCH_LIMIT),
-        pingpongRepository.fetchLeaderboard(),
-      ]);
+      const loadedMatches =
+        await pingpongRepository.fetchRecentMatches(MATCH_LIMIT);
       setMatches(loadedMatches);
-      setPlayers(loadedPlayers);
       // Clear a previous failure, or a successful retry would render fresh
       // matches underneath a stale error.
       setError(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught : new Error(String(caught)));
-      // Either request failing takes the whole screen down. A match list
-      // with no leaderboard is a page of "Joueur inconnu", which looks like
-      // corrupted data rather than a failed request.
       setMatches([]);
-      setPlayers([]);
     } finally {
       // Always, so a failure stops the skeletons. A permanent loading state
       // gives nobody anything to act on.
@@ -72,14 +57,6 @@ export default function PingpongMatchesPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  // Keyed on the player id, which is what a match carries — NOT competitorId.
-  // Both are strings, so the wrong key type-checks and renders placeholders
-  // for everybody.
-  const playersById = useMemo(
-    () => new Map(players.map((player) => [player.id, player])),
-    [players],
-  );
 
   // The API sorts newest first; grouping preserves the order it sent rather
   // than re-sorting, so the two cannot disagree.
@@ -167,11 +144,7 @@ export default function PingpongMatchesPage() {
                 />
                 <div className="space-y-3 px-4">
                   {group.matches.map((match) => (
-                    <MatchCard
-                      key={match.id}
-                      match={match}
-                      players={playersById}
-                    />
+                    <MatchCard key={match.id} match={match} />
                   ))}
                 </div>
               </section>

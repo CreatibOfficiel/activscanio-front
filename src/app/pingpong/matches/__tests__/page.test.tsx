@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import MatchesPage from '../page';
 import { pingpongRepository } from '../../../repositories/PingpongRepository';
-import { PingpongMatch, PingpongPlayer } from '../../../models/Pingpong';
+import { PingpongMatch, PingpongMatchPlayer } from '../../../models/Pingpong';
 
 jest.mock('../../../repositories/PingpongRepository', () => ({
   __esModule: true,
@@ -18,45 +18,25 @@ const fetchLeaderboard = pingpongRepository.fetchLeaderboard as jest.Mock;
 /**
  * The ping-pong match history.
  *
- * The screen makes two requests, not one. `GET /pingpong/matches` returns
- * playerAId and playerBId and no names at all — the controller does a bare
- * find() with no relations — so the names come from the leaderboard and the
- * page joins them client-side on PingpongPlayer.id.
+ * One request. `GET /pingpong/matches` eager-loads the player relations and
+ * embeds both sides on each match, so the page no longer fetches the
+ * leaderboard as well and no longer joins on the id itself. The leaderboard
+ * mock stays declared purely so a test can prove it is never called.
  *
- * That join is the thing most likely to break, and it breaks quietly: a
- * missing player yields `undefined` in a template rather than an exception.
- * So the tests below assert on names rather than on counts, and one of them
- * deliberately references a player the leaderboard never returned.
+ * A match can still arrive with a null player — archived, deleted. That
+ * breaks quietly if unhandled, yielding `undefined` in a template rather
+ * than an exception, so one test below deliberately sends one.
  */
 describe('Ping-pong match history', () => {
-  function player(overrides: Partial<PingpongPlayer> = {}): PingpongPlayer {
+  function player(
+    overrides: Partial<PingpongMatchPlayer> = {},
+  ): PingpongMatchPlayer {
     return {
       id: 'p1',
       competitorId: 'c1',
       firstName: 'Marc',
       lastName: 'Dupont',
       profilePictureUrl: '',
-      rating: 1620,
-      rd: 55,
-      vol: 0.06,
-      conservativeScore: 1510,
-      matchCount: 24,
-      weightedMatchCount: 20,
-      wins: 15,
-      losses: 9,
-      setsWon: 38,
-      setsLost: 27,
-      currentStreak: 3,
-      bestStreak: 6,
-      lastMatchAt: '2026-03-14T12:00:00Z',
-      previousDayRank: null,
-      provisional: false,
-      inactive: false,
-      archived: false,
-      isRankingEligible: true,
-      distinctOpponents21d: 5,
-      diversityScore21d: 0.9,
-      rank: 2,
       ...overrides,
     };
   }
@@ -66,6 +46,8 @@ describe('Ping-pong match history', () => {
       id: 'm1',
       playerAId: 'p1',
       playerBId: 'p2',
+      playerA: player({ id: 'p1', firstName: 'Marc', lastName: 'Dupont' }),
+      playerB: player({ id: 'p2', firstName: 'Léa', lastName: 'Bernard' }),
       winnerId: 'p1',
       sets: [
         { a: 11, b: 7 },
@@ -82,15 +64,8 @@ describe('Ping-pong match history', () => {
     };
   }
 
-  const LEADERBOARD = [
-    player({ id: 'p1', competitorId: 'c1', firstName: 'Marc', lastName: 'Dupont' }),
-    player({ id: 'p2', competitorId: 'c2', firstName: 'Léa', lastName: 'Bernard' }),
-    player({ id: 'p3', competitorId: 'c3', firstName: 'Yannis', lastName: 'Roux' }),
-  ];
-
-  function resolveWith(matches: PingpongMatch[], players = LEADERBOARD) {
+  function resolveWith(matches: PingpongMatch[]) {
     fetchRecentMatches.mockResolvedValue(matches);
-    fetchLeaderboard.mockResolvedValue(players);
   }
 
   beforeEach(() => {
@@ -98,9 +73,8 @@ describe('Ping-pong match history', () => {
   });
 
   describe('loading', () => {
-    it('shows a skeleton while both requests are in flight', () => {
+    it('shows a skeleton while the request is in flight', () => {
       fetchRecentMatches.mockReturnValue(new Promise(() => {}));
-      fetchLeaderboard.mockReturnValue(new Promise(() => {}));
 
       render(<MatchesPage />);
 
@@ -111,7 +85,6 @@ describe('Ping-pong match history', () => {
       // An empty list and a list not yet loaded look identical in state;
       // conflating them flashes "no matches" on every visit.
       fetchRecentMatches.mockReturnValue(new Promise(() => {}));
-      fetchLeaderboard.mockReturnValue(new Promise(() => {}));
 
       render(<MatchesPage />);
 
@@ -133,7 +106,14 @@ describe('Ping-pong match history', () => {
     it('renders one card per match', async () => {
       resolveWith([
         match({ id: 'm1' }),
-        match({ id: 'm2', playerAId: 'p3', playerBId: 'p1', winnerId: 'p3' }),
+        match({
+          id: 'm2',
+          playerAId: 'p3',
+          playerBId: 'p1',
+          winnerId: 'p3',
+          playerA: player({ id: 'p3', firstName: 'Yannis', lastName: 'Roux' }),
+          playerB: player({ id: 'p1', firstName: 'Marc', lastName: 'Dupont' }),
+        }),
       ]);
 
       render(<MatchesPage />);
@@ -142,8 +122,8 @@ describe('Ping-pong match history', () => {
     });
 
     it('names both players of a match', async () => {
-      // Only reachable through the leaderboard join: the matches endpoint
-      // sends ids alone.
+      // Read off the match itself. The endpoint embeds both sides, so no
+      // second response is needed to put a name on screen.
       resolveWith([match()]);
 
       render(<MatchesPage />);
@@ -157,10 +137,15 @@ describe('Ping-pong match history', () => {
       );
     });
 
-    it('joins on the player id and not the competitor id', async () => {
-      // Matches carry PingpongPlayer.id. Keying the map on competitorId
-      // compiles fine — both are strings — and shows nobody's name.
-      resolveWith([match({ playerAId: 'p1', playerBId: 'p3' })]);
+    it('names a player the leaderboard would never have supplied', async () => {
+      // Proof the name comes from the match and not from a joined board:
+      // this player appears in no other response the page could read.
+      resolveWith([
+        match({
+          playerBId: 'p3',
+          playerB: player({ id: 'p3', firstName: 'Yannis', lastName: 'Roux' }),
+        }),
+      ]);
 
       render(<MatchesPage />);
 
@@ -170,10 +155,10 @@ describe('Ping-pong match history', () => {
       );
     });
 
-    it('keeps a match whose player is absent from the leaderboard', async () => {
-      // Archived players drop off the board while their matches remain.
+    it('keeps a match whose player the API could not load', async () => {
+      // Archived players come back null while their matches remain.
       // Dropping the row would silently shrink the history.
-      resolveWith([match({ id: 'm1', playerBId: 'disparu' })]);
+      resolveWith([match({ id: 'm1', playerBId: 'disparu', playerB: null })]);
 
       render(<MatchesPage />);
 
@@ -265,6 +250,7 @@ describe('Ping-pong match history', () => {
           playerAId: 'p3',
           playerBId: 'p2',
           winnerId: 'p3',
+          playerA: player({ id: 'p3', firstName: 'Yannis', lastName: 'Roux' }),
         }),
       ]);
 
@@ -309,18 +295,6 @@ describe('Ping-pong match history', () => {
   describe('errors', () => {
     it('shows an error state when the matches request fails', async () => {
       fetchRecentMatches.mockRejectedValue(new Error('500'));
-      fetchLeaderboard.mockResolvedValue(LEADERBOARD);
-
-      render(<MatchesPage />);
-
-      expect(await screen.findByTestId('matches-error')).toBeInTheDocument();
-    });
-
-    it('shows an error state when the leaderboard request fails', async () => {
-      // The join has no names without it, so a page of "Joueur inconnu"
-      // rows would be worse than saying the load failed.
-      fetchRecentMatches.mockResolvedValue([match()]);
-      fetchLeaderboard.mockRejectedValue(new Error('500'));
 
       render(<MatchesPage />);
 
@@ -329,7 +303,6 @@ describe('Ping-pong match history', () => {
 
     it('stops the skeleton on failure instead of spinning forever', async () => {
       fetchRecentMatches.mockRejectedValue(new Error('500'));
-      fetchLeaderboard.mockRejectedValue(new Error('500'));
 
       render(<MatchesPage />);
 
@@ -341,7 +314,6 @@ describe('Ping-pong match history', () => {
       // A failed load is not an empty history, and telling someone their
       // matches are gone when the server merely 500'd is worse than useless.
       fetchRecentMatches.mockRejectedValue(new Error('500'));
-      fetchLeaderboard.mockRejectedValue(new Error('500'));
 
       render(<MatchesPage />);
 
@@ -351,7 +323,6 @@ describe('Ping-pong match history', () => {
 
     it('offers a retry', async () => {
       fetchRecentMatches.mockRejectedValue(new Error('500'));
-      fetchLeaderboard.mockRejectedValue(new Error('500'));
 
       render(<MatchesPage />);
 
@@ -359,9 +330,8 @@ describe('Ping-pong match history', () => {
       expect(within(error).getByRole('button')).toHaveTextContent(/réessayer/i);
     });
 
-    it('reloads both endpoints when the retry is pressed', async () => {
+    it('reloads the matches when the retry is pressed', async () => {
       fetchRecentMatches.mockRejectedValue(new Error('500'));
-      fetchLeaderboard.mockRejectedValue(new Error('500'));
 
       render(<MatchesPage />);
 
@@ -371,18 +341,58 @@ describe('Ping-pong match history', () => {
 
       expect(await screen.findByTestId('match-card')).toBeInTheDocument();
     });
+
+    it('does not fetch the leaderboard on a retry either', async () => {
+      fetchRecentMatches.mockRejectedValue(new Error('500'));
+
+      render(<MatchesPage />);
+
+      const error = await screen.findByTestId('matches-error');
+      resolveWith([match()]);
+      await userEvent.click(within(error).getByRole('button'));
+
+      await screen.findByTestId('match-card');
+      expect(fetchLeaderboard).not.toHaveBeenCalled();
+    });
   });
 
-  it('fetches the matches and the leaderboard, and nothing else', async () => {
-    // Two requests, one join. Fetching a player per match would be N+1 on a
-    // list that routinely runs to fifty rows.
-    resolveWith([match({ id: 'm1' }), match({ id: 'm2' })]);
+  describe('one request, not two', () => {
+    it('fetches the matches once', async () => {
+      resolveWith([match({ id: 'm1' }), match({ id: 'm2' })]);
 
-    render(<MatchesPage />);
+      render(<MatchesPage />);
 
-    await screen.findAllByTestId('match-card');
-    expect(fetchRecentMatches).toHaveBeenCalledTimes(1);
-    expect(fetchLeaderboard).toHaveBeenCalledTimes(1);
+      await screen.findAllByTestId('match-card');
+      expect(fetchRecentMatches).toHaveBeenCalledTimes(1);
+    });
+
+    it('never fetches the leaderboard', async () => {
+      // The whole point of embedding the players. The page used to fetch the
+      // board purely to join names onto rows it already had.
+      resolveWith([match({ id: 'm1' }), match({ id: 'm2' })]);
+
+      render(<MatchesPage />);
+
+      await screen.findAllByTestId('match-card');
+      expect(fetchLeaderboard).not.toHaveBeenCalled();
+    });
+
+    it('makes no request per row', async () => {
+      // Fifty matches is still one call, never one lookup per player.
+      resolveWith([
+        match({ id: 'm1' }),
+        match({ id: 'm2' }),
+        match({ id: 'm3' }),
+      ]);
+
+      render(<MatchesPage />);
+
+      await screen.findAllByTestId('match-card');
+      const calls =
+        fetchRecentMatches.mock.calls.length +
+        fetchLeaderboard.mock.calls.length;
+      expect(calls).toBe(1);
+    });
   });
 
   it('titles the page', async () => {

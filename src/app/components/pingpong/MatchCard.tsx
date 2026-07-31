@@ -1,26 +1,23 @@
 'use client';
 
 import { FC } from 'react';
-import { PingpongMatch, PingpongPlayer } from '../../models/Pingpong';
+import { PingpongMatch, PingpongMatchPlayer } from '../../models/Pingpong';
 import { formatCompetitorName, formatRelativeDate } from '../../utils/formatters';
 import { UserAvatar } from '../ui';
 
 interface MatchCardProps {
-  match: PingpongMatch;
   /**
-   * The leaderboard, keyed by `PingpongPlayer.id`.
+   * The match, with both players embedded.
    *
-   * `GET /pingpong/matches` returns `playerAId` / `playerBId` and no names —
-   * the controller does a bare find() with no relations — so the caller
-   * fetches the leaderboard and hands it down. Keyed on `id` and not
-   * `competitorId`: both are strings, so the wrong key compiles cleanly and
-   * renders a card of placeholders.
+   * `GET /pingpong/matches` eager-loads the relations, so the card needs no
+   * leaderboard and no lookup table. Either side can still be null — a
+   * player row the API could not resolve — and that renders a placeholder.
    */
-  players: Map<string, PingpongPlayer>;
+  match: PingpongMatch;
   className?: string;
 }
 
-/** Shown in place of a name for a player the leaderboard did not return. */
+/** Shown in place of a name for a player the API could not return. */
 const UNKNOWN_PLAYER = 'Joueur inconnu';
 
 /**
@@ -39,16 +36,34 @@ function formatDelta(before: number, after: number): string {
 
 interface SideProps {
   testId: string;
-  player: PingpongPlayer | undefined;
+  player: PingpongMatchPlayer | null;
   isWinner: boolean;
   delta: string | null;
   align: 'left' | 'right';
 }
 
+/**
+ * A player's display name, or the placeholder.
+ *
+ * Covers two distinct absences: a null player, and a player row whose
+ * competitor could not be loaded, which arrives with empty names rather than
+ * as null. Both must read as "unknown" — a blank space where a name belongs
+ * looks like a rendering fault.
+ */
+function displayName(player: PingpongMatchPlayer | null): string {
+  if (!player) return UNKNOWN_PLAYER;
+  // The fallback is passed explicitly: formatCompetitorName defaults to
+  // "Pilote", which belongs to Mario Kart and would name a ping-pong player
+  // after the wrong sport.
+  return formatCompetitorName(
+    player.firstName,
+    player.lastName,
+    UNKNOWN_PLAYER,
+  );
+}
+
 const Side: FC<SideProps> = ({ testId, player, isWinner, delta, align }) => {
-  const name = player
-    ? formatCompetitorName(player.firstName, player.lastName)
-    : UNKNOWN_PLAYER;
+  const name = displayName(player);
 
   return (
     <div
@@ -60,7 +75,7 @@ const Side: FC<SideProps> = ({ testId, player, isWinner, delta, align }) => {
     >
       <UserAvatar
         src={player?.profilePictureUrl}
-        name={player ? `${player.firstName} ${player.lastName}` : UNKNOWN_PLAYER}
+        name={name}
         size="sm"
         className="flex-shrink-0 border border-neutral-700"
       />
@@ -108,6 +123,11 @@ const Side: FC<SideProps> = ({ testId, player, isWinner, delta, align }) => {
 /**
  * One recorded ping-pong match.
  *
+ * Both players come embedded on the match, so there is no lookup here and no
+ * leaderboard to fetch. The winner is still resolved from `winnerId` against
+ * the flat `playerAId` / `playerBId`, which survive a null player — a match
+ * whose winner could not be named is still a match with a winner.
+ *
  * Always read from player A's side. The API sends `sets` in A's point of
  * view, and mirroring them for whoever is looking would make one match
  * render two different ways — a screenshot of it would then mean nothing
@@ -119,16 +139,12 @@ const Side: FC<SideProps> = ({ testId, player, isWinner, delta, align }) => {
  * wide enough that the ratings were pinned, and "+0" beside both names
  * reads as arithmetic that failed rather than a rule that applied.
  */
-const MatchCard: FC<MatchCardProps> = ({ match, players, className = '' }) => {
-  const playerA = players.get(match.playerAId);
-  const playerB = players.get(match.playerBId);
+const MatchCard: FC<MatchCardProps> = ({ match, className = '' }) => {
+  const playerA = match.playerA;
+  const playerB = match.playerB;
 
-  const nameA = playerA
-    ? formatCompetitorName(playerA.firstName, playerA.lastName)
-    : UNKNOWN_PLAYER;
-  const nameB = playerB
-    ? formatCompetitorName(playerB.firstName, playerB.lastName)
-    : UNKNOWN_PLAYER;
+  const nameA = displayName(playerA);
+  const nameB = displayName(playerB);
 
   const setsA = match.sets.filter((set) => set.a > set.b).length;
   const setsB = match.sets.length - setsA;
