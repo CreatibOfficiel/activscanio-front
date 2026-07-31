@@ -45,16 +45,14 @@ export interface PingpongPlayer {
   currentStreak: number;
   bestStreak: number;
   lastMatchAt: string | null;
-  previousDayRank: number | null;
   /**
-   * Rank held at the start of the week, for the movement indicator.
+   * Rank held at the start of the day, for the movement indicator.
    *
-   * Weekly rather than daily: in a pool this size a daily delta is mostly
-   * sampling noise, and an arrow presents noise as signal. Null when the
-   * player carried no rank when the week opened — which is not the same as
-   * having been last.
+   * Written daily by the API's rank-snapshot cron. Null when the player
+   * carried no rank at capture time, which is not the same as having been
+   * last — rankMovement treats the two differently.
    */
-  previousWeekRank: number | null;
+  previousDayRank: number | null;
   /** Still calibrating: fewer than 8 weighted matches, or RD above 150. */
   provisional: boolean;
   /** No match for 14 days. Still shown, but without a rank. */
@@ -73,10 +71,39 @@ export interface PingpongPlayer {
   rank: number | null;
 }
 
+/**
+ * Just enough of a player to name them on a match.
+ *
+ * A trimmed shape, not a whole `PingpongPlayer`: a match card renders a name
+ * and an avatar, and a fifty-row history has no use for rd, vol, streaks or a
+ * rank. The API sends exactly these five fields on each side of a match.
+ */
+export interface PingpongMatchPlayer {
+  id: string;
+  competitorId: string;
+  firstName: string;
+  lastName: string;
+  profilePictureUrl: string;
+}
+
 export interface PingpongMatch {
   id: string;
   playerAId: string;
   playerBId: string;
+  /**
+   * The two sides, embedded by the API.
+   *
+   * Null when the player row could not be loaded — archived, deleted, or a
+   * relation the database could not resolve. A consumer must render a
+   * placeholder rather than assume a name, which is why this is nullable
+   * instead of optional: `undefined` slips through a template silently,
+   * `null` has to be handled.
+   *
+   * `playerAId` / `playerBId` stay alongside them. They are what `winnerId`
+   * is compared against, and a null player must not cost the winner check.
+   */
+  playerA: PingpongMatchPlayer | null;
+  playerB: PingpongMatchPlayer | null;
   winnerId: string;
   sets: SetScore[];
   playedAt: string;

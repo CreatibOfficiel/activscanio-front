@@ -50,7 +50,6 @@ describe('Ping-pong match history', () => {
       bestStreak: 6,
       lastMatchAt: '2026-03-14T12:00:00Z',
       previousDayRank: null,
-      previousWeekRank: null,
       provisional: false,
       inactive: false,
       archived: false,

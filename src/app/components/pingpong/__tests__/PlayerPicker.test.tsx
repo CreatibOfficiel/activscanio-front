@@ -29,7 +29,6 @@ function makePlayer(
     bestStreak: 4,
     lastMatchAt: '2026-07-20T12:00:00Z',
     previousDayRank: null,
-    previousWeekRank: null,
     provisional: false,
     inactive: false,
     archived: false,
