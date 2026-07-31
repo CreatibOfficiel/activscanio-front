@@ -1,5 +1,6 @@
 import {
   PingpongEloSnapshot,
+  SelectablePlayer,
   PingpongHeadToHead,
   PingpongMatch,
   PingpongPlayer,
@@ -28,6 +29,22 @@ export class PingpongRepository {
       throw new Error(
         `Error fetching ping-pong leaderboard: ${await res.text()}`,
       );
+    }
+    return await res.json();
+  }
+
+  /**
+   * Everyone who could play, enrolled or not.
+   *
+   * The entry form needs this rather than the leaderboard: on day one
+   * nobody is enrolled, so a form listing only enrolled players shows an
+   * empty search box with no explanation and no way forward. Enrolment
+   * happens on the first recorded match.
+   */
+  async fetchSelectable(): Promise<SelectablePlayer[]> {
+    const res = await apiFetch(`${this.baseUrl}/pingpong/selectable`);
+    if (!res.ok) {
+      throw new Error(`Error fetching selectable players: ${await res.text()}`);
     }
     return await res.json();
   }

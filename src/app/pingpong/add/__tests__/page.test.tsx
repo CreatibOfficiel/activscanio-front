@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import AddMatchPage from '../page';
 import { pingpongRepository } from '../../../repositories/PingpongRepository';
-import { PingpongPlayer } from '../../../models/Pingpong';
+import { SelectablePlayer } from '../../../models/Pingpong';
 
 const push = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -16,46 +16,28 @@ jest.mock('sonner', () => ({
 
 jest.mock('../../../repositories/PingpongRepository', () => ({
   pingpongRepository: {
-    fetchLeaderboard: jest.fn(),
+    fetchSelectable: jest.fn(),
     recordMatch: jest.fn(),
   },
 }));
 
-const fetchLeaderboard = pingpongRepository.fetchLeaderboard as jest.Mock;
+const fetchSelectable = pingpongRepository.fetchSelectable as jest.Mock;
 const recordMatch = pingpongRepository.recordMatch as jest.Mock;
 
 function makePlayer(
   id: string,
   firstName: string,
   lastName: string,
-): PingpongPlayer {
+): SelectablePlayer {
   return {
-    id,
-    competitorId: `c-${id}`,
+    // A match is recorded against a competitor, not a ping-pong player:
+    // most of the office has never played, and the API enrols both sides
+    // when the first match is submitted.
+    competitorId: id,
     firstName,
     lastName,
     profilePictureUrl: '',
-    rating: 1500,
-    rd: 120,
-    vol: 0.06,
-    conservativeScore: 1260,
-    matchCount: 12,
-    weightedMatchCount: 10,
-    wins: 7,
-    losses: 5,
-    setsWon: 16,
-    setsLost: 13,
-    currentStreak: 1,
-    bestStreak: 4,
-    lastMatchAt: '2026-07-20T12:00:00Z',
-    previousDayRank: null,
-    provisional: false,
-    inactive: false,
-    archived: false,
-    isRankingEligible: true,
-    distinctOpponents21d: 3,
-    diversityScore21d: 0.7,
-    rank: 1,
+    playerId: null,
   };
 }
 
@@ -96,7 +78,7 @@ async function completeMatch() {
 describe('Ping-pong match entry', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    fetchLeaderboard.mockResolvedValue(PLAYERS);
+    fetchSelectable.mockResolvedValue(PLAYERS);
     recordMatch.mockResolvedValue({ id: 'm1' });
   });
 

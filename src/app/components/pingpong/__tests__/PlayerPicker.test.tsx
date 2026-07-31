@@ -1,49 +1,30 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PlayerPicker from '../PlayerPicker';
-import { PingpongPlayer } from '../../../models/Pingpong';
+import { SelectablePlayer } from '../../../models/Pingpong';
 
 function makePlayer(
   id: string,
   firstName: string,
   lastName: string,
-  overrides: Partial<PingpongPlayer> = {},
-): PingpongPlayer {
+  overrides: Partial<SelectablePlayer> = {},
+): SelectablePlayer {
   return {
-    id,
-    competitorId: `c-${id}`,
+    // The picker keys on competitorId: that is what a match is recorded
+    // against, and someone who has never played has no player id yet.
+    competitorId: id,
     firstName,
     lastName,
     profilePictureUrl: '',
-    rating: 1500,
-    rd: 120,
-    vol: 0.06,
-    conservativeScore: 1260,
-    matchCount: 12,
-    weightedMatchCount: 10,
-    wins: 7,
-    losses: 5,
-    setsWon: 16,
-    setsLost: 13,
-    currentStreak: 1,
-    bestStreak: 4,
-    lastMatchAt: '2026-07-20T12:00:00Z',
-    previousDayRank: null,
-    provisional: false,
-    inactive: false,
-    archived: false,
-    isRankingEligible: true,
-    distinctOpponents21d: 3,
-    diversityScore21d: 0.7,
-    rank: 1,
+    playerId: null,
     ...overrides,
   };
 }
 
 const PLAYERS = [
-  makePlayer('p1', 'Marc', 'Dupont', { rank: 1 }),
-  makePlayer('p2', 'Sophie', 'Bernard', { rank: 2 }),
-  makePlayer('p3', 'Élodie', 'Martin', { rank: 3 }),
+  makePlayer('p1', 'Marc', 'Dupont'),
+  makePlayer('p2', 'Sophie', 'Bernard'),
+  makePlayer('p3', 'Élodie', 'Martin'),
 ];
 
 /**

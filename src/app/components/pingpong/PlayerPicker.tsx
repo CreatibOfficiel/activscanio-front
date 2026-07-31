@@ -2,7 +2,7 @@
 
 import { FC, useId, useMemo, useState } from 'react';
 import { MdSearch } from 'react-icons/md';
-import { PingpongPlayer } from '../../models/Pingpong';
+import { SelectablePlayer } from '../../models/Pingpong';
 import { formatCompetitorName } from '../../utils/formatters';
 import { matchesSearch } from '../../utils/search-text';
 import { UserAvatar } from '../ui';
@@ -10,7 +10,12 @@ import { UserAvatar } from '../ui';
 interface PlayerPickerProps {
   /** Names the side of the table, e.g. "Joueur A". Shown and announced. */
   label: string;
-  players: PingpongPlayer[];
+  /**
+   * Everyone pickable, enrolled or not. The form lists the whole office:
+   * on day one nobody has played, and a picker showing only enrolled
+   * players would be empty with no way forward.
+   */
+  players: SelectablePlayer[];
   selectedId: string | null;
   /** Whoever holds the other side. Left out of the list entirely. */
   excludedId: string | null;
@@ -51,7 +56,7 @@ const PlayerPicker: FC<PlayerPickerProps> = ({
   const visible = useMemo(
     () =>
       players
-        .filter((player) => player.id !== excludedId)
+        .filter((player) => player.competitorId !== excludedId)
         .filter((player) =>
           matchesSearch(`${player.firstName} ${player.lastName}`, query),
         ),
@@ -100,14 +105,14 @@ const PlayerPicker: FC<PlayerPickerProps> = ({
           bg-neutral-800/40 border border-neutral-700 p-1"
       >
         {visible.map((player) => {
-          const isSelected = player.id === selectedId;
+          const isSelected = player.competitorId === selectedId;
           return (
-            <li key={player.id}>
+            <li key={player.competitorId}>
               <button
                 type="button"
                 role="option"
                 aria-selected={isSelected}
-                onClick={() => onSelect(player.id)}
+                onClick={() => onSelect(player.competitorId)}
                 className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left
                   min-h-[44px] transition-colors
                   ${

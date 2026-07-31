@@ -10,7 +10,7 @@ import { Button, PageHeader, Spinner } from '@/app/components/ui';
 import PlayerPicker from '@/app/components/pingpong/PlayerPicker';
 import ScoreInput from '@/app/components/pingpong/ScoreInput';
 import { useMatchEntry } from '@/app/hooks/useMatchEntry';
-import { PingpongPlayer } from '@/app/models/Pingpong';
+import { SelectablePlayer } from '@/app/models/Pingpong';
 import { pingpongRepository } from '@/app/repositories/PingpongRepository';
 import { formatCompetitorName } from '@/app/utils/formatters';
 
@@ -47,7 +47,7 @@ const AddMatchPage: NextPage = () => {
   const router = useRouter();
   const { getToken } = useAuth();
 
-  const [players, setPlayers] = useState<PingpongPlayer[]>([]);
+  const [players, setPlayers] = useState<SelectablePlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -73,7 +73,7 @@ const AddMatchPage: NextPage = () => {
     let cancelled = false;
 
     pingpongRepository
-      .fetchLeaderboard()
+      .fetchSelectable()
       .then((list) => {
         if (!cancelled) setPlayers(list);
       })
@@ -90,7 +90,7 @@ const AddMatchPage: NextPage = () => {
   }, []);
 
   const byId = useMemo(
-    () => new Map(players.map((player) => [player.id, player])),
+    () => new Map(players.map((player) => [player.competitorId, player])),
     [players],
   );
 
