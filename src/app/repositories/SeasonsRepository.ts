@@ -9,9 +9,16 @@ export interface SeasonArchive {
   year: number;
   seasonName: string | null;
   totalCompetitors: number;
-  totalBettors: number;
   totalRaces: number;
+  /** Betting leftovers. Always 0 on new archives, kept so old ones load. */
+  totalBettors: number;
   totalBets: number;
+  /**
+   * Optional: seasons archived before ping-pong existed have neither column,
+   * so callers must default them rather than assume a number.
+   */
+  totalPingpongPlayers?: number;
+  totalPingpongMatches?: number;
   avgCompetitorRating: number;
   createdAt: string;
 }
@@ -32,13 +39,23 @@ export interface ArchivedCompetitorRanking {
   characterImageUrl: string | null;
 }
 
-export interface ArchivedBettorRanking {
-  userId: string;
-  userName: string;
-  profilePictureUrl: string | null;
-  rank: number;
-  totalPoints: number;
-  betsPlaced: number;
+/** A player's ping-pong standing when a season closed. */
+export interface ArchivedPingpongRanking {
+  id: string;
+  playerId: string;
+  playerName: string;
+  /** Null for anyone who was still calibrating when the season closed. */
+  rank: number | null;
+  provisional: boolean;
+  finalRating: number;
+  finalRd: number;
+  finalVol: number;
+  totalMatches: number;
+  wins: number;
+  losses: number;
+  setsWon: number;
+  setsLost: number;
+  bestStreak: number;
 }
 
 export interface SeasonBettingWeek {
@@ -72,7 +89,7 @@ export interface SeasonHighlights {
 export interface SeasonRecapData {
   season: SeasonArchive;
   competitors: ArchivedCompetitorRanking[];
-  bettors: ArchivedBettorRanking[];
+  pingpong: ArchivedPingpongRanking[];
   highlights: SeasonHighlights;
 }
 
@@ -153,15 +170,19 @@ export class SeasonsRepository {
   }
 
   /**
-   * Get bettor rankings for a season
+   * Get ping-pong rankings for a season.
+   *
+   * Replaces the bettor rankings, whose endpoint went away with the betting
+   * system. Players still calibrating come back with `rank: null` rather than
+   * being left out, so the archive reports who was around that season.
    */
-  static async getBettorRankings(
+  static async getPingpongRankings(
     year: number,
     month: number
-  ): Promise<ArchivedBettorRanking[]> {
+  ): Promise<ArchivedPingpongRanking[]> {
     try {
       const response = await apiFetch(
-        `${API_BASE_URL}/seasons/${year}/${month}/bettors`,
+        `${API_BASE_URL}/seasons/${year}/${month}/pingpong`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -170,12 +191,14 @@ export class SeasonsRepository {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch bettor rankings: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch ping-pong rankings: ${response.statusText}`
+        );
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching bettor rankings:', error);
+      console.error('Error fetching ping-pong rankings:', error);
       throw error;
     }
   }
@@ -246,12 +269,15 @@ export class SeasonsRepository {
     const season = await this.getSeason(year, month);
     if (!season) return null;
 
-    const [competitors, bettors, highlights] = await Promise.all([
+    const [competitors, pingpong, highlights] = await Promise.all([
       this.getCompetitorRankings(year, month),
-      this.getBettorRankings(year, month),
+      // Seasons archived before ping-pong existed have no standings to
+      // return, and the endpoint may 404 on them. That must not take the
+      // whole recap down — the Mario Kart half is still worth showing.
+      this.getPingpongRankings(year, month).catch(() => []),
       this.getSeasonHighlights(year, month),
     ]);
 
-    return { season, competitors, bettors, highlights };
+    return { season, competitors, pingpong, highlights };
   }
 }

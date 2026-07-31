@@ -6,14 +6,12 @@ import {
   SeasonsRepository,
   SeasonArchive,
   ArchivedCompetitorRanking,
-  ArchivedBettorRanking,
-  SeasonBettingWeek,
+  ArchivedPingpongRanking,
 } from '@/app/repositories/SeasonsRepository';
 import { Card, Badge, Button, PageHeader } from '@/app/components/ui';
 import {
   MdEmojiEvents,
   MdPerson,
-  MdCalendarToday,
   MdAutoAwesome,
 } from 'react-icons/md';
 import { toast } from 'sonner';
@@ -21,8 +19,7 @@ import SeasonRecapModal from '@/app/components/season/SeasonRecapModal';
 
 enum TabType {
   COMPETITORS = 'competitors',
-  BETTORS = 'bettors',
-  WEEKS = 'weeks',
+  PINGPONG = 'pingpong',
 }
 
 const SeasonDetailPage: FC = () => {
@@ -33,8 +30,7 @@ const SeasonDetailPage: FC = () => {
 
   const [season, setSeason] = useState<SeasonArchive | null>(null);
   const [competitorRankings, setCompetitorRankings] = useState<ArchivedCompetitorRanking[]>([]);
-  const [bettorRankings, setBettorRankings] = useState<ArchivedBettorRanking[]>([]);
-  const [weeks, setWeeks] = useState<SeasonBettingWeek[]>([]);
+  const [pingpongRankings, setPingpongRankings] = useState<ArchivedPingpongRanking[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>(TabType.COMPETITORS);
   const [isLoading, setIsLoading] = useState(true);
   const [showRecap, setShowRecap] = useState(false);
@@ -48,16 +44,16 @@ const SeasonDetailPage: FC = () => {
         const seasonData = await SeasonsRepository.getSeason(year, month);
         setSeason(seasonData);
 
-        // Load all data in parallel
-        const [competitors, bettors, weeksData] = await Promise.all([
+        // Load both rankings in parallel. Ping-pong is tolerated failing:
+        // seasons archived before the sport existed have none, and that must
+        // not take the Mario Kart half of the page down with it.
+        const [competitors, pingpong] = await Promise.all([
           SeasonsRepository.getCompetitorRankings(year, month),
-          SeasonsRepository.getBettorRankings(year, month),
-          SeasonsRepository.getSeasonWeeks(year, month),
+          SeasonsRepository.getPingpongRankings(year, month).catch(() => []),
         ]);
 
         setCompetitorRankings(competitors);
-        setBettorRankings(bettors);
-        setWeeks(weeksData);
+        setPingpongRankings(pingpong);
       } catch (error) {
         console.error('Error loading season data:', error);
         toast.error('Erreur lors du chargement de la saison');
@@ -165,18 +161,11 @@ const SeasonDetailPage: FC = () => {
             Classement Pilotes ({competitorRankings.length})
           </Button>
           <Button
-            variant={activeTab === TabType.BETTORS ? 'primary' : 'secondary'}
-            onClick={() => setActiveTab(TabType.BETTORS)}
+            variant={activeTab === TabType.PINGPONG ? 'primary' : 'secondary'}
+            onClick={() => setActiveTab(TabType.PINGPONG)}
           >
             <MdPerson className="mr-2" />
-            Classement Parieurs ({bettorRankings.length})
-          </Button>
-          <Button
-            variant={activeTab === TabType.WEEKS ? 'primary' : 'secondary'}
-            onClick={() => setActiveTab(TabType.WEEKS)}
-          >
-            <MdCalendarToday className="mr-2" />
-            Semaines ({weeks.length})
+            Classement Ping-Pong ({pingpongRankings.length})
           </Button>
         </div>
 
@@ -221,78 +210,38 @@ const SeasonDetailPage: FC = () => {
           </Card>
         )}
 
-        {activeTab === TabType.BETTORS && (
+        {activeTab === TabType.PINGPONG && (
           <Card className="p-6">
-            <h2 className="text-heading text-white mb-4">Classement des parieurs</h2>
-            {bettorRankings.length === 0 ? (
+            <h2 className="text-heading text-white mb-4">Classement ping-pong</h2>
+            {pingpongRankings.length === 0 ? (
               <p className="text-regular text-neutral-400 text-center py-8">
-                Aucun classement disponible
+                Personne n&apos;a joué au ping-pong cette saison
               </p>
             ) : (
               <div className="space-y-2">
-                {bettorRankings.map((ranking) => (
+                {pingpongRankings.map((ranking) => (
                   <div
-                    key={ranking.userId}
+                    key={ranking.id}
                     className="flex items-center justify-between p-4 bg-neutral-750 rounded-lg"
                   >
                     <div className="flex items-center gap-4">
                       <Badge variant={getRankBadgeVariant(ranking.rank)} size="md">
-                        #{ranking.rank}
+                        {ranking.rank !== null ? `#${ranking.rank}` : 'Cal.'}
                       </Badge>
                       <div>
-                        <p className="text-bold text-white">{ranking.userName}</p>
+                        <p className="text-bold text-white">{ranking.playerName}</p>
                         <p className="text-sub text-neutral-400">
-                          {ranking.betsPlaced} paris placés
+                          {ranking.wins}V · {ranking.losses}D · Série: {ranking.bestStreak}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-bold text-primary-500">
-                        {ranking.totalPoints.toFixed(2)} pts
+                        {Math.round(ranking.finalRating - 2 * ranking.finalRd)}
                       </p>
+                      <p className="text-sub text-neutral-400">ELO</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        )}
-
-        {activeTab === TabType.WEEKS && (
-          <Card className="p-6">
-            <h2 className="text-heading text-white mb-4">Semaines de Paris</h2>
-            {weeks.length === 0 ? (
-              <p className="text-regular text-neutral-400 text-center py-8">
-                Aucune semaine disponible
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {weeks.map((week) => (
-                  <Card key={week.id} className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-bold text-white">
-                        Semaine {week.seasonWeekNumber}
-                      </h3>
-                      <Badge
-                        variant={week.status === 'finalized' ? 'success' : 'default'}
-                        size="sm"
-                      >
-                        {week.status}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1 text-sub text-neutral-400">
-                      <p>
-                        {new Date(week.startDate).toLocaleDateString('fr-FR')} -{' '}
-                        {new Date(week.endDate).toLocaleDateString('fr-FR')}
-                      </p>
-                      {week.finalizedAt && (
-                        <p className="text-success-500">
-                          Finalisée le{' '}
-                          {new Date(week.finalizedAt).toLocaleDateString('fr-FR')}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
                 ))}
               </div>
             )}
