@@ -2,17 +2,20 @@
 
 import { FC, useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { MdCasino, MdStar, MdEmojiEvents, MdTrendingUp, MdRocketLaunch, MdCalendarMonth, MdCheckCircle, MdPercent, MdDiamond, MdMilitaryTech } from 'react-icons/md';
+import { MdStar, MdEmojiEvents, MdTrendingUp, MdRocketLaunch, MdCalendarMonth, MdCheckCircle, MdPercent, MdDiamond, MdMilitaryTech } from 'react-icons/md';
 import { UserStats } from '../../models/Achievement';
 import TimePeriodToggle, { TimePeriod } from '../stats/TimePeriodToggle';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
 import StatCard from '../ui/StatCard';
 import { StreakIndicator } from '../achievements';
+import type { CompetitorStats } from '../../profile/page';
 
 // Lazy load chart components for performance
 
 interface StatsTabProps {
   stats: UserStats;
+  /** Absent for someone with no linked competitor — a spectator. */
+  competitorStats?: CompetitorStats | null;
   className?: string;
 }
 
@@ -30,62 +33,28 @@ interface StatsTabProps {
  */
 const StatsTab: FC<StatsTabProps> = ({
   stats,
+  competitorStats,
   className = '',
 }) => {
   const [period, setPeriod] = useState<TimePeriod>('all');
 
   // Compute stats based on selected period
-  const periodStats = useMemo(() => {
-    switch (period) {
-      case 'month':
-        return {
-          betsPlaced: stats.monthlyBetsPlaced,
-          betsWon: stats.monthlyBetsWon,
-          perfectBets: stats.monthlyPerfectBets,
-          points: stats.monthlyPoints,
-          winRate: stats.monthlyBetsPlaced > 0
-            ? (stats.monthlyBetsWon / stats.monthlyBetsPlaced) * 100
-            : 0,
-          bestRank: stats.monthlyRank,
-          xp: stats.xp, // No monthly XP tracking
-          level: stats.level,
-          boostsUsed: stats.totalBoostsUsed, // No monthly tracking
-          highOddsWins: stats.highOddsWins, // No monthly tracking
-          consecutiveMonths: stats.consecutiveMonthlyWins,
-        };
-      case 'year':
-        // Yearly stats are approximated from lifetime (API would need yearly endpoint)
-        // For now, we use lifetime as placeholder
-        return {
-          betsPlaced: stats.totalBetsPlaced,
-          betsWon: stats.totalBetsWon,
-          perfectBets: stats.totalPerfectBets,
-          points: stats.totalPoints,
-          winRate: stats.winRate,
-          bestRank: stats.bestMonthlyRank,
-          xp: stats.xp,
-          level: stats.level,
-          boostsUsed: stats.totalBoostsUsed,
-          highOddsWins: stats.highOddsWins,
-          consecutiveMonths: stats.consecutiveMonthlyWins,
-        };
-      case 'all':
-      default:
-        return {
-          betsPlaced: stats.totalBetsPlaced,
-          betsWon: stats.totalBetsWon,
-          perfectBets: stats.totalPerfectBets,
-          points: stats.totalPoints,
-          winRate: stats.winRate,
-          bestRank: stats.bestMonthlyRank,
-          xp: stats.xp,
-          level: stats.level,
-          boostsUsed: stats.totalBoostsUsed,
-          highOddsWins: stats.highOddsWins,
-          consecutiveMonths: stats.consecutiveMonthlyWins,
-        };
-    }
-  }, [period, stats]);
+  /**
+   * What the period toggle can still slice.
+   *
+   * The betting fields it used to carry — bets placed, boosts, high-odds
+   * wins — are permanent zeroes since betting was removed, and a card
+   * reading 0 is worse than no card: it tells someone they did nothing.
+   * XP, level and consecutive seasons are still computed by the API.
+   */
+  const periodStats = useMemo(
+    () => ({
+      xp: stats.xp,
+      level: stats.level,
+      consecutiveMonths: stats.consecutiveMonthlyWins,
+    }),
+    [stats],
+  );
 
   return (
     <div
@@ -168,57 +137,51 @@ const StatsTab: FC<StatsTabProps> = ({
         transition={{ duration: 0.3 }}
         className="grid grid-cols-3 gap-2 sm:gap-4"
       >
-        {/* Win Rate Card */}
+        {/* Race data. The three cards this replaces read betting win rate,
+            betting points and perfect podiums — all permanent zeroes since
+            the feature was removed. */}
         <div className="p-3 sm:p-5 rounded-xl bg-neutral-800 border border-neutral-700 flex flex-col items-center">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center mb-2 sm:mb-3">
             <MdPercent className="text-lg sm:text-xl text-emerald-400" />
           </div>
           <AnimatedNumber
-            value={Math.round(periodStats.winRate)}
+            value={competitorStats?.totalWins ?? 0}
             size="lg"
             colorClass="text-emerald-400"
-            suffix="%"
           />
-          <span className="text-xs sm:text-sm text-neutral-400 mt-1 mb-2 sm:mb-3">Win Rate</span>
-          {/* Mini progress bar */}
-          <div className="w-full h-1.5 sm:h-2 bg-neutral-900 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${periodStats.winRate}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="h-full bg-linear-to-r from-emerald-500 to-emerald-400 rounded-full"
-            />
-          </div>
+          <span className="text-xs sm:text-sm text-neutral-400 mt-1">
+            Victoires
+          </span>
         </div>
 
-        {/* Points Card */}
         <div className="p-3 sm:p-5 rounded-xl bg-neutral-800 border border-neutral-700 flex flex-col items-center">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-500/20 flex items-center justify-center mb-2 sm:mb-3">
             <MdDiamond className="text-lg sm:text-xl text-primary-400" />
           </div>
           <AnimatedNumber
-            value={Math.round(periodStats.points)}
+            value={competitorStats?.raceCount ?? 0}
             size="lg"
             colorClass="text-primary-400"
-            suffix=""
           />
-          <span className="text-xs sm:text-sm text-neutral-400 mt-1">Points</span>
+          <span className="text-xs sm:text-sm text-neutral-400 mt-1">
+            Courses
+          </span>
         </div>
 
-        {/* Podiums Parfaits Card */}
         <div className="p-3 sm:p-5 rounded-xl bg-neutral-800 border border-neutral-700 flex flex-col items-center">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-warning-500/20 flex items-center justify-center mb-2 sm:mb-3">
             <MdEmojiEvents className="text-lg sm:text-xl text-warning-500" />
           </div>
           <AnimatedNumber
-            value={periodStats.perfectBets}
+            value={competitorStats?.bestPlayStreak ?? 0}
             size="lg"
             colorClass="text-warning-500"
-            suffix=""
           />
-          <span className="text-xs sm:text-sm text-neutral-400 mt-1 text-center leading-tight">Parfaits</span>
-          <span className="text-[10px] text-neutral-500">(3/3 corrects)</span>
+          <span className="text-xs sm:text-sm text-neutral-400 mt-1">
+            Record de série
+          </span>
         </div>
+
       </motion.div>
 
       {/* Stats Grid (2x4) */}
@@ -229,41 +192,37 @@ const StatsTab: FC<StatsTabProps> = ({
         transition={{ duration: 0.3, delay: 0.1 }}
         className="grid grid-cols-2 sm:grid-cols-4 gap-3"
       >
-        <StatCard
-          label="Paris Placés"
-          value={periodStats.betsPlaced}
-          icon={<MdCasino className="text-emerald-400" />}
-          colorClass="text-emerald-400"
-          animated
-        />
-        <StatCard
-          label="Victoires"
-          value={periodStats.betsWon}
-          icon={<MdCheckCircle className="text-success-400" />}
-          colorClass="text-success-400"
-          animated
-        />
-        <StatCard
-          label="Meilleur Rang"
-          value={periodStats.bestRank ? `#${periodStats.bestRank}` : '-'}
-          icon={<MdEmojiEvents className="text-gold-500" />}
-          colorClass="text-gold-500"
-        />
-        <StatCard
-          label="Boosts"
-          value={periodStats.boostsUsed}
-          icon={<MdRocketLaunch className="text-warning-500" />}
-          colorClass="text-warning-500"
-          animated
-        />
-        <StatCard
-          label="Cotes Élevées"
-          value={periodStats.highOddsWins}
-          icon={<span className="text-error-400">💥</span>}
-          subValue="Cote > 10"
-          colorClass="text-error-400"
-          animated
-        />
+        {/* Race data, which the profile already loads. The cards this
+            replaces read from betting fields the API stopped computing —
+            five permanent zeroes on a tab called "Statistiques". */}
+        {competitorStats && (
+          <>
+            <StatCard
+              label="Courses"
+              value={competitorStats.raceCount}
+              icon={<MdCheckCircle className="text-emerald-400" />}
+              colorClass="text-emerald-400"
+              animated
+            />
+            <StatCard
+              label="Victoires"
+              value={competitorStats.totalWins}
+              icon={<MdEmojiEvents className="text-success-400" />}
+              colorClass="text-success-400"
+              animated
+            />
+            <StatCard
+              label="Rang moyen"
+              value={
+                competitorStats.avgRank12
+                  ? competitorStats.avgRank12.toFixed(1)
+                  : '-'
+              }
+              icon={<MdRocketLaunch className="text-gold-500" />}
+              colorClass="text-gold-500"
+            />
+          </>
+        )}
         <StatCard
           label="XP Total"
           value={periodStats.xp.toLocaleString()}

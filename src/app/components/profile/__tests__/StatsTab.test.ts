@@ -44,6 +44,38 @@ describe('StatsTab', () => {
     ).toBe(false);
   });
 
+  const DEAD_BETTING_CARDS = [
+    'Paris Placés',
+    'Boosts',
+    'Cotes Élevées',
+  ];
+
+  it.each(DEAD_BETTING_CARDS)('no longer shows the "%s" card', (label) => {
+    // Permanent zeroes: the API stopped computing these when betting went.
+    // A card reading 0 is worse than no card — it says you did nothing.
+    expect(source).not.toMatch(new RegExp(`label="${label}"`));
+  });
+
+  it.each(['betsPlaced', 'boostsUsed', 'highOddsWins'])(
+    'no longer reads %s',
+    (field) => {
+      expect(source).not.toMatch(new RegExp(`\\b${field}\\b`));
+    },
+  );
+
+  it('shows race data in their place', () => {
+    // The tab is labelled "Statistiques"; it should hold statistics that
+    // are true rather than statistics about a removed feature.
+    expect(source).toMatch(/competitorStats/);
+  });
+
+  it('keeps the stats that still have data behind them', () => {
+    // XP, level and consecutive seasons are all still computed.
+    for (const label of ['XP Total', 'Niveau', 'Saisons Consécutives']) {
+      expect(source).toMatch(new RegExp(`label="${label}"`));
+    }
+  });
+
   it('still renders the stats it can actually compute', () => {
     // The regression this change could cause: deleting one block too many.
     expect(source).toMatch(/StatCard/);
