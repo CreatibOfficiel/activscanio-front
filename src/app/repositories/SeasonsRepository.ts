@@ -70,20 +70,24 @@ export interface SeasonBettingWeek {
   finalizedAt: string | null;
 }
 
+/**
+ * What the season recap can show.
+ *
+ * The API returns exactly three fields. An earlier version of this type
+ * declared eight — five of them betting highlights that went away with the
+ * feature — and the recap called `.length` on one the server never sends.
+ * That crashed the whole app on the highlights slide, with no error until
+ * render.
+ *
+ * The response is cast rather than parsed, so TypeScript could not see it:
+ * the type said the fields were there, and nothing checked.
+ */
 export interface SeasonHighlights {
-  perfectScores: { userName: string; week: number; points: number }[];
-  perfectPodiums: { userName: string; week: number; points: number }[];
-  highestBetScore: { userName: string; week: number; points: number } | null;
-  biggestUpset: {
-    userName: string;
-    competitorName: string;
-    odd: number;
-    week: number;
-  } | null;
-  longestParticipationStreak: { userName: string; streak: number } | null;
   longestWinStreak: { competitorName: string; streak: number } | null;
   mostRaces: { competitorName: string; count: number } | null;
-  bestRaceScorers: { competitorName: string; maxScore: number; perfectCount: number }[] | null;
+  bestRaceScorers:
+    | { competitorName: string; maxScore: number; perfectCount: number }[]
+    | null;
 }
 
 export interface SeasonRecapData {

@@ -24,7 +24,6 @@ import {
   MdClose,
   MdEmojiEvents,
   MdStar,
-  MdTrendingUp,
   MdSportsScore,
   MdPerson,
   MdFlag,
@@ -525,11 +524,6 @@ function SlideHighlights({
   reducedMotion: boolean;
 }) {
   const hasContent =
-    highlights.perfectScores.length > 0 ||
-    highlights.perfectPodiums.length > 0 ||
-    highlights.highestBetScore ||
-    highlights.biggestUpset ||
-    highlights.longestParticipationStreak ||
     highlights.longestWinStreak ||
     highlights.mostRaces ||
     (highlights.bestRaceScorers && highlights.bestRaceScorers.length > 0) ||
@@ -567,120 +561,6 @@ function SlideHighlights({
       </motion.div>
 
       <div className="overflow-y-auto flex-1 min-h-0 space-y-3 pb-4 overscroll-contain">
-        {/* Perfect Scores (60 pts) */}
-        {highlights.perfectScores.length > 0 && (
-          <HighlightCard
-            icon={<span className="text-base">💯</span>}
-            title={`Score${highlights.perfectScores.length > 1 ? 's' : ''} Parfait${highlights.perfectScores.length > 1 ? 's' : ''}`}
-            subtitle="60 pts en une semaine"
-            accent="gold"
-            delay={(delayIdx++) * 0.08 + 0.1}
-            reducedMotion={reducedMotion}
-          >
-            <div className="space-y-1">
-              {highlights.perfectScores.map((ps, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between bg-yellow-400/[0.06] rounded-md px-2.5 py-1.5"
-                >
-                  <span className="text-[13px] font-semibold text-yellow-200">{ps.userName}</span>
-                  <span className="text-[11px] text-neutral-500 tabular-nums">
-                    S{ps.week} · {ps.points} pts
-                  </span>
-                </div>
-              ))}
-            </div>
-          </HighlightCard>
-        )}
-
-        {/* Perfect Podiums */}
-        {highlights.perfectPodiums.length > 0 && (() => {
-          const grouped = new Map<string, { userName: string; weeks: number[]; count: number }>();
-          for (const pp of highlights.perfectPodiums) {
-            const existing = grouped.get(pp.userName);
-            if (existing) {
-              existing.weeks.push(pp.week);
-              existing.count++;
-            } else {
-              grouped.set(pp.userName, { userName: pp.userName, weeks: [pp.week], count: 1 });
-            }
-          }
-          const entries = Array.from(grouped.values());
-          return (
-            <HighlightCard
-              icon={<MdEmojiEvents className="text-base" />}
-              title={`Podium${highlights.perfectPodiums.length > 1 ? 's' : ''} Parfait${highlights.perfectPodiums.length > 1 ? 's' : ''}`}
-              subtitle={`${highlights.perfectPodiums.length} sur la saison`}
-              accent="gold"
-              delay={(delayIdx++) * 0.08 + 0.1}
-              reducedMotion={reducedMotion}
-            >
-              <div className="flex flex-wrap gap-1.5">
-                {entries.map((entry, i) => (
-                  <span
-                    key={i}
-                    className="bg-neutral-700/60 text-[11px] text-neutral-200 px-2 py-0.5 rounded-full border border-neutral-600/60"
-                  >
-                    {entry.count > 1
-                      ? `${entry.userName} ×${entry.count}`
-                      : `${entry.userName} · S${entry.weeks[0]}`}
-                  </span>
-                ))}
-              </div>
-            </HighlightCard>
-          );
-        })()}
-
-        {/* Highest Bet Score */}
-        {highlights.highestBetScore && (
-          <HighlightCard
-            icon={<MdTrendingUp className="text-base" />}
-            title="Plus gros score de pari"
-            subtitle={`Semaine ${highlights.highestBetScore.week}`}
-            accent="emerald"
-            delay={(delayIdx++) * 0.08 + 0.1}
-            reducedMotion={reducedMotion}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-white truncate">
-                {highlights.highestBetScore.userName}
-              </span>
-              <span className="text-lg font-bold text-emerald-400 tabular-nums shrink-0">
-                {highlights.highestBetScore.points} pts
-              </span>
-            </div>
-          </HighlightCard>
-        )}
-
-        {/* Biggest Upset */}
-        {highlights.biggestUpset && (
-          <HighlightCard
-            icon={<span className="text-base">🎲</span>}
-            title="Plus gros upset"
-            subtitle={`Semaine ${highlights.biggestUpset.week}`}
-            accent="orange"
-            delay={(delayIdx++) * 0.08 + 0.1}
-            reducedMotion={reducedMotion}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-white truncate">
-                  {highlights.biggestUpset.userName}
-                </p>
-                <p className="text-[11px] text-neutral-500 truncate">
-                  a misé sur{" "}
-                  <span className="text-neutral-300">
-                    {highlights.biggestUpset.competitorName}
-                  </span>
-                </p>
-              </div>
-              <span className="text-lg font-bold text-orange-400 tabular-nums shrink-0">
-                ×{highlights.biggestUpset.odd.toFixed(1)}
-              </span>
-            </div>
-          </HighlightCard>
-        )}
-
         {/* Best Race Scorers (Perfect 60 pts races) */}
         {highlights.bestRaceScorers && highlights.bestRaceScorers.length > 0 && (
           <HighlightCard
@@ -710,8 +590,7 @@ function SlideHighlights({
         )}
 
         {/* Streaks */}
-        {(highlights.longestParticipationStreak ||
-          highlights.longestWinStreak ||
+        {(highlights.longestWinStreak ||
           highlights.mostRaces ||
           season.totalRaces > 0) && (
           <HighlightCard
@@ -722,19 +601,6 @@ function SlideHighlights({
             reducedMotion={reducedMotion}
           >
             <div className="divide-y divide-neutral-700/40">
-              {highlights.longestParticipationStreak && (
-                <div className="flex items-center justify-between gap-3 py-1.5">
-                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
-                    Participations
-                  </span>
-                  <span className="text-[12px] text-neutral-200 truncate text-right">
-                    {highlights.longestParticipationStreak.userName}{" "}
-                    <span className="text-primary-400 font-bold tabular-nums">
-                      {highlights.longestParticipationStreak.streak} sem.
-                    </span>
-                  </span>
-                </div>
-              )}
               {highlights.longestWinStreak && (
                 <div className="flex items-center justify-between gap-3 py-1.5">
                   <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
