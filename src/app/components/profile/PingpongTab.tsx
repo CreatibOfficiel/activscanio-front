@@ -2,11 +2,12 @@
 
 import { FC, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PingpongMatch, PingpongPlayer } from '../../models/Pingpong';
+import { PingpongBestWin, PingpongMatch, PingpongPlayer } from '../../models/Pingpong';
 import { pingpongRepository } from '../../repositories/PingpongRepository';
 import { calibrationProgress, winRate } from '../../utils/pingpong-leaderboard';
 import { Skeleton } from '../ui';
 import HeadToHeadSection from '../pingpong/HeadToHeadSection';
+import BestWinCard from '../pingpong/BestWinCard';
 
 interface PingpongTabProps {
   /**
@@ -26,6 +27,8 @@ interface Loaded {
   player: PingpongPlayer | null;
   matches: PingpongMatch[];
   opponents: PingpongPlayer[];
+  /** Null for a player who has never won. */
+  bestWin: PingpongBestWin | null;
 }
 
 interface StatProps {
@@ -84,22 +87,26 @@ const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => 
 
         // Nobody to build a rivalry list for, and no reason to ask.
         if (!player) {
-          if (!cancelled) setData({ player: null, matches: [], opponents: [] });
+          if (!cancelled) setData({ player: null, matches: [], opponents: [], bestWin: null });
           return;
         }
 
         // Secondary data. `allSettled` rather than `all` so one failure
         // leaves the stats above it standing.
-        const [matchesResult, boardResult] = await Promise.allSettled([
-          pingpongRepository.fetchPlayerMatches(competitorId),
-          pingpongRepository.fetchLeaderboard(),
-        ]);
+        const [matchesResult, boardResult, bestWinResult] =
+          await Promise.allSettled([
+            pingpongRepository.fetchPlayerMatches(competitorId),
+            pingpongRepository.fetchLeaderboard(),
+            pingpongRepository.fetchBestWin(competitorId),
+          ]);
 
         if (cancelled) return;
         setData({
           player,
           matches: matchesResult.status === 'fulfilled' ? matchesResult.value : [],
           opponents: boardResult.status === 'fulfilled' ? boardResult.value : [],
+          bestWin:
+            bestWinResult.status === 'fulfilled' ? bestWinResult.value : null,
         });
       } catch (caught) {
         console.error('Error fetching ping-pong profile:', caught);
@@ -258,6 +265,10 @@ const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => 
           </div>
         )}
       </section>
+
+      {/* Two personal surfaces, side by side: a record nobody can take, and
+          the rivalries that are true whatever your rank. */}
+      <BestWinCard bestWin={data.bestWin} />
 
       <HeadToHeadSection
         player={player}

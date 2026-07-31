@@ -159,6 +159,35 @@ export interface SelectablePlayer {
   playerId: string | null;
 }
 
+/**
+ * The strongest opponent this player has beaten.
+ *
+ * Monotone by construction: it reads only matches the player won, and only
+ * the opponent's rating from BEFORE that match. Nothing anyone else does
+ * can lower it — which is the whole point, since a rank is zero-sum and
+ * half a 25-person office sits in its bottom half by construction.
+ *
+ * Deliberately not a peak rating: a Glicko-2 rating falls as well as rises,
+ * and the decay cron lowers one during a holiday. A summit you have dropped
+ * below is a goal you have already failed.
+ */
+export interface PingpongBestWin {
+  matchId: string;
+  opponentId: string;
+  /** The opponent's rating before the match, not after. */
+  opponentRating: number;
+  /** The player's own rating before that match, for the gap. Null if unknown. */
+  playerRating: number | null;
+  playedAt: string;
+  opponent: {
+    id: string;
+    competitorId: string;
+    firstName: string;
+    lastName: string;
+    profilePictureUrl: string;
+  } | null;
+}
+
 /* -------- Request payloads -------- */
 
 export interface RecordMatchPayload {

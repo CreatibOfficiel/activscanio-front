@@ -1,4 +1,5 @@
 import {
+  PingpongBestWin,
   PingpongEloSnapshot,
   SelectablePlayer,
   PingpongHeadToHead,
@@ -76,6 +77,23 @@ export class PingpongRepository {
       throw new Error(`Error fetching ping-pong history: ${await res.text()}`);
     }
     return await res.json();
+  }
+
+  /**
+   * The strongest opponent this player has beaten, or null if they have
+   * never won. Null rather than a zero-rated placeholder: "beat someone
+   * rated 0" is not a thing that happened.
+   */
+  async fetchBestWin(competitorId: string): Promise<PingpongBestWin | null> {
+    const res = await apiFetch(
+      `${this.baseUrl}/pingpong/players/${competitorId}/best-win`,
+    );
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      throw new Error(`Error fetching best win: ${await res.text()}`);
+    }
+    const body = await res.text();
+    return body ? (JSON.parse(body) as PingpongBestWin) : null;
   }
 
   // GET /pingpong/players/:competitorId/matches

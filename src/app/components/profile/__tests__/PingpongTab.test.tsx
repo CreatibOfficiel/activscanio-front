@@ -8,6 +8,7 @@ jest.mock('../../../repositories/PingpongRepository', () => ({
     fetchPlayer: jest.fn(),
     fetchPlayerMatches: jest.fn(),
     fetchLeaderboard: jest.fn(),
+    fetchBestWin: jest.fn(),
   },
 }));
 
