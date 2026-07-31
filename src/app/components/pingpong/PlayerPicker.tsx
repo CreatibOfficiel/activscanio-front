@@ -4,22 +4,8 @@ import { FC, useId, useMemo, useState } from 'react';
 import { MdSearch } from 'react-icons/md';
 import { PingpongPlayer } from '../../models/Pingpong';
 import { formatCompetitorName } from '../../utils/formatters';
+import { matchesSearch } from '../../utils/search-text';
 import { UserAvatar } from '../ui';
-
-/**
- * Fold accents and case so "elodie" finds Élodie.
- *
- * Not `normalizeText` from utils/formatters — that one only trims. Typing
- * accents on a phone keyboard is a long-press, so nobody does it in a search
- * box, and a search that misses half the team is a search nobody uses.
- */
-function fold(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
 
 interface PlayerPickerProps {
   /** Names the side of the table, e.g. "Joueur A". Shown and announced. */
@@ -62,15 +48,15 @@ const PlayerPicker: FC<PlayerPickerProps> = ({
   const [query, setQuery] = useState('');
   const searchId = useId();
 
-  const visible = useMemo(() => {
-    const needle = fold(query);
-    return players
-      .filter((player) => player.id !== excludedId)
-      .filter((player) => {
-        if (needle === '') return true;
-        return fold(`${player.firstName} ${player.lastName}`).includes(needle);
-      });
-  }, [players, excludedId, query]);
+  const visible = useMemo(
+    () =>
+      players
+        .filter((player) => player.id !== excludedId)
+        .filter((player) =>
+          matchesSearch(`${player.firstName} ${player.lastName}`, query),
+        ),
+    [players, excludedId, query],
+  );
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>

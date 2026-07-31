@@ -18,6 +18,7 @@ import {
 } from "react-icons/md";
 import { Button } from "@/app/components/ui";
 import Spinner from "@/app/components/ui/Spinner";
+import { matchesSearch } from "@/app/utils/search-text";
 import imageCompression from "browser-image-compression";
 import exifr from "exifr";
 import { set as idbSet, del as idbDel } from "idb-keyval";
@@ -125,15 +126,10 @@ const AddRaceContent = () => {
   }, [allCompetitors, detectedCompetitorIds]);
 
   const filteredCompetitors = sortedCompetitors.filter((c) => {
-    const normalizeText = (text: string) =>
-      text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
     const fullName = c.firstName + " " + c.lastName;
     const characterName = c.characterVariant?.baseCharacter?.name || "";
     const searchableText = `${fullName} ${characterName}`;
-    return normalizeText(searchableText).includes(normalizeText(searchTerm));
+    return matchesSearch(searchableText, searchTerm);
   });
 
   /* ---------- Selection ---------- */

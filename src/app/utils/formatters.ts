@@ -43,9 +43,19 @@ export const formatOdds = (odds: number): string => {
 };
 
 /**
- * Normalize text by trimming whitespace
+ * Trim surrounding whitespace, and nothing else.
+ *
+ * Was called `normalizeText`, which was a trap: "normalize" reads as Unicode
+ * normalization, so two search boxes assumed it folded accents, found that it
+ * did not, and each wrote its own inline folder instead of fixing it.
+ *
+ * It deliberately still does not fold. Its caller is the add-pilote form,
+ * which hands the result straight to the API to be stored, and folding there
+ * would persist "Aurele" for a man who writes his name "Aurèle". Accents and
+ * case are preserved on purpose. For search, use `matchesSearch` from
+ * `utils/search-text`, which compares without ever writing anything back.
  */
-export const normalizeText = (text: string): string => {
+export const trimText = (text: string): string => {
   return text.trim();
 };
 

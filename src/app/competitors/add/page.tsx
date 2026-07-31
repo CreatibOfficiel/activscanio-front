@@ -8,7 +8,7 @@ import { AppContext } from "@/app/context/AppContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
-import { normalizeText } from "@/app/utils/formatters";
+import { trimText } from "@/app/utils/formatters";
 import { addCompetitorSchema, AddCompetitorFormData } from "@/app/schemas";
 import { Input, Button, PageHeader } from "@/app/components/ui";
 
@@ -32,8 +32,8 @@ const AddCompetitorPage: NextPage = () => {
     try {
       await addCompetitor({
         id: "",
-        firstName: normalizeText(data.firstName),
-        lastName: normalizeText(data.lastName),
+        firstName: trimText(data.firstName),
+        lastName: trimText(data.lastName),
         profilePictureUrl: data.profilePictureUrl || "",
         rating: 1500,
         rd: 350,
