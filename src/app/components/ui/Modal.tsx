@@ -10,6 +10,15 @@ interface ModalProps {
   title?: string;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  /**
+   * Where the dialog sits.
+   *
+   * 'sheet' anchors it to the bottom edge, full-width, for thumb reach on a
+   * phone. Positioning only: the portal, scroll lock, ESC, focus trap and
+   * focus restore are identical, which is the reason this is a variant here
+   * rather than a second component that would not inherit their fixes.
+   */
+  placement?: 'center' | 'sheet';
   showCloseButton?: boolean;
   closeOnBackdropClick?: boolean;
   closeOnEsc?: boolean;
@@ -24,6 +33,7 @@ const Modal: FC<ModalProps> = ({
   title,
   children,
   size = 'md',
+  placement = 'center',
   showCloseButton = true,
   closeOnBackdropClick = true,
   closeOnEsc = true,
@@ -123,7 +133,14 @@ const Modal: FC<ModalProps> = ({
         previous.focus();
       }
     }
-  }, [isOpen]);
+    // `mounted` is a dependency because the portal does not exist on the first
+    // render: for a modal rendered with isOpen already true, this effect first
+    // runs while modalRef is still null, so the focus call is a no-op and
+    // focus stays on document.body — outside a trap that is nonetheless armed,
+    // which lets Tab walk the page behind the backdrop. Re-running once the
+    // portal mounts is what actually moves focus in. Modals opened after mount
+    // were unaffected, which is why this survived so long.
+  }, [isOpen, mounted]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (closeOnBackdropClick && e.target === e.currentTarget) {
@@ -133,9 +150,13 @@ const Modal: FC<ModalProps> = ({
 
   if (!mounted || !isOpen) return null;
 
+  const isSheet = placement === 'sheet';
+
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fadeIn"
+      className={`fixed inset-0 z-50 flex justify-center bg-black/50 animate-fadeIn ${
+        isSheet ? 'items-end' : 'items-center p-4'
+      }`}
       onClick={handleBackdropClick}
       role="presentation"
     >
@@ -147,10 +168,13 @@ const Modal: FC<ModalProps> = ({
         aria-describedby={ariaDescribedBy}
         tabIndex={-1}
         className={`
-          relative w-full bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl
+          relative w-full bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08]
           shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden animate-slideUp
-          ${sizes[size]}
-          ${size !== 'full' ? 'max-h-[90vh]' : ''}
+          ${
+            isSheet
+              ? 'rounded-t-2xl border-b-0 max-h-[85vh] pb-[env(safe-area-inset-bottom)]'
+              : `rounded-2xl ${sizes[size]} ${size !== 'full' ? 'max-h-[90vh]' : ''}`
+          }
           ${className}
         `}
         style={{
@@ -179,7 +203,11 @@ const Modal: FC<ModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain max-h-[calc(90vh-140px)]">
+        <div
+          className={`p-4 sm:p-6 overflow-y-auto overscroll-contain ${
+            isSheet ? 'max-h-[calc(85vh-140px)]' : 'max-h-[calc(90vh-140px)]'
+          }`}
+        >
           {children}
         </div>
       </div>
