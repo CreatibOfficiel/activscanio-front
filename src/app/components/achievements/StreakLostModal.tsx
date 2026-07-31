@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { StreakLossPayload } from '@/app/types/bet-result';
+import { StreakLossPayload } from '@/app/types/streak-loss';
 
 interface StreakLostModalProps {
   losses: StreakLossPayload[];
@@ -16,7 +16,7 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
 
-  const bettingLoss = losses.find((l) => l.type === 'betting');
+  const bettingLoss = losses.find((l) => l.type === 'participation');
   const playLoss = losses.find((l) => l.type === 'play');
   const isMultiple = losses.length > 1;
 
@@ -119,7 +119,7 @@ export default function StreakLostModal({ losses, onClose }: StreakLostModalProp
                 {playLoss.missedDays && playLoss.missedDays.length > 0 && (
                   <p className="text-xs text-neutral-500 mt-2">
                     Jour{playLoss.missedDays.length > 1 ? 's' : ''} manqué{playLoss.missedDays.length > 1 ? 's' : ''} :{' '}
-                    {playLoss.missedDays.map((d) => {
+                    {playLoss.missedDays.map((d: string) => {
                       const date = new Date(d + 'T12:00:00');
                       return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
                     }).join(', ')}

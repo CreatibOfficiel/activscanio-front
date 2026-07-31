@@ -1,15 +1,12 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { BetResultPayload, StreakLossPayload } from '../types/bet-result';
+import { StreakLossPayload } from '../types/streak-loss';
 
-type QueueItem =
-  | { type: 'betResult'; data: BetResultPayload }
-  | { type: 'streakLoss'; data: StreakLossPayload[] };
+type QueueItem = { type: 'streakLoss'; data: StreakLossPayload[] };
 
 interface ResultModalsContextType {
   currentItem: QueueItem | null;
-  enqueueBetResult: (data: BetResultPayload) => void;
   enqueueStreakLoss: (data: StreakLossPayload[]) => void;
   advanceQueue: () => void;
 }
@@ -19,20 +16,9 @@ const ResultModalsContext = createContext<ResultModalsContextType | null>(null);
 export function ResultModalsProvider({ children }: { children: ReactNode }) {
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
-  const enqueueBetResult = useCallback((data: BetResultPayload) => {
-    setQueue((prev) => {
-      // Avoid duplicate bet results
-      if (prev.some((item) => item.type === 'betResult' && item.data.betId === data.betId)) {
-        return prev;
-      }
-      return [...prev, { type: 'betResult', data }];
-    });
-  }, []);
-
   const enqueueStreakLoss = useCallback((data: StreakLossPayload[]) => {
     if (data.length === 0) return;
     setQueue((prev) => {
-      // Avoid duplicate streak losses
       if (prev.some((item) => item.type === 'streakLoss')) {
         return prev;
       }
@@ -48,7 +34,7 @@ export function ResultModalsProvider({ children }: { children: ReactNode }) {
 
   return (
     <ResultModalsContext.Provider
-      value={{ currentItem, enqueueBetResult, enqueueStreakLoss, advanceQueue }}
+      value={{ currentItem, enqueueStreakLoss, advanceQueue }}
     >
       {children}
     </ResultModalsContext.Provider>

@@ -2,29 +2,22 @@
 
 import { FC, useEffect, useState, useCallback, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { BettingRepository } from "@/app/repositories/BettingRepository";
 import {
   SeasonsRepository,
   SeasonArchive,
 } from "@/app/repositories/SeasonsRepository";
 import { CompetitorsRepository } from "@/app/repositories/CompetitorsRepository";
-import { BettorRankingsView } from "./components/BettorRankingsView";
 import { CompetitorRankingsView } from "./components/CompetitorRankingsView";
-import { WeeklyOddsView } from "./components/WeeklyOddsView";
 import { ArchivedSeasonsView } from "./components/ArchivedSeasonsView";
 import TVProgressBar from "./components/TVProgressBar";
 import { useAutoScroll } from "@/app/hooks/useAutoScroll";
-import { BettorRanking, CompetitorOdds } from "@/app/models/CompetitorOdds";
 import { Competitor } from "@/app/models/Competitor";
-import { getCurrentSeasonNumber } from "@/app/utils/season-utils";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 enum DisplayView {
-  BETTOR_RANKINGS = "bettors",
   COMPETITOR_RANKINGS = "competitors",
-  WEEKLY_ODDS = "odds",
   ARCHIVED_SEASONS = "seasons",
 }
 
@@ -32,36 +25,19 @@ const DEFAULT_ROTATION_INTERVAL = 15000; // 15 seconds default
 const REFRESH_INTERVAL = 300000; // 5 minutes
 
 interface TVDisplayData {
-  bettorRankings: {
-    month: number;
-    year: number;
-    count: number;
-    rankings: BettorRanking[];
-  } | null;
   competitorRankings: Competitor[];
   archivedSeasons: SeasonArchive[];
-  weeklyOdds: CompetitorOdds[] | null;
-  currentWeekDates: string | null;
-  currentWeekStartDate: string | null;
-  currentWeekStatus: string | null;
 }
 
-const ALL_VIEWS = [
-  DisplayView.COMPETITOR_RANKINGS,
-  DisplayView.BETTOR_RANKINGS,
-];
+const ALL_VIEWS = [DisplayView.COMPETITOR_RANKINGS];
 
 const viewLabels: Record<DisplayView, string> = {
-  [DisplayView.BETTOR_RANKINGS]: "Parieurs",
   [DisplayView.COMPETITOR_RANKINGS]: "Pilotes",
-  [DisplayView.WEEKLY_ODDS]: "Cotes",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons",
 };
 
 const viewTitles: Record<DisplayView, string> = {
-  [DisplayView.BETTOR_RANKINGS]: "Classement des parieurs",
   [DisplayView.COMPETITOR_RANKINGS]: "Classement des pilotes",
-  [DisplayView.WEEKLY_ODDS]: "Cotes de la semaine",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons archivées",
 };
 
@@ -78,13 +54,8 @@ const TVDisplayContent: FC = () => {
   const [currentView, setCurrentView] = useState(DisplayView.COMPETITOR_RANKINGS);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [data, setData] = useState<TVDisplayData>({
-    bettorRankings: null,
     competitorRankings: [],
     archivedSeasons: [],
-    weeklyOdds: null,
-    currentWeekDates: null,
-    currentWeekStartDate: null,
-    currentWeekStatus: null,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,20 +74,10 @@ const TVDisplayContent: FC = () => {
   const activeViews = useMemo(() => {
     return ALL_VIEWS.filter((view) => {
       switch (view) {
-        case DisplayView.BETTOR_RANKINGS:
-          return (
-            data.bettorRankings &&
-            data.bettorRankings.rankings.length > 0
-          );
         case DisplayView.COMPETITOR_RANKINGS:
           return (
             data.competitorRankings.length > 0 &&
             data.competitorRankings.some((c) => c.raceCount && c.raceCount > 0)
-          );
-        case DisplayView.WEEKLY_ODDS:
-          return (
-            data.weeklyOdds &&
-            data.weeklyOdds.filter((o) => o.isEligible !== false).length > 0
           );
         case DisplayView.ARCHIVED_SEASONS:
           return data.archivedSeasons.length > 0;
@@ -124,7 +85,7 @@ const TVDisplayContent: FC = () => {
           return true;
       }
     });
-  }, [data.bettorRankings, data.competitorRankings, data.weeklyOdds, data.archivedSeasons]);
+  }, [data.competitorRankings, data.archivedSeasons]);
 
   // If current view is no longer active (e.g. data disappeared after refresh), fallback
   useEffect(() => {
@@ -177,39 +138,16 @@ const TVDisplayContent: FC = () => {
       try {
         setError(null);
 
-        const now = new Date();
-        const currentSeasonNum = getCurrentSeasonNumber();
-        const currentYear = now.getFullYear();
-
         const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
 
-        const [bettors, competitors, seasons, currentWeek] = await Promise.all([
-          BettingRepository.getMonthlyRankings(currentSeasonNum, currentYear).catch(
-            () => null
-          ),
+        const [competitors, seasons] = await Promise.all([
           competitorsRepo.fetchCompetitors().catch(() => []),
           SeasonsRepository.getAllSeasons().catch(() => []),
-          BettingRepository.getCurrentWeek().catch(() => null),
         ]);
 
-        let weeklyOdds: CompetitorOdds[] | null = null;
-        let currentWeekDates: string | null = null;
-        if (currentWeek) {
-          weeklyOdds = await BettingRepository.getWeekOdds(currentWeek.id).catch(() => null);
-          const start = new Date(currentWeek.startDate);
-          const end = new Date(currentWeek.endDate);
-          const fmt: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
-          currentWeekDates = `Semaine du ${start.toLocaleDateString("fr-FR", fmt)} au ${end.toLocaleDateString("fr-FR", fmt)}`;
-        }
-
         setData({
-          bettorRankings: bettors,
           competitorRankings: competitors,
           archivedSeasons: seasons,
-          weeklyOdds,
-          currentWeekDates,
-          currentWeekStartDate: currentWeek?.startDate ?? null,
-          currentWeekStatus: currentWeek?.status ?? null,
         });
         setLastUpdate(new Date());
         setIsLoading(false);
@@ -323,20 +261,8 @@ const TVDisplayContent: FC = () => {
             : "opacity-100 transform translate-x-0"
             }`}
         >
-          {currentView === DisplayView.BETTOR_RANKINGS && (
-            <BettorRankingsView rankings={data.bettorRankings} scrollRef={scrollRef} />
-          )}
           {currentView === DisplayView.COMPETITOR_RANKINGS && (
             <CompetitorRankingsView rankings={data.competitorRankings} scrollRef={scrollRef} />
-          )}
-          {currentView === DisplayView.WEEKLY_ODDS && (
-            <WeeklyOddsView
-              odds={data.weeklyOdds}
-              weekDates={data.currentWeekDates ?? undefined}
-              weekStartDate={data.currentWeekStartDate ?? undefined}
-              weekStatus={data.currentWeekStatus ?? undefined}
-              scrollRef={scrollRef}
-            />
           )}
           {currentView === DisplayView.ARCHIVED_SEASONS && (
             <ArchivedSeasonsView seasons={data.archivedSeasons} scrollRef={scrollRef} />

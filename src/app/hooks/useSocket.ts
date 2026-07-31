@@ -14,27 +14,6 @@ interface LevelUpData {
   rewards: unknown[];
 }
 
-interface BetFinalizedPayload {
-  betId: string;
-  weekId: string;
-  userId: string;
-  status: 'won' | 'lost';
-  pointsEarned: number;
-  isPerfectPodium: boolean;
-  perfectPodiumBonus: number;
-  correctPicks: number;
-  totalPicks: number;
-  hasBoost: boolean;
-  picks: Array<{
-    competitorName: string;
-    position: string;
-    isCorrect: boolean;
-    oddAtBet: number;
-    hasBoost: boolean;
-    pointsEarned: number;
-    usedBogOdd: boolean;
-  }>;
-}
 
 interface StreakLostData {
   type: 'betting' | 'play';
@@ -43,9 +22,6 @@ interface StreakLostData {
   missedDays?: string[];
 }
 
-interface PerfectScoreData {
-  imageUrl?: string;
-}
 
 interface Race {
   title?: string;
@@ -220,35 +196,7 @@ export const subscribeToAchievementRevoked = (
   };
 };
 
-/**
- * Subscribe to bet finalized events (enriched payload)
- */
-export const subscribeToBetFinalized = (
-  callback: (bet: BetFinalizedPayload) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
 
-  socket.on('bet:finalized', callback);
-
-  return () => {
-    socket?.off('bet:finalized', callback);
-  };
-};
-
-/**
- * Subscribe to perfect score events
- */
-export const subscribeToPerfectScore = (
-  callback: (data: PerfectScoreData) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('perfect:score', callback);
-
-  return () => {
-    socket?.off('perfect:score', callback);
-  };
-};
 
 /**
  * Subscribe to race announcement events (broadcast)
@@ -295,20 +243,6 @@ export const subscribeToCompetitorUpdated = (
   };
 };
 
-/**
- * Subscribe to rankings updated events (broadcast)
- */
-export const subscribeToRankingsUpdated = (
-  callback: (rankings: unknown) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('rankings:updated', callback);
-
-  return () => {
-    socket?.off('rankings:updated', callback);
-  };
-};
 
 /**
  * Subscribe to streak lost events (betting or play)
@@ -325,124 +259,12 @@ export const subscribeToStreakLost = (
   };
 };
 
-/**
- * Subscribe to duel received events (challenged user)
- */
-export const subscribeToDuelReceived = (
-  callback: (data: DuelReceivedData) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
 
-  socket.on('duel:received', callback);
 
-  return () => {
-    socket?.off('duel:received', callback);
-  };
-};
 
-/**
- * Subscribe to duel accepted events (challenger)
- */
-export const subscribeToDuelAccepted = (
-  callback: (data: { duelId: string }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
 
-  socket.on('duel:accepted', callback);
 
-  return () => {
-    socket?.off('duel:accepted', callback);
-  };
-};
 
-/**
- * Subscribe to duel declined events (challenger)
- */
-export const subscribeToDuelDeclined = (
-  callback: (data: { duelId: string }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:declined', callback);
-
-  return () => {
-    socket?.off('duel:declined', callback);
-  };
-};
-
-/**
- * Subscribe to duel resolved events (both users)
- */
-export const subscribeToDuelResolved = (
-  callback: (data: {
-    duelId: string;
-    winnerUserId: string;
-    loserUserId: string;
-    stakeType?: string;
-    stakeEmoji?: string;
-    stakeLabel?: string;
-  }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:resolved', callback);
-
-  return () => {
-    socket?.off('duel:resolved', callback);
-  };
-};
-
-/**
- * Subscribe to duel settled events (proof uploaded — both users + feed)
- */
-export const subscribeToDuelSettled = (
-  callback: (data: {
-    duelId: string;
-    winnerUserId: string;
-    loserUserId: string;
-    stakeEmoji?: string;
-    stakeLabel?: string;
-    proofPhotoUrl?: string;
-  }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:settled', callback);
-
-  return () => {
-    socket?.off('duel:settled', callback);
-  };
-};
-
-/**
- * Subscribe to duel unsettled events (proof undone — both users + feed)
- */
-export const subscribeToDuelUnsettled = (
-  callback: (data: { duelId: string }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:unsettled', callback);
-
-  return () => {
-    socket?.off('duel:unsettled', callback);
-  };
-};
-
-/**
- * Subscribe to duel cancelled events (both users)
- */
-export const subscribeToDuelCancelled = (
-  callback: (data: { duelId: string; reason: string }) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('duel:cancelled', callback);
-
-  return () => {
-    socket?.off('duel:cancelled', callback);
-  };
-};
 
 export interface LiveBetResolvedData {
   liveBetId: string;
@@ -452,17 +274,3 @@ export interface LiveBetResolvedData {
   oddAtBet: number;
 }
 
-/**
- * Subscribe to live bet resolved events (bettor)
- */
-export const subscribeToLiveBetResolved = (
-  callback: (data: LiveBetResolvedData) => void,
-): (() => void) | undefined => {
-  if (!socket) return;
-
-  socket.on('liveBet:resolved', callback);
-
-  return () => {
-    socket?.off('liveBet:resolved', callback);
-  };
-};

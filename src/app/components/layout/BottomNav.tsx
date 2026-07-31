@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   MdLeaderboard,
   MdFlag,
-  MdSportsMma,
   MdPerson,
 } from "react-icons/md";
 import { useSoundboard } from "../../context/SoundboardContext";
@@ -35,7 +34,6 @@ export default function BottomNav() {
   const items = [
     { href: "/", icon: MdLeaderboard, label: "Classement" },
     { href: "/races", icon: MdFlag, label: "Courses", activePaths: ["/races"] },
-    { href: "/betting", icon: MdSportsMma, label: "Défis", activePaths: ["/betting"] },
     { href: "/profile", icon: MdPerson, label: "Profil", activePaths: ["/profile", "/achievements"] },
   ];
 

@@ -21,8 +21,6 @@ describe('BOTTOM_NAV_HIDDEN_PATHS', () => {
       '/races/add',
       '/races/score-setup',
       '/races/summary',
-      '/betting/place-bet',
-      '/betting/live/create',
       '/competitors/add',
       '/competitors/edit',
       '/tv',
@@ -57,14 +55,9 @@ describe('SIDEBAR_HIDDEN_PATHS', () => {
     ]);
   });
 
-  it('still shows the sidebar on the four flows the bottom nav hides', () => {
+  it('still shows the sidebar on the flows the bottom nav hides', () => {
     // Documents the current divergence rather than endorsing it.
-    for (const path of [
-      '/betting/place-bet',
-      '/betting/live/create',
-      '/competitors/add',
-      '/competitors/edit',
-    ]) {
+    for (const path of ['/competitors/add', '/competitors/edit']) {
       expect(matchesAnyPath(path, SIDEBAR_HIDDEN_PATHS)).toBe(false);
       expect(matchesAnyPath(path, BOTTOM_NAV_HIDDEN_PATHS)).toBe(true);
     }
