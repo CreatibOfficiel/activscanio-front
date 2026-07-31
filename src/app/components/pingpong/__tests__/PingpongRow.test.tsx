@@ -43,6 +43,7 @@ describe('PingpongRow', () => {
       bestStreak: 6,
       lastMatchAt: '2026-03-14T12:00:00Z',
       previousDayRank: null,
+      previousWeekRank: null,
       provisional: false,
       inactive: false,
       archived: false,
@@ -176,6 +177,63 @@ describe('PingpongRow', () => {
       'data-inactive',
       'true',
     );
+  });
+
+  describe('weekly movement', () => {
+    it('shows a climb when the rank improved since Monday', () => {
+      render(<PingpongRow player={player({ rank: 2, previousWeekRank: 5 })} />);
+
+      expect(screen.getByTestId('pingpong-trend')).toHaveAttribute(
+        'data-direction',
+        'up',
+      );
+    });
+
+    it('shows a fall when the rank worsened', () => {
+      render(<PingpongRow player={player({ rank: 6, previousWeekRank: 3 })} />);
+
+      expect(screen.getByTestId('pingpong-trend')).toHaveAttribute(
+        'data-direction',
+        'down',
+      );
+    });
+
+    it('shows nothing when the rank held', () => {
+      // A stable arrow on most rows every week is visual noise.
+      render(<PingpongRow player={player({ rank: 4, previousWeekRank: 4 })} />);
+
+      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
+    });
+
+    it('shows nothing for a player who held no rank last week', () => {
+      // Null means "was unranked", not "was last". Treating it as a climb
+      // from the bottom would invent a movement that never happened.
+      render(<PingpongRow player={player({ rank: 3, previousWeekRank: null })} />);
+
+      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
+    });
+
+    it('shows nothing for a player with no rank now', () => {
+      render(
+        <PingpongRow
+          player={player({ rank: null, provisional: true, previousWeekRank: 2 })}
+        />,
+      );
+
+      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
+    });
+
+    it('reads the weekly rank, never the daily one', () => {
+      // previousDayRank exists on the row but is deliberately unused: a
+      // daily delta in a 25-player pool is sampling noise.
+      render(
+        <PingpongRow
+          player={player({ rank: 2, previousWeekRank: 2, previousDayRank: 9 })}
+        />,
+      );
+
+      expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
+    });
   });
 
   it('names the player', () => {

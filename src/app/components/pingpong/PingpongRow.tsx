@@ -6,6 +6,7 @@ import { calibrationProgress, winRate } from '../../utils/pingpong-leaderboard';
 import { formatCompetitorName } from '../../utils/formatters';
 import { UserAvatar } from '../ui';
 import RankBadge from '../leaderboard/RankBadge';
+import TrendIndicator from '../leaderboard/TrendIndicator';
 
 interface PingpongRowProps {
   player: PingpongPlayer;
@@ -44,6 +45,23 @@ const PingpongRow: FC<PingpongRowProps> = ({
   animationDelay = 0,
 }) => {
   const name = formatCompetitorName(player.firstName, player.lastName);
+
+  /**
+   * Movement since Monday, not since yesterday.
+   *
+   * `previousDayRank` exists on the row and is deliberately unread: in a
+   * 25-person pool a daily delta is mostly sampling noise, and an arrow
+   * presents noise as signal.
+   *
+   * Null means the player held no rank when the week opened — which is not
+   * the same as having been last, so it shows nothing rather than inventing
+   * a climb from the bottom. A stable arrow is also omitted: most rows hold
+   * their place most weeks, and an arrow on all of them says nothing.
+   */
+  const weeklyMove =
+    player.rank !== null && player.previousWeekRank !== null
+      ? player.previousWeekRank - player.rank
+      : 0;
   const rate = winRate(player);
 
   // Inactivity wins over calibration when both apply: "not seen for two
@@ -114,6 +132,20 @@ const PingpongRow: FC<PingpongRowProps> = ({
           )}
         </div>
       </div>
+
+      {weeklyMove !== 0 && (
+        <div
+          data-testid="pingpong-trend"
+          data-direction={weeklyMove > 0 ? 'up' : 'down'}
+          className="flex-shrink-0"
+        >
+          <TrendIndicator
+            direction={weeklyMove > 0 ? 'up' : 'down'}
+            value={Math.abs(weeklyMove)}
+            size="sm"
+          />
+        </div>
+      )}
 
       <div className="text-right flex-shrink-0">
         <p

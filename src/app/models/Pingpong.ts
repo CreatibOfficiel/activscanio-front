@@ -46,6 +46,15 @@ export interface PingpongPlayer {
   bestStreak: number;
   lastMatchAt: string | null;
   previousDayRank: number | null;
+  /**
+   * Rank held at the start of the week, for the movement indicator.
+   *
+   * Weekly rather than daily: in a pool this size a daily delta is mostly
+   * sampling noise, and an arrow presents noise as signal. Null when the
+   * player carried no rank when the week opened — which is not the same as
+   * having been last.
+   */
+  previousWeekRank: number | null;
   /** Still calibrating: fewer than 8 weighted matches, or RD above 150. */
   provisional: boolean;
   /** No match for 14 days. Still shown, but without a rank. */
