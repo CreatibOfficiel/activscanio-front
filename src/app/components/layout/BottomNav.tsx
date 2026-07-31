@@ -7,6 +7,7 @@ import {
   MdLeaderboard,
   MdFlag,
   MdPerson,
+  MdSportsTennis,
 } from "react-icons/md";
 import { useSoundboard } from "../../context/SoundboardContext";
 import { BOTTOM_NAV_HIDDEN_PATHS } from "@/app/config/routes";
@@ -34,6 +35,9 @@ export default function BottomNav() {
   const items = [
     { href: "/", icon: MdLeaderboard, label: "Classement" },
     { href: "/races", icon: MdFlag, label: "Courses", activePaths: ["/races"] },
+    // activePaths is required for anything but an exact match, or the tab
+    // goes dark inside its own section (/pingpong/matches).
+    { href: "/pingpong", icon: MdSportsTennis, label: "Ping-Pong", activePaths: ["/pingpong"] },
     { href: "/profile", icon: MdPerson, label: "Profil", activePaths: ["/profile", "/achievements"] },
   ];
 
