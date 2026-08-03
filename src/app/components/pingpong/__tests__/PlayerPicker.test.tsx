@@ -220,4 +220,77 @@ describe('PlayerPicker', () => {
 
     expect(screen.getByRole('listbox', { name: 'Joueur B' })).toBeInTheDocument();
   });
+
+  describe('adding someone who is not in the list', () => {
+    // The Mario Kart race form ends its picker with the same row. Without
+    // it, a new colleague can only be added from a different screen, and
+    // nothing here says so.
+    it('offers a way to create a competitor', () => {
+      render(
+        <PlayerPicker
+          label="Joueur A"
+          players={PLAYERS}
+          selectedId={null}
+          excludedId={null}
+          onSelect={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByTestId('picker-add-player')).toBeInTheDocument();
+    });
+
+    it('offers it even when the search matches nobody', async () => {
+      // This is when it is most needed: you searched for someone, they are
+      // not there, and the next thing you want is to add them.
+      render(
+        <PlayerPicker
+          label="Joueur A"
+          players={PLAYERS}
+          selectedId={null}
+          excludedId={null}
+          onSelect={jest.fn()}
+        />,
+      );
+
+      await userEvent.type(
+        screen.getByLabelText('Rechercher Joueur A'),
+        'personne-de-ce-nom',
+      );
+
+      expect(screen.getByTestId('picker-add-player')).toBeInTheDocument();
+    });
+
+    it('links to the competitor creation screen', () => {
+      render(
+        <PlayerPicker
+          label="Joueur A"
+          players={PLAYERS}
+          selectedId={null}
+          excludedId={null}
+          onSelect={jest.fn()}
+        />,
+      );
+
+      expect(screen.getByTestId('picker-add-player')).toHaveAttribute(
+        'href',
+        '/competitors/add',
+      );
+    });
+
+    it('is not one of the selectable options', () => {
+      // It navigates away rather than picking someone, so announcing it as
+      // an option would promise the wrong thing.
+      render(
+        <PlayerPicker
+          label="Joueur A"
+          players={PLAYERS}
+          selectedId={null}
+          excludedId={null}
+          onSelect={jest.fn()}
+        />,
+      );
+
+      expect(screen.getAllByRole('option')).toHaveLength(PLAYERS.length);
+    });
+  });
 });

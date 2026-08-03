@@ -1,7 +1,8 @@
 'use client';
 
 import { FC, useId, useMemo, useState } from 'react';
-import { MdSearch } from 'react-icons/md';
+import Link from 'next/link';
+import { MdPersonAdd, MdSearch } from 'react-icons/md';
 import { SelectablePlayer } from '../../models/Pingpong';
 import { formatCompetitorName } from '../../utils/formatters';
 import { matchesSearch } from '../../utils/search-text';
@@ -140,6 +141,24 @@ const PlayerPicker: FC<PlayerPickerProps> = ({
           </li>
         )}
       </ul>
+
+      {/* Outside the listbox on purpose: it navigates away rather than
+          picking someone, so announcing it as an option would promise the
+          wrong thing. Always shown, and most useful precisely when the
+          search found nobody — that is when you want to add them. Mirrors
+          the row the Mario Kart race form already ends its picker with. */}
+      <Link
+        href="/competitors/add"
+        data-testid="picker-add-player"
+        className="flex items-center gap-3 py-3 px-2 mt-1 text-left rounded-lg hover:bg-neutral-800/50 transition-colors"
+      >
+        <div className="w-10 h-10 rounded-full bg-neutral-800 border-2 border-dashed border-neutral-600 flex items-center justify-center flex-shrink-0">
+          <MdPersonAdd size={20} className="text-neutral-400" />
+        </div>
+        <span className="text-neutral-300 font-medium text-sm">
+          Ajouter un joueur
+        </span>
+      </Link>
     </div>
   );
 };
