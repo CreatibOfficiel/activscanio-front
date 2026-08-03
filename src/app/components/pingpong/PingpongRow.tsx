@@ -60,6 +60,10 @@ const PingpongRow: FC<PingpongRowProps> = ({
 
   // Inactivity wins over calibration when both apply: "not seen for two
   // weeks" is the more useful thing to report.
+  // The calibrating label names what the count is counting toward. "3/8
+  // matchs" states a ratio and leaves its purpose to be guessed, and on a
+  // board where the first eight matches produce no ranking at all, that
+  // purpose is the one thing explaining why the row carries no rank.
   const status = player.inactive
     ? { label: 'Inactif', testId: 'pingpong-status' }
     : player.provisional
@@ -67,7 +71,7 @@ const PingpongRow: FC<PingpongRowProps> = ({
           label: `${Math.round(
             calibrationProgress(player, MATCHES_TO_CALIBRATE) *
               MATCHES_TO_CALIBRATE,
-          )}/${MATCHES_TO_CALIBRATE} matchs`,
+          )} matchs sur ${MATCHES_TO_CALIBRATE} avant d'être classé`,
           testId: 'pingpong-status',
         }
       : null;

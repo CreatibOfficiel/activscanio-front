@@ -63,10 +63,11 @@ describe('BottomNav', () => {
     );
   });
 
-  it('keeps the ping-pong tab active inside the match list', () => {
+  it('keeps the ping-pong tab active deeper in its section', () => {
     // Without activePaths, isActiveRoute only matches an exact path, so the
-    // tab would go dark inside its own section.
-    mockPathname.mockReturnValue('/pingpong/matches');
+    // tab would go dark inside its own section. Asserted on a player profile
+    // rather than /pingpong/matches, which no longer exists.
+    mockPathname.mockReturnValue('/pingpong/players/abc');
     render(<BottomNav />);
 
     expect(screen.getByRole('link', { name: /ping-pong/i })).toHaveAttribute(
@@ -97,5 +98,18 @@ describe('BottomNav', () => {
     const { container } = render(<BottomNav />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('gives every tab a visible keyboard focus ring', () => {
+    // The only navigation in the app that had none. A keyboard or
+    // switch-control user tabbing through the bar could not tell which entry
+    // they were on, and the browser default outline is suppressed by the
+    // surrounding styles. Matches the sidebar's treatment.
+    mockPathname.mockReturnValue('/');
+    render(<BottomNav />);
+
+    for (const link of screen.getAllByRole('link')) {
+      expect(link.className).toMatch(/focus-visible:ring-2/);
+    }
   });
 });

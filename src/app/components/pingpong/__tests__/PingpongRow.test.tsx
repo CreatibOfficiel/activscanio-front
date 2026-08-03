@@ -98,7 +98,27 @@ describe('PingpongRow', () => {
       );
 
       // Progress, not a bare word: it tells them how far off they are.
-      expect(screen.getByTestId('pingpong-status')).toHaveTextContent('3/8');
+      expect(screen.getByTestId('pingpong-status')).toHaveTextContent('3');
+      expect(screen.getByTestId('pingpong-status')).toHaveTextContent('8');
+    });
+
+    it('says what the calibration count leads to', () => {
+      // "3/8 matchs" states a ratio without naming its purpose. On a board
+      // where the first eight matches produce no ranking at all, the missing
+      // half is the one that explains why the row carries no rank.
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            weightedMatchCount: 3,
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-status')).toHaveTextContent(
+        /class/i,
+      );
     });
 
     it('labels an inactive player differently', () => {

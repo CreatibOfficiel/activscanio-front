@@ -36,7 +36,7 @@ export default function BottomNav() {
     { href: "/", icon: MdLeaderboard, label: "Classement" },
     { href: "/races", icon: MdFlag, label: "Courses", activePaths: ["/races"] },
     // activePaths is required for anything but an exact match, or the tab
-    // goes dark inside its own section (/pingpong/matches).
+    // goes dark inside its own section (/pingpong/add, /pingpong/players/...).
     { href: "/pingpong", icon: MdSportsTennis, label: "Ping-Pong", activePaths: ["/pingpong"] },
     { href: "/profile", icon: MdPerson, label: "Profil", activePaths: ["/profile", "/achievements"] },
   ];
@@ -65,6 +65,7 @@ export default function BottomNav() {
                 relative flex flex-col items-center justify-center flex-1
                 py-2.5 rounded-2xl
                 transition-all duration-300
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
                 ${isActive ? "text-primary-400" : "text-neutral-400 hover:text-neutral-200"}
               `}
               aria-current={isActive ? "page" : undefined}

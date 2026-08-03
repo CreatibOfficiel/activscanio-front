@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { Skeleton } from '../components/ui';
 import PingpongRow from '../components/pingpong/PingpongRow';
+import PingpongMatchesSection from '../components/pingpong/PingpongMatchesSection';
 import AddActivityButton from '../components/sport/AddActivityButton';
 import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
+import { usePingpongMatches } from '../hooks/usePingpongMatches';
 
 /**
  * The ping-pong leaderboard.
@@ -33,9 +35,27 @@ import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
  * Crossing between the two boards belongs to the bottom nav, which already
  * offers both as explicit tabs to everyone whatever their preference. Two
  * controls that look different and do the same thing is the worse failure.
+ *
+ * The match history lives here too, below the board. It used to be its own
+ * route, `/pingpong/matches`, which nothing linked to — a fully-built page
+ * reachable only by typing the URL. Merging it answers the question the owner
+ * actually asked ("on aurait classement et match au meme endroit ?") and
+ * fixes the cold start: a rank is withheld until eight weighted matches, so
+ * early on this screen would otherwise be nothing but an empty ranking, which
+ * reads as a broken feature rather than a new one.
+ *
+ * Two requests, deliberately not one. The matches load through their own hook
+ * with their own loading and error states, so a history that fails still
+ * leaves a working leaderboard behind it.
  */
 export default function PingpongPage() {
   const { segmentation, loading, error } = usePingpongLeaderboard();
+  const {
+    matches,
+    loading: matchesLoading,
+    error: matchesError,
+    refresh: refreshMatches,
+  } = usePingpongMatches();
 
   const { ranked, calibrating, inactive, isEmpty } = segmentation;
   // One list, in tier order: settled ratings first, then those still
@@ -47,14 +67,20 @@ export default function PingpongPage() {
       <div className="max-w-2xl mx-auto px-4 pb-8">
         <div className="flex flex-col items-center mt-8 mb-6">
           <h1 className="text-title mb-2">Classement ping-pong</h1>
-          <p className="text-sm text-neutral-500">
-            <span data-testid="pingpong-count">{ranked.length}</span> joueur
-            {ranked.length > 1 ? 's' : ''} classé{ranked.length > 1 ? 's' : ''}
-            {calibrating.length > 0 &&
-              ` + ${calibrating.length} en calibrage`}
-            {inactive.length > 0 &&
-              ` + ${inactive.length} inactif${inactive.length > 1 ? 's' : ''}`}
-          </p>
+          {/* Suppressed on a cold start. "0 joueur classé" above an empty
+              board states a fact nobody needs and makes a new feature read
+              as a dead one; the empty state below says the useful thing
+              instead. It returns the moment anyone is on the board. */}
+          {!isEmpty && (
+            <p className="text-sm text-neutral-500">
+              <span data-testid="pingpong-count">{ranked.length}</span> joueur
+              {ranked.length > 1 ? 's' : ''} classé{ranked.length > 1 ? 's' : ''}
+              {calibrating.length > 0 &&
+                ` + ${calibrating.length} en calibrage`}
+              {inactive.length > 0 &&
+                ` + ${inactive.length} inactif${inactive.length > 1 ? 's' : ''}`}
+            </p>
+          )}
         </div>
 
         {loading && (
@@ -76,9 +102,19 @@ export default function PingpongPage() {
             <h2 className="text-heading text-white mb-2">
               Classement indisponible
             </h2>
-            <p className="text-regular text-neutral-400">
+            <p className="text-regular text-neutral-400 mb-6">
               Impossible de charger le classement. Réessaie dans un instant.
             </p>
+            {/* A failed read does not break the write path. Without this, an
+                unrelated server hiccup blocks recording a match that has
+                already been played, which is the one thing still worth doing
+                while the board is down. */}
+            <Link
+              href="/pingpong/add"
+              className="inline-block px-5 py-3 rounded-xl bg-primary-500 text-neutral-900 font-semibold text-sm"
+            >
+              Enregistrer un match
+            </Link>
           </div>
         )}
 
@@ -119,6 +155,19 @@ export default function PingpongPage() {
               />
             ))}
           </div>
+        )}
+
+        {/* Held back only while the board itself is loading or broken. A dead
+            board means the whole screen is an error message, and matches
+            below it would suggest the failure was partial when it was not.
+            Otherwise the section decides for itself what to render. */}
+        {!loading && !error && (
+          <PingpongMatchesSection
+            matches={matches}
+            loading={matchesLoading}
+            error={matchesError}
+            onRetry={refreshMatches}
+          />
         )}
       </div>
     </div>
