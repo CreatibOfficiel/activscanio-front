@@ -32,8 +32,9 @@ const mockedPreference = useSportPreference as jest.MockedFunction<
  * assumes the app forgot them, which is worse than seeing themselves
  * unranked.
  *
- * The sport switcher only exists for someone who follows both sports — a
- * control offering one choice conveys nothing.
+ * Crossing to the Mario Kart board is the bottom nav's job, not this page's.
+ * The sport switcher that used to sit here looked like a filter and behaved
+ * like navigation; see the block below for why it went.
  */
 describe('PingpongPage', () => {
   function player(overrides: Partial<PingpongPlayer> = {}): PingpongPlayer {
@@ -146,54 +147,99 @@ describe('PingpongPage', () => {
     expect(names[1]).toMatch(/Julie/);
   });
 
-  describe('the sport switcher', () => {
-    it('is absent for someone who follows one sport', async () => {
-      // A control with one option conveys nothing.
-      givenPreference(false);
-      givenBoard([player()]);
+  /**
+   * The sport switcher used to live here, and no longer does.
+   *
+   * These tests previously asserted it appeared for a `followsBoth` user and
+   * called router.push('/') when Mario Kart was picked. They now assert the
+   * opposite, because that control was the bug the user reported.
+   *
+   * It was a segmented radiogroup — the shape of an in-page filter — whose
+   * only behaviour was to navigate to a different route. Two failures
+   * compounded: nothing on screen predicted that tapping it would leave the
+   * page, and `/` is the app home, arriving with a season countdown, streak
+   * banners and a ranking animation. Worse, `/` renders no switcher of its
+   * own, so the "filter" only ever went one way — a filter you cannot undo
+   * from the other side is not a filter.
+   *
+   * The bottom nav already offers both boards as explicit tabs, to everyone,
+   * regardless of preference. Keeping a second control that looks unlike the
+   * first and does the same thing is worse than having only the first.
+   */
+  describe('crossing to the Mario Kart board', () => {
+    it('offers no radiogroup, whatever sports the user follows', async () => {
+      // Both preferences, since the old control was gated on followsBoth.
+      for (const followsBoth of [false, true]) {
+        givenPreference(followsBoth);
+        givenBoard([player()]);
 
-      render(<PingpongPage />);
+        const { unmount } = render(<PingpongPage />);
 
-      await waitFor(() => expect(screen.getAllByTestId('pingpong-row')).toHaveLength(1));
-      expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+        await waitFor(() =>
+          expect(screen.getAllByTestId('pingpong-row')).toHaveLength(1),
+        );
+        expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+
+        unmount();
+      }
     });
 
-    it('is present for someone who follows both', async () => {
+    it('pushes no route however the user pokes at it', async () => {
+      // The heart of the report: a tap that silently teleported. Clicking
+      // every control the page renders must leave the router untouched, so
+      // nothing here can move the user without a visible link saying so.
       givenPreference(true);
       givenBoard([player()]);
 
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getByRole('radiogroup')).toBeInTheDocument(),
+        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(1),
       );
+
+      for (const control of [
+        ...screen.queryAllByRole('button'),
+        ...screen.queryAllByRole('radio'),
+      ]) {
+        await userEvent.click(control);
+      }
+
+      expect(push).not.toHaveBeenCalled();
     });
 
-    it('crosses to the Mario Kart board when the other sport is picked', async () => {
-      // The two boards are separate routes, so switching is navigation.
-      givenPreference(true);
-      givenBoard([player()]);
-
-      render(<PingpongPage />);
-      await waitFor(() =>
-        expect(screen.getByRole('radiogroup')).toBeInTheDocument(),
-      );
-
-      await userEvent.click(
-        screen.getByRole('radio', { name: /mario kart/i }),
-      );
-
-      expect(push).toHaveBeenCalledWith('/');
-    });
-
-    it('shows ping-pong as the active sport', async () => {
+    it('offers no control naming the other sport', async () => {
+      // Whatever remains on this page, nothing advertises Mario Kart in a
+      // way a user could tap expecting a filter. Queried by accessible name
+      // across every role rather than by role: the old control's buttons
+      // carried role="radio", so a button-role query missed them entirely.
       givenPreference(true);
       givenBoard([player()]);
 
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getByRole('radio', { name: /ping-pong/i })).toBeChecked(),
+        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(1),
+      );
+      expect(screen.queryByText(/mario kart/i)).not.toBeInTheDocument();
+    });
+
+    it('leaves every interactive control on the page a plain link', async () => {
+      // The positive half of the rule: what stays must look like what it
+      // does. The empty-state CTA is a link to /pingpong/add, and a link
+      // that navigates is exactly what a user predicts.
+      givenPreference(true);
+      givenBoard([]);
+
+      render(<PingpongPage />);
+
+      await waitFor(() =>
+        expect(screen.getByTestId('pingpong-empty')).toBeInTheDocument(),
+      );
+
+      expect(screen.queryAllByRole('button')).toHaveLength(0);
+      expect(screen.getByRole('link', { name: /match/i })).toHaveAttribute(
+        'href',
+        '/pingpong/add',
       );
     });
   });

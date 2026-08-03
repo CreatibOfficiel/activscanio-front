@@ -1,12 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Skeleton } from '../components/ui';
 import PingpongRow from '../components/pingpong/PingpongRow';
-import SportSwitcher from '../components/sport/SportSwitcher';
 import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
-import { useSportPreference } from '../hooks/useSportPreference';
 
 /**
  * The ping-pong leaderboard.
@@ -24,11 +21,20 @@ import { useSportPreference } from '../hooks/useSportPreference';
  * A separate route from the Mario Kart board rather than a branch inside
  * it: that page runs a four-phase ranking animation over `Competitor`-typed
  * components, and a source-text guard test asserts on its contents.
+ *
+ * No sport switcher. There was one, gated on `followsBoth`, and it was the
+ * bug: a segmented radiogroup — the shape of an in-page filter — whose only
+ * behaviour was `router.push('/')`. Nothing about it predicted leaving the
+ * page, and `/` is the app home, which lands with a season countdown, streak
+ * banners and a ranking animation. It was one-directional too: `/` renders
+ * no switcher, so the "filter" could never be undone from the other side.
+ *
+ * Crossing between the two boards belongs to the bottom nav, which already
+ * offers both as explicit tabs to everyone whatever their preference. Two
+ * controls that look different and do the same thing is the worse failure.
  */
 export default function PingpongPage() {
-  const router = useRouter();
   const { segmentation, loading, error } = usePingpongLeaderboard();
-  const { followsBoth } = useSportPreference();
 
   const { ranked, calibrating, inactive, isEmpty } = segmentation;
   // One list, in tier order: settled ratings first, then those still
@@ -49,19 +55,6 @@ export default function PingpongPage() {
               ` + ${inactive.length} inactif${inactive.length > 1 ? 's' : ''}`}
           </p>
         </div>
-
-        {/* Only rendered for someone who follows both sports: a control
-            offering a single choice conveys nothing. */}
-        {followsBoth && (
-          <div className="flex justify-center mb-6">
-            <SportSwitcher
-              value="ping-pong"
-              onChange={(sport) => {
-                if (sport === 'mario-kart') router.push('/');
-              }}
-            />
-          </div>
-        )}
 
         {loading && (
           <div data-testid="pingpong-loading" className="space-y-2">
