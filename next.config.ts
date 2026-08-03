@@ -54,6 +54,16 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
+  // Emits `.next/standalone` with a self-contained server.js and only the
+  // node_modules actually traced as reachable. Lets the Docker runner stage
+  // skip shipping the full dependency tree.
+  //
+  // Standalone does NOT copy `public/` or `.next/static` into the output —
+  // the Dockerfile copies both explicitly from the builder stage. `public/`
+  // in particular must come from the builder, never the build context:
+  // next-pwa writes `sw-custom.js` / `workbox-*.js` there during the build
+  // and `scripts/post-build-sw.js` mutates it afterwards.
+  output: "standalone",
   images: {
     unoptimized: true,
     remotePatterns: [

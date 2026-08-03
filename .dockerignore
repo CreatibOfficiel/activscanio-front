@@ -1,26 +1,79 @@
-# Exclude local dependencies
+# Dependencies.
+#
+# Load-bearing, not just a size optimisation: `sharp` ships platform-specific
+# native binaries (@img/sharp-<platform>). The host here is macOS arm64, the
+# target is linux amd64. If the host node_modules leaked into the build
+# context, `npm ci` layer caching could surface darwin binaries in a linux
+# image. Let the image install its own.
 node_modules
+.pnp
+.pnp.*
+.yarn
 
-# Exclude Next.js build output folders
+# Build output. The image builds these itself; copying stale local output in
+# would also let a previously generated public/sw-custom.js shadow the fresh one.
 .next
 out
+build
 dist
+*.tsbuildinfo
 
-# Exclude version control files and directories
+# Environment files.
+#
+# Critical: `.env` exists locally and holds a real CLERK_SECRET_KEY. Next.js
+# `output: "standalone"` copies `.env` into `.next/standalone/`, so without
+# this rule a dev secret would be baked into the production image AND would
+# override the CLERK_SECRET_KEY injected at runtime with `-e`.
+# `.env.example` is kept: it is checked in and holds no secrets.
+.env
+.env.*
+!.env.example
+
+# Vercel / Clerk local link state (contains project ids and secrets).
+.vercel
+.clerk
+
+# Version control.
 .git
 .gitignore
+.gitattributes
 
-# Exclude Docker configuration files (they are not needed in the image)
+# Docker + compose files. Not needed inside the image, and changes to them
+# should not bust the build cache.
 Dockerfile*
 .dockerignore
+docker-compose*.yml
+deploy
 
-# Exclude log files
+# Tests and coverage. Not run in the image.
+coverage
+jest.config.js
+jest.setup.js
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Logs.
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# Exclude local environment variable files
-.env
+# Editor / OS cruft.
+.idea
+.vscode
+.DS_Store
+*.pem
+.swc
 
-# Exclude test coverage reports
-coverage
+# Docs and local scripts that are not part of the build.
+*.md
+!README.md
+deploy-front.sh
+
+# The pnpm lockfile is stale here; the image builds from package-lock.json
+# via `npm ci`. Shipping both invites the wrong one being used.
+pnpm-lock.yaml
