@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Skeleton } from '../components/ui';
 import PingpongRow from '../components/pingpong/PingpongRow';
+import AddActivityButton from '../components/sport/AddActivityButton';
 import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
 
 /**
@@ -102,6 +103,11 @@ export default function PingpongPage() {
             </Link>
           </div>
         )}
+
+        {/* Gated the same way as the races page: with an empty board the
+            empty state's own call to action sits a few pixels away, and two
+            prompts to do the same thing on one screen is one too many. */}
+        {!loading && !error && !isEmpty && <AddActivityButton />}
 
         {!loading && !error && !isEmpty && (
           <div className="space-y-2">

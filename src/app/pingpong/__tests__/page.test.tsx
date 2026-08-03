@@ -244,6 +244,44 @@ describe('PingpongPage', () => {
     });
   });
 
+  describe('the add button', () => {
+    it('is offered once someone is on the board', () => {
+      givenBoard([player()]);
+
+      render(<PingpongPage />);
+
+      expect(screen.getByTestId('add-activity')).toBeInTheDocument();
+    });
+
+    it('is absent on an empty board', () => {
+      // The empty state carries its own call to action a few pixels away.
+      // Two prompts to do the same thing on one screen is one too many.
+      givenBoard([]);
+
+      render(<PingpongPage />);
+
+      expect(screen.queryByTestId('add-activity')).not.toBeInTheDocument();
+    });
+
+    it('is absent while loading', () => {
+      givenBoard([], { loading: true });
+
+      render(<PingpongPage />);
+
+      expect(screen.queryByTestId('add-activity')).not.toBeInTheDocument();
+    });
+
+    it('is absent when the board failed to load', () => {
+      // Offering to add a match under an error message reads as if the
+      // error had nothing to do with the app.
+      givenBoard([], { error: new Error('offline') });
+
+      render(<PingpongPage />);
+
+      expect(screen.queryByTestId('add-activity')).not.toBeInTheDocument();
+    });
+  });
+
   describe('states', () => {
     it('shows a loading state', () => {
       givenBoard([], { loading: true });
