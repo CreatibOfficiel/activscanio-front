@@ -65,7 +65,14 @@ const nextConfig: NextConfig = {
   // and `scripts/post-build-sw.js` mutates it afterwards.
   output: "standalone",
   images: {
-    unoptimized: true,
+    // Optimization is ON. It was previously disabled (`unoptimized: true`),
+    // which made every <Image> serve the original bytes: a 3.3 MB 3024x4032
+    // phone photo was being downloaded to fill a 38x38 avatar.
+    //
+    // The optimizer needs `sharp` AT RUNTIME. Next resolves it from
+    // node_modules inside the standalone output, so `sharp` MUST stay in
+    // `dependencies` (not devDependencies) or the runner stage 500s on
+    // /_next/image. See package.json and the Dockerfile deps stage.
     remotePatterns: [
       {
         protocol: "https",
@@ -79,7 +86,32 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      // Uploaded profile pictures and duel proofs. The API serves them at
+      // /images/... on the SAME host as the web app (nginx routes /images/
+      // to the API container), but PUBLIC_IMAGE_URL stores them as absolute
+      // https:// URLs, so Next still requires an explicit allow-list entry.
+      {
+        protocol: "https",
+        hostname: "azule.ascan.io",
+        port: "",
+        pathname: "/images/**",
+      },
+      // Local development: the API serves images off its own port.
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "",
+        pathname: "/images/**",
+      },
     ],
+    // Uploads are normalized to WebP server-side (see the API's
+    // ImageProcessingService); AVIF on top of that buys little and costs
+    // noticeably more CPU per variant on a single VPS.
+    formats: ["image/webp"],
+    // Avatars dominate this app: 28-80 CSS px, so 32/48/64/96/128 cover
+    // 1x-3x DPR without generating a long tail of unused variants.
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    minimumCacheTTL: 2592000,
   },
 };
 

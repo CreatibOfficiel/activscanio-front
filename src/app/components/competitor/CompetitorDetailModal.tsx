@@ -451,7 +451,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 {positions.slice(0, 5).map((pos, i) => {
                   const isPodium = pos <= 3;
                   const illustration = isPodium
-                    ? `/illustrations/${pos === 1 ? 'gold' : pos === 2 ? 'silver' : 'bronze'}-medal.png`
+                    ? `/illustrations/${pos === 1 ? 'gold' : pos === 2 ? 'silver' : 'bronze'}-medal.webp`
                     : '/illustrations/flag.webp';
 
                   return (
@@ -659,7 +659,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
                 {recentRaces.map((race) => {
                   const isPodium = race.rank12 <= 3;
                   const illustration = isPodium
-                    ? `/illustrations/${race.rank12 === 1 ? 'gold' : race.rank12 === 2 ? 'silver' : 'bronze'}-medal.png`
+                    ? `/illustrations/${race.rank12 === 1 ? 'gold' : race.rank12 === 2 ? 'silver' : 'bronze'}-medal.webp`
                     : '/illustrations/flag.webp';
 
                   return (

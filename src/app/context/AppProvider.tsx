@@ -97,7 +97,7 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   /* ───────── competitor CRUD ───────── */
   const addCompetitor = async (newCompetitor: Competitor) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     const created = await competitorsRepo.createCompetitor(newCompetitor, token!);
     setCompetitors((prev) => [...prev, created]);
     return created;
@@ -113,7 +113,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     id: string,
     payload: UpdateCompetitorPayload
   ) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     const updated = await competitorsRepo.updateCompetitor(id, payload, token!);
     setCompetitors((prev) =>
       prev.map((c) => (c.id === updated.id ? updated : c))
@@ -125,7 +125,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     competitorId: string,
     variantId: string
   ) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     const updated = await competitorsRepo.linkCharacterToCompetitor(
       competitorId,
       variantId,
@@ -138,7 +138,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   };
 
   const unlinkCharacterFromCompetitor = async (competitorId: string) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     const updated = await competitorsRepo.unlinkCharacterFromCompetitor(
       competitorId,
       token!,
@@ -151,7 +151,7 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   /* ───────── races ───────── */
   const addRaceEvent = async (results: RaceResult[]) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     const generatedId = Math.floor(Math.random() * 999_999).toString();
     const newEvent: RaceEvent = {
       id: generatedId,
@@ -167,12 +167,12 @@ export function AppProvider({ children }: PropsWithChildren) {
   };
 
   const getRaceById = useCallback(async (raceId: string) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     return racesRepo.fetchRaceById(raceId, token!);
   }, [getToken]);
 
   const getRecentRacesOfCompetitor = useCallback(async (competitorId: string) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     return racesRepo.fetchRecentRacesOfCompetitor(competitorId, undefined, token!);
   }, [getToken]);
 
@@ -181,7 +181,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, []);
 
   const getSimilarRaces = useCallback(async (raceId: string) => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     return racesRepo.fetchSimilarRaces(raceId, token!);
   }, [getToken]);
 
@@ -190,7 +190,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     image: File,
     competitorIds: string[]
   ): Promise<RaceAnalysisResult> => {
-    const token = await getToken({ skipCache: true });
+    const token = await getToken();
     return raceAnalysisRepo.uploadImageForAnalysis(image, competitorIds, token!);
   };
 

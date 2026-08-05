@@ -23,7 +23,7 @@ export default function ShareAchievementButton({
   const generateShareImage = async () => {
     setIsGenerating(true);
     try {
-      const token = await getToken({ skipCache: true });
+      const token = await getToken();
       const response = await fetch(
         `${apiUrl}/share/achievement/${achievementId}`,
         {

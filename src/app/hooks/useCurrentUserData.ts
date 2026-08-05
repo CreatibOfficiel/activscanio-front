@@ -41,8 +41,9 @@ export function useCurrentUserData() {
 
     (async () => {
       try {
-        // Force fresh token when cache is empty to avoid stale tokens
-        const token = await getToken({ skipCache: true });
+        // Cached token: Clerk handles renewal. A 401 clears the cache below
+        // so the next mount retries.
+        const token = await getToken();
         if (!token || cancelled) return;
 
         const data = await UsersRepository.getMe(token);

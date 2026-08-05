@@ -41,8 +41,9 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     setIsChecking(true);
 
     try {
-      // Force fresh token to avoid using an expired cached token
-      const token = await getTokenRef.current({ skipCache: true });
+      // Use the cached token: Clerk refreshes it on expiry, and a 401 from
+      // the API is already handled below (redirect to sign-in).
+      const token = await getTokenRef.current();
       if (!token) {
         setIsChecking(false);
         return;

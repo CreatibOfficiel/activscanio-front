@@ -145,7 +145,7 @@ const OnboardingPage: FC = () => {
   useEffect(() => {
     const loadBaseCharacters = async () => {
       try {
-        const token = await getToken({ skipCache: true });
+        const token = await getToken();
         if (!token) return;
 
         const characters = await OnboardingRepository.getAllBaseCharactersWithStatus(token);
@@ -176,7 +176,7 @@ const OnboardingPage: FC = () => {
 
       try {
         setIsLoading(true);
-        const token = await getToken({ skipCache: true });
+        const token = await getToken();
         if (!token) return;
 
         const results = await OnboardingRepository.searchCompetitors('', token);
@@ -326,7 +326,7 @@ const OnboardingPage: FC = () => {
       // Bettor path: complete onboarding directly with competitor link
       try {
         setIsSubmitting(true);
-        const token = await getToken({ skipCache: true });
+        const token = await getToken();
         if (!token) throw new Error('Token non disponible');
 
         await OnboardingRepository.completeOnboarding(
@@ -418,7 +418,7 @@ const OnboardingPage: FC = () => {
       // Bettor path: complete onboarding directly with new competitor
       try {
         setIsSubmitting(true);
-        const token = await getToken({ skipCache: true });
+        const token = await getToken();
         if (!token) throw new Error('Token non disponible');
 
         await OnboardingRepository.completeOnboarding(
@@ -456,7 +456,7 @@ const OnboardingPage: FC = () => {
 
     try {
       setIsSubmitting(true);
-      const token = await getToken({ skipCache: true });
+      const token = await getToken();
       if (!token) {
         throw new Error('Token non disponible');
       }

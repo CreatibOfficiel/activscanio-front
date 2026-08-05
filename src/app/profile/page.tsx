@@ -98,7 +98,7 @@ const ProfilePage: FC = () => {
         setLoading(true);
         setError(null);
 
-        const token = await getToken({ skipCache: true });
+        const token = await getToken();
         if (!token) {
           throw new Error('Non authentifié');
         }
@@ -176,13 +176,13 @@ const ProfilePage: FC = () => {
 
   // Handle character change
   const handleChangeCharacter = useCallback(async (variantId: string) => {
-    const freshToken = await getToken({ skipCache: true });
-    if (!freshToken) {
+    const token = await getToken();
+    if (!token) {
       throw new Error('Non authentifié');
     }
 
     try {
-      const updatedUser = await UsersRepository.changeCharacter(variantId, freshToken);
+      const updatedUser = await UsersRepository.changeCharacter(variantId, token);
       setUserData(updatedUser);
       toast.success('Personnage changé avec succès !');
     } catch (error) {

@@ -18,6 +18,14 @@ build
 dist
 *.tsbuildinfo
 
+# Pre-optimisation originals kept locally as a safety copy (3.8 MB, e.g. a
+# 1500x1000 flag_1.webp at 605 KB and a 410 KB icon-512x512.png). Everything
+# under public/ is served publicly and copied into the runner image, so
+# without this rule the image ships — and exposes — the very files the
+# optimisation pass replaced. Excluded from the build context only; the local
+# folder is left untouched.
+public/_originals-backup
+
 # Environment files.
 #
 # Critical: `.env` exists locally and holds a real CLERK_SECRET_KEY. Next.js

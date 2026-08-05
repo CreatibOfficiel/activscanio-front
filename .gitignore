@@ -52,3 +52,6 @@ public/workbox-*.js.map
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# originaux d'avant compression, gardés en local comme filet de sécurité
+public/_originals-backup/

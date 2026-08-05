@@ -168,7 +168,7 @@ const EditCompetitorPage: NextPage = () => {
         <ImageUpload
           currentImageUrl={profilePictureUrl}
           onUpload={async (file) => {
-            const token = await getToken({ skipCache: true });
+            const token = await getToken();
             const repo = new CompetitorsRepository(API_BASE_URL);
             const updated = await repo.uploadProfilePicture(
               state.competitor!.id,

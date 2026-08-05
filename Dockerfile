@@ -6,6 +6,19 @@
 # `sharp` resolves a platform-specific native binary at install time and
 # Next.js traces that binary into the standalone output.
 #
+# This is now load-bearing, not just a nice-to-have. next.config.ts enables
+# image optimization (it used to set `unoptimized: true`), and the optimizer
+# calls sharp on EVERY /_next/image request at runtime. Consequences:
+#   - `sharp` must be in package.json `dependencies`, not devDependencies, or
+#     the traced standalone bundle omits it and /_next/image 500s. It was in
+#     devDependencies, which is the most likely reason optimization was
+#     disabled in the first place.
+#   - Building on arm64 traces @img/sharp-darwin-arm64 into the output; on
+#     this alpine/amd64 base the correct package is @img/sharp-linuxmusl-x64.
+#     A cross-arch build produces an image whose optimizer cannot start.
+# .dockerignore excludes node_modules and .next precisely so the host's
+# arm64 binaries can never leak in.
+#
 # ---------------------------------------------------------------------------
 # NEXT_PUBLIC_* are INLINED INTO THE JS BUNDLE AT BUILD TIME.
 # Passing them at runtime (compose `environment:`, `docker run -e`) does
