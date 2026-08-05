@@ -33,8 +33,13 @@ const SINGLE_SPORT: Record<Sport, { href: string; label: string }> = {
 };
 
 /** Shared by both variants: the shape, the transition, the centring. */
+// No positioning here on purpose. `relative` used to live in this string, and
+// because Tailwind resolves conflicting utilities by their order in the
+// stylesheet rather than in the class attribute, it beat the `fixed` that the
+// floating variant appends — so the FAB landed in the flow at the top of the
+// page instead of above the nav. Each variant now owns its own positioning.
 const BASE_CLASSES =
-  'relative flex items-center justify-center transition-all duration-300 group';
+  'flex items-center justify-center transition-all duration-300 group';
 
 /**
  * The bar's centre action.
@@ -51,7 +56,7 @@ const BASE_CLASSES =
  * overlaps at the bottom edge.
  */
 const NAV_CLASSES =
-  'w-[57px] h-[65px] bg-primary-500 text-neutral-900 rounded-3xl shadow-[0_8px_24px_rgba(0,0,0,0.45)] hover:bg-primary-400 active:scale-95';
+  'relative w-[57px] h-[65px] bg-primary-500 text-neutral-900 rounded-3xl shadow-[0_8px_24px_rgba(0,0,0,0.45)] hover:bg-primary-400 active:scale-95';
 
 /** The original floating action button, anchored clear of the bar. */
 const FAB_CLASSES =

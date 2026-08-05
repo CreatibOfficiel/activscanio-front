@@ -29,6 +29,43 @@ const mockedPreference = useSportPreference as jest.MockedFunction<
  * silently breaks all three.
  */
 describe('AddActivityButton', () => {
+  /**
+   * Where the control sits is not decoration — it is the whole difference
+   * between the two variants, and it broke in production without a single
+   * test noticing. `relative` sat in the shared base string, and Tailwind
+   * resolves conflicting utilities by their order in the STYLESHEET, not in
+   * the class attribute, so it beat the `fixed` the floating variant
+   * appended. The button rendered in the flow at the top of the page,
+   * underneath Safari's own chrome, on both boards.
+   *
+   * Asserting on class names is usually a smell. Here the class IS the
+   * behaviour: nothing else in jsdom can observe that an element is pinned
+   * above the nav rather than sitting in the document flow.
+   */
+  describe('where each variant sits', () => {
+    it('pins the floating variant above the nav, bottom right', () => {
+      givenSports(['ping-pong']);
+      render(<AddActivityButton variant="floating" />);
+
+      const control = screen.getByRole('link');
+      expect(control).toHaveClass('fixed');
+      expect(control).toHaveClass('right-6');
+      // The one that regressed: a stray `relative` anywhere in the string
+      // takes the element out of fixed positioning.
+      expect(control).not.toHaveClass('relative');
+    });
+
+    it('leaves the nav variant in the flow, for the bar to place', () => {
+      givenSports(['ping-pong']);
+      render(<AddActivityButton variant="nav" />);
+
+      const control = screen.getByRole('link');
+      expect(control).not.toHaveClass('fixed');
+      // `relative` is load-bearing here: the glow is a -z-10 layer behind it.
+      expect(control).toHaveClass('relative');
+    });
+  });
+
   function givenSports(
     sports: Array<'mario-kart' | 'ping-pong'>,
     loading = false,
