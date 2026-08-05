@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import Home from '../page';
 import { AppContext } from '../context/AppContext';
@@ -60,8 +61,21 @@ jest.mock('../context/AddActivitySlotContext', () => ({
   AddActivitySlot: () => <div data-testid="add-activity-slot" />,
 }));
 
+/**
+ * A client per render, with retries off.
+ *
+ * `Home` reads its competitors through React Query now, so rendering it
+ * without a provider throws before a single tab is asserted on. Retries are
+ * disabled because a failing query would otherwise be retried on a timer and
+ * outlive the test.
+ */
 function renderBoard() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
   return render(
+    <QueryClientProvider client={client}>
     <AppContext.Provider
       value={
         {
@@ -72,7 +86,8 @@ function renderBoard() {
       }
     >
       <Home />
-    </AppContext.Provider>,
+    </AppContext.Provider>
+    </QueryClientProvider>,
   );
 }
 
