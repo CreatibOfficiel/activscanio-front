@@ -16,6 +16,16 @@ export interface FilterState {
 
 interface Props {
   competitors: Competitor[];
+  /**
+   * True while `competitors` is still empty because the app context has not
+   * answered yet, as opposed to genuinely empty.
+   *
+   * The history no longer waits on the context before drawing its cards, so
+   * this strip renders at least once with no players in hand. The two states
+   * look identical from in here and mean opposite things to a reader, so the
+   * caller has to say which one it is.
+   */
+  competitorsLoading?: boolean;
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
 }
@@ -27,7 +37,12 @@ const periodOptions: { value: PeriodFilter; label: string }[] = [
   { value: "season", label: "Cette saison" },
 ];
 
-const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
+const RaceFilters: FC<Props> = ({
+  competitors,
+  competitorsLoading = false,
+  filters,
+  onFilterChange,
+}) => {
   const [showCompetitorDropdown, setShowCompetitorDropdown] = useState(false);
   const [competitorSearch, setCompetitorSearch] = useState("");
 
@@ -83,13 +98,20 @@ const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
       <div className="flex items-center gap-2">
         {/* Competitor dropdown */}
         <div className="relative flex-1">
+          {/* Disabled only while the names are in flight. Opening onto a list
+              that is about to change under the pointer is worse than a moment
+              of not being able to open it. Padding, text size and both icons
+              are identical in every branch below, so the button occupies the
+              same box throughout and the strip never reflows. */}
           <button
             onClick={() => setShowCompetitorDropdown(!showCompetitorDropdown)}
+            disabled={competitorsLoading}
+            aria-busy={competitorsLoading || undefined}
             className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl text-sub transition-all duration-200 ${
               selectedCompetitor
                 ? "bg-primary-500/10 text-primary-500 border border-primary-500/30"
                 : "bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-neutral-600"
-            }`}
+            } ${competitorsLoading ? "opacity-60 cursor-default" : ""}`}
           >
             <div className="flex items-center gap-2 min-w-0">
               <MdFilterList className="flex-shrink-0" />
@@ -118,6 +140,12 @@ const RaceFilters: FC<Props> = ({ competitors, filters, onFilterChange }) => {
                     {formatCompetitorName(selectedCompetitor.firstName, selectedCompetitor.lastName)}
                   </span>
                 </>
+              ) : competitorsLoading ? (
+                /* Checked after `selectedCompetitor`, not before. A filter can
+                   be active while the names are still loading — the list is
+                   already filtered by id — and showing "Chargement..." over it
+                   would suggest no filter is applied. */
+                <span>Chargement...</span>
               ) : (
                 <span>Filtrer par joueur</span>
               )}
