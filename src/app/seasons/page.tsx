@@ -1,72 +1,51 @@
-"use client";
+import { FC } from 'react';
+import {
+  SeasonsRepository,
+  type SeasonArchive,
+} from '@/app/repositories/SeasonsRepository';
+import { Card } from '@/app/components/ui';
+import { MdErrorOutline } from 'react-icons/md';
+import SeasonsList from './SeasonsList';
 
-import { FC, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { SeasonsRepository, SeasonArchive } from '@/app/repositories/SeasonsRepository';
-import { Card, Badge, Button } from '@/app/components/ui';
-import { MdCalendarToday, MdPeople, MdTrendingUp, MdSportsMartialArts, MdChevronLeft, MdChevronRight } from 'react-icons/md';
-import { toast } from 'sonner';
+/**
+ * Archived seasons are immutable once written: the cron archives a season on
+ * the 1st of the month and never touches it again. The only thing that ever
+ * changes here is a new row appearing, once a month.
+ *
+ * An hour is therefore already conservative — it bounds the staleness of "a
+ * new season showed up" to well under a day, while letting every visit inside
+ * the window serve prerendered HTML with no call to the API at all.
+ */
+export const revalidate = 3600;
 
-const ITEMS_PER_PAGE = 12;
+export const metadata = {
+  title: 'Historique des Saisons | MushroomBet',
+  description: 'Consultez les archives des saisons précédentes',
+};
 
-const SeasonsPage: FC = () => {
-  const router = useRouter();
-  const [seasons, setSeasons] = useState<SeasonArchive[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+/**
+ * Server component: fetches the archive list at render time so the HTML ships
+ * filled. `getAllSeasons()` hits a public endpoint and needs no Clerk token,
+ * which is what makes this route SSR-able at all — the middleware still gates
+ * access to the page itself.
+ */
+const SeasonsPage: FC = async () => {
+  let seasons: SeasonArchive[] = [];
+  let failed = false;
 
-  useEffect(() => {
-    const loadSeasons = async () => {
-      try {
-        setIsLoading(true);
-        const data = await SeasonsRepository.getAllSeasons();
-        setSeasons(data);
-      } catch (error) {
-        console.error('Error loading seasons:', error);
-        toast.error('Erreur lors du chargement des saisons');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSeasons();
-  }, []);
-
-  const handleSeasonClick = (season: SeasonArchive) => {
-    router.push(`/seasons/${season.year}/${season.seasonNumber}`);
-  };
-
-  // Pagination logic
-  const totalPages = Math.ceil(seasons.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentSeasons = seasons.slice(startIndex, endIndex);
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(1, prev - 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-regular">Chargement des saisons...</p>
-        </div>
-      </div>
-    );
+  try {
+    seasons = await SeasonsRepository.getAllSeasons();
+  } catch (error) {
+    // A dead API must not 500 the page. Archives are cosmetic history; a
+    // readable "try again" beats the global error boundary swallowing the
+    // whole route, and beats a cached error page being served for an hour.
+    console.error('SSR: failed to load seasons', error);
+    failed = true;
   }
 
   return (
     <div className="min-h-screen bg-neutral-900 text-neutral-100 p-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-title mb-2">Historique des Saisons</h1>
           <p className="text-regular text-neutral-300">
@@ -74,102 +53,18 @@ const SeasonsPage: FC = () => {
           </p>
         </div>
 
-        {/* Seasons grid */}
-        {seasons.length === 0 ? (
+        {failed ? (
           <Card className="p-8 text-center">
-            <MdCalendarToday className="text-6xl text-neutral-600 mx-auto mb-4" />
+            <MdErrorOutline className="text-6xl text-neutral-600 mx-auto mb-4" />
             <p className="text-regular text-neutral-400">
-              Aucune saison archivée pour le moment
+              Impossible de charger les saisons pour le moment.
+            </p>
+            <p className="text-sub text-neutral-500 mt-2">
+              Réessayez dans quelques instants.
             </p>
           </Card>
         ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentSeasons.map((season) => (
-              <Card
-                key={season.id}
-                className="p-6 cursor-pointer hover:border-primary-500 transition-colors"
-                onClick={() => handleSeasonClick(season)}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-heading text-white">
-                      Saison {season.seasonNumber} - {season.year}
-                    </h3>
-                    {season.seasonName && (
-                      <p className="text-sub text-neutral-400">{season.seasonName}</p>
-                    )}
-                  </div>
-                  <Badge variant="primary" size="md">
-                    <MdCalendarToday className="mr-1" />
-                    S{season.seasonNumber}
-                  </Badge>
-                </div>
-
-                {/* Stats */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sub text-neutral-300">
-                    <MdPeople className="text-primary-500" />
-                    <span>{season.totalCompetitors} pilote{season.totalCompetitors !== 1 && "s"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sub text-neutral-300">
-                    <MdSportsMartialArts className="text-primary-500" />
-                    <span>{season.totalRaces} course{season.totalRaces !== 1 && "s"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sub text-neutral-300">
-                    <MdTrendingUp className="text-primary-500" />
-                    <span>{season.totalBets} pari{season.totalBets !== 1 && "s"} placé{season.totalBets !== 1 && "s"}</span>
-                  </div>
-                  <div className="border-t border-neutral-700 pt-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sub text-neutral-400">ELO moyen</span>
-                      <span className="text-bold text-white">
-                        {Math.round(season.avgCompetitorRating)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-center gap-4">
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                aria-label="Page précédente"
-              >
-                <MdChevronLeft className="text-xl" />
-                Précédent
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <span className="text-regular text-neutral-300">
-                  Page {currentPage} sur {totalPages}
-                </span>
-                <Badge variant="primary" size="sm">
-                  {seasons.length} saisons
-                </Badge>
-              </div>
-
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                aria-label="Page suivante"
-              >
-                Suivant
-                <MdChevronRight className="text-xl" />
-              </Button>
-            </div>
-          )}
-        </>
+          <SeasonsList seasons={seasons} />
         )}
       </div>
     </div>

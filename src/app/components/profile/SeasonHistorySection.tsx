@@ -1,6 +1,7 @@
 'use client';
 
 import { FC, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import { MdEmojiEvents, MdStarRate } from 'react-icons/md';
 import {
@@ -116,6 +117,34 @@ const getRankStyle = (
 };
 
 /**
+ * Header shared by the populated and the empty state.
+ *
+ * This section only ever shows the seasons *this* player took part in, so it
+ * is the one place in the app where someone is already thinking about season
+ * archives and may want the ones they missed. `/seasons` had no entry point
+ * anywhere before this — it was reachable only by typing the URL — and the
+ * bottom nav is full at four tabs, so the link lives here.
+ *
+ * `next/link` rather than a router push: it prefetches the archive list on
+ * hover, and the list is a static, hourly-revalidated server component.
+ */
+const SeasonHistoryHeader: FC = () => (
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+      <MdEmojiEvents className="text-yellow-400" />
+      <span>Palmarès des Saisons</span>
+    </h3>
+    <Link
+      href="/seasons"
+      className="text-sm text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-1"
+    >
+      Toutes les saisons
+      <span aria-hidden="true">→</span>
+    </Link>
+  </div>
+);
+
+/**
  * SeasonHistorySection Component
  *
  * Displays the competitor's historical rankings across archived seasons:
@@ -225,10 +254,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
       <div
         className={`p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500 ${className}`}
       >
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <MdEmojiEvents className="text-yellow-400" />
-          <span>Palmarès des Saisons</span>
-        </h3>
+        <SeasonHistoryHeader />
         <div className="text-center py-8">
           <div className="text-4xl mb-3">🏁</div>
           <p className="text-neutral-400">Première saison en cours</p>
@@ -262,10 +288,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
       className={`p-5 rounded-xl bg-neutral-800 border border-neutral-700 border-l-4 border-l-blue-500 ${className}`}
     >
       {/* Header */}
-      <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-        <MdEmojiEvents className="text-yellow-400" />
-        <span>Palmarès des Saisons</span>
-      </h3>
+      <SeasonHistoryHeader />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-3 mb-6 p-3 rounded-lg bg-neutral-900/50">
