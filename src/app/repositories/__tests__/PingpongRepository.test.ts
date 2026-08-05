@@ -178,6 +178,63 @@ describe('PingpongRepository', () => {
     });
   });
 
+  /**
+   * The paginated sibling, which the history scrolls.
+   *
+   * It hits a different path from `fetchRecentMatches` and returns an
+   * envelope rather than a bare array — the old method keeps its shape so
+   * its callers keep working.
+   */
+  describe('fetchMatchesPage', () => {
+    const page = {
+      data: [{ id: 'm1' }],
+      meta: { hasMore: true, nextCursor: '2026-03-14T12:00:00.000Z|m1' },
+    };
+
+    it('asks the paginated endpoint, not the flat one', async () => {
+      respondWith(page);
+      await repository.fetchMatchesPage();
+
+      expect(lastUrl()).toContain('/pingpong/matches/paginated');
+    });
+
+    it('omits the cursor on the first page', async () => {
+      respondWith(page);
+      await repository.fetchMatchesPage();
+
+      expect(lastUrl()).not.toContain('cursor=');
+    });
+
+    /**
+     * The mutation this guards: drop the cursor and every page repeats
+     * page one, which reads as a list that will not advance.
+     */
+    it('sends the cursor when asking for a later page', async () => {
+      respondWith(page);
+      await repository.fetchMatchesPage('2026-03-14T12:00:00.000Z|m1');
+
+      expect(lastUrl()).toContain(
+        `cursor=${encodeURIComponent('2026-03-14T12:00:00.000Z|m1')}`,
+      );
+    });
+
+    it('returns the envelope intact, meta included', async () => {
+      respondWith(page);
+
+      const result = await repository.fetchMatchesPage();
+
+      expect(result.data).toHaveLength(1);
+      expect(result.meta.hasMore).toBe(true);
+      expect(result.meta.nextCursor).toBe('2026-03-14T12:00:00.000Z|m1');
+    });
+
+    it('throws with the server reason when the page fails', async () => {
+      respondWith('boom', { status: 500 });
+
+      await expect(repository.fetchMatchesPage()).rejects.toThrow(/boom/);
+    });
+  });
+
   describe('enrolPlayer', () => {
     it('posts the competitor id with the token', async () => {
       respondWith({ id: 'p1' });

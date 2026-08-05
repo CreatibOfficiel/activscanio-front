@@ -8,6 +8,7 @@ import { UserAvatar } from '../ui';
 import RankBadge from '../leaderboard/RankBadge';
 import TrendIndicator from '../leaderboard/TrendIndicator';
 import { rankMovement } from '../../utils/rank-movement';
+import { EloGlyph, WinRateGlyph } from './StatGlyphs';
 
 interface PingpongRowProps {
   player: PingpongPlayer;
@@ -35,9 +36,25 @@ const MATCHES_TO_CALIBRATE = 8;
  * because "we don't know yet" and "was settled, then drifted" are different
  * states, and the second is what someone looking for a colleague needs.
  *
- * The rating carries the word "elo" beside it. "1510" alone means nothing
- * to a casual player, and that explanation is vital to reading the row —
- * NN/g is explicit that vital information does not belong in a tooltip.
+ * The rank is a digit at every position, including the top three. It used to
+ * be a medal there — `RankBadge` renders 🥇🥈🥉 by default — and that was the
+ * reported bug: the three rows a reader is most likely to be looking for
+ * were the only three carrying no readable rank, and a medal cannot be
+ * compared against the "4" underneath it. `showMedal={false}` restores the
+ * number. The top three also have a podium of their own above this list now,
+ * which is where the ceremony belongs.
+ *
+ * Two stats down the right edge, icon over value, rather than one rating
+ * with the word "elo" spelled out beside it. The word moved into an
+ * `sr-only` label: it was there because "1510" alone means nothing, and that
+ * is still true, but it is true for anyone reading the column header rather
+ * than every row. The win/loss tally that used to sit under the name is
+ * gone — the win rate says the same thing in the space the sub-line needs.
+ *
+ * The trend arrow stays on the row, immediately left of the stats. The
+ * design spec proposed moving it into the detail sheet; it is the only mark
+ * on the board that says anything changed today, and behind a tap nobody
+ * would see it.
  */
 const PingpongRow: FC<PingpongRowProps> = ({
   player,
@@ -57,6 +74,7 @@ const PingpongRow: FC<PingpongRowProps> = ({
     lastActiveAt: player.lastMatchAt,
   });
   const rate = winRate(player);
+  const isRanked = player.rank !== null;
 
   // Inactivity wins over calibration when both apply: "not seen for two
   // weeks" is the more useful thing to report.
@@ -76,59 +94,43 @@ const PingpongRow: FC<PingpongRowProps> = ({
         }
       : null;
 
-  return (
-    <div
-      data-testid="pingpong-row"
-      data-current-user={isCurrentUser}
-      data-inactive={player.inactive}
-      onClick={onClick}
-      className={`
-        group relative flex items-center gap-3 py-2 px-3 rounded-xl
-        bg-neutral-800/40 border border-neutral-600/60
-        transition-all duration-200
-        ${onClick ? 'cursor-pointer hover:bg-neutral-800/60 hover:border-neutral-500/60' : ''}
-        ${isCurrentUser ? 'ring-1 ring-primary-500/30' : ''}
-        ${player.inactive ? 'opacity-50' : ''}
-      `}
-      style={{ animationDelay: `${animationDelay}ms` }}
-    >
-      {/* A rank, or nothing at all — the gap is the signal. */}
-      {player.rank !== null ? (
+  // A rate off three matches is noise, and it would occupy the column a
+  // ranked row uses for a number that means something. The rating stays:
+  // it exists and is real, only the rank is withheld.
+  const showsRate = isRanked && rate !== null;
+
+  const content = (
+    <>
+      {/* A rank, or nothing at all — the gap is the signal. Stated for a
+          screen reader, which gets nothing out of an empty box. */}
+      {isRanked ? (
         <div data-testid="pingpong-rank" className="flex-shrink-0">
-          <RankBadge rank={player.rank} size="md" />
+          <RankBadge rank={player.rank as number} size="md" showMedal={false} />
         </div>
       ) : (
-        <div className="w-8 flex-shrink-0" aria-hidden="true" />
+        <div className="w-8 flex-shrink-0">
+          <span className="sr-only">Non classé</span>
+        </div>
       )}
 
       <UserAvatar
         src={player.profilePictureUrl}
         name={`${player.firstName} ${player.lastName}`}
-        size="md"
-        className="border border-neutral-700 flex-shrink-0"
+        size="sm"
+        className="flex-shrink-0"
       />
 
-      <div className="flex-grow min-w-0">
-        <p className="text-sm font-semibold text-white truncate">{name}</p>
+      <div className="min-w-0 flex-grow text-left">
+        <p className="truncate text-lg font-normal text-neutral-300">{name}</p>
 
-        <div className="flex items-center gap-2 text-xs text-neutral-400">
-          {status ? (
-            <span data-testid={status.testId} className="text-neutral-500">
-              {status.label}
-            </span>
-          ) : (
-            <>
-              <span data-testid="pingpong-record" className="tabular-nums">
-                {player.wins}V · {player.losses}D
-              </span>
-              {rate !== null && (
-                <span data-testid="pingpong-winrate" className="tabular-nums">
-                  {rate}%
-                </span>
-              )}
-            </>
-          )}
-        </div>
+        {status && (
+          <p
+            data-testid={status.testId}
+            className="truncate text-[11px] text-neutral-500"
+          >
+            {status.label}
+          </p>
+        )}
       </div>
 
       {movement && (
@@ -145,17 +147,75 @@ const PingpongRow: FC<PingpongRowProps> = ({
         </div>
       )}
 
-      <div className="text-right flex-shrink-0">
-        <p
+      <div
+        data-testid="pingpong-stats"
+        className="flex flex-shrink-0 items-start gap-4"
+      >
+        <div
           data-testid="pingpong-rating"
-          className="text-sm font-bold text-primary-500 tabular-nums"
+          className="flex flex-col items-center gap-1"
         >
-          {Math.round(player.conservativeScore)}
-          <span className="ml-1 text-[10px] font-medium text-neutral-500 uppercase">
-            elo
+          <EloGlyph className="h-3 w-3 text-neutral-500" />
+          <span className="text-xs font-medium tabular-nums text-neutral-300">
+            {Math.round(player.conservativeScore)}
           </span>
-        </p>
+          <span className="sr-only">elo</span>
+        </div>
+
+        {showsRate && (
+          <div
+            data-testid="pingpong-winrate"
+            className="flex flex-col items-center gap-1"
+          >
+            <WinRateGlyph className="h-3 w-3 text-neutral-500" />
+            <span className="text-xs font-medium tabular-nums text-neutral-300">
+              {rate}
+            </span>
+            <span className="sr-only">% de victoires</span>
+          </div>
+        )}
       </div>
+    </>
+  );
+
+  const shell = `
+    group relative flex w-full items-center gap-2.5 rounded-2xl bg-neutral-800 px-3
+    ${status ? 'py-2' : 'h-[3.375rem]'}
+    transition-colors duration-200
+    ${isCurrentUser ? 'ring-1 ring-primary-500/30' : ''}
+    ${player.inactive ? 'opacity-50' : ''}
+  `;
+
+  // A real button only when there is something to press. A button that does
+  // nothing is a tab stop that wastes a press, and on a 25-row board that is
+  // 25 of them.
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        data-testid="pingpong-row"
+        data-current-user={isCurrentUser}
+        data-inactive={player.inactive}
+        onClick={onClick}
+        aria-haspopup="dialog"
+        aria-label={`Voir la fiche de ${name}`}
+        className={`${shell} cursor-pointer text-left hover:bg-neutral-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500`}
+        style={{ animationDelay: `${animationDelay}ms` }}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      data-testid="pingpong-row"
+      data-current-user={isCurrentUser}
+      data-inactive={player.inactive}
+      className={shell}
+      style={{ animationDelay: `${animationDelay}ms` }}
+    >
+      {content}
     </div>
   );
 };

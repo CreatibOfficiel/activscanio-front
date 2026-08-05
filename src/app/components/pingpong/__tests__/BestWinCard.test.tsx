@@ -98,4 +98,43 @@ describe('BestWinCard', () => {
 
     expect(screen.getByTestId('best-win-date')).toBeInTheDocument();
   });
+
+  /**
+   * The card was written for one reader — the player themselves — and now
+   * has two: the leaderboard opens it for whoever you tapped. "au-dessus de
+   * toi" addressed to someone reading a colleague's card is not a wording
+   * nit, it misattributes the rating gap to the wrong person and makes the
+   * number wrong.
+   */
+  describe('viewed on someone else', () => {
+    it('speaks to the player by default', () => {
+      // The profile page passes nothing, and must keep the copy it had.
+      render(<BestWinCard bestWin={bestWin()} />);
+
+      expect(screen.getByTestId('best-win-gap')).toHaveTextContent(/toi/);
+    });
+
+    it('drops the second person when viewing another player', () => {
+      render(<BestWinCard bestWin={bestWin()} perspective="other" />);
+
+      expect(screen.getByTestId('best-win-gap')).not.toHaveTextContent(/toi/);
+    });
+
+    it('still states the gap when viewing another player', () => {
+      // Rewording must not quietly drop the number the card exists for.
+      render(<BestWinCard bestWin={bestWin()} perspective="other" />);
+
+      expect(screen.getByTestId('best-win-gap')).toHaveTextContent('240');
+    });
+
+    it('rewords the empty state too', () => {
+      // "Ta première victoire s'affichera ici" on a colleague's card
+      // promises the reader something that will never appear for them.
+      render(<BestWinCard bestWin={null} perspective="other" />);
+
+      const empty = screen.getByTestId('best-win-empty');
+      expect(empty).not.toHaveTextContent(/\bTa\b/);
+      expect(empty).not.toHaveTextContent(/t'être/);
+    });
+  });
 });

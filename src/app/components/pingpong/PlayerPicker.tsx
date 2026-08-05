@@ -25,6 +25,57 @@ interface PlayerPickerProps {
 }
 
 /**
+ * Milliseconds since epoch, or null when they have never played.
+ *
+ * The field is optional as well as nullable — an older cached response
+ * predates it — and both mean the same thing here. An unparseable date is
+ * folded into null too: `Date.parse` returns NaN, and NaN in a comparator
+ * makes the sort inconsistent, which is unspecified behaviour rather than
+ * merely a wrong order.
+ */
+const lastPlayedAt = (player: SelectablePlayer): number | null => {
+  if (!player.lastMatchAt) return null;
+  const parsed = Date.parse(player.lastMatchAt);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+/**
+ * Most recently played first; never-played last, alphabetically.
+ *
+ * The office plays in a small rotation, so whoever is being entered has
+ * usually played in the last few days. Recency puts them within the first
+ * couple of rows of a list that would otherwise need a search.
+ *
+ * Never-played colleagues go last rather than first even though they are the
+ * ones you cannot find by memory. The roster is the whole office while only
+ * a fraction of it plays, so seeding the top with them would push every
+ * regular below the fold of a capped, scrolling list — costing a scroll on
+ * every entry to save one on the rare first-timer, who is reachable by
+ * search anyway.
+ *
+ * Their tiebreak is the name because they have no other: they are
+ * indistinguishable on recency, and API order would reshuffle the tail each
+ * time a competitor is added. `localeCompare` so French accents collate
+ * where a reader expects (É beside E, not after Z).
+ */
+const byMostRecentlyPlayed = (
+  a: SelectablePlayer,
+  b: SelectablePlayer,
+): number => {
+  const playedA = lastPlayedAt(a);
+  const playedB = lastPlayedAt(b);
+
+  if (playedA !== null && playedB !== null) return playedB - playedA;
+  if (playedA !== null) return -1;
+  if (playedB !== null) return 1;
+
+  return `${a.firstName} ${a.lastName}`.localeCompare(
+    `${b.firstName} ${b.lastName}`,
+    'fr',
+  );
+};
+
+/**
  * Picks the player on one side of the table.
  *
  * Single-select, one instance per side, rather than one multi-select for
@@ -54,13 +105,21 @@ const PlayerPicker: FC<PlayerPickerProps> = ({
   const [query, setQuery] = useState('');
   const searchId = useId();
 
+  // Recency ordering survives the search rather than giving way to relevance
+  // ranking. A query narrows ~35 people to a handful, where the order barely
+  // matters — and re-ranking on each keystroke moves rows under a finger
+  // already on its way to one.
   const visible = useMemo(
     () =>
       players
         .filter((player) => player.competitorId !== excludedId)
         .filter((player) =>
           matchesSearch(`${player.firstName} ${player.lastName}`, query),
-        ),
+        )
+        // Sorted after filtering, and on a copy: `players` is a prop, and
+        // sorting in place would mutate the caller's array.
+        .slice()
+        .sort(byMostRecentlyPlayed),
     [players, excludedId, query],
   );
 

@@ -17,6 +17,12 @@ interface HeadToHeadSectionProps {
   opponents: PingpongPlayer[];
   /** The player's matches. One fetch, not one request per rival. */
   matches: PingpongMatch[];
+  /**
+   * Who is reading. Only the empty state speaks to anyone, and on a
+   * colleague's card "Enregistre un match pour voir ton bilan" tells the
+   * viewer to go and play somebody else's matches.
+   */
+  perspective?: 'self' | 'other';
   className?: string;
 }
 
@@ -106,6 +112,7 @@ const HeadToHeadSection: FC<HeadToHeadSectionProps> = ({
   player,
   opponents,
   matches,
+  perspective = 'self',
   className = '',
 }) => {
   const records = useMemo(
@@ -129,7 +136,9 @@ const HeadToHeadSection: FC<HeadToHeadSectionProps> = ({
             Aucun face-à-face pour l’instant
           </p>
           <p className="mt-1 text-xs text-neutral-500">
-            Enregistre un match pour voir ton bilan contre chaque adversaire.
+            {perspective === 'self'
+              ? 'Enregistre un match pour voir ton bilan contre chaque adversaire.'
+              : 'Les face-à-face apparaîtront après le premier match.'}
           </p>
         </div>
       ) : (

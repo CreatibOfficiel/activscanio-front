@@ -4,6 +4,7 @@ import {
   SelectablePlayer,
   PingpongHeadToHead,
   PingpongMatch,
+  PingpongMatchesPage,
   PingpongPlayer,
   RecordMatchPayload,
 } from '../models/Pingpong';
@@ -107,10 +108,42 @@ export class PingpongRepository {
     return await res.json();
   }
 
-  // GET /pingpong/matches
+  /**
+   * GET /pingpong/matches — the newest few, as a bare array.
+   *
+   * Kept as it was. The history now scrolls through `fetchMatchesPage`
+   * instead, but this shape is what the existing callers index into, and
+   * wrapping it in an envelope would break each of them for no gain.
+   */
   async fetchRecentMatches(limit = 50): Promise<PingpongMatch[]> {
     const res = await apiFetch(
       `${this.baseUrl}/pingpong/matches?limit=${limit}`,
+    );
+    if (!res.ok) {
+      throw new Error(`Error fetching ping-pong matches: ${await res.text()}`);
+    }
+    return await res.json();
+  }
+
+  /**
+   * GET /pingpong/matches/paginated — one page of history.
+   *
+   * The cursor is opaque here on purpose. It is the server's `playedAt|id`
+   * keyset position, and the only correct thing a client can do with it is
+   * hand back the last one it was given. Parsing or rebuilding it here would
+   * duplicate the ordering rule on the side that does not own it.
+   */
+  async fetchMatchesPage(
+    cursor?: string,
+    limit = 20,
+  ): Promise<PingpongMatchesPage> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    // Only on later pages. An empty `cursor=` would be a falsy string the
+    // server still has to reason about.
+    if (cursor) params.set('cursor', cursor);
+
+    const res = await apiFetch(
+      `${this.baseUrl}/pingpong/matches/paginated?${params.toString()}`,
     );
     if (!res.ok) {
       throw new Error(`Error fetching ping-pong matches: ${await res.text()}`);

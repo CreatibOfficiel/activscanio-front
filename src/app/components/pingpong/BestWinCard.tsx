@@ -8,6 +8,16 @@ import { UserAvatar } from '../ui';
 interface BestWinCardProps {
   /** Null for a player who has never won a match. */
   bestWin: PingpongBestWin | null;
+  /**
+   * Who is reading. 'self' addresses the player directly, which is what the
+   * profile page wants and why it is the default — that page passes nothing
+   * and keeps the copy it was written with.
+   *
+   * The leaderboard opens this same card for whoever was tapped, and there
+   * the second person is not a wording nit: "+240 au-dessus de toi" measures
+   * the gap from the reader, and the reader is not the player on screen.
+   */
+  perspective?: 'self' | 'other';
   className?: string;
 }
 
@@ -23,7 +33,13 @@ interface BestWinCardProps {
  * rises, and the decay cron lowers one during a holiday. A summit you have
  * dropped below is a goal you have already failed.
  */
-const BestWinCard: FC<BestWinCardProps> = ({ bestWin, className = '' }) => {
+const BestWinCard: FC<BestWinCardProps> = ({
+  bestWin,
+  perspective = 'self',
+  className = '',
+}) => {
+  const isSelf = perspective === 'self';
+
   if (!bestWin) {
     return (
       <div
@@ -35,8 +51,9 @@ const BestWinCard: FC<BestWinCardProps> = ({ bestWin, className = '' }) => {
           <span>Meilleur adversaire battu</span>
         </h3>
         <p className="text-sm text-neutral-400">
-          Ta première victoire s&apos;affichera ici. Elle ne pourra plus
-          jamais t&apos;être reprise.
+          {isSelf
+            ? "Ta première victoire s'affichera ici. Elle ne pourra plus jamais t'être reprise."
+            : "Aucune victoire enregistrée pour l'instant."}
         </p>
       </div>
     );
@@ -101,7 +118,7 @@ const BestWinCard: FC<BestWinCardProps> = ({ bestWin, className = '' }) => {
               data-testid="best-win-gap"
               className="text-xs text-emerald-400 tabular-nums"
             >
-              +{gap} au-dessus de toi
+              +{gap} {isSelf ? 'au-dessus de toi' : 'de plus'}
             </p>
           )}
         </div>

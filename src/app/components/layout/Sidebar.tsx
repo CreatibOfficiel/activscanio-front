@@ -3,7 +3,7 @@
 import { FC, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MdLeaderboard, MdFlag, MdPerson,
+import { MdPerson, MdSportsEsports,
   MdSportsTennis } from 'react-icons/md';
 import { toast } from 'sonner';
 import { useSoundboard } from '../../context/SoundboardContext';
@@ -54,9 +54,23 @@ const Sidebar: FC = () => {
     return null;
   }
 
+  /**
+   * Mirrors the bottom nav: one entry per sport.
+   *
+   * Kept in step deliberately. The two bars are the same navigation at two
+   * breakpoints, and a desktop user who learns "Mario Kart holds the races"
+   * should not have to relearn it on a phone. `/races` still resolves and the
+   * Mario Kart entry stays lit there, same as on mobile.
+   *
+   * NO CENTRED ADD BUTTON HERE, unlike the bottom bar. That button's shape
+   * comes from the thumb: a large target in the middle of a horizontal strip
+   * is where a thumb rests on a phone. A vertical sidebar has no equivalent
+   * centre, the pointer reaches anywhere on screen equally, and desktop
+   * already has the page-level controls. Adding a fifth item shaped like a
+   * button would be the phone's ergonomics copied somewhere they buy nothing.
+   */
   const navItems = [
-    { href: '/', label: 'Classement', icon: MdLeaderboard },
-    { href: '/races', label: 'Courses', icon: MdFlag, activePaths: ['/races'] },
+    { href: '/', label: 'Mario Kart', icon: MdSportsEsports, activePaths: ['/races'] },
     { href: '/pingpong', label: 'Ping-Pong', icon: MdSportsTennis, activePaths: ['/pingpong'] },
     { href: '/profile', label: 'Profil', icon: MdPerson, activePaths: ['/profile', '/achievements'] },
   ];

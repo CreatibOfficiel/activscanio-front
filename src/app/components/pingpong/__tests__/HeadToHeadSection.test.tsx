@@ -286,4 +286,33 @@ describe('HeadToHeadSection', () => {
       );
     });
   });
+
+  /**
+   * The section now appears in two places: a player's own profile, and the
+   * sheet the leaderboard opens on whoever was tapped. Only the empty state
+   * speaks to the reader, and there it tells a viewer to go and play
+   * somebody else's matches.
+   */
+  describe('viewed on someone else', () => {
+    it('tells the player themselves what to do next', () => {
+      render(<HeadToHeadSection player={me} opponents={[marc]} matches={[]} />);
+
+      expect(screen.getByTestId('h2h-empty')).toHaveTextContent(/ton bilan/i);
+    });
+
+    it('does not tell the viewer to play someone else’s matches', () => {
+      render(
+        <HeadToHeadSection
+          player={me}
+          opponents={[marc]}
+          matches={[]}
+          perspective="other"
+        />,
+      );
+
+      const empty = screen.getByTestId('h2h-empty');
+      expect(empty).not.toHaveTextContent(/ton bilan/i);
+      expect(empty).not.toHaveTextContent(/enregistre/i);
+    });
+  });
 });

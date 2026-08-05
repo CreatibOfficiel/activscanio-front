@@ -17,6 +17,16 @@ interface PingpongTabProps {
    * compiles cleanly and 404s.
    */
   competitorId: string;
+  /**
+   * Who is reading. 'self' addresses the player directly; the profile page
+   * passes nothing and so keeps the copy this component was written with.
+   *
+   * The leaderboard opens the same component in a sheet for whoever was
+   * tapped, and there the second person addresses the wrong person: "tes
+   * stats", "ton rang" and a "record a match" button on a colleague's card
+   * each claim the numbers belong to the reader.
+   */
+  perspective?: 'self' | 'other';
   className?: string;
 }
 
@@ -70,17 +80,22 @@ const Stat: FC<StatProps> = ({ testId, label, value, accent = 'text-white' }) =>
  * their own: losing the rivalry section must not take the rating and record
  * down with it.
  */
-const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => {
+const PingpongTab: FC<PingpongTabProps> = ({
+  competitorId,
+  perspective = 'self',
+  className = '',
+}) => {
+  const isSelf = perspective === 'self';
   const [data, setData] = useState<Loaded | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       setLoading(true);
-      setError(null);
+      setError(false);
 
       try {
         const player = await pingpongRepository.fetchPlayer(competitorId);
@@ -110,7 +125,10 @@ const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => 
         });
       } catch (caught) {
         console.error('Error fetching ping-pong profile:', caught);
-        if (!cancelled) setError('Impossible de charger tes stats ping-pong');
+        // A flag, not a sentence. The wording depends on who is reading, and
+        // storing the finished string here would make `perspective` a
+        // dependency of the fetch — a re-read of the API for a copy change.
+        if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -137,7 +155,9 @@ const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => 
         data-testid="pingpong-tab-error"
         className={`rounded-xl border border-error-500 bg-error-500/10 p-5 text-error-400 ${className}`}
       >
-        {error}
+        {isSelf
+          ? 'Impossible de charger tes stats ping-pong'
+          : 'Impossible de charger ces stats ping-pong'}
       </div>
     );
   }
@@ -154,14 +174,21 @@ const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => 
           Pas encore de match
         </h3>
         <p className="mb-4 text-sm text-neutral-400">
-          Enregistre ton premier match pour lancer ton classement ping-pong.
+          {isSelf
+            ? 'Enregistre ton premier match pour lancer ton classement ping-pong.'
+            : "Ce joueur n'a pas encore de match enregistré."}
         </p>
-        <Link
-          href="/pingpong/add"
-          className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-neutral-900 transition-colors hover:bg-primary-400"
-        >
-          Enregistrer un match
-        </Link>
+        {/* The call to action belongs to whoever owns the profile. On a
+            colleague's card it invites the reader to record a match that is
+            not theirs to record. */}
+        {isSelf && (
+          <Link
+            href="/pingpong/add"
+            className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-neutral-900 transition-colors hover:bg-primary-400"
+          >
+            Enregistrer un match
+          </Link>
+        )}
       </div>
     );
   }
@@ -260,7 +287,9 @@ const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => 
               />
             </div>
             <p className="mt-1.5 text-xs text-neutral-500">
-              Ton rang apparaîtra une fois le calibrage terminé.
+              {isSelf
+                ? 'Ton rang apparaîtra une fois le calibrage terminé.'
+                : 'Le rang apparaîtra une fois le calibrage terminé.'}
             </p>
           </div>
         )}
@@ -268,12 +297,13 @@ const PingpongTab: FC<PingpongTabProps> = ({ competitorId, className = '' }) => 
 
       {/* Two personal surfaces, side by side: a record nobody can take, and
           the rivalries that are true whatever your rank. */}
-      <BestWinCard bestWin={data.bestWin} />
+      <BestWinCard bestWin={data.bestWin} perspective={perspective} />
 
       <HeadToHeadSection
         player={player}
         opponents={opponents.filter((o) => o.id !== player.id)}
         matches={matches}
+        perspective={perspective}
       />
     </div>
   );

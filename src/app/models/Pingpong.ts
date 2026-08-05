@@ -126,6 +126,22 @@ export interface PingpongHeadToHead {
 }
 
 /**
+ * One page of match history.
+ *
+ * `nextCursor` is the server's keyset position (`playedAt|id`) and is opaque
+ * to the client: hand the last one back to ask for the page after it. It is
+ * null exactly when `hasMore` is false, which is what stops the scroll.
+ */
+export interface PingpongMatchesPage {
+  data: PingpongMatch[];
+  meta: {
+    hasMore: boolean;
+    nextCursor: string | null;
+    limit: number;
+  };
+}
+
+/**
  * One day's rating, for the history chart.
  *
  * Field names mirror the API entity exactly. An earlier version of this
@@ -157,6 +173,15 @@ export interface SelectablePlayer {
   lastName: string;
   profilePictureUrl: string;
   playerId: string | null;
+  /**
+   * ISO timestamp of their last match, used to float the regulars to the top
+   * of the picker.
+   *
+   * Null for anyone who has never played, and optional because the field was
+   * added after the interface: a cached or older response omits it, and the
+   * picker treats missing and null the same way.
+   */
+  lastMatchAt?: string | null;
 }
 
 /**

@@ -1,21 +1,40 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Skeleton } from '../components/ui';
+import { Modal, Skeleton } from '../components/ui';
 import PingpongRow from '../components/pingpong/PingpongRow';
 import PingpongMatchesSection from '../components/pingpong/PingpongMatchesSection';
-import AddActivityButton from '../components/sport/AddActivityButton';
+import PingpongPodiumCarousel from '../components/pingpong/PingpongPodiumCarousel';
+import PingpongViewTabs, {
+  PingpongView,
+  panelId,
+  tabId,
+} from '../components/pingpong/PingpongViewTabs';
+import PingpongTab from '../components/profile/PingpongTab';
+import { AddActivitySlot } from '../context/AddActivitySlotContext';
+import { formatCompetitorName } from '../utils/formatters';
+import { PingpongPlayer } from '../models/Pingpong';
 import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
 import { usePingpongMatches } from '../hooks/usePingpongMatches';
 
 /**
  * The ping-pong leaderboard.
  *
- * One flat list. No platform surveyed renders three separately-headed
- * groups — they either exclude the uncertain entirely (Lichess, UTR, FIDE)
- * or keep everyone inline with a short marker (FICS). Three headers on a
- * 25-row phone list turns a third of the screen into chrome, and visually
- * establishes "the bottom group" as somewhere people live.
+ * The top three sit in a carousel above the list; everyone else is one flat
+ * list below it. `segmentPingpongLeaderboard` has returned `podium` and
+ * `rest` since it was written and this page never read them — it flattened
+ * every tier into a single array, so the podium half was dead code. It is
+ * read now, including its `minPodiumSize` guard: below three ranked players
+ * there is no podium at all, because a carousel of one is a pedestal with a
+ * scroll hint that scrolls nowhere.
+ *
+ * Below the podium, still one flat list. No platform surveyed renders three
+ * separately-headed groups — they either exclude the uncertain entirely
+ * (Lichess, UTR, FIDE) or keep everyone inline with a short marker (FICS).
+ * Three headers on a 25-row phone list turns a third of the screen into
+ * chrome, and visually establishes "the bottom group" as somewhere people
+ * live.
  *
  * Everyone the API returned appears. Someone who cannot find themselves
  * assumes the app forgot them, which is worse than seeing themselves
@@ -36,17 +55,42 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
  * offers both as explicit tabs to everyone whatever their preference. Two
  * controls that look different and do the same thing is the worse failure.
  *
- * The match history lives here too, below the board. It used to be its own
- * route, `/pingpong/matches`, which nothing linked to — a fully-built page
- * reachable only by typing the URL. Merging it answers the question the owner
- * actually asked ("on aurait classement et match au meme endroit ?") and
- * fixes the cold start: a rank is withheld until eight weighted matches, so
- * early on this screen would otherwise be nothing but an empty ranking, which
- * reads as a broken feature rather than a new one.
+ * THE TAB BAR IS NOT THAT CONTROL COMING BACK. The switcher that was deleted
+ * navigated: it looked like a filter and pushed a route. This one stays on
+ * the page and swaps a rendered panel, which is the behaviour its shape
+ * promises. It is a `tablist` rather than a `radiogroup` for the same
+ * reason — a ranking and a match history are two different things sharing a
+ * screen, not one thing filtered — and it writes nothing to the URL, so the
+ * back button still leaves the page rather than unwinding a toggle. A guard
+ * test clicks every tab and asserts the router stayed untouched.
+ *
+ * The match history lives here too, behind that second tab. It used to be
+ * its own route, `/pingpong/matches`, which nothing linked to — a fully-built
+ * page reachable only by typing the URL. Merging it answers the question the
+ * owner actually asked ("on aurait classement et match au meme endroit ?")
+ * and fixes the cold start: a rank is withheld until eight weighted matches,
+ * so early on this screen would otherwise be nothing but an empty ranking,
+ * which reads as a broken feature rather than a new one. It sat under the
+ * board before the tabs; on a phone that put the history below however many
+ * rows the office had grown to, which is a scroll nobody performs.
+ *
+ * Both fetches stay eager and parallel. The tab swaps a rendered panel, it
+ * does not gate a request, so opening the history is instant rather than the
+ * start of a spinner.
  *
  * Two requests, deliberately not one. The matches load through their own hook
  * with their own loading and error states, so a history that fails still
  * leaves a working leaderboard behind it.
+ *
+ * The tab bar is gated on `!isEmpty`, the same condition as the add button.
+ * With nobody on the board a "Matchs" tab leads to a blank panel, and a
+ * control that reveals nothing reads as broken rather than as empty.
+ *
+ * One `selectedPlayer` for the detail sheet, on the page rather than one
+ * modal per row. `LeaderboardRow` does it per row and pays an O(rows ×
+ * races) `useMemo` on every render for it; a row here also mounts a
+ * component that fires four requests, so a modal per row would put a hundred
+ * of them behind a list nobody has tapped.
  */
 export default function PingpongPage() {
   const { segmentation, loading, error } = usePingpongLeaderboard();
@@ -55,12 +99,27 @@ export default function PingpongPage() {
     loading: matchesLoading,
     error: matchesError,
     refresh: refreshMatches,
+    loadingMore: matchesLoadingMore,
+    loadMoreError: matchesLoadMoreError,
+    hasMore: matchesHasMore,
+    loadMore: loadMoreMatches,
   } = usePingpongMatches();
 
-  const { ranked, calibrating, inactive, isEmpty } = segmentation;
-  // One list, in tier order: settled ratings first, then those still
-  // calibrating, then the players nobody has seen for a fortnight.
-  const rows = [...ranked, ...calibrating, ...inactive];
+  const [view, setView] = useState<PingpongView>('ranking');
+  const [selected, setSelected] = useState<PingpongPlayer | null>(null);
+
+  const { ranked, calibrating, inactive, podium, rest, isEmpty } = segmentation;
+  // Below the podium, in tier order: the ranked players the podium did not
+  // take, then those still calibrating, then the players nobody has seen for
+  // a fortnight. `rest` is every ranked player when there is no podium, so
+  // this is the whole board in that case.
+  const rows = [...rest, ...calibrating, ...inactive];
+
+  // The realistic first week: people have played, the API has ranked nobody,
+  // and a board of unnumbered rows with no explanation reads as broken.
+  const nobodyRanked = !isEmpty && ranked.length === 0;
+
+  const showsBoard = !loading && !error && !isEmpty;
 
   return (
     <div className="min-h-screen bg-neutral-900">
@@ -140,20 +199,63 @@ export default function PingpongPage() {
           </div>
         )}
 
-        {/* Gated the same way as the races page: with an empty board the
-            empty state's own call to action sits a few pixels away, and two
-            prompts to do the same thing on one screen is one too many. */}
-        {!loading && !error && !isEmpty && <AddActivityButton />}
+        {/* Gated exactly as before: with an empty board the empty state's own
+            call to action sits a few pixels away, and two prompts to do the
+            same thing on one screen is one too many.
 
-        {!loading && !error && !isEmpty && (
-          <div className="space-y-2">
-            {rows.map((player, index) => (
-              <PingpongRow
-                key={player.id}
-                player={player}
-                animationDelay={Math.min(index * 30, 300)}
-              />
-            ))}
+            What changed is only where the control lands. It used to be a FAB
+            floating bottom-right over the list, permanently covering the end
+            of a row; it now portals into the bottom bar's centre. The gate is
+            page knowledge — no route can tell whether a board came back
+            empty — so it stays here rather than moving into the nav. */}
+        {showsBoard && <AddActivitySlot />}
+
+        {/* Same gate as the add button. A "Matchs" tab over an empty board
+            opens a blank panel, and a control that reveals nothing reads as
+            broken rather than as empty. */}
+        {showsBoard && (
+          <PingpongViewTabs
+            value={view}
+            onChange={setView}
+            className="mb-4"
+          />
+        )}
+
+        {showsBoard && view === 'ranking' && (
+          <div
+            role="tabpanel"
+            id={panelId('ranking')}
+            aria-labelledby={tabId('ranking')}
+            tabIndex={0}
+          >
+            <PingpongPodiumCarousel
+              podium={podium}
+              onSelect={setSelected}
+              className="mb-4"
+            />
+
+            {/* Not an error, and not silence. Everyone is calibrating during
+                the first week and a list of unnumbered rows with nothing
+                explaining it reads as a board that failed to load. */}
+            {nobodyRanked && (
+              <p
+                data-testid="pingpong-nobody-ranked"
+                className="mb-3 text-sm text-neutral-500"
+              >
+                Personne n&apos;est encore classé — 8 matchs nécessaires.
+              </p>
+            )}
+
+            <div className="space-y-2.5">
+              {rows.map((player, index) => (
+                <PingpongRow
+                  key={player.id}
+                  player={player}
+                  onClick={() => setSelected(player)}
+                  animationDelay={Math.min(index * 30, 300)}
+                />
+              ))}
+            </div>
           </div>
         )}
 
@@ -161,15 +263,44 @@ export default function PingpongPage() {
             board means the whole screen is an error message, and matches
             below it would suggest the failure was partial when it was not.
             Otherwise the section decides for itself what to render. */}
-        {!loading && !error && (
-          <PingpongMatchesSection
-            matches={matches}
-            loading={matchesLoading}
-            error={matchesError}
-            onRetry={refreshMatches}
-          />
+        {showsBoard && view === 'matches' && (
+          <div
+            role="tabpanel"
+            id={panelId('matches')}
+            aria-labelledby={tabId('matches')}
+            tabIndex={0}
+          >
+            <PingpongMatchesSection
+              matches={matches}
+              loading={matchesLoading}
+              error={matchesError}
+              onRetry={refreshMatches}
+              loadingMore={matchesLoadingMore}
+              loadMoreError={matchesLoadMoreError}
+              hasMore={matchesHasMore}
+              onLoadMore={loadMoreMatches}
+            />
+          </div>
         )}
       </div>
+
+      {/* A sheet rather than a route: the board is a scroll position someone
+          worked to reach, and pushing a page throws it away for a glance at
+          one player. Mounted only once something is selected, because the
+          sheet's contents fetch on mount. */}
+      {selected && (
+        <Modal
+          isOpen
+          onClose={() => setSelected(null)}
+          placement="sheet"
+          title={formatCompetitorName(selected.firstName, selected.lastName)}
+        >
+          <PingpongTab
+            competitorId={selected.competitorId}
+            perspective="other"
+          />
+        </Modal>
+      )}
     </div>
   );
 }

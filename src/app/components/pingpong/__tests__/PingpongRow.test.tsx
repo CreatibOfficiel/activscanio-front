@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import PingpongRow from '../PingpongRow';
 import { PingpongPlayer } from '../../../models/Pingpong';
 
@@ -60,11 +61,21 @@ describe('PingpongRow', () => {
     expect(screen.getByTestId('pingpong-rank')).toHaveTextContent('7');
   });
 
-  it('shows a medal instead of a number on the podium', () => {
-    // RankBadge's existing behaviour, shared with the Mario Kart board.
+  it('shows a digit on the podium, not a medal', () => {
+    // Reversed. This test used to assert the opposite — RankBadge's default
+    // renders 🥇🥈🥉 in place of the number, and the row inherited it.
+    //
+    // The medals were the reported bug. Ranks 1-3 were the only three rows
+    // on the board carrying no readable rank, in the one place a reader is
+    // most likely to be looking for one, and a medal cannot be compared
+    // against the "4" below it. The top three now have a podium of their own
+    // above the list; the list itself is a ranking, and a ranking numbers
+    // every line.
     render(<PingpongRow player={player({ rank: 2 })} />);
 
-    expect(screen.getByTestId('pingpong-rank')).toHaveTextContent('🥈');
+    const rank = screen.getByTestId('pingpong-rank');
+    expect(rank).toHaveTextContent('2');
+    expect(rank).not.toHaveTextContent('🥈');
   });
 
   it('shows no rank for a calibrating player', () => {
@@ -153,11 +164,15 @@ describe('PingpongRow', () => {
   });
 
   describe('record', () => {
-    it('shows wins and losses', () => {
+    it('leaves the win/loss tally to the detail sheet', () => {
+      // Reversed. The row used to carry "15V · 9D" under the name. The row
+      // is now 54 px with the rating and the win rate down its right edge,
+      // and the tally is the same information as the win rate stated twice —
+      // one of them in the space the sub-line needs for a calibrating
+      // player's reason. Tapping the row opens the full record.
       render(<PingpongRow player={player({ wins: 15, losses: 9 })} />);
 
-      expect(screen.getByTestId('pingpong-record')).toHaveTextContent('15');
-      expect(screen.getByTestId('pingpong-record')).toHaveTextContent('9');
+      expect(screen.queryByTestId('pingpong-record')).not.toBeInTheDocument();
     });
 
     it('shows no win rate for someone who has never played', () => {
@@ -285,5 +300,179 @@ describe('PingpongRow', () => {
     render(<PingpongRow player={player()} />);
 
     expect(screen.getByText(/Marc/)).toBeInTheDocument();
+  });
+
+  /**
+   * The rows open a detail sheet, so they have to be real buttons.
+   *
+   * `onClick` has been declared on this component since it was written and
+   * no caller ever passed one, which is why the row stayed a div with a
+   * handler that never fired. Now that the leaderboard passes one, the
+   * element has to match what it does: a div with an onClick is invisible to
+   * the keyboard and announces nothing.
+   *
+   * Only when it is actually clickable. A button that does nothing is a tab
+   * stop that wastes a press, and on a 25-row board that is 25 of them.
+   */
+  describe('opening the detail sheet', () => {
+    it('is a button when it can be opened', () => {
+      render(<PingpongRow player={player()} onClick={jest.fn()} />);
+
+      expect(screen.getByTestId('pingpong-row').tagName).toBe('BUTTON');
+    });
+
+    it('is not a button when it cannot', () => {
+      render(<PingpongRow player={player()} />);
+
+      expect(screen.getByTestId('pingpong-row').tagName).not.toBe('BUTTON');
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+
+    it('opens on a click', async () => {
+      const onClick = jest.fn();
+      render(<PingpongRow player={player()} onClick={onClick} />);
+
+      await userEvent.click(screen.getByTestId('pingpong-row'));
+
+      expect(onClick).toHaveBeenCalled();
+    });
+
+    it('opens on Enter', async () => {
+      const onClick = jest.fn();
+      render(<PingpongRow player={player()} onClick={onClick} />);
+
+      screen.getByTestId('pingpong-row').focus();
+      await userEvent.keyboard('{Enter}');
+
+      expect(onClick).toHaveBeenCalled();
+    });
+
+    it('opens on Space', async () => {
+      const onClick = jest.fn();
+      render(<PingpongRow player={player()} onClick={onClick} />);
+
+      screen.getByTestId('pingpong-row').focus();
+      await userEvent.keyboard(' ');
+
+      expect(onClick).toHaveBeenCalled();
+    });
+
+    it('says whose card it opens', async () => {
+      // "Marc D." alone is what the row shows; the button has to say what
+      // pressing it does.
+      render(<PingpongRow player={player()} onClick={jest.fn()} />);
+
+      expect(
+        screen.getByRole('button', { name: /marc/i }),
+      ).toHaveAccessibleName(/fiche/i);
+    });
+
+    it('declares that it opens a dialog', async () => {
+      render(<PingpongRow player={player()} onClick={jest.fn()} />);
+
+      expect(screen.getByTestId('pingpong-row')).toHaveAttribute(
+        'aria-haspopup',
+        'dialog',
+      );
+    });
+  });
+
+  /**
+   * The stat block, and where the trend arrow sits relative to it.
+   *
+   * The design spec proposed moving the arrow off the row into the detail
+   * sheet. The owner rejected that: it is the only thing on the board that
+   * says anything changed today, and burying it behind a tap means nobody
+   * sees it. It stays, immediately left of the two stat columns, so the
+   * numbers still line up down the right edge.
+   */
+  describe('the right-hand stats', () => {
+    it('shows the rating and the win rate as two columns', () => {
+      render(
+        <PingpongRow player={player({ conservativeScore: 1030, wins: 15, losses: 9 })} />,
+      );
+
+      expect(screen.getByTestId('pingpong-rating')).toHaveTextContent('1030');
+      expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent('63');
+    });
+
+    it('labels each number for a screen reader', () => {
+      // Both are icon-over-value on screen. Without the labels a row reads
+      // "4 Marc D. 1030 63".
+      render(<PingpongRow player={player()} />);
+
+      expect(screen.getByTestId('pingpong-rating')).toHaveTextContent(/elo/i);
+      expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent(
+        /victoires/i,
+      );
+    });
+
+    it('puts the trend arrow immediately before the stats', () => {
+      // Explicitly kept on the row rather than moved into the sheet, and
+      // positioned left of the stat block so the numbers stay aligned.
+      render(
+        <PingpongRow
+          player={player({
+            rank: 2,
+            previousDayRank: 5,
+            lastMatchAt: new Date().toISOString(),
+          })}
+        />,
+      );
+
+      const trend = screen.getByTestId('pingpong-trend');
+      const stats = screen.getByTestId('pingpong-stats');
+      expect(
+        trend.compareDocumentPosition(stats) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(trend.nextElementSibling).toBe(stats);
+    });
+  });
+
+  describe('an unranked row', () => {
+    it('shows no win rate for a calibrating player', () => {
+      // A win rate off three matches is noise, and it would sit in the
+      // column a ranked row uses for a number that means something.
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            wins: 2,
+            losses: 1,
+          })}
+        />,
+      );
+
+      expect(screen.queryByTestId('pingpong-winrate')).not.toBeInTheDocument();
+    });
+
+    it('still shows the rating', () => {
+      // The rating exists and is real; only the rank is withheld.
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            conservativeScore: 1042,
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-rating')).toHaveTextContent('1042');
+    });
+
+    it('says it is unranked rather than staying silent', () => {
+      // The empty rank column is the visual signal. A screen reader gets
+      // nothing from an empty box, so the absence is stated.
+      render(
+        <PingpongRow player={player({ rank: null, provisional: true })} />,
+      );
+
+      expect(screen.getByTestId('pingpong-row')).toHaveTextContent(
+        /non classé/i,
+      );
+    });
   });
 });

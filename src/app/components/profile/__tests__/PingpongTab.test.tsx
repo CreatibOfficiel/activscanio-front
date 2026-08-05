@@ -324,4 +324,96 @@ describe('PingpongTab', () => {
       ).toHaveTextContent('1480');
     });
   });
+
+  /**
+   * The tab was written for one reader and now has two: the leaderboard
+   * opens the same component in a sheet for whoever you tapped. Copy written
+   * in the second person then addresses the viewer as if they were the
+   * player on screen — "tes stats" about a colleague is not a wording nit,
+   * it says the wrong thing about whose numbers these are.
+   *
+   * 'self' is the default so the profile page, which passes nothing, keeps
+   * exactly the copy it had.
+   */
+  describe('viewed on someone else', () => {
+    it('invites the player themselves to record a first match', async () => {
+      mockedRepo.fetchPlayer.mockResolvedValue(null);
+
+      render(<PingpongTab competitorId="c-me" />);
+
+      expect(
+        await screen.findByTestId('pingpong-tab-never-played'),
+      ).toHaveTextContent(/ton premier match/i);
+    });
+
+    it('does not tell the viewer to play someone else’s first match', async () => {
+      mockedRepo.fetchPlayer.mockResolvedValue(null);
+
+      render(<PingpongTab competitorId="c-other" perspective="other" />);
+
+      const empty = await screen.findByTestId('pingpong-tab-never-played');
+      expect(empty).not.toHaveTextContent(/ton premier match/i);
+      expect(empty).not.toHaveTextContent(/\bton\b/i);
+    });
+
+    it('does not offer a record-a-match link on someone else’s card', async () => {
+      // The CTA belongs to the person whose profile it is. On a colleague it
+      // invites the viewer to record a match they may not have played.
+      mockedRepo.fetchPlayer.mockResolvedValue(null);
+
+      render(<PingpongTab competitorId="c-other" perspective="other" />);
+
+      await screen.findByTestId('pingpong-tab-never-played');
+      expect(
+        screen.queryByRole('link', { name: /enregistrer un match/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('drops the second person from the calibration note', async () => {
+      // "Ton rang apparaîtra" about someone else names the wrong rank.
+      mockedRepo.fetchPlayer.mockResolvedValue(
+        player({ rank: null, provisional: true, weightedMatchCount: 3 }),
+      );
+
+      render(<PingpongTab competitorId="c-other" perspective="other" />);
+
+      await screen.findByTestId('pingpong-tab-calibration');
+      expect(screen.queryByText(/ton rang/i)).not.toBeInTheDocument();
+    });
+
+    it('keeps the second person for the player themselves', async () => {
+      mockedRepo.fetchPlayer.mockResolvedValue(
+        player({ rank: null, provisional: true, weightedMatchCount: 3 }),
+      );
+
+      render(<PingpongTab competitorId="c-me" />);
+
+      await screen.findByTestId('pingpong-tab-calibration');
+      expect(screen.getByText(/ton rang/i)).toBeInTheDocument();
+    });
+
+    it('says whose stats failed to load', async () => {
+      // "Impossible de charger tes stats" under a colleague's name is a
+      // sentence about the wrong person.
+      const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockedRepo.fetchPlayer.mockRejectedValue(new Error('network down'));
+
+      render(<PingpongTab competitorId="c-other" perspective="other" />);
+
+      expect(await screen.findByTestId('pingpong-tab-error')).not.toHaveTextContent(
+        /tes stats/i,
+      );
+      spy.mockRestore();
+    });
+
+    it('still shows the rating and record on someone else’s card', async () => {
+      // Rewording is all that changes. The numbers are the point.
+      render(<PingpongTab competitorId="c-other" perspective="other" />);
+
+      expect(
+        await screen.findByTestId('pingpong-tab-rating'),
+      ).toHaveTextContent('1480');
+      expect(screen.getByTestId('pingpong-tab-record')).toHaveTextContent('12');
+    });
+  });
 });
