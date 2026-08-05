@@ -186,6 +186,34 @@ describe('PingpongRow', () => {
       expect(screen.queryByTestId('pingpong-winrate')).not.toBeInTheDocument();
     });
 
+    /**
+     * The rate used to be gated on being ranked, which needs 8 weighted
+     * matches. With nobody ranked yet that emptied the column for the whole
+     * board — the screen lost a real number to protect against a fake one.
+     * Three matches is where a percentage stops being noise: 2/3 is a
+     * reading, 1/1 is an accident.
+     */
+    it('shows a win rate for a calibrating player past three matches', () => {
+      render(
+        <PingpongRow
+          player={player({ wins: 5, losses: 2, rank: null, provisional: true })}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent('71');
+    });
+
+    it('withholds it below three matches', () => {
+      // 100% off one match says nothing about anyone.
+      render(
+        <PingpongRow
+          player={player({ wins: 1, losses: 0, rank: null, provisional: true })}
+        />,
+      );
+
+      expect(screen.queryByTestId('pingpong-winrate')).not.toBeInTheDocument();
+    });
+
     it('shows a win rate once matches have been played', () => {
       render(<PingpongRow player={player({ wins: 3, losses: 1 })} />);
 
@@ -431,9 +459,16 @@ describe('PingpongRow', () => {
   });
 
   describe('an unranked row', () => {
-    it('shows no win rate for a calibrating player', () => {
-      // A win rate off three matches is noise, and it would sit in the
-      // column a ranked row uses for a number that means something.
+    /**
+     * Reversed deliberately. This used to assert the opposite: no rate for a
+     * calibrating player, whatever they had played. The reasoning was that a
+     * rate off a few matches is noise — true of one match, not of three — and
+     * the cost went unnoticed until the board filled with calibrating players
+     * and the column was empty for everyone. The gate is now three played
+     * matches rather than being ranked; 2W-1L is exactly the boundary and
+     * shows.
+     */
+    it('shows a win rate for a calibrating player at the threshold', () => {
       render(
         <PingpongRow
           player={player({
@@ -445,7 +480,7 @@ describe('PingpongRow', () => {
         />,
       );
 
-      expect(screen.queryByTestId('pingpong-winrate')).not.toBeInTheDocument();
+      expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent('67');
     });
 
     it('still shows the rating', () => {

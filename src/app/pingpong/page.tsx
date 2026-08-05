@@ -242,7 +242,7 @@ export default function PingpongPage() {
                 data-testid="pingpong-nobody-ranked"
                 className="mb-3 text-sm text-neutral-500"
               >
-                Personne n&apos;est encore classé — 8 matchs nécessaires.
+                Personne n&apos;est encore classé, 8 matchs nécessaires.
               </p>
             )}
 

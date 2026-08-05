@@ -56,6 +56,9 @@ const MATCHES_TO_CALIBRATE = 8;
  * on the board that says anything changed today, and behind a tap nobody
  * would see it.
  */
+/** Below this, a win percentage is an artefact of a tiny sample. */
+const MIN_MATCHES_FOR_RATE = 3;
+
 const PingpongRow: FC<PingpongRowProps> = ({
   player,
   isCurrentUser = false,
@@ -94,10 +97,18 @@ const PingpongRow: FC<PingpongRowProps> = ({
         }
       : null;
 
-  // A rate off three matches is noise, and it would occupy the column a
-  // ranked row uses for a number that means something. The rating stays:
-  // it exists and is real, only the rank is withheld.
-  const showsRate = isRanked && rate !== null;
+  /**
+   * Three played matches, not "is ranked".
+   *
+   * Gating on rank meant waiting for 8 weighted matches, and with nobody
+   * ranked yet that left the column empty for every row on the board — the
+   * screen gave up a real number to avoid showing a fake one. Three is where
+   * a percentage starts carrying information: 2/3 is a reading, 1/1 is an
+   * accident. Below it the column stays empty rather than showing a figure
+   * nobody should act on.
+   */
+  const played = player.wins + player.losses;
+  const showsRate = played >= MIN_MATCHES_FOR_RATE && rate !== null;
 
   const content = (
     <>

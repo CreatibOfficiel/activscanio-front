@@ -204,6 +204,12 @@ export default function Home() {
           <MarioKartViewTabs value={view} onChange={setView} />
         </div>
 
+        {/* Outside both panels on purpose. Recording a race is the write
+            action for this whole screen, not for one of its two views, and
+            hanging it off the history panel meant anyone reading the ranking
+            had to switch tabs first just to reach it. */}
+        <AddActivityButton variant="floating" />
+
         {view === 'races' && (
           <div
             role="tabpanel"
@@ -213,10 +219,7 @@ export default function Home() {
           >
             {/* The same component `/races` renders. The countdown is
                 suppressed because this page already shows one above. */}
-            <RaceHistory
-              showCountdown={false}
-              renderAddControl={() => <AddActivityButton variant="floating" />}
-            />
+            <RaceHistory showCountdown={false} />
           </div>
         )}
 
