@@ -164,6 +164,41 @@ describe('RacesPage — add control', () => {
 
     expect(await screen.findByTestId('add-activity')).toBeInTheDocument();
   });
+
+  /**
+   * What this route keeps while the board's Courses panel was rearranged.
+   *
+   * `/` moved its headings inside its tab panels, so the Courses panel now
+   * carries an h1 of its own. This page renders the same `RaceHistory` but has
+   * no tabs and no ranking, so its own title and its own countdown must both
+   * survive that change untouched.
+   */
+  describe('standing on its own', () => {
+    it('titles itself Courses at level 1', async () => {
+      renderPage();
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: /^courses$/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('carries exactly one h1', async () => {
+      // The board's panel heading must not arrive here as a second one:
+      // `/races` supplies its own title and `RaceHistory` supplies none.
+      renderPage();
+      await screen.findByRole('heading', { level: 1 });
+
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    });
+
+    it('shows the season countdown, which the board suppresses', async () => {
+      // `showCountdown` is left unset here, so it defaults to true. On `/` the
+      // countdown belongs to the ranking panel and the flag is passed false.
+      renderPage();
+
+      expect(await screen.findByText(/fin de saison/i)).toBeInTheDocument();
+    });
+  });
 });
 
 /**

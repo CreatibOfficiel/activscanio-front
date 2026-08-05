@@ -13,6 +13,7 @@ import PingpongViewTabs, {
 } from '../components/pingpong/PingpongViewTabs';
 import PingpongTab from '../components/profile/PingpongTab';
 import AddActivityButton from '@/app/components/sport/AddActivityButton';
+import BoardPanelHeading from '@/app/components/sport/BoardPanelHeading';
 import { formatCompetitorName } from '../utils/formatters';
 import { PingpongPlayer } from '../models/Pingpong';
 import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
@@ -124,23 +125,25 @@ export default function PingpongPage() {
   return (
     <div className="min-h-screen bg-neutral-900">
       <div className="max-w-2xl mx-auto px-4 pb-8">
-        <div className="flex flex-col items-center mt-8 mb-6">
-          <h1 className="text-title mb-2">Classement ping-pong</h1>
-          {/* Suppressed on a cold start. "0 joueur classé" above an empty
-              board states a fact nobody needs and makes a new feature read
-              as a dead one; the empty state below says the useful thing
-              instead. It returns the moment anyone is on the board. */}
-          {!isEmpty && (
-            <p className="text-sm text-neutral-500">
-              <span data-testid="pingpong-count">{ranked.length}</span> joueur
-              {ranked.length > 1 ? 's' : ''} classé{ranked.length > 1 ? 's' : ''}
-              {calibrating.length > 0 &&
-                ` + ${calibrating.length} en calibrage`}
-              {inactive.length > 0 &&
-                ` + ${inactive.length} inactif${inactive.length > 1 ? 's' : ''}`}
-            </p>
-          )}
-        </div>
+        {/* NO PAGE TITLE HERE ANY MORE — same fix as the Mario Kart board,
+            same reason. "Classement ping-pong" and its tier counts used to sit
+            above the selector and stay there when Matchs was picked, titling a
+            panel that was not rendered ("pareil sur ping pong ca change pas le
+            titre en haut de la page"). Each panel names itself now; the
+            reasoning for the panel-owned h1 is on `BoardPanelHeading`.
+
+            The exception below is the three states that render no tab strip at
+            all. */}
+
+        {/* The tabs are gated on `showsBoard`, so while the board is loading,
+            broken or empty there is no panel to own a heading — and a document
+            with no h1 is worse than a heading that is momentarily generic. The
+            board's own title stands in, without counts: there are none to
+            state, and on the cold start "0 joueur classé" was already
+            suppressed for making a new feature read as a dead one. */}
+        {!showsBoard && (
+          <BoardPanelHeading title="Classement ping-pong" className="mt-8 mb-6" />
+        )}
 
         {loading && (
           <div data-testid="pingpong-loading" className="space-y-2">
@@ -217,7 +220,7 @@ export default function PingpongPage() {
           <PingpongViewTabs
             value={view}
             onChange={setView}
-            className="mb-4"
+            className="mt-8 mb-4"
           />
         )}
 
@@ -228,6 +231,29 @@ export default function PingpongPage() {
             aria-labelledby={tabId('ranking')}
             tabIndex={0}
           >
+            {/* The counts describe this list and only this list — ranked,
+                calibrating and inactive are its three tiers — so they travel
+                with its title into the panel.
+
+                The cold-start suppression is preserved but it can no longer
+                fire from here: this panel only renders when `showsBoard` is
+                true, which already excludes the empty board. The guard above
+                covers that case with a title and no counts. */}
+            <BoardPanelHeading
+              title="Classement ping-pong"
+              className="mb-6"
+              subtitle={
+                <>
+                  <span data-testid="pingpong-count">{ranked.length}</span> joueur
+                  {ranked.length > 1 ? 's' : ''} classé{ranked.length > 1 ? 's' : ''}
+                  {calibrating.length > 0 &&
+                    ` + ${calibrating.length} en calibrage`}
+                  {inactive.length > 0 &&
+                    ` + ${inactive.length} inactif${inactive.length > 1 ? 's' : ''}`}
+                </>
+              }
+            />
+
             <PingpongPodiumCarousel
               podium={podium}
               onSelect={setSelected}
@@ -270,6 +296,14 @@ export default function PingpongPage() {
             aria-labelledby={tabId('matches')}
             tabIndex={0}
           >
+            {/* The panel's title, matching the tab that opened it. That
+                repetition was the reason this panel deliberately carried no
+                heading before — but that held only while a page-level title
+                sat above the tabs. With it gone, an unheaded panel leaves the
+                document with no h1 at all, which is the worse trade: the tab
+                is a control, the heading is a landmark. */}
+            <BoardPanelHeading title="Matchs" className="mb-4" />
+
             <PingpongMatchesSection
               matches={matches}
               loading={matchesLoading}

@@ -52,9 +52,19 @@ jest.mock('../components/leaderboard', () => ({
   LeagueDivider: () => <div />,
 }));
 
+/**
+ * Stubbed, but NOT down to a bare div any more.
+ *
+ * The board owns the Courses panel's heading and countdown now, so a stub that
+ * swallowed `showCountdown` would let the board pass it either way. The stub
+ * reports what it was told instead, which is the only prop this file cares
+ * about.
+ */
 jest.mock('../components/race/RaceHistory', () => ({
   __esModule: true,
-  default: () => <div data-testid="race-history" />,
+  default: ({ showCountdown }: { showCountdown?: boolean }) => (
+    <div data-testid="race-history" data-show-countdown={String(showCountdown)} />
+  ),
 }));
 
 jest.mock('../context/AddActivitySlotContext', () => ({
@@ -183,5 +193,111 @@ describe('Home — Mario Kart view selector', () => {
     expect(
       screen.getByRole('tab', { name: /classement/i }),
     ).toHaveAttribute('aria-controls', 'mariokart-panel-ranking');
+  });
+});
+
+/**
+ * The heading follows the selection.
+ *
+ * The bug this pins: the board used to title itself "Classement des pilotes"
+ * ABOVE the selector, with the competitor counts and the season countdown
+ * under it. Pick Courses and all three stayed on screen, so the reader got a
+ * ranking's title, a ranking's counts and a ranking's deadline sitting over a
+ * race history. The title described a panel that was no longer rendered.
+ *
+ * Each panel owns its heading now and there is nothing above the tabs. Every
+ * assertion here is about absence as much as presence — a heading that merely
+ * APPEARS on the right tab would pass just as well if the old one were still
+ * stacked above it.
+ */
+describe('Home — heading follows the selected panel', () => {
+  const rankingTitle = /classement des pilotes/i;
+
+  it('titles the page with the ranking while the ranking is showing', () => {
+    renderBoard();
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: rankingTitle }),
+    ).toBeInTheDocument();
+  });
+
+  it('drops the ranking title, its counts and its countdown on Courses', async () => {
+    // The whole defect in one test. The counts line is queried by its exact
+    // text rather than by a testid, so it cannot be satisfied by an element
+    // that merely changed its label. Anchored, because the ranking panel's
+    // empty state also says "Ajouter une course" and a loose /pilote/ matches
+    // both.
+    renderBoard();
+    expect(screen.getByText(/^0 pilote$/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: /courses/i }));
+
+    expect(
+      screen.queryByRole('heading', { name: rankingTitle }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/^0 pilote$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/en calibrage/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/fin de saison/i)).not.toBeInTheDocument();
+  });
+
+  it('titles the page with the history once Courses is picked', async () => {
+    // Level 1, not 2. Nothing above the tabs names the page any more, so a
+    // subordinate heading here would leave the document topless.
+    renderBoard();
+    await userEvent.click(screen.getByRole('tab', { name: /courses/i }));
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: /^courses$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('restores the ranking title on the way back', async () => {
+    renderBoard();
+    await userEvent.click(screen.getByRole('tab', { name: /courses/i }));
+    await userEvent.click(screen.getByRole('tab', { name: /classement/i }));
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: rankingTitle }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /^courses$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('carries exactly one h1 on either tab', async () => {
+    // Two h1s is the failure the old architecture shipped: the page title
+    // above the tabs plus whatever the panel added.
+    renderBoard();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole('tab', { name: /courses/i }));
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+  });
+
+  it('shows the season countdown on the ranking and nowhere else', async () => {
+    // The countdown belongs to the ranking: it is the deadline for the board,
+    // not for the list of races already run. It used to sit above the tabs,
+    // which is why `/` passed `showCountdown={false}` to RaceHistory.
+    renderBoard();
+    expect(screen.getAllByText(/fin de saison/i)).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole('tab', { name: /courses/i }));
+    expect(screen.queryByText(/fin de saison/i)).not.toBeInTheDocument();
+  });
+
+  it('still suppresses the history panel\'s own countdown', async () => {
+    // `showCountdown={false}` survives the move. The countdown left the top of
+    // the page for the ranking panel, so the history has no sibling copy to
+    // clash with any more — but it is still the ranking's fact, and letting
+    // RaceHistory render one here would put a season deadline over a list that
+    // does not answer to it. `/races` standalone leaves the flag unset and
+    // keeps its own.
+    renderBoard();
+    await userEvent.click(screen.getByRole('tab', { name: /courses/i }));
+
+    expect(screen.getByTestId('race-history')).toHaveAttribute(
+      'data-show-countdown',
+      'false',
+    );
   });
 });

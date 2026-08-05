@@ -3,6 +3,7 @@
 import { NextPage } from "next";
 import RaceHistory from "../components/race/RaceHistory";
 import AddActivityButton from "../components/sport/AddActivityButton";
+import BoardPanelHeading from "../components/sport/BoardPanelHeading";
 
 /**
  * The race history as a standalone route.
@@ -27,11 +28,22 @@ import AddActivityButton from "../components/sport/AddActivityButton";
  * "Courses" panel renders too. This file is what is left: the page title, and
  * the add control, which on this screen goes into the bottom bar's centre slot
  * exactly as it does on the board.
+ *
+ * The title is the same `BoardPanelHeading` the board's Courses panel uses, so
+ * the two entry points read identically. It stayed here rather than moving
+ * into `RaceHistory` because the countdown differs — this page shows one, the
+ * board's panel suppresses it — and a component that titles itself would have
+ * to be told which of its two callers it is, which is exactly the knowledge it
+ * was extracted to avoid.
+ *
+ * It is also now the ONLY "Courses" on this screen. `RacesStatsHeader` used to
+ * print an `<h1>Courses</h1>` of its own directly beneath this one, so both
+ * this route and the board's panel shipped the heading twice.
  */
 const RacesPage: NextPage = () => {
   return (
     <div className="min-h-screen bg-neutral-900">
-      <h1 className="text-center text-title pt-6 pb-2">Courses</h1>
+      <BoardPanelHeading title="Courses" className="pt-6 pb-2" />
       <RaceHistory renderAddControl={() => <AddActivityButton variant="floating" />} />
     </div>
   );

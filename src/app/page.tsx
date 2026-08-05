@@ -27,6 +27,7 @@ import MarioKartViewTabs, {
 } from "./components/race/MarioKartViewTabs";
 import RaceHistory from "./components/race/RaceHistory";
 import AddActivityButton from "./components/sport/AddActivityButton";
+import BoardPanelHeading from "./components/sport/BoardPanelHeading";
 
 const SEGMENTATION_OPTIONS = { excludePodiumFromLeagues: true };
 
@@ -170,37 +171,26 @@ export default function Home() {
           transition: isPulling ? "none" : "transform 0.3s ease-out",
         }}
       >
-        {/* Header */}
-        <div className="flex flex-col items-center mt-8 mb-8">
-          <h1 className="text-title mb-2">Classement des pilotes</h1>
+        {/* NO PAGE TITLE HERE, and that is the fix rather than an omission.
+            A "Classement des pilotes" heading used to sit at this spot with
+            the competitor counts and the season countdown under it, none of
+            which moved when the tab did — picking Courses left a ranking's
+            title, counts and deadline sitting over a race history. Each panel
+            names itself now; see `BoardPanelHeading` for why the h1 moved into
+            the panels rather than staying here and rewriting its own text.
 
-          <p className="text-sm text-neutral-500">
-            {confirmed.length} pilote
-            {confirmed.length > 1 ? "s" : ""}
-            {inactive.length > 0 && ` + ${inactive.length} inactif${inactive.length > 1 ? "s" : ""}`}
-            {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
-          </p>
-        </div>
+            The knock-on is that the selector is the first thing on the page,
+            at a fixed offset from the top, so it no longer moves under the
+            thumb that just pressed it. */}
 
-        {/* Season countdown. Above the selector because it belongs to the
-            season rather than to either view — the deadline is the same fact
-            whether you are reading the board or the history, and RaceHistory
-            is told to suppress its own copy here. */}
-        <Countdown
-          label="Fin de saison"
-          targetDate={seasonEndDate}
-          thresholds={{ warningSeconds: 259200, criticalSeconds: 86400 }}
-          expiredLabel="Saison terminée"
-          className="mx-4 mb-4"
-        />
+        {/* Streak Warning Banners. Above the selector, unlike the title: a
+            warning that the streak is about to lapse is the reason to open the
+            app at all, it belongs to neither view in particular, and hiding it
+            behind whichever tab happens to be showing would bury the one thing
+            that is time-critical. */}
+        {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mt-8 mb-4" />}
 
-        {/* Streak Warning Banners. Also above the selector: a warning that the
-            streak is about to lapse is the reason to open the app at all, and
-            hiding it behind whichever tab happens to be showing would bury
-            the one thing that is time-critical. */}
-        {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mb-4" />}
-
-        <div className="flex justify-center mb-4">
+        <div className={`flex justify-center mb-4 ${streakWarnings ? '' : 'mt-8'}`}>
           <MarioKartViewTabs value={view} onChange={setView} />
         </div>
 
@@ -217,8 +207,17 @@ export default function Home() {
             aria-labelledby={tabId('races')}
             tabIndex={0}
           >
-            {/* The same component `/races` renders. The countdown is
-                suppressed because this page already shows one above. */}
+            <BoardPanelHeading title="Courses" className="mb-4" />
+
+            {/* The same component `/races` renders.
+                `showCountdown={false}` survives the heading move. The season
+                deadline is the ranking's fact — it counts down to the board
+                being frozen, not to anything about races already run — so it
+                went into the ranking panel rather than to the top of the page.
+                Letting RaceHistory render its own here would put it back on a
+                panel that does not answer to it. `/races` leaves the flag unset
+                and keeps its countdown, because there it is the only thing on
+                screen the season applies to. */}
             <RaceHistory showCountdown={false} />
           </div>
         )}
@@ -230,6 +229,33 @@ export default function Home() {
           aria-labelledby={tabId('ranking')}
           tabIndex={0}
         >
+        {/* The counts describe this panel and nothing else — they are the
+            three tiers of THIS list — so they travel with its title. */}
+        <BoardPanelHeading
+          title="Classement des pilotes"
+          className="mb-8"
+          subtitle={
+            <>
+              {confirmed.length} pilote
+              {confirmed.length > 1 ? "s" : ""}
+              {inactive.length > 0 && ` + ${inactive.length} inactif${inactive.length > 1 ? "s" : ""}`}
+              {calibrating.length > 0 && ` + ${calibrating.length} en calibrage`}
+            </>
+          }
+        />
+
+        {/* Season countdown, inside the ranking panel. It counts down to this
+            board being frozen and archived; the race history has no deadline,
+            which is why it stopped living above the selector where it hung
+            over both. */}
+        <Countdown
+          label="Fin de saison"
+          targetDate={seasonEndDate}
+          thresholds={{ warningSeconds: 259200, criticalSeconds: 86400 }}
+          expiredLabel="Saison terminée"
+          className="mx-4 mb-4"
+        />
+
         {/* Ranking animation overlay + Podium + Leagues */}
         <RankingAnimationOverlay
           phase={animationPhase}

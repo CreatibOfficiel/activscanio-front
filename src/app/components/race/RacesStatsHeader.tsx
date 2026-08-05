@@ -22,8 +22,15 @@ interface Props {
 const RacesStatsHeader: FC<Props> = ({ totalRaces, weeklyRaces, mostActive }) => {
   return (
     <div className="px-4 pt-6 pb-4">
-      {/* Title */}
-      <h1 className="text-center text-title mb-6">Courses</h1>
+      {/* NO TITLE. This component carried an `<h1>Courses</h1>` and it was a
+          duplicate on every screen that rendered it: `/races` prints its own
+          "Courses" title directly above, and the board's Courses panel now
+          does the same. Two identical h1s, one under the other — which is the
+          second "Courses" visible in the reported screenshot.
+
+          Naming the page is the caller's job, because only the caller knows
+          whether this is a whole route or one tab panel. What is left here is
+          what the component is actually for: the three stat cards. */}
 
       {/* Stats cards */}
       <div className="grid grid-cols-3 gap-3">

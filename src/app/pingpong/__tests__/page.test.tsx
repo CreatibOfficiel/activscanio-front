@@ -238,9 +238,12 @@ describe('PingpongPage', () => {
     // tiers, which is fine — what must not exist is a heading splitting the
     // list into groups.
     //
-    // The matches panel deliberately carries no <h2> of its own either: the
-    // tab that opened it already names it, and a heading repeating the tab
-    // label is the same word twice.
+    // Still exactly one heading, but it moved: it used to sit above the tab
+    // selector, where it stayed put while the reader was on Matchs and
+    // titled a panel that was not rendered. It is inside the ranking panel
+    // now. The equality is kept rather than loosened — one heading per panel
+    // is the rule this file has always pinned, and the tiers must still not
+    // grow headers of their own.
     const headings = screen.getAllByRole('heading').map((h) => h.textContent);
     expect(headings).toEqual(['Classement ping-pong']);
   });
@@ -257,6 +260,150 @@ describe('PingpongPage', () => {
     const names = screen.getAllByTestId('pingpong-row').map((row) => row.textContent);
     expect(names[0]).toMatch(/Marc/);
     expect(names[1]).toMatch(/Julie/);
+  });
+
+  /**
+   * The heading follows the selected panel.
+   *
+   * Same defect as the Mario Kart board and fixed the same way. The page used
+   * to title itself "Classement ping-pong" above the tab selector, with the
+   * "N joueurs classés + M en calibrage" line under it. Pick Matchs and both
+   * stayed: a ranking's title and a ranking's tier counts sitting over a match
+   * history that has neither.
+   *
+   * `page-views.test.tsx` holds the mirror of this block for `/`. The two
+   * boards are siblings and a fix that landed on one only would recreate the
+   * asymmetry the tab work removed.
+   */
+  describe('the heading follows the selected panel', () => {
+    const rankingTitle = /classement ping-pong/i;
+
+    async function openMatchesTab() {
+      await userEvent.click(screen.getByRole('tab', { name: /matchs/i }));
+    }
+
+    it('titles the page with the ranking while the ranking is showing', async () => {
+      givenBoard([player({ id: 'a', rank: 1 })]);
+
+      render(<PingpongPage />);
+      await screen.findAllByTestId('pingpong-row');
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: rankingTitle }),
+      ).toBeInTheDocument();
+    });
+
+    it('drops the ranking title and its counts on Matchs', async () => {
+      // The defect itself. Both must go, and the counts are queried by their
+      // text so the assertion cannot be satisfied by a relabelled element.
+      givenBoard([
+        player({ id: 'a', rank: 1 }),
+        player({ id: 'b', rank: null, provisional: true }),
+      ]);
+      givenMatches([match()]);
+
+      render(<PingpongPage />);
+      await screen.findAllByTestId('pingpong-row');
+      expect(screen.getByTestId('pingpong-count')).toBeInTheDocument();
+
+      await openMatchesTab();
+
+      expect(
+        screen.queryByRole('heading', { name: rankingTitle }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('pingpong-count')).not.toBeInTheDocument();
+      expect(screen.queryByText(/en calibrage/i)).not.toBeInTheDocument();
+    });
+
+    it('titles the page with the matches once Matchs is picked', async () => {
+      // Level 1. With nothing above the tabs naming the page, an h2 here
+      // would leave the document without a top-level heading.
+      givenBoard([player({ id: 'a', rank: 1 })]);
+      givenMatches([match()]);
+
+      render(<PingpongPage />);
+      await screen.findAllByTestId('pingpong-row');
+      await openMatchesTab();
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: /^matchs$/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('restores the ranking title on the way back', async () => {
+      givenBoard([player({ id: 'a', rank: 1 })]);
+      givenMatches([match()]);
+
+      render(<PingpongPage />);
+      await screen.findAllByTestId('pingpong-row');
+      await openMatchesTab();
+      await userEvent.click(screen.getByRole('tab', { name: /classement/i }));
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: rankingTitle }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { level: 1, name: /^matchs$/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('carries exactly one h1 on either tab', async () => {
+      givenBoard([player({ id: 'a', rank: 1 })]);
+      givenMatches([match()]);
+
+      render(<PingpongPage />);
+      await screen.findAllByTestId('pingpong-row');
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+
+      await openMatchesTab();
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    });
+
+    it('still suppresses the counts on a cold start', async () => {
+      // Preserved behaviour, moved inside the panel with the title. "0 joueur
+      // classé" over an empty board states a fact nobody needs and makes a new
+      // feature read as a dead one. The empty state below says the useful
+      // thing instead.
+      givenBoard([]);
+
+      render(<PingpongPage />);
+      await screen.findByTestId('pingpong-empty');
+
+      expect(screen.queryByTestId('pingpong-count')).not.toBeInTheDocument();
+    });
+
+    it('titles the page even when the board is empty', async () => {
+      // The tabs are gated on a non-empty board, so on a cold start there is
+      // no panel to own a heading. The page must still have one, or the empty
+      // state ships a document with no h1 at all.
+      givenBoard([]);
+
+      render(<PingpongPage />);
+      await screen.findByTestId('pingpong-empty');
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: rankingTitle }),
+      ).toBeInTheDocument();
+    });
+
+    it('titles the page while the board is loading and when it fails', async () => {
+      // Same reason: neither state renders a tab strip or a panel, so the
+      // heading cannot come from one.
+      givenBoard([], { loading: true });
+      const { unmount } = render(<PingpongPage />);
+      await screen.findByTestId('pingpong-loading');
+      expect(
+        screen.getByRole('heading', { level: 1, name: rankingTitle }),
+      ).toBeInTheDocument();
+      unmount();
+
+      givenBoard([], { error: new Error('offline') });
+      render(<PingpongPage />);
+      await screen.findByTestId('pingpong-error');
+      expect(
+        screen.getByRole('heading', { level: 1, name: rankingTitle }),
+      ).toBeInTheDocument();
+    });
   });
 
   /**
@@ -877,11 +1024,18 @@ describe('PingpongPage', () => {
       expect(await screen.findByTestId('match-card')).toBeInTheDocument();
     });
 
-    it('leaves the panel unheaded, because the tab already names it', async () => {
-      // The tab that opened the panel is its label. A "Derniers matchs"
-      // heading directly under a pressed "Matchs" tab is the same word
-      // twice, and it would put a second h2 on a page whose single-heading
-      // rule the guard above pins.
+    it('titles the panel and drops the ranking heading', async () => {
+      // DELIBERATELY REVERSED. This used to assert the matches panel carried
+      // no heading, on the reasoning that the pressed tab already named it.
+      // That reasoning held only while a page-level "Classement ping-pong"
+      // sat above the tabs — and that heading was the actual bug: it titled
+      // the ranking while the reader was looking at the matches.
+      //
+      // With the page title gone, an unheaded panel leaves the document with
+      // no h1 at all. So the panel names itself, and the ranking's title goes
+      // away with the ranking. Still exactly one heading, still no
+      // "Derniers matchs" duplicating anything — the panel's title IS the
+      // page's title now.
       givenBoard([player({ id: 'a', rank: 1 })]);
       givenMatches([match()]);
 
@@ -891,7 +1045,7 @@ describe('PingpongPage', () => {
       await screen.findByTestId('match-card');
 
       const headings = screen.getAllByRole('heading').map((h) => h.textContent);
-      expect(headings).toEqual(['Classement ping-pong']);
+      expect(headings).toEqual(['Matchs']);
     });
 
     it('renders a card per match on the matches tab', async () => {
