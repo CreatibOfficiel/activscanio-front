@@ -2,7 +2,10 @@
 
 import React, { PropsWithChildren, useCallback, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppContext } from "./AppContext";
+import { queryKeys } from "../query/keys";
+import { useCompetitorsQuery, useInvalidateCompetitors } from "../query/useCompetitors";
 import { Competitor, UpdateCompetitorPayload } from "../models/Competitor";
 import { RaceEvent } from "../models/RaceEvent";
 import { RaceResult } from "../models/RaceResult";
@@ -25,65 +28,101 @@ const racesRepo = new RacesRepository(baseUrl);
 const raceAnalysisRepo = new RaceAnalysisRepository(baseUrl);
 const charactersRepo = new CharactersRepository(baseUrl);
 
+/** Stable identity, so consumers memoising on `allCompetitors` don't rerun
+ *  every render while the query is still pending. */
+const EMPTY_COMPETITORS: Competitor[] = [];
+
 export function AppProvider({ children }: PropsWithChildren) {
   /* ───────── state ───────── */
   const { isLoaded, isSignedIn, getToken } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [competitors, setCompetitors] = useState<Competitor[]>([]);
+  const queryClient = useQueryClient();
+  const [isLoadingRest, setIsLoadingRest] = useState(false);
   const [raceEvents, setRaceEvents] = useState<RaceEvent[]>([]);
   const [baseCharacters, setBaseCharacters] = useState<BaseCharacter[]>([]);
 
+  /* ───────── competitors: owned by React Query ───────── */
+  // Held in the query cache rather than local state so that the leaderboard
+  // survives navigation, dedupes concurrent readers, and can be invalidated
+  // from SocketWrapper without routing a callback through this provider.
+  const competitorsQuery = useCompetitorsQuery();
+  const competitors = competitorsQuery.data ?? EMPTY_COMPETITORS;
+  const invalidateCompetitors = useInvalidateCompetitors();
+
+  /** Write a single competitor back into the cached list. */
+  const patchCompetitorInCache = useCallback(
+    (updated: Competitor) => {
+      queryClient.setQueryData<Competitor[]>(queryKeys.competitors, (prev) =>
+        prev ? prev.map((c) => (c.id === updated.id ? updated : c)) : prev,
+      );
+    },
+    [queryClient],
+  );
+
+  // `isLoading` keeps its old meaning for consumers: true while the initial
+  // payload is still in flight. Competitors now report through the query.
+  const isLoading = isLoadingRest || competitorsQuery.isPending;
+
   /* ───────── bootstrap ───────── */
   useEffect(() => {
-    // Only load data when user is authenticated
+    // Only load data when user is authenticated. Competitors are fetched by
+    // the query above, so this only covers races and base characters.
     if (isLoaded && isSignedIn) {
-      loadInitialData().catch(console.error);
+      loadSecondaryData().catch(console.error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn]);
 
-  const loadInitialData = async (): Promise<
-    [Competitor[], RaceEvent[], BaseCharacter[]]
-  > => {
+  const loadSecondaryData = async (): Promise<[RaceEvent[], BaseCharacter[]]> => {
     try {
-      setIsLoading(true);
+      setIsLoadingRest(true);
 
-      const [competitorsRes, racesRes, charsRes] = await Promise.all([
-        authenticatedFetch(getToken, `${baseUrl}/competitors`),
+      const [racesRes, charsRes] = await Promise.all([
         authenticatedFetch(getToken, `${baseUrl}/races?recent=true`),
         authenticatedFetch(getToken, `${baseUrl}/base-characters`),
       ]);
 
-      if (!competitorsRes.ok) throw new Error('Failed to fetch competitors');
       if (!racesRes.ok) throw new Error('Failed to fetch races');
       if (!charsRes.ok) throw new Error('Failed to fetch characters');
 
-      const [remoteCompetitors, remoteRaces, remoteBaseChars] = await Promise.all([
-        competitorsRes.json(),
+      const [remoteRaces, remoteBaseChars] = await Promise.all([
         racesRes.json(),
         charsRes.json(),
       ]);
 
-      setCompetitors(remoteCompetitors);
       setRaceEvents(remoteRaces);
       setBaseCharacters(remoteBaseChars);
-      return [remoteCompetitors, remoteRaces, remoteBaseChars];
+      return [remoteRaces, remoteBaseChars];
     } finally {
-      setIsLoading(false);
+      setIsLoadingRest(false);
     }
   };
 
+  /**
+   * Kept for API compatibility: still returns the same tuple, but competitors
+   * now come from the query cache (refetched here so the returned value is
+   * fresh, as callers of the old version would expect).
+   */
+  const loadInitialData = async (): Promise<
+    [Competitor[], RaceEvent[], BaseCharacter[]]
+  > => {
+    const [competitorsResult, secondary] = await Promise.all([
+      competitorsQuery.refetch(),
+      loadSecondaryData(),
+    ]);
+    return [competitorsResult.data ?? [], secondary[0], secondary[1]];
+  };
+
   /* ───────── lightweight refresh ───────── */
+  // Same signature as before (`() => Promise<void>`), but an invalidation:
+  // React Query collapses concurrent calls into one request, which is what
+  // makes a burst of socket events cost a single fetch instead of four.
   const refreshCompetitors = useCallback(async (): Promise<void> => {
     try {
-      const res = await authenticatedFetch(getToken, `${baseUrl}/competitors`);
-      if (!res.ok) throw new Error('Failed to fetch competitors');
-      const data = await res.json();
-      setCompetitors(data);
+      await invalidateCompetitors();
     } catch (err) {
       console.error('refreshCompetitors failed:', err);
     }
-  }, [getToken]);
+  }, [invalidateCompetitors]);
 
   /* ───────── characters helpers ───────── */
   const getCharacterVariants = (baseCharacterId: string) =>
@@ -99,7 +138,9 @@ export function AppProvider({ children }: PropsWithChildren) {
   const addCompetitor = async (newCompetitor: Competitor) => {
     const token = await getToken();
     const created = await competitorsRepo.createCompetitor(newCompetitor, token!);
-    setCompetitors((prev) => [...prev, created]);
+    queryClient.setQueryData<Competitor[]>(queryKeys.competitors, (prev) =>
+      prev ? [...prev, created] : prev,
+    );
     return created;
   };
 
@@ -115,9 +156,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   ) => {
     const token = await getToken();
     const updated = await competitorsRepo.updateCompetitor(id, payload, token!);
-    setCompetitors((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
+    patchCompetitorInCache(updated);
     return updated;
   };
 
@@ -131,9 +170,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       variantId,
       token!,
     );
-    setCompetitors((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
+    patchCompetitorInCache(updated);
     return updated;
   };
 
@@ -143,9 +180,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       competitorId,
       token!,
     );
-    setCompetitors((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c))
-    );
+    patchCompetitorInCache(updated);
     return updated;
   };
 

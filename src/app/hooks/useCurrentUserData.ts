@@ -1,70 +1,96 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { UsersRepository, UserData } from '../repositories/UsersRepository';
-
-let cachedUserData: UserData | null = null;
-
-/** Everyone currently mounted, so a write can push the new value to all. */
-const subscribers = new Set<(data: UserData | null) => void>();
+import { queryKeys } from '../query/keys';
 
 /**
- * Replace the cached user after a write.
+ * How long `/users/me` is trusted without refetching.
  *
- * The cache is module-level and otherwise never invalidated, so without this
- * a preference change would keep showing the old value until a full reload —
- * the setting would appear not to have saved.
+ * 5 minutes because this payload is close to static: role, sport preference,
+ * onboarding flag and the linked character. Nothing here changes without the
+ * user themselves triggering it, and every one of those writes already pushes
+ * the fresh record into the cache via `setCachedUserData`. A shorter window
+ * would buy refetches nobody is waiting for.
  */
-export function setCachedUserData(data: UserData | null): void {
-  cachedUserData = data;
-  for (const notify of subscribers) notify(data);
+const CURRENT_USER_STALE_TIME = 5 * 60_000;
+
+/**
+ * The signed-in user, shared by every caller.
+ *
+ * Previously a hand-rolled module cache with a pub/sub set. That version had
+ * no in-flight deduplication: the cache was only written once a response
+ * landed, so N components mounting cold produced N requests — which is exactly
+ * how /profile ended up firing `/users/me` twice, 12ms apart. React Query
+ * dedupes on the key itself, so concurrent mounts now share one request.
+ */
+export function useCurrentUserData() {
+  const { getToken, isLoaded, isSignedIn } = useAuth();
+
+  const query = useQuery({
+    queryKey: queryKeys.currentUser,
+    queryFn: async (): Promise<UserData | null> => {
+      const token = await getToken();
+      if (!token) return null;
+      return UsersRepository.getMe(token);
+    },
+    // Clerk has to resolve before a token exists; querying earlier would just
+    // resolve to null and cache an empty user.
+    enabled: isLoaded && isSignedIn,
+    staleTime: CURRENT_USER_STALE_TIME,
+  });
+
+  return {
+    userData: query.data ?? null,
+    // Matches the old contract: false once we have an answer, and false when
+    // there is nobody to fetch for, never a spinner that cannot end.
+    loading: query.isPending && isLoaded && !!isSignedIn,
+  };
 }
 
-export function useCurrentUserData() {
-  const { getToken } = useAuth();
-  const [userData, setUserData] = useState<UserData | null>(cachedUserData);
-  const [loading, setLoading] = useState(!cachedUserData);
+/**
+ * Push a freshly written user into the cache.
+ *
+ * Kept as a hook-free export because callers use it from inside async write
+ * handlers. It needs a QueryClient, so the module-level singleton set by
+ * `CurrentUserCacheBridge` is what it writes through.
+ */
+export function setCachedUserData(data: UserData | null): void {
+  queryClientRef?.setQueryData(queryKeys.currentUser, data);
+}
 
-  // Subscribe first, so a write from anywhere reaches every mounted copy.
-  useEffect(() => {
-    subscribers.add(setUserData);
-    return () => {
-      subscribers.delete(setUserData);
-    };
-  }, []);
+/**
+ * Hook form, for callers that are already inside a component.
+ */
+export function useSetCachedUserData() {
+  const queryClient = useQueryClient();
+  return useCallback(
+    (data: UserData | null) => {
+      queryClient.setQueryData(queryKeys.currentUser, data);
+    },
+    [queryClient],
+  );
+}
 
-  useEffect(() => {
-    if (cachedUserData) return;
+/* ───────── module-level client bridge ───────── */
 
-    let cancelled = false;
+type MinimalQueryClient = {
+  setQueryData: (key: readonly unknown[], data: UserData | null) => unknown;
+};
 
-    (async () => {
-      try {
-        // Cached token: Clerk handles renewal. A 401 clears the cache below
-        // so the next mount retries.
-        const token = await getToken();
-        if (!token || cancelled) return;
+let queryClientRef: MinimalQueryClient | null = null;
 
-        const data = await UsersRepository.getMe(token);
-        if (cancelled) return;
-
-        setCachedUserData(data);
-      } catch (err: unknown) {
-        // On 401, invalidate cache so next mount retries with a fresh token
-        const status = err && typeof err === 'object' && 'status' in err ? (err as { status: number }).status : undefined;
-        if (status === 401) {
-          cachedUserData = null;
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [getToken]);
-
-  return { userData, loading };
+/**
+ * Lets the non-hook `setCachedUserData` reach the QueryClient.
+ *
+ * `setCachedUserData` is called from plain async functions (a preference
+ * change, a character change) where no hook can run. Rather than change every
+ * one of those call sites, the provider hands the client over once at mount.
+ */
+export function registerQueryClientForUserCache(
+  client: MinimalQueryClient | null,
+): void {
+  queryClientRef = client;
 }

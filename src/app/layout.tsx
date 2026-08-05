@@ -1,8 +1,10 @@
 import "./globals.css";
 import "./styles/animations.css";
 import { AppProvider } from "./context/AppProvider";
+import { QueryProvider } from "./query/QueryProvider";
 import { SoundboardProvider } from "./context/SoundboardContext";
 import { ResultModalsProvider } from "./context/ResultModalsContext";
+import { AddActivitySlotProvider } from "./context/AddActivitySlotContext";
 import { BottomNav, Sidebar } from "./components/layout";
 import MainContent from "./components/layout/MainContent";
 import { OnboardingGuard } from "./components/auth/OnboardingGuard";
@@ -57,10 +59,17 @@ export default function RootLayout({
       </head>
       <body className="bg-neutral-900 text-neutral-100">
         <ClerkProvider>
+          {/* Outside AppProvider: AppProvider now sources its competitors
+              from a React Query cache, so the client must already exist. */}
+          <QueryProvider>
           <AppProvider>
             <SoundboardProvider>
             <ResultModalsProvider>
             <OnboardingProvider>
+            {/* Wraps both the pages and the bottom nav: a board fills the
+                bar's centre add slot from inside its own tree, and the nav is
+                what offers that slot. Both ends need the same provider. */}
+            <AddActivitySlotProvider>
             <OnboardingGuard>
               {/* Offline Indicator */}
               <OfflineIndicator />
@@ -117,12 +126,14 @@ export default function RootLayout({
                 <BottomNav />
               </AuthLayout>
             </OnboardingGuard>
+            </AddActivitySlotProvider>
             </OnboardingProvider>
             </ResultModalsProvider>
             <SoundboardModal />
             <ShakeDetector />
             </SoundboardProvider>
           </AppProvider>
+          </QueryProvider>
         </ClerkProvider>
       </body>
     </html>

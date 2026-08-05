@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useSocket, subscribeToAchievements, subscribeToLevelUp, subscribeToAchievementRevoked, subscribeToRaceAnnouncements, subscribeToRaceResults, subscribeToCompetitorUpdated, subscribeToStreakLost } from '@/app/hooks/useSocket';
-import { useApp } from '@/app/context/AppContext';
 import { useResultModals } from '@/app/context/ResultModalsContext';
+import { useInvalidateCompetitors } from '@/app/query/useCompetitors';
 import { toast } from 'sonner';
 
 interface SocketWrapperProps {
@@ -13,8 +13,17 @@ interface SocketWrapperProps {
 
 export default function SocketWrapper({ userId }: SocketWrapperProps) {
   const { socket, isConnected } = useSocket(userId);
-  const { refreshCompetitors } = useApp();
   const { enqueueStreakLoss } = useResultModals();
+  /**
+   * Invalidating the query key directly, rather than going through
+   * `useApp().refreshCompetitors`, for two reasons. It no longer depends on
+   * the AppContext value object — which is rebuilt on every AppProvider render
+   * and used to re-run this whole subscribe/unsubscribe effect. And when a
+   * race is recorded the server emits `race-announcements`, `race-results` and
+   * `competitor-updated` within the same tick: React Query collapses the three
+   * invalidations into one refetch, where the old code issued three requests.
+   */
+  const refreshCompetitors = useInvalidateCompetitors();
 
   useEffect(() => {
     if (!socket || !isConnected) return;
