@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import Modal from '../Modal';
@@ -73,6 +73,57 @@ describe('Modal — focus management', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(dialog.contains(document.activeElement)).toBe(true);
+  });
+
+  /**
+   * Closing must not move the page. The body carries `overflow: hidden`
+   * while the modal is open, so the browser's idea of where the trigger sits
+   * is stale by the time focus goes back to it: on a long leaderboard,
+   * restoring focus to a row near the top scrolled the reader down a row or
+   * two for no reason they could see. `preventScroll` is the whole fix, and
+   * nothing else here would notice if it were dropped — the focus assertions
+   * pass either way.
+   */
+  it('restores focus without scrolling the page', async () => {
+    const user = userEvent.setup();
+    const focusCalls: (FocusOptions | undefined)[] = [];
+
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button
+            onClick={() => setOpen(true)}
+            ref={(el) => {
+              if (!el || (el as { _spied?: boolean })._spied) return;
+              (el as { _spied?: boolean })._spied = true;
+              const real = el.focus.bind(el);
+              el.focus = (opts?: FocusOptions) => {
+                focusCalls.push(opts);
+                real(opts);
+              };
+            }}
+          >
+            Ouvrir
+          </button>
+          <Modal isOpen={open} onClose={() => setOpen(false)} title="Test">
+            <p>content</p>
+          </Modal>
+        </>
+      );
+    }
+
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    focusCalls.length = 0;
+
+    await user.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+
+    expect(focusCalls).toContainEqual({ preventScroll: true });
   });
 
   it('restores focus to the trigger after being closed', async () => {

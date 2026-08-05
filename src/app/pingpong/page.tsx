@@ -12,7 +12,7 @@ import PingpongViewTabs, {
   tabId,
 } from '../components/pingpong/PingpongViewTabs';
 import PingpongTab from '../components/profile/PingpongTab';
-import { AddActivitySlot } from '../context/AddActivitySlotContext';
+import AddActivityButton from '@/app/components/sport/AddActivityButton';
 import { formatCompetitorName } from '../utils/formatters';
 import { PingpongPlayer } from '../models/Pingpong';
 import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
@@ -208,7 +208,7 @@ export default function PingpongPage() {
             of a row; it now portals into the bottom bar's centre. The gate is
             page knowledge — no route can tell whether a board came back
             empty — so it stays here rather than moving into the nav. */}
-        {showsBoard && <AddActivitySlot />}
+        {showsBoard && <AddActivityButton variant="floating" />}
 
         {/* Same gate as the add button. A "Matchs" tab over an empty board
             opens a blank panel, and a control that reveals nothing reads as

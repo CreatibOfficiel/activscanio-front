@@ -2,7 +2,7 @@
 
 import { NextPage } from "next";
 import RaceHistory from "../components/race/RaceHistory";
-import { AddActivitySlot } from "../context/AddActivitySlotContext";
+import AddActivityButton from "../components/sport/AddActivityButton";
 
 /**
  * The race history as a standalone route.
@@ -32,7 +32,7 @@ const RacesPage: NextPage = () => {
   return (
     <div className="min-h-screen bg-neutral-900">
       <h1 className="text-center text-title pt-6 pb-2">Courses</h1>
-      <RaceHistory renderAddControl={() => <AddActivitySlot />} />
+      <RaceHistory renderAddControl={() => <AddActivityButton variant="floating" />} />
     </div>
   );
 };

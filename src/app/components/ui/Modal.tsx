@@ -130,7 +130,13 @@ const Modal: FC<ModalProps> = ({
       const previous = previousFocusRef.current;
       previousFocusRef.current = null;
       if (previous && document.contains(previous)) {
-        previous.focus();
+        // `preventScroll` matters: the body carried `overflow: hidden` while
+        // the modal was open, so the browser's scroll position for the
+        // restored element is stale. Without it, focusing a row near the top
+        // of a long leaderboard scrolls the page down by a row or two on
+        // close — the reader is moved without asking. Focus still lands
+        // correctly for keyboard users; only the scrolling is suppressed.
+        previous.focus({ preventScroll: true });
       }
     }
     // `mounted` is a dependency because the portal does not exist on the first

@@ -101,11 +101,16 @@ export default function ViewTabs<T extends string>({
   };
 
   return (
-    <div
-      role="tablist"
-      aria-label={label}
-      className={`inline-flex gap-1 rounded-xl bg-neutral-800 p-1 ${className}`}
-    >
+    // `flex justify-center` on a full-width wrapper rather than a bare
+    // `inline-flex`: an inline-flex tablist hugs the left edge of whatever
+    // contains it, which read as misaligned against a centred page title.
+    // The inner strip keeps its own width so the pills stay snug.
+    <div className={`flex justify-center ${className}`}>
+      <div
+        role="tablist"
+        aria-label={label}
+        className="inline-flex gap-1 rounded-xl bg-neutral-800 p-1"
+      >
       {views.map((view, index) => {
         const selected = view.id === value;
 
@@ -132,7 +137,8 @@ export default function ViewTabs<T extends string>({
             {view.label}
           </button>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }

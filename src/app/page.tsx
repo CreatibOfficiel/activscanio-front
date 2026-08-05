@@ -26,7 +26,7 @@ import MarioKartViewTabs, {
   tabId,
 } from "./components/race/MarioKartViewTabs";
 import RaceHistory from "./components/race/RaceHistory";
-import { AddActivitySlot } from "./context/AddActivitySlotContext";
+import AddActivityButton from "./components/sport/AddActivityButton";
 
 const SEGMENTATION_OPTIONS = { excludePodiumFromLeagues: true };
 
@@ -215,7 +215,7 @@ export default function Home() {
                 suppressed because this page already shows one above. */}
             <RaceHistory
               showCountdown={false}
-              renderAddControl={() => <AddActivitySlot />}
+              renderAddControl={() => <AddActivityButton variant="floating" />}
             />
           </div>
         )}
