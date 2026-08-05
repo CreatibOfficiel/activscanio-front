@@ -10,16 +10,24 @@ import { formatCompetitorName } from "@/app/utils/formatters";
 import { LeagueDivider } from "@/app/components/leaderboard";
 import { useLeaderboardSegmentation } from "@/app/hooks/useLeaderboardSegmentation";
 import { getRaceSeasonEndDate } from "../utils/deadlines";
+import { useViewEntry } from "../utils/useViewEntry";
 
 const SEGMENTATION_OPTIONS = { excludePodiumFromLeagues: true };
 
 interface Props {
   rankings: Competitor[];
   scrollRef?: RefObject<HTMLDivElement | null>;
+  /**
+   * The page's rotation counter. Changes only when this board comes on
+   * screen, which is the one moment the entry animation belongs to. Omit
+   * it to animate on every mount, as before.
+   */
+  viewEntryKey?: number;
 }
 
-export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
+export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef, viewEntryKey }) => {
   const raceSeasonEndDate = useMemo(() => getRaceSeasonEndDate(), []);
+  const isViewEntry = useViewEntry(viewEntryKey);
 
   const {
     confirmed, inactive, calibrating, maxScore,
@@ -74,7 +82,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
   }
 
   return (
-    <div className="flex flex-row gap-8 max-w-[1800px] mx-auto w-full px-4 h-full overflow-hidden">
+    <div className="flex flex-row gap-8 max-w-[1800px] mx-auto w-full h-full overflow-hidden">
       {/* LEFT COLUMN: Hero Zone (Fixed, centered) */}
       <div className="w-[45%] flex flex-col items-center justify-center shrink-0">
 
@@ -114,6 +122,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
                     maxScore,
                   }}
                   animationDelay={index * 80}
+                  disableEntryAnimation={!isViewEntry}
                 />
               );
             })}
@@ -155,6 +164,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
                       maxScore,
                     }}
                     animationDelay={index * 80}
+                    disableEntryAnimation={!isViewEntry}
                   />
                 );
               })}
@@ -179,7 +189,10 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
                 </h3>
                 <div className="h-px flex-1 bg-neutral-700" />
               </div>
-              <div className="space-y-3 opacity-50">
+              {/* Desaturated, not dimmed: `opacity-50` here put the row
+                  subtitle at 2.50:1, under the 4.5:1 floor. See
+                  `.tv-row-muted` in globals.css. */}
+              <div className="space-y-3 tv-row-muted">
                 {inactive.map((competitor, index) => {
                   const rank = inactiveRanks.get(competitor.id) ?? confirmed.length + index + 1;
                   const trend = getTrend(competitor, rank);
@@ -202,6 +215,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
                         maxScore,
                       }}
                       animationDelay={index * 80}
+                      disableEntryAnimation={!isViewEntry}
                     />
                   );
                 })}
@@ -249,6 +263,7 @@ export const CompetitorRankingsView: FC<Props> = ({ rankings, scrollRef }) => {
                         maxScore,
                       }}
                       animationDelay={index * 80}
+                      disableEntryAnimation={!isViewEntry}
                     />
                   );
                 })}

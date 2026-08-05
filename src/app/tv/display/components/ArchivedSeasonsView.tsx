@@ -52,24 +52,39 @@ export const ArchivedSeasonsView: FC<Props> = ({ seasons, scrollRef }) => {
                 </p>
                 <p className="text-xs font-bold text-primary-500">{season.totalCompetitors}</p>
               </div>
-              <div>
-                <p className="text-[9px] text-neutral-400">
-                  {season.totalBettors === 1 ? "Parieur" : "Parieurs"}
-                </p>
-                <p className="text-xs font-bold text-primary-500">{season.totalBettors}</p>
-              </div>
+              {/* Ping-pong replaces the bettors/bets tiles. Those read the
+                  archive's totalBettors/totalBets, which the API has written
+                  as 0 on every season since the betting system was deleted —
+                  two of the four numbers on the card were permanently wrong.
+
+                  Rendered only when the archive carries the fields at all.
+                  They are optional because seasons archived before ping-pong
+                  existed have neither column, and `?? 0` would print a
+                  confident "0 joueurs" for a season where the sport did not
+                  exist yet. A present zero is a fact worth showing (the sport
+                  was there, nobody played); an absent one is not a zero. */}
+              {season.totalPingpongPlayers !== undefined && (
+                <div>
+                  <p className="text-[9px] text-neutral-400">
+                    {season.totalPingpongPlayers === 1 ? "Joueur ping-pong" : "Joueurs ping-pong"}
+                  </p>
+                  <p className="text-xs font-bold text-primary-500">{season.totalPingpongPlayers}</p>
+                </div>
+              )}
               <div>
                 <p className="text-[9px] text-neutral-400">
                   Course{season.totalRaces > 1 ? 's' : ''}
                 </p>
                 <p className="text-xs font-bold text-white">{season.totalRaces}</p>
               </div>
-              <div>
-                <p className="text-[9px] text-neutral-400">
-                  Pari{season.totalBets > 1 ? 's' : ''}
-                </p>
-                <p className="text-xs font-bold text-white">{season.totalBets}</p>
-              </div>
+              {season.totalPingpongMatches !== undefined && (
+                <div>
+                  <p className="text-[9px] text-neutral-400">
+                    {season.totalPingpongMatches === 1 ? "Match ping-pong" : "Matchs ping-pong"}
+                  </p>
+                  <p className="text-xs font-bold text-white">{season.totalPingpongMatches}</p>
+                </div>
+              )}
             </div>
           </Card>
         ))}

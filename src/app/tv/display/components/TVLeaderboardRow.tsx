@@ -82,10 +82,13 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
                   ${disableEntryAnimation ? '' : 'animate-row-slide-in'}`}
       style={disableEntryAnimation ? undefined : { animationDelay: `${animationDelay}ms` }}
     >
-      {/* Rank */}
+      {/* Rank.
+          text-3xl (30px) rather than text-xl (20px): the rank is the first
+          thing read on a board glanced at from across the room, and 20px
+          stops being legible at about 1.1 m. */}
       <div
         data-testid="tv-row-rank"
-        className={`w-12 text-xl italic text-center ${getRankStyle()} drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]`}
+        className={`w-14 text-3xl italic text-center ${getRankStyle()} drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]`}
       >
         {item.rank}
       </div>
@@ -124,9 +127,12 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
 
       {/* Name and subtitle */}
       <div className="flex-grow min-w-0">
-        <h4 data-testid="tv-row-name" className="text-base font-bold text-white truncate leading-tight">{item.name}</h4>
+        {/* The name is the payload of the whole row. text-base (16px) was
+            legible to about 0.9 m; text-2xl (24px) reaches ~1.3 m. */}
+        <h4 data-testid="tv-row-name" className="text-2xl font-bold text-white truncate leading-tight">{item.name}</h4>
         {item.subtitle && (
-          <p className="text-[10px] text-neutral-400 truncate leading-tight">{item.subtitle}</p>
+          /* 10px was decorative, not readable, at any office distance. */
+          <p className="text-sm text-neutral-400 truncate leading-tight">{item.subtitle}</p>
         )}
 
         {/* Progress bar */}
@@ -142,13 +148,16 @@ const TVLeaderboardRow: FC<Props> = ({ item, animationDelay = 0, disableEntryAni
       </div>
 
       {/* Score */}
-      <div className="text-right min-w-[80px]">
-        <div className="text-xl font-black text-primary-400">
+      <div className="text-right min-w-[96px]">
+        <div className="text-3xl font-black text-primary-400">
           {typeof item.score === "number"
             ? item.score.toFixed(item.scoreLabel === "pts" ? 1 : 0)
             : item.score}
         </div>
-        <div className="text-[8px] font-bold uppercase text-neutral-500 tracking-wider">
+        {/* The unit label only has to be identifiable, not read, so it stays
+            the smallest thing on the row — but 8px was invisible even close
+            up. */}
+        <div className="text-xs font-bold uppercase text-neutral-500 tracking-wider">
           {item.scoreLabel}
         </div>
       </div>

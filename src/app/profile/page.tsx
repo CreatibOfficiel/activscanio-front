@@ -7,7 +7,7 @@ import { useAuth, useUser, useClerk } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { UserStats, UserAchievement, StreakWarningStatus } from '../models/Achievement';
 import { AchievementsRepository } from '../repositories/AchievementsRepository';
-import { UsersRepository, UserData } from '../repositories/UsersRepository';
+import { UsersRepository } from '../repositories/UsersRepository';
 import { CompetitorsRepository } from '../repositories/CompetitorsRepository';
 import type { Competitor } from '../models/Competitor';
 import { PersonalBestsSection } from '../components/profile';
@@ -27,6 +27,7 @@ import { formatCompetitorName } from '../utils/formatters';
 import { AppContext } from '../context/AppContext';
 import { computeRanksWithTies } from '../utils/rankings';
 import { useSportPreference } from '../hooks/useSportPreference';
+import { useCurrentUserData, useSetCachedUserData } from '../hooks/useCurrentUserData';
 
 // Type for competitor stats used in profile
 export interface CompetitorStats {
@@ -66,7 +67,12 @@ const ProfilePage: FC = () => {
   };
 
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  // Shared with every other `/users/me` reader (OnboardingGuard,
+  // useSportPreference, EditCompetitorButton...). This page used to fetch its
+  // own copy alongside `useSportPreference`, which is what produced two
+  // identical `/users/me` requests ~12ms apart on every cold load of /profile.
+  const { userData, loading: userLoading } = useCurrentUserData();
+  const setUserData = useSetCachedUserData();
   const [competitorStats, setCompetitorStats] = useState<CompetitorStats | null>(null);
   const [competitor, setCompetitor] = useState<Competitor | null>(null);
   const [recentAchievements, setRecentAchievements] = useState<UserAchievement[]>([]);
@@ -105,46 +111,20 @@ const ProfilePage: FC = () => {
 
         setAuthToken(token);
 
-        // Fetch stats, achievements, and user data in parallel
-        const [statsData, achievementsData, userDataResult] = await Promise.all([
+        // `/users/me` is no longer fetched here — `useCurrentUserData` owns it
+        // and shares one request across the whole tree.
+        const [statsData, achievementsData] = await Promise.all([
           AchievementsRepository.getMyStats(token),
           AchievementsRepository.getMyAchievements(token),
-          UsersRepository.getMe(token),
         ]);
 
         setStats(statsData);
         setRecentAchievements(achievementsData.slice(0, 6));
-        setUserData(userDataResult);
 
         // Fetch streak warnings (non-blocking)
         AchievementsRepository.getStreakWarnings(token)
           .then(setStreakWarnings)
           .catch((err) => console.warn('Could not fetch streak warnings:', err));
-
-        // If user is a player with a linked competitor, fetch competitor stats
-        if (userDataResult.competitorId && userDataResult.role === 'player') {
-          try {
-            const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
-            const competitor = await competitorsRepo.fetchCompetitorById(userDataResult.competitorId);
-            // Kept whole as well: PersonalBestsSection reads recentPositions
-            // and lifetimeAvgRank, neither of which survives the reduction
-            // to CompetitorStats below.
-            setCompetitor(competitor);
-            setCompetitorStats({
-              conservativeScore: competitor.conservativeScore ?? Math.round(competitor.rating - 2 * competitor.rd),
-              raceCount: competitor.raceCount || 0,
-              avgRank12: competitor.avgRank12 || 0,
-              totalWins: competitor.totalWins || 0,
-              winStreak: competitor.winStreak || 0,
-              bestWinStreak: competitor.bestWinStreak || 0,
-              playStreak: competitor.playStreak ?? 0,
-              bestPlayStreak: competitor.bestPlayStreak ?? 0,
-            });
-          } catch (competitorErr) {
-            console.warn('Could not fetch competitor stats:', competitorErr);
-            // Non-blocking: competitor stats are optional
-          }
-        }
       } catch (err) {
         console.error('Error fetching profile data:', err);
         setError('Impossible de charger votre profil');
@@ -155,6 +135,49 @@ const ProfilePage: FC = () => {
 
     fetchData();
   }, [getToken]);
+
+  // Competitor stats, once the shared user record identifies a linked player.
+  // Split out of the effect above because `userData` now arrives from a shared
+  // query that may already be warm, so this must react to it rather than to
+  // the one-shot fetch that used to produce it.
+  const linkedCompetitorId =
+    userData?.role === 'player' ? userData.competitorId : undefined;
+
+  useEffect(() => {
+    if (!linkedCompetitorId) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
+        const fetched = await competitorsRepo.fetchCompetitorById(linkedCompetitorId);
+        if (cancelled) return;
+
+        // Kept whole as well: PersonalBestsSection reads recentPositions
+        // and lifetimeAvgRank, neither of which survives the reduction
+        // to CompetitorStats below.
+        setCompetitor(fetched);
+        setCompetitorStats({
+          conservativeScore: fetched.conservativeScore ?? Math.round(fetched.rating - 2 * fetched.rd),
+          raceCount: fetched.raceCount || 0,
+          avgRank12: fetched.avgRank12 || 0,
+          totalWins: fetched.totalWins || 0,
+          winStreak: fetched.winStreak || 0,
+          bestWinStreak: fetched.bestWinStreak || 0,
+          playStreak: fetched.playStreak ?? 0,
+          bestPlayStreak: fetched.bestPlayStreak ?? 0,
+        });
+      } catch (competitorErr) {
+        // Non-blocking: competitor stats are optional
+        console.warn('Could not fetch competitor stats:', competitorErr);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [linkedCompetitorId]);
 
   // Build character info from user data
   const getCharacterInfo = () => {
@@ -190,7 +213,7 @@ const ProfilePage: FC = () => {
       toast.error(message);
       throw error;
     }
-  }, [getToken]);
+  }, [getToken, setUserData]);
 
   // Get user display name
   const getUserName = () => {
@@ -206,7 +229,10 @@ const ProfilePage: FC = () => {
     return 'Utilisateur';
   };
 
-  if (loading) {
+  // Also gates on the shared user query: the header renders the name and
+  // character straight off `userData`, so showing the page before it lands
+  // would flash a placeholder identity.
+  if (loading || userLoading) {
     return (
       <div className="min-h-screen bg-neutral-900 p-6 flex items-center justify-center">
         <div className="text-center">

@@ -352,3 +352,90 @@ describe('CompetitorRankingsView — empty states', () => {
     expect(screen.queryByText('Alice A.')).not.toBeInTheDocument();
   });
 });
+
+/* ---------------------------------------------------------------- */
+/*  Legibility and entry animation                                   */
+/* ---------------------------------------------------------------- */
+
+/** The wrapper holding the rows under a section heading. */
+function rowContainerUnder(headingText: string): HTMLElement {
+  const section = sectionAfterHeading(headingText);
+  const container = within(section)
+    .getAllByTestId('tv-row')[0]
+    .parentElement;
+  if (!container) throw new Error(`No row container under "${headingText}"`);
+  return container;
+}
+
+describe('CompetitorRankingsView — inactive row legibility', () => {
+  /**
+   * `opacity-50` on the wrapper composites the row's text *and* its
+   * background down together. The subtitle (neutral-400 on the row
+   * gradient) lands at 2.50:1 against the darkest page region, well under
+   * the 4.5:1 floor — and this is a board read from across an office.
+   *
+   * The dimming has to come from a solid colour that still passes, not
+   * from alpha.
+   */
+  it('does not dim inactive rows with alpha', () => {
+    render(<CompetitorRankingsView rankings={RANKINGS} />);
+    expect(rowContainerUnder('Inactifs').className).not.toMatch(/opacity-\d/);
+  });
+
+  it('still marks the inactive section as visually distinct', () => {
+    render(<CompetitorRankingsView rankings={RANKINGS} />);
+    // A muting hook must remain, otherwise "inactive" reads as "active".
+    expect(rowContainerUnder('Inactifs').className).toMatch(/tv-row-muted/);
+  });
+});
+
+describe('CompetitorRankingsView — entry animation', () => {
+  /**
+   * A row that changes rank or tier between two polls is a *new* React
+   * node, so it replays the 80ms-staggered slide-in in the middle of a
+   * dwell — motion on an always-on wall panel with nothing on screen to
+   * explain it.
+   *
+   * The animation belongs to a view entry. `viewEntryKey` is that signal:
+   * unchanged between polls means no entry, so no animation.
+   */
+  it('animates rows on first render', () => {
+    render(<CompetitorRankingsView rankings={RANKINGS} viewEntryKey={0} />);
+    expect(
+      screen.getAllByTestId('tv-row').some((r) =>
+        r.className.includes('animate-row-slide-in'),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not animate rows that remount while the view is still on screen', () => {
+    const { rerender } = render(
+      <CompetitorRankingsView rankings={RANKINGS} viewEntryKey={0} />,
+    );
+    // A poll that moves someone into the inactive tier remounts their row.
+    const polled = RANKINGS.map((c) =>
+      c.id === 'g' ? { ...c, inactive: true } : { ...c },
+    );
+    rerender(<CompetitorRankingsView rankings={polled} viewEntryKey={0} />);
+
+    expect(
+      screen.getAllByTestId('tv-row').filter((r) =>
+        r.className.includes('animate-row-slide-in'),
+      ),
+    ).toHaveLength(0);
+  });
+
+  it('animates again when the view is re-entered', () => {
+    const { rerender } = render(
+      <CompetitorRankingsView rankings={RANKINGS} viewEntryKey={0} />,
+    );
+    rerender(<CompetitorRankingsView rankings={RANKINGS} viewEntryKey={0} />);
+    rerender(<CompetitorRankingsView rankings={RANKINGS} viewEntryKey={1} />);
+
+    expect(
+      screen.getAllByTestId('tv-row').some((r) =>
+        r.className.includes('animate-row-slide-in'),
+      ),
+    ).toBe(true);
+  });
+});

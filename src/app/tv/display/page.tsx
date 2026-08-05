@@ -2,44 +2,36 @@
 
 import { FC, useEffect, useState, useCallback, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  SeasonsRepository,
-  SeasonArchive,
-} from "@/app/repositories/SeasonsRepository";
+import { SeasonsRepository } from "@/app/repositories/SeasonsRepository";
 import { CompetitorsRepository } from "@/app/repositories/CompetitorsRepository";
+import { pingpongRepository } from "@/app/repositories/PingpongRepository";
 import { CompetitorRankingsView } from "./components/CompetitorRankingsView";
+import { PingpongRankingsView } from "./components/PingpongRankingsView";
 import { ArchivedSeasonsView } from "./components/ArchivedSeasonsView";
 import TVProgressBar from "./components/TVProgressBar";
 import { useAutoScroll } from "@/app/hooks/useAutoScroll";
-import { Competitor } from "@/app/models/Competitor";
+import {
+  DisplayView,
+  TVDisplayData,
+  computeActiveViews,
+  viewLabels,
+  viewTitles,
+} from "./active-views";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-enum DisplayView {
-  COMPETITOR_RANKINGS = "competitors",
-  ARCHIVED_SEASONS = "seasons",
-}
-
+/**
+ * 15 seconds per view.
+ *
+ * Above every pass-by signage recommendation, which lands at 8-12s. The
+ * dwell is still fixed, but the scroll inside it is no longer: the interval
+ * is handed to `useAutoScroll` as a budget, so a four-row board and a
+ * thirty-five-row board both finish their pass within the same 15s rather
+ * than the long one being yanked away mid-scroll.
+ */
 const DEFAULT_ROTATION_INTERVAL = 15000; // 15 seconds default
 const REFRESH_INTERVAL = 300000; // 5 minutes
-
-interface TVDisplayData {
-  competitorRankings: Competitor[];
-  archivedSeasons: SeasonArchive[];
-}
-
-const ALL_VIEWS = [DisplayView.COMPETITOR_RANKINGS];
-
-const viewLabels: Record<DisplayView, string> = {
-  [DisplayView.COMPETITOR_RANKINGS]: "Pilotes",
-  [DisplayView.ARCHIVED_SEASONS]: "Saisons",
-};
-
-const viewTitles: Record<DisplayView, string> = {
-  [DisplayView.COMPETITOR_RANKINGS]: "Classement des pilotes",
-  [DisplayView.ARCHIVED_SEASONS]: "Saisons archivées",
-};
 
 // Inner component that uses useSearchParams
 const TVDisplayContent: FC = () => {
@@ -55,6 +47,7 @@ const TVDisplayContent: FC = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [data, setData] = useState<TVDisplayData>({
     competitorRankings: [],
+    pingpongPlayers: [],
     archivedSeasons: [],
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -64,28 +57,19 @@ const TVDisplayContent: FC = () => {
   // Each view provides its own scrollable ref (right column or single-column wrapper)
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // The dwell is the scroll's budget, not just the rotation timer: handing
+  // `rotationInterval` to the hook is what lets a thirty-five-row board
+  // reach its bottom before the view rotates, and what makes a longer
+  // `?interval=` buy a gentler scroll instead of the same rushed one.
   useAutoScroll(scrollRef, rotationKey, {
     delay: 5000,
-    speed: 150,
+    budget: rotationInterval,
     enabled: !isTransitioning,
   });
 
-  // Compute active views (skip views with no data)
-  const activeViews = useMemo(() => {
-    return ALL_VIEWS.filter((view) => {
-      switch (view) {
-        case DisplayView.COMPETITOR_RANKINGS:
-          return (
-            data.competitorRankings.length > 0 &&
-            data.competitorRankings.some((c) => c.raceCount && c.raceCount > 0)
-          );
-        case DisplayView.ARCHIVED_SEASONS:
-          return data.archivedSeasons.length > 0;
-        default:
-          return true;
-      }
-    });
-  }, [data.competitorRankings, data.archivedSeasons]);
+  // Skip views with no data. The rule itself lives in ./active-views as a
+  // pure function so it can be tested without mounting this page.
+  const activeViews = useMemo(() => computeActiveViews(data), [data]);
 
   // If current view is no longer active (e.g. data disappeared after refresh), fallback
   useEffect(() => {
@@ -140,13 +124,17 @@ const TVDisplayContent: FC = () => {
 
         const competitorsRepo = new CompetitorsRepository(API_BASE_URL);
 
-        const [competitors, seasons] = await Promise.all([
+        // Each call swallows its own failure, so one board being down
+        // leaves the others on screen instead of blanking the whole wall.
+        const [competitors, pingpong, seasons] = await Promise.all([
           competitorsRepo.fetchCompetitors().catch(() => []),
+          pingpongRepository.fetchLeaderboard().catch(() => []),
           SeasonsRepository.getAllSeasons().catch(() => []),
         ]);
 
         setData({
           competitorRankings: competitors,
+          pingpongPlayers: pingpong,
           archivedSeasons: seasons,
         });
         setLastUpdate(new Date());
@@ -205,8 +193,29 @@ const TVDisplayContent: FC = () => {
 
   const currentIndex = activeViews.indexOf(currentView);
 
+  /*
+   * The root padding is the TV title-safe area, not decoration.
+   *
+   * Panels with overscan enabled crop the outer edge of the signal, and the
+   * long-standing broadcast allowance is 5% per side: at 1920x1080 that is
+   * 96px horizontal and 54px vertical. The previous `p-2 lg:p-3` (8-12px)
+   * left the header, the view indicators and the footer inside the cropped
+   * band, where an overscanning panel cuts them off the screen entirely.
+   *
+   * Expressed in vw/vh so it scales with the panel rather than assuming
+   * 1080p, and floored with `max()` so a small browser window does not end
+   * up with a hairline margin. Inline rather than a Tailwind class because
+   * `max()` of two different units is not expressible in the arbitrary-value
+   * syntax without escaping that reads worse than this.
+   */
   return (
-    <div className="h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-950 via-slate-900 to-black text-neutral-100 p-2 lg:p-3 flex flex-col">
+    <div
+      className="h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-950 via-slate-900 to-black text-neutral-100 flex flex-col"
+      style={{
+        paddingInline: "max(0.75rem, 5vw)",
+        paddingBlock: "max(0.5rem, 5vh)",
+      }}
+    >
       {/* Header */}
       <header className="flex items-center justify-between mb-2">
         <div>
@@ -261,8 +270,23 @@ const TVDisplayContent: FC = () => {
             : "opacity-100 transform translate-x-0"
             }`}
         >
+          {/* `rotationKey` doubles as the view-entry signal: it increments
+              when a board comes on screen and at no other time, so the rows
+              animate on entry instead of replaying mid-dwell whenever a
+              five-minute poll reorders them. */}
           {currentView === DisplayView.COMPETITOR_RANKINGS && (
-            <CompetitorRankingsView rankings={data.competitorRankings} scrollRef={scrollRef} />
+            <CompetitorRankingsView
+              rankings={data.competitorRankings}
+              scrollRef={scrollRef}
+              viewEntryKey={rotationKey}
+            />
+          )}
+          {currentView === DisplayView.PINGPONG_RANKINGS && (
+            <PingpongRankingsView
+              players={data.pingpongPlayers}
+              scrollRef={scrollRef}
+              viewEntryKey={rotationKey}
+            />
           )}
           {currentView === DisplayView.ARCHIVED_SEASONS && (
             <ArchivedSeasonsView seasons={data.archivedSeasons} scrollRef={scrollRef} />

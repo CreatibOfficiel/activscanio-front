@@ -20,13 +20,46 @@ import { usePullToRefresh } from "./hooks/usePullToRefresh";
 import { useRankingAnimation } from "./hooks/useRankingAnimation";
 import RankingAnimationOverlay from "./components/leaderboard/RankingAnimationOverlay";
 import { useLeaderboardSegmentation } from "./hooks/useLeaderboardSegmentation";
+import MarioKartViewTabs, {
+  MarioKartView,
+  panelId,
+  tabId,
+} from "./components/race/MarioKartViewTabs";
+import RaceHistory from "./components/race/RaceHistory";
+import { AddActivitySlot } from "./context/AddActivitySlotContext";
 
 const SEGMENTATION_OPTIONS = { excludePodiumFromLeagues: true };
 
+/**
+ * The Mario Kart board: the ranking, and behind a second tab, the race
+ * history.
+ *
+ * The history used to be its own bottom-nav tab (`/races`), which meant Mario
+ * Kart held two of the bar's four entries while ping-pong made the same
+ * ranking-versus-history choice with an in-page tablist. One architecture,
+ * two expressions. Both sports now work the same way: one tab in the bar, one
+ * selector on the board.
+ *
+ * `/races` is untouched as a URL and renders the very same `RaceHistory`
+ * component this page's Courses panel does. One implementation, two entry
+ * points — nobody's bookmark broke, and the filters and infinite scroll are
+ * not maintained twice.
+ *
+ * The tabs write nothing to the URL, matching ping-pong. The board is the
+ * app's home screen; a toggle that pushed history entries would make the back
+ * button unwind a tab press instead of leaving the app, and `/races` already
+ * provides the shareable address for the history.
+ *
+ * The ranking is the default and that is not arbitrary: `/` is what the app
+ * opens to and the ranking is what people open it for. The panels are swapped,
+ * not stacked — leaving the podium above a 474-race list would make the
+ * selector read as a filter that did nothing.
+ */
 export default function Home() {
   const { isLoading, allCompetitors, refreshCompetitors } = useContext(AppContext);
   const { isSignedIn, getToken } = useAuth();
   const [now, setNow] = useState<Date | null>(null);
+  const [view, setView] = useState<MarioKartView>('ranking');
   const [streakWarnings, setStreakWarnings] = useState<StreakWarningStatus | null>(null);
   const seasonEndDate = useMemo(() => getRaceSeasonEndDate(), []);
 
@@ -149,7 +182,10 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Season countdown */}
+        {/* Season countdown. Above the selector because it belongs to the
+            season rather than to either view — the deadline is the same fact
+            whether you are reading the board or the history, and RaceHistory
+            is told to suppress its own copy here. */}
         <Countdown
           label="Fin de saison"
           targetDate={seasonEndDate}
@@ -158,9 +194,39 @@ export default function Home() {
           className="mx-4 mb-4"
         />
 
-        {/* Streak Warning Banners */}
+        {/* Streak Warning Banners. Also above the selector: a warning that the
+            streak is about to lapse is the reason to open the app at all, and
+            hiding it behind whichever tab happens to be showing would bury
+            the one thing that is time-critical. */}
         {streakWarnings && <StreakWarningBanner warnings={streakWarnings} className="mb-4" />}
 
+        <div className="flex justify-center mb-4">
+          <MarioKartViewTabs value={view} onChange={setView} />
+        </div>
+
+        {view === 'races' && (
+          <div
+            role="tabpanel"
+            id={panelId('races')}
+            aria-labelledby={tabId('races')}
+            tabIndex={0}
+          >
+            {/* The same component `/races` renders. The countdown is
+                suppressed because this page already shows one above. */}
+            <RaceHistory
+              showCountdown={false}
+              renderAddControl={() => <AddActivitySlot />}
+            />
+          </div>
+        )}
+
+        {view === 'ranking' && (
+        <div
+          role="tabpanel"
+          id={panelId('ranking')}
+          aria-labelledby={tabId('ranking')}
+          tabIndex={0}
+        >
         {/* Ranking animation overlay + Podium + Leagues */}
         <RankingAnimationOverlay
           phase={animationPhase}
@@ -278,6 +344,8 @@ export default function Home() {
             ))}
           </div>
         )}
+        </div>
+        )}{/* end ranking panel */}
       </div>{/* end content wrapper */}
     </div>
   );

@@ -4,6 +4,10 @@ import RacesPage from '../page';
 import { AppContext } from '../../context/AppContext';
 import { useInfiniteRaces } from '../../hooks/useInfiniteRaces';
 import { useSportPreference } from '../../hooks/useSportPreference';
+import {
+  AddActivitySlotProvider,
+  useAddActivitySlotTarget,
+} from '../../context/AddActivitySlotContext';
 import { RaceEvent } from '../../models/RaceEvent';
 
 jest.mock('../../hooks/useInfiniteRaces');
@@ -39,6 +43,16 @@ const mockedPreference = useSportPreference as jest.MockedFunction<
  * The gate on `total > 0` stays. A user with no races at all already has the
  * empty state's call to action a few pixels away, and two identical prompts on
  * one screen is one too many.
+ *
+ * The control no longer renders into the page: it portals into the bottom
+ * bar's centre slot, so these render inside the slot provider with a stand-in
+ * target. Without one the portal would have nowhere to go and every assertion
+ * here would pass or fail for the wrong reason.
+ *
+ * The page itself is now a thin wrapper around `RaceHistory`, which `/` also
+ * renders behind its Courses tab. The list, filters and infinite scroll are
+ * covered by that component's own suite; what is still tested here is what
+ * this route adds — its title, and the add control's gate.
  */
 describe('RacesPage — add control', () => {
   function race(id: string): RaceEvent {
@@ -82,16 +96,19 @@ describe('RacesPage — add control', () => {
 
   function renderPage() {
     return render(
-      <AppContext.Provider
-        value={
-          {
-            isLoading: false,
-            allCompetitors: [],
-          } as unknown as React.ContextType<typeof AppContext>
-        }
-      >
-        <RacesPage />
-      </AppContext.Provider>,
+      <AddActivitySlotProvider>
+        <AppContext.Provider
+          value={
+            {
+              isLoading: false,
+              allCompetitors: [],
+            } as unknown as React.ContextType<typeof AppContext>
+          }
+        >
+          <RacesPage />
+        </AppContext.Provider>
+        <NavSlotStub />
+      </AddActivitySlotProvider>,
     );
   }
 
@@ -101,11 +118,13 @@ describe('RacesPage — add control', () => {
     givenRaces([race('r1')]);
   });
 
-  it('links straight to the race form for a Mario-Kart-only user', () => {
+  // The control arrives through a portal, which needs a mount effect, so these
+  // await it rather than reading the DOM on the first synchronous pass.
+  it('links straight to the race form for a Mario-Kart-only user', async () => {
     renderPage();
 
     expect(
-      screen.getByRole('link', { name: /ajouter une course/i }),
+      await screen.findByRole('link', { name: /ajouter une course/i }),
     ).toHaveAttribute('href', '/races/add');
   });
 
@@ -113,7 +132,9 @@ describe('RacesPage — add control', () => {
     givenSports(['mario-kart', 'ping-pong']);
 
     renderPage();
-    await userEvent.click(screen.getByRole('button', { name: /ajouter/i }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: /ajouter/i }),
+    );
 
     const links = within(screen.getByRole('dialog')).getAllByRole('link');
     expect(links.map((l) => l.getAttribute('href'))).toEqual([
@@ -122,21 +143,37 @@ describe('RacesPage — add control', () => {
     ]);
   });
 
-  it('stays hidden while there are no races', () => {
-    // The empty state already carries its own call to action, so the floating
+  it('stays hidden while there are no races', async () => {
+    // The empty state already carries its own call to action, so the bar's
     // control would be the second identical prompt on one screen.
     givenRaces([], 0);
 
     renderPage();
 
+    // Waits for the portal target to register before asserting absence.
+    // Reading the DOM synchronously would find nothing whether the gate works
+    // or not, so this test would pass on a broken gate.
+    await screen.findByTestId('nav-slot');
     expect(screen.queryByTestId('add-activity')).not.toBeInTheDocument();
   });
 
-  it('is present once there is at least one race', () => {
+  it('is present once there is at least one race', async () => {
     givenRaces([race('r1')], 1);
 
     renderPage();
 
-    expect(screen.getByTestId('add-activity')).toBeInTheDocument();
+    expect(await screen.findByTestId('add-activity')).toBeInTheDocument();
   });
 });
+
+/**
+ * Stands in for the bottom nav's centre holder.
+ *
+ * The real one lives in `BottomNav`, which is layout chrome and not mounted
+ * here. Registering a plain div gives the page's `AddActivitySlot` somewhere
+ * to portal to, so the gate is what gets tested rather than the plumbing.
+ */
+function NavSlotStub() {
+  const register = useAddActivitySlotTarget();
+  return <div ref={register} data-testid="nav-slot" />;
+}
