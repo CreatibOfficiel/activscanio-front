@@ -6,21 +6,33 @@ import { PingpongPlayer } from '../../../models/Pingpong';
 /**
  * One row of the ping-pong leaderboard.
  *
- * Three research findings shape it.
+ * ONE list, not three sections. Unchanged, and the one finding that survived:
+ * no platform surveyed renders three separately-headed groups; they either
+ * exclude the uncertain (Lichess, UTR, FIDE) or keep everyone inline with a
+ * short marker (FICS). Three headers on a phone list turns a third of the
+ * screen into chrome and reifies "the bottom group" as a place people live.
  *
- * ONE list, not three sections. No platform surveyed renders three
- * separately-headed groups; they either exclude the uncertain (Lichess, UTR,
- * FIDE) or keep everyone inline with a short marker (FICS). Three headers on
- * a 25-row phone list turns a third of the screen into chrome and reifies
- * "the bottom group" as a place people live.
+ * THE ABSENCE OF A NUMBER IS NO LONGER THE BADGE. That was this file's central
+ * claim and it is reversed below. It held while the unranked were a minority —
+ * a gap in a numbered column reads as an exception. Measured in production it
+ * was 6 rows of 8, so the "exception" was the rule and the column was mostly
+ * empty: a ranking where most rows have no position is not a ranking with
+ * some players pending, it is a list that failed to load. The row now carries
+ * a position always, and says separately how sure that position is.
  *
- * The ABSENCE of a rank number is itself the badge — no extra decoration
- * needed to say someone is unranked.
+ * WHICH ROWS CARRY THE MARK IS ALSO REVERSED. A badge on 6 of 8 rows
+ * communicates nothing — it becomes the background, and the two rows without
+ * it read as the ones missing something. So the mark is on the CONFIDENT rows:
+ * a settled rating is stated plainly, an unsettled one is rendered in a muted
+ * weight with a `?` after it, the way Lichess does. The visual weight goes to
+ * what we are sure of, and the minority case stays the marked one whichever
+ * way the league tips.
  *
- * Calibrating and inactive get DIFFERENT words. FICS uses P and E precisely
- * because "we don't know yet" and "was settled, drifted" are different
- * states. Collapsing them loses the distinction that matters to whoever is
- * looking for that person.
+ * Calibrating and inactive still get DIFFERENT treatment, for FICS's original
+ * reason: "we don't know yet" and "was settled, then drifted" are different
+ * states. What changed is which one loses its number — neither does now. The
+ * inactive keep a settled rating we trust and are dimmed; the calibrating keep
+ * a position we are unsure of and are marked.
  */
 describe('PingpongRow', () => {
   function player(overrides: Partial<PingpongPlayer> = {}): PingpongPlayer {
@@ -78,13 +90,52 @@ describe('PingpongRow', () => {
     expect(rank).not.toHaveTextContent('🥈');
   });
 
-  it('shows no rank for a calibrating player', () => {
-    // The absence IS the badge. Nothing stands in for the number.
+  /**
+   * DELIBERATELY REVERSED. This asserted the opposite: no rank badge at all
+   * for a calibrating player, on the reasoning that the absence IS the badge.
+   *
+   * That reasoning was sound while the unranked were a minority. In production
+   * it was 6 of 8 — the API's gate (5 weighted matches AND rd ≤ 200) admitted
+   * Charles and Thibaud and nobody else, with Don Joran and Maxime missing by
+   * one match and two rd points. A column that is empty on three quarters of
+   * its rows has stopped being a signal.
+   *
+   * The position comes from the board, not from the API's `rank`, which is
+   * still null here and still null on the wire. Nothing about the API changed.
+   */
+  it('shows a position for a calibrating player', () => {
     render(
-      <PingpongRow player={player({ rank: null, provisional: true })} />,
+      <PingpongRow
+        player={player({ rank: null, provisional: true })}
+        position={4}
+      />,
     );
 
-    expect(screen.queryByTestId('pingpong-rank')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pingpong-rank')).toHaveTextContent('4');
+  });
+
+  it('numbers a calibrating player from the board, not from the API rank', () => {
+    // The API sends rank: null for everyone it gated out. If the row read
+    // that field it would render nothing whatever position it was handed.
+    render(
+      <PingpongRow
+        player={player({ rank: null, provisional: true })}
+        position={7}
+      />,
+    );
+
+    expect(screen.getByTestId('pingpong-rank')).toHaveTextContent('7');
+  });
+
+  it('prefers the position it is given over a stale API rank', () => {
+    // Both present and disagreeing. The board's number is the one on screen,
+    // or a settled player would be numbered by a rank computed over the gated
+    // subset — Thibaud is the API's rank 2 and the board's position 6.
+    render(
+      <PingpongRow player={player({ rank: 2 })} position={6} />,
+    );
+
+    expect(screen.getByTestId('pingpong-rank')).toHaveTextContent('6');
   });
 
   it('shows the rating with a word beside it', () => {
@@ -96,27 +147,98 @@ describe('PingpongRow', () => {
     expect(screen.getByTestId('pingpong-rating')).toHaveTextContent(/elo/i);
   });
 
-  describe('status labels', () => {
-    it('labels a calibrating player with their progress', () => {
+  /**
+   * The uncertainty marker, and which rows carry it.
+   *
+   * On the CONFIDENT rows, inverted from the obvious design. Marking the
+   * uncertain ones was the first instinct and it fails on the real data: 6 of
+   * 8 rows carrying a "provisional" pill is not a signal, it is wallpaper, and
+   * it makes the two unmarked rows look like the ones missing something.
+   *
+   * So the rating is the marker. A settled rating is stated plainly in the
+   * row's normal weight; an unsettled one is muted and takes a `?`, which is
+   * exactly Lichess's convention and reads at a glance on a phone without
+   * adding a row of chrome. Nothing is added to the layout — one glyph and a
+   * colour on a number that was already there.
+   */
+  describe('the uncertainty marker', () => {
+    it('marks an uncertain rating with a question mark', () => {
       render(
         <PingpongRow
-          player={player({
-            rank: null,
-            provisional: true,
-            weightedMatchCount: 3,
-          })}
+          player={player({ rank: null, provisional: true, conservativeScore: 1611 })}
+          position={3}
         />,
       );
 
-      // Progress, not a bare word: it tells them how far off they are.
-      expect(screen.getByTestId('pingpong-status')).toHaveTextContent('3');
-      expect(screen.getByTestId('pingpong-status')).toHaveTextContent('8');
+      expect(screen.getByTestId('pingpong-rating')).toHaveTextContent('1611?');
     });
 
-    it('says what the calibration count leads to', () => {
-      // "3/8 matchs" states a ratio without naming its purpose. On a board
-      // where the first eight matches produce no ranking at all, the missing
-      // half is the one that explains why the row carries no rank.
+    it('leaves a settled rating unmarked', () => {
+      render(
+        <PingpongRow
+          player={player({ provisional: false, conservativeScore: 1808 })}
+          position={1}
+        />,
+      );
+
+      const rating = screen.getByTestId('pingpong-rating');
+      expect(rating).toHaveTextContent('1808');
+      expect(rating).not.toHaveTextContent('?');
+    });
+
+    it('says in words what the question mark means', () => {
+      // A "?" is a glyph. A screen reader gets nothing from it, and neither
+      // does someone who has not been told the convention.
+      render(
+        <PingpongRow
+          player={player({ rank: null, provisional: true })}
+          position={3}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-rating')).toHaveTextContent(
+        /estimation/i,
+      );
+    });
+
+    it('flags the row so the marker is not the only trace', () => {
+      render(
+        <PingpongRow
+          player={player({ rank: null, provisional: true })}
+          position={3}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-row')).toHaveAttribute(
+        'data-uncertain',
+        'true',
+      );
+    });
+
+    it('does not mark an inactive player whose rating settled', () => {
+      // The distinction FICS draws and this row keeps: a settled rating that
+      // is stale is not an unknown one. They are dimmed, not questioned.
+      render(
+        <PingpongRow
+          player={player({ rank: null, inactive: true, provisional: false })}
+          position={5}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-rating')).not.toHaveTextContent('?');
+      expect(screen.getByTestId('pingpong-row')).toHaveAttribute(
+        'data-uncertain',
+        'false',
+      );
+    });
+  });
+
+  describe('status labels', () => {
+    it('labels a calibrating player with their progress', () => {
+      // The bar is 5, not 8. The API lowered `PROVISIONAL_MIN_MATCHES` from 8
+      // to 5 and this copy was left behind, so the row told players they owed
+      // five more matches than they did. The figure now comes from the shared
+      // `MATCHES_TO_CALIBRATE` constant rather than a local redeclaration.
       render(
         <PingpongRow
           player={player({
@@ -124,22 +246,122 @@ describe('PingpongRow', () => {
             provisional: true,
             weightedMatchCount: 3,
           })}
+          position={4}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-status')).toHaveTextContent('3');
+      expect(screen.getByTestId('pingpong-status')).toHaveTextContent('5');
+      expect(screen.getByTestId('pingpong-status')).not.toHaveTextContent('8');
+    });
+
+    it('writes "1 match" without an s', () => {
+      // Reported by the owner: the label read "1 matchs". French takes the s
+      // only past one, and this sentence is the first thing a new player reads
+      // written about themselves — Valentin and Florian are both on exactly one
+      // match in the real league, so it is the common case, not the edge one.
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            weightedMatchCount: 1,
+          })}
+          position={2}
+        />,
+      );
+
+      const status = screen.getByTestId('pingpong-status');
+      expect(status).toHaveTextContent(/\b1 match\b/);
+      expect(status).not.toHaveTextContent(/1 matchs/);
+    });
+
+    it('keeps the s past one', () => {
+      // The other half. A blanket removal of the s would pass the test above
+      // and read as "3 match".
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            weightedMatchCount: 3,
+          })}
+          position={4}
         />,
       );
 
       expect(screen.getByTestId('pingpong-status')).toHaveTextContent(
-        /class/i,
+        /3 matchs/,
+      );
+    });
+
+    it('writes "0 match" without an s', () => {
+      // French keeps the singular at zero, unlike English. Someone enrolled
+      // but not yet played sits here.
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            weightedMatchCount: 0,
+          })}
+          position={8}
+        />,
+      );
+
+      const status = screen.getByTestId('pingpong-status');
+      expect(status).toHaveTextContent(/\b0 match\b/);
+      expect(status).not.toHaveTextContent(/0 matchs/);
+    });
+
+    it('says what the calibration count leads to', () => {
+      // "3/5 matchs" states a ratio without naming its purpose. The row no
+      // longer withholds a number, so the sentence changed with it: the count
+      // now leads to a CONFIRMED rating rather than to a rank that was being
+      // held back.
+      render(
+        <PingpongRow
+          player={player({
+            rank: null,
+            provisional: true,
+            weightedMatchCount: 3,
+          })}
+          position={4}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-status')).toHaveTextContent(
+        /confirm/i,
+      );
+    });
+
+    it('no longer tells a calibrating player they are unranked', () => {
+      // The old label ended "avant d'être classé", which was the honest
+      // description of a row with no number. They have a number now, and
+      // repeating the old sentence under it would contradict the row.
+      render(
+        <PingpongRow
+          player={player({ rank: null, provisional: true, weightedMatchCount: 3 })}
+          position={4}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-row')).not.toHaveTextContent(
+        /non class/i,
       );
     });
 
     it('labels an inactive player differently', () => {
       render(
-        <PingpongRow player={player({ rank: null, inactive: true })} />,
+        <PingpongRow
+          player={player({ rank: null, inactive: true })}
+          position={5}
+        />,
       );
 
       const status = screen.getByTestId('pingpong-status');
       expect(status).toHaveTextContent(/inactif/i);
-      expect(status).not.toHaveTextContent(/\d\/8/);
+      expect(status).not.toHaveTextContent(/\d\/5/);
     });
 
     it('calls an inactive calibrating player inactive', () => {
@@ -308,7 +530,19 @@ describe('PingpongRow', () => {
       expect(screen.queryByTestId('pingpong-trend')).not.toBeInTheDocument();
     });
 
-    it('shows nothing for an unranked player', () => {
+    /**
+     * Still nothing for a calibrating player, and the reasoning is now the
+     * only reason left rather than a side effect of having no rank.
+     *
+     * `previousDayRank` is written by the API's nightly snapshot cron, which
+     * records the API's own gated rank — null for anyone it excluded. So for a
+     * calibrating player there is no yesterday to compare today's position
+     * against, and an arrow drawn from a null baseline would invent a movement.
+     * `rankMovement` reads `player.rank` (still null) rather than the board
+     * position for exactly that reason: the two ends of the comparison have to
+     * come from the same ruler.
+     */
+    it('shows nothing for a calibrating player, whose baseline is null', () => {
       render(
         <PingpongRow
           player={player({
@@ -317,6 +551,7 @@ describe('PingpongRow', () => {
             previousDayRank: 2,
             lastMatchAt: TODAY,
           })}
+          position={4}
         />,
       );
 
@@ -458,7 +693,7 @@ describe('PingpongRow', () => {
     });
   });
 
-  describe('an unranked row', () => {
+  describe('an uncertain row', () => {
     /**
      * Reversed deliberately. This used to assert the opposite: no rate for a
      * calibrating player, whatever they had played. The reasoning was that a
@@ -477,6 +712,7 @@ describe('PingpongRow', () => {
             wins: 2,
             losses: 1,
           })}
+          position={4}
         />,
       );
 
@@ -484,7 +720,7 @@ describe('PingpongRow', () => {
     });
 
     it('still shows the rating', () => {
-      // The rating exists and is real; only the rank is withheld.
+      // The rating exists and is real; the `?` says how far to trust it.
       render(
         <PingpongRow
           player={player({
@@ -492,21 +728,39 @@ describe('PingpongRow', () => {
             provisional: true,
             conservativeScore: 1042,
           })}
+          position={4}
         />,
       );
 
       expect(screen.getByTestId('pingpong-rating')).toHaveTextContent('1042');
     });
 
-    it('says it is unranked rather than staying silent', () => {
-      // The empty rank column is the visual signal. A screen reader gets
-      // nothing from an empty box, so the absence is stated.
+    /**
+     * DELIBERATELY REVERSED, and this is the sharpest edge of the reversal.
+     *
+     * This used to assert the row announced "Non classé" to a screen reader,
+     * standing in for the empty rank column that sighted readers saw. There is
+     * no empty column any more — the row is numbered — so announcing "unranked"
+     * would now contradict the number sitting next to it, and it would say the
+     * one thing this change exists to stop saying to 6 people out of 8.
+     *
+     * What replaces it is the marker's own words: the rating carries
+     * "estimation" in an sr-only span, which is the same fact stated as
+     * uncertainty rather than as exclusion.
+     */
+    it('does not announce itself as unranked', () => {
       render(
-        <PingpongRow player={player({ rank: null, provisional: true })} />,
+        <PingpongRow
+          player={player({ rank: null, provisional: true })}
+          position={4}
+        />,
       );
 
-      expect(screen.getByTestId('pingpong-row')).toHaveTextContent(
+      expect(screen.getByTestId('pingpong-row')).not.toHaveTextContent(
         /non classé/i,
+      );
+      expect(screen.getByTestId('pingpong-rating')).toHaveTextContent(
+        /estimation/i,
       );
     });
   });

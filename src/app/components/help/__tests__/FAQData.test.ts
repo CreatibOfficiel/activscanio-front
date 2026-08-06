@@ -80,7 +80,41 @@ describe('faqSections', () => {
       ranking!.technicalDetails ?? '',
     ].join('\n');
 
-    expect(text).toMatch(/8 matchs/);
+    // Five, not eight. The API's bar moved from 8 to 5 and this copy was left
+    // behind alongside three other frontend copies of the figure.
+    expect(text).toMatch(/5 matchs/);
+    expect(text).not.toMatch(/8 matchs/);
+  });
+
+  /**
+   * The FAQ described a board that no longer exists.
+   *
+   * It promised newcomers they would appear "sans rang" until they had
+   * calibrated — which was true, and was the behaviour the leaderboard
+   * reversed: everyone is numbered now, and an uncertain rating is marked
+   * rather than a position withheld. Documentation that describes the old
+   * behaviour is worse than none, because a reader trusts it over the screen.
+   */
+  it('does not promise newcomers they will appear without a rank', () => {
+    const ranking = faqSections.find((s) => s.id === 'pingpong-ranking-rules')!;
+    const text = [
+      ranking.summary,
+      ...(ranking.points ?? []),
+      ranking.technicalDetails ?? '',
+    ].join('\n');
+
+    expect(text).not.toMatch(/sans rang/i);
+  });
+
+  it('says everyone is ranked and that a new rating is an estimate', () => {
+    const ranking = faqSections.find((s) => s.id === 'pingpong-ranking-rules')!;
+    const text = [
+      ranking.summary,
+      ...(ranking.points ?? []),
+      ranking.technicalDetails ?? '',
+    ].join('\n');
+
+    expect(text).toMatch(/estimation/i);
   });
 
   it('does not promise a diversity requirement that was removed', () => {

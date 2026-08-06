@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PingpongPlayer } from '../models/Pingpong';
 import { pingpongRepository } from '../repositories/PingpongRepository';
 import {
+  PingpongBoardOptions,
   PingpongSegmentationOptions,
+  buildPingpongBoard,
   segmentPingpongLeaderboard,
 } from '../utils/pingpong-leaderboard';
 
@@ -19,7 +21,7 @@ import {
  * and the util cannot disagree about who counts as calibrating.
  */
 export function usePingpongLeaderboard(
-  options: PingpongSegmentationOptions = {},
+  options: PingpongSegmentationOptions & PingpongBoardOptions = {},
 ) {
   const [players, setPlayers] = useState<PingpongPlayer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,8 @@ export function usePingpongLeaderboard(
 
   // Options come from the caller as an object literal, so a new identity
   // arrives on every render — depend on the values, not the object.
-  const { minPodiumSize, podiumSize, includeArchived } = options;
+  const { minPodiumSize, podiumSize, includeArchived, minConfidentForPodium } =
+    options;
   const segmentation = useMemo(
     () =>
       segmentPingpongLeaderboard(players, {
@@ -62,5 +65,25 @@ export function usePingpongLeaderboard(
     [players, minPodiumSize, podiumSize, includeArchived],
   );
 
-  return { players, segmentation, loading, error, refresh: load };
+  /**
+   * The one-list board, which is what the phone leaderboard renders.
+   *
+   * Returned ALONGSIDE `segmentation` rather than instead of it. The TV board
+   * builds its own segmentation from `players` directly, but this hook's
+   * `segmentation` is still consumed and still describes what the API decided;
+   * dropping it here to force every caller onto the new shape would have meant
+   * editing the TV surface blind. The two answer different questions — see the
+   * note on `segmentPingpongLeaderboard`.
+   */
+  const board = useMemo(
+    () =>
+      buildPingpongBoard(players, {
+        podiumSize,
+        minConfidentForPodium,
+        includeArchived,
+      }),
+    [players, podiumSize, minConfidentForPodium, includeArchived],
+  );
+
+  return { players, segmentation, board, loading, error, refresh: load };
 }

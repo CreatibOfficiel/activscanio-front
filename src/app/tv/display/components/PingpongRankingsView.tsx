@@ -8,6 +8,7 @@ import { formatCompetitorName } from "@/app/utils/formatters";
 import { rankMovement } from "@/app/utils/rank-movement";
 import {
   calibrationProgress,
+  MATCHES_TO_CALIBRATE,
   segmentPingpongLeaderboard,
   winRate,
 } from "@/app/utils/pingpong-leaderboard";
@@ -22,9 +23,6 @@ import { useViewEntry } from "../utils/useViewEntry";
  * trap for the same reason.
  */
 const SEGMENTATION_OPTIONS = { minPodiumSize: 3, podiumSize: 3 };
-
-/** Weighted matches needed to leave calibration. Mirrors the API. */
-const MATCHES_TO_CALIBRATE = 8;
 
 /**
  * How many ranked players each layout is for.

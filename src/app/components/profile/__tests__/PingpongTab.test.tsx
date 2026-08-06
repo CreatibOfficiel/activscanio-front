@@ -31,7 +31,14 @@ const mockedRepo = pingpongRepository as jest.Mocked<typeof pingpongRepository>;
  *
  * A calibrating player is shown progress, never a rank. The API withholds
  * the rank on purpose; inventing a provisional one and then moving it would
- * be worse than saying "3 matchs sur 8".
+ * be worse than saying "3 matchs sur 5".
+ *
+ * This sheet KEEPS that rule, unlike the leaderboard, which now numbers
+ * everyone. The two are not inconsistent: a list position is relative and
+ * self-evidently provisional next to seven other rows, whereas "3e" on your
+ * own profile card is a personal claim with nothing around it to qualify it —
+ * and it would move without you playing. The board says where you stand today;
+ * this says whether your rating is settled yet.
  */
 describe('PingpongTab', () => {
   function player(overrides: Partial<PingpongPlayer> = {}): PingpongPlayer {
@@ -168,10 +175,16 @@ describe('PingpongTab', () => {
   });
 
   describe('calibration', () => {
+    /**
+     * The bar is 5, not 8, and these assertions moved with it.
+     *
+     * The API lowered `PROVISIONAL_MIN_MATCHES` from 8 to 5 and three separate
+     * frontend copies of the figure were left behind — this file, the row, and
+     * the TV board — so all three told players they owed more matches than they
+     * did, and began disagreeing with each other as they were fixed one at a
+     * time. The constant is shared now; this asserts the sheet reads it.
+     */
     it('shows progress instead of a rank while calibrating', async () => {
-      // The API withholds the rank on purpose. Showing "8 matchs sur 8"
-      // worth of progress is a fact; a provisional rank that later moves is
-      // a promise the board does not keep.
       mockedRepo.fetchPlayer.mockResolvedValue(
         player({ rank: null, provisional: true, weightedMatchCount: 3 }),
       );
@@ -179,9 +192,26 @@ describe('PingpongTab', () => {
       render(<PingpongTab competitorId="c-me" />);
 
       const progress = await screen.findByTestId('pingpong-tab-calibration');
-      expect(progress).toHaveTextContent('3');
-      expect(progress).toHaveTextContent('8');
+      expect(progress).toHaveTextContent('3/5');
+      expect(progress).not.toHaveTextContent('/8');
       expect(screen.queryByTestId('pingpong-tab-rank')).not.toBeInTheDocument();
+    });
+
+    it('reports the bar to a screen reader as 5 as well', async () => {
+      // The progressbar's aria-valuemax is a second copy of the same figure,
+      // and it was wrong in the same way — a bar announced as "3 of 8" while
+      // it renders three fifths full.
+      mockedRepo.fetchPlayer.mockResolvedValue(
+        player({ rank: null, provisional: true, weightedMatchCount: 3 }),
+      );
+
+      render(<PingpongTab competitorId="c-me" />);
+
+      await screen.findByTestId('pingpong-tab-calibration');
+      expect(screen.getByRole('progressbar')).toHaveAttribute(
+        'aria-valuemax',
+        '5',
+      );
     });
 
     it('shows the rank and no calibration bar once settled', async () => {
@@ -201,7 +231,7 @@ describe('PingpongTab', () => {
 
     it('rounds the weighted count it displays', async () => {
       // `weightedMatchCount` is a sum of weights, not a count — a repeat
-      // match counts for less. "2.6/8 matchs" reads as a bug.
+      // match counts for less. "2.6/5 matchs" reads as a bug.
       mockedRepo.fetchPlayer.mockResolvedValue(
         player({ rank: null, provisional: true, weightedMatchCount: 2.6 }),
       );
@@ -209,7 +239,7 @@ describe('PingpongTab', () => {
       render(<PingpongTab competitorId="c-me" />);
 
       const progress = await screen.findByTestId('pingpong-tab-calibration');
-      expect(progress).toHaveTextContent('3/8');
+      expect(progress).toHaveTextContent('3/5');
       expect(progress).not.toHaveTextContent('2.6');
     });
   });

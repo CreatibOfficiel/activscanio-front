@@ -2,7 +2,12 @@
 
 import { FC } from 'react';
 import { PingpongPlayer } from '../../models/Pingpong';
-import { calibrationProgress, winRate } from '../../utils/pingpong-leaderboard';
+import {
+  MATCHES_TO_CALIBRATE,
+  calibrationProgress,
+  isConfident,
+  winRate,
+} from '../../utils/pingpong-leaderboard';
 import { formatCompetitorName } from '../../utils/formatters';
 import { UserAvatar } from '../ui';
 import RankBadge from '../leaderboard/RankBadge';
@@ -12,13 +17,20 @@ import { EloGlyph, WinRateGlyph } from './StatGlyphs';
 
 interface PingpongRowProps {
   player: PingpongPlayer;
+  /**
+   * Where this player sits on the board, from 1. Comes from
+   * `buildPingpongBoard`, NOT from `player.rank` — the API's rank is null for
+   * anyone its gate excluded, and ordinal among the few it admitted.
+   *
+   * Optional, and the row falls back to `player.rank`, because two callers
+   * outside this board render a row from a bare player with no list around
+   * them to take a position from.
+   */
+  position?: number;
   isCurrentUser?: boolean;
   onClick?: () => void;
   animationDelay?: number;
 }
-
-/** Weighted matches needed to leave calibration. Mirrors the API. */
-const MATCHES_TO_CALIBRATE = 8;
 
 /**
  * One player on the ping-pong leaderboard.
@@ -30,11 +42,37 @@ const MATCHES_TO_CALIBRATE = 8;
  * chrome, and visually establishes "the bottom group" as somewhere people
  * live.
  *
- * The absence of a rank number is itself the badge, so nothing stands in
- * for it. The status label says WHY there is no rank, and calibrating and
- * inactive get different words: FICS distinguishes P from E precisely
+ * THE ABSENCE OF A RANK NUMBER USED TO BE THE BADGE, AND IS NOT ANY MORE.
+ * That was this component's stated design and it is deliberately reversed. It
+ * was right while unranked players were a minority: a gap in a numbered column
+ * is loud precisely because the column is otherwise full, and it needed no
+ * decoration of its own.
+ *
+ * Measured in production it was 6 rows of 8. The API's gate — 5 weighted
+ * matches AND rd ≤ 200, itself already loosened from 8/150, which had admitted
+ * nobody at all — passed Charles and Thibaud and stopped Don Joran at 4
+ * matches and Maxime at rd 202. Six blank cells out of eight is not an
+ * exception being flagged, it is a ranking that appears not to have loaded,
+ * and the readers it fails hardest are the six it silently declines to place.
+ *
+ * So every row carries a position, and the uncertainty moved onto the rating,
+ * where it belongs: Glickman's case for RD is that it lets you publish a
+ * number and state how far to trust it, rather than withhold it. An unsettled
+ * rating is muted and takes a `?` — Lichess's convention exactly — while a
+ * settled one is stated plainly.
+ *
+ * The mark is therefore on the MINORITY, whichever way the league tips, and
+ * today that means the confident rows are the ones that stand out. Badging the
+ * uncertain would have put a pill on three rows in four, where it stops being
+ * a signal and starts being the background, and would have made the two
+ * settled rows read as the ones missing something.
+ *
+ * The status label says why the rating is unsettled, and calibrating and
+ * inactive still get different words: FICS distinguishes P from E precisely
  * because "we don't know yet" and "was settled, then drifted" are different
- * states, and the second is what someone looking for a colleague needs.
+ * states, and the second is what someone looking for a colleague needs. An
+ * inactive player's rating is trusted — they keep an unmarked number and are
+ * dimmed instead.
  *
  * The rank is a digit at every position, including the top three. It used to
  * be a medal there — `RankBadge` renders 🥇🥈🥉 by default — and that was the
@@ -61,6 +99,7 @@ const MIN_MATCHES_FOR_RATE = 3;
 
 const PingpongRow: FC<PingpongRowProps> = ({
   player,
+  position,
   isCurrentUser = false,
   onClick,
   animationDelay = 0,
@@ -77,22 +116,58 @@ const PingpongRow: FC<PingpongRowProps> = ({
     lastActiveAt: player.lastMatchAt,
   });
   const rate = winRate(player);
-  const isRanked = player.rank !== null;
+
+  // The board's position, falling back to the API rank for the callers that
+  // render a row outside a list. Null only when neither exists, which is a
+  // bare player rendered standalone.
+  const shownPosition = position ?? player.rank;
+
+  /**
+   * Is the number next to this row's name a fact or an estimate?
+   *
+   * Read from the shared helper, not from `player.rank === null`, which is
+   * what this used to key off. Those two answered the same question only while
+   * the API's gate decided both; now that the board numbers everyone, "has no
+   * rank from the API" and "we are unsure of this rating" have come apart, and
+   * only the second one belongs on screen.
+   */
+  const uncertain = !isConfident(player);
+
+  /**
+   * Weighted matches played, rounded for display.
+   *
+   * The weighted count is a sum of applied weights, not a tally — a player who
+   * replayed one opponent all week sits on something like 2.6 — and "2.6
+   * matchs" reads as a bug.
+   */
+  const playedTowardCalibration = Math.round(
+    calibrationProgress(player) * MATCHES_TO_CALIBRATE,
+  );
 
   // Inactivity wins over calibration when both apply: "not seen for two
   // weeks" is the more useful thing to report.
-  // The calibrating label names what the count is counting toward. "3/8
-  // matchs" states a ratio and leaves its purpose to be guessed, and on a
-  // board where the first eight matches produce no ranking at all, that
-  // purpose is the one thing explaining why the row carries no rank.
+  //
+  // The calibrating label names what the count is counting toward. It used to
+  // end "avant d'être classé", which described a row with no number. The row
+  // has one now, so that sentence would contradict what sits beside it — the
+  // count leads to a CONFIRMED rating instead, which is the thing that
+  // actually changes at the bar, and always was.
+  //
+  // Five, not eight, and read from the shared constant rather than a local
+  // copy. The API moved `PROVISIONAL_MIN_MATCHES` from 8 to 5; the local copies
+  // here and on the TV board were left behind, so both told players they owed
+  // more matches than they did, and disagreed with each other once one was
+  // fixed. One constant, imported, is what stops that recurring.
+  //
+  // `matchs` only past one: "1 matchs" reads as a typo, and this label is the
+  // first thing a new player sees written about themselves.
   const status = player.inactive
     ? { label: 'Inactif', testId: 'pingpong-status' }
     : player.provisional
       ? {
-          label: `${Math.round(
-            calibrationProgress(player, MATCHES_TO_CALIBRATE) *
-              MATCHES_TO_CALIBRATE,
-          )} matchs sur ${MATCHES_TO_CALIBRATE} avant d'être classé`,
+          label: `${playedTowardCalibration} match${
+            playedTowardCalibration > 1 ? 's' : ''
+          } sur ${MATCHES_TO_CALIBRATE} avant d'être confirmé`,
           testId: 'pingpong-status',
         }
       : null;
@@ -112,16 +187,17 @@ const PingpongRow: FC<PingpongRowProps> = ({
 
   const content = (
     <>
-      {/* A rank, or nothing at all — the gap is the signal. Stated for a
-          screen reader, which gets nothing out of an empty box. */}
-      {isRanked ? (
+      {/* A position on every row. The blank box that used to sit here for
+          unranked players — and the "Non classé" it announced — is gone with
+          the gate; see the reversal at the top of this file. The fallback
+          remains only for a row rendered outside a list, which has no position
+          to be given. */}
+      {shownPosition !== null && shownPosition !== undefined ? (
         <div data-testid="pingpong-rank" className="flex-shrink-0">
-          <RankBadge rank={player.rank as number} size="md" showMedal={false} />
+          <RankBadge rank={shownPosition} size="md" showMedal={false} />
         </div>
       ) : (
-        <div className="w-8 flex-shrink-0">
-          <span className="sr-only">Non classé</span>
-        </div>
+        <div className="w-8 flex-shrink-0" />
       )}
 
       <UserAvatar
@@ -162,15 +238,30 @@ const PingpongRow: FC<PingpongRowProps> = ({
         data-testid="pingpong-stats"
         className="flex flex-shrink-0 items-start gap-4"
       >
+        {/* The uncertainty marker, and the whole of it: a `?` after the number
+            and a muted weight, which is Lichess's convention for a provisional
+            rating. Nothing is added to the row's layout — no pill, no extra
+            line — because on this board the marker lands on most rows, and
+            anything with its own footprint would turn the list into chrome.
+
+            The `?` is decorative to a screen reader, which would read it as a
+            question or skip it; the sr-only word carries the meaning. */}
         <div
           data-testid="pingpong-rating"
           className="flex flex-col items-center gap-1"
         >
           <EloGlyph className="h-3 w-3 text-neutral-500" />
-          <span className="text-xs font-medium tabular-nums text-neutral-300">
+          <span
+            className={`text-xs font-medium tabular-nums ${
+              uncertain ? 'text-neutral-500' : 'text-neutral-300'
+            }`}
+          >
             {Math.round(player.conservativeScore)}
+            {uncertain && <span aria-hidden="true">?</span>}
           </span>
-          <span className="sr-only">elo</span>
+          <span className="sr-only">
+            {uncertain ? 'elo, estimation en cours' : 'elo'}
+          </span>
         </div>
 
         {showsRate && (
@@ -207,6 +298,7 @@ const PingpongRow: FC<PingpongRowProps> = ({
         data-testid="pingpong-row"
         data-current-user={isCurrentUser}
         data-inactive={player.inactive}
+        data-uncertain={uncertain}
         onClick={onClick}
         aria-haspopup="dialog"
         aria-label={`Voir la fiche de ${name}`}
@@ -223,6 +315,7 @@ const PingpongRow: FC<PingpongRowProps> = ({
       data-testid="pingpong-row"
       data-current-user={isCurrentUser}
       data-inactive={player.inactive}
+      data-uncertain={uncertain}
       className={shell}
       style={{ animationDelay: `${animationDelay}ms` }}
     >

@@ -4,7 +4,11 @@ import { FC, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PingpongBestWin, PingpongMatch, PingpongPlayer } from '../../models/Pingpong';
 import { pingpongRepository } from '../../repositories/PingpongRepository';
-import { calibrationProgress, winRate } from '../../utils/pingpong-leaderboard';
+import {
+  MATCHES_TO_CALIBRATE,
+  calibrationProgress,
+  winRate,
+} from '../../utils/pingpong-leaderboard';
 import { Skeleton } from '../ui';
 import HeadToHeadSection from '../pingpong/HeadToHeadSection';
 import BestWinCard from '../pingpong/BestWinCard';
@@ -29,9 +33,6 @@ interface PingpongTabProps {
   perspective?: 'self' | 'other';
   className?: string;
 }
-
-/** Weighted matches needed to leave calibration. Mirrors the API. */
-const MATCHES_TO_CALIBRATE = 8;
 
 interface Loaded {
   player: PingpongPlayer | null;
@@ -195,7 +196,7 @@ const PingpongTab: FC<PingpongTabProps> = ({
 
   const { player, matches, opponents } = data;
   const rate = winRate(player);
-  // The weighted count is a sum of weights, not a tally — "2.6/8 matchs"
+  // The weighted count is a sum of weights, not a tally — "2.6/5 matchs"
   // reads as a bug, so it is rounded for display only.
   const weighted = Math.round(
     calibrationProgress(player, MATCHES_TO_CALIBRATE) * MATCHES_TO_CALIBRATE,

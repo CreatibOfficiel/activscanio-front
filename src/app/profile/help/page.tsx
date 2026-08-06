@@ -72,8 +72,9 @@ const HelpPage: FC = () => {
             <div className="text-2xl mb-2">💡</div>
             <p className="text-sm text-neutral-300">
               Il faut{' '}
-              <span className="text-primary-400 font-semibold">8 matchs</span>{' '}
-              de ping-pong pour décrocher un rang au classement
+              <span className="text-primary-400 font-semibold">5 matchs</span>{' '}
+              de ping-pong pour confirmer votre niveau. Avant ça, vous êtes
+              classé avec un « ? »
             </p>
           </div>
           <div className="p-4 rounded-xl bg-neutral-800 border border-neutral-700">

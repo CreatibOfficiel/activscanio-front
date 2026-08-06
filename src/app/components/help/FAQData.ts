@@ -135,17 +135,19 @@ moins de confiance.`,
     icon: '✅',
     title: 'Apparaître au classement',
     summary:
-      'Tout le monde est visible dès le premier match. Il faut 8 matchs pour recevoir un rang, le temps que le niveau se stabilise.',
+      'Tout le monde est classé dès le premier match. Avant 5 matchs, votre niveau est affiché comme une estimation, avec un « ? ».',
     points: [
-      'Vous apparaissez dès votre premier match, sans rang',
-      'Le rang arrive après 8 matchs, quand le niveau est fiable',
+      'Vous êtes classé dès votre premier match, comme tout le monde',
+      'Avant 5 matchs, le niveau affiché est une estimation marquée d’un « ? »',
+      'Après 5 matchs, le niveau est confirmé et le « ? » disparaît',
       'Jouer toujours contre les mêmes ne vous exclut pas',
-      'Après 14 jours sans jouer, le rang est mis en pause',
+      'Après 14 jours sans jouer, votre rang reste mais la ligne est grisée',
       'Le nombre d’adversaires différents est affiché comme information',
     ],
-    technicalDetails: `Le seul filtre : la calibration.
-• 8 matchs pondérés pour recevoir un rang
-• Ou un RD retombé sous 150
+    technicalDetails: `Personne n'est exclu du classement. La calibration décide
+seulement si le niveau est affiché comme confirmé ou comme estimation :
+• 5 matchs pondérés, et un RD retombé sous 200
+• En dessous, le rating porte un « ? » et la ligne est atténuée
 
 Pourquoi « pondérés » :
 Rejouer la même personne compte de moins en moins. Sur une semaine,

@@ -243,10 +243,15 @@ describe('PingpongRankingsView — sections', () => {
 describe('PingpongRankingsView — calibration', () => {
   it('shows progress toward a rank as a bar, and no rank number', () => {
     render(<PingpongRankingsView players={PLAYERS} />);
-    // Olga has 3 of the 8 weighted matches a rank needs.
+    // Olga has 3 of the 5 weighted matches a rank needs.
+    //
+    // Five, not eight. This board declared its own `MATCHES_TO_CALIBRATE = 8`
+    // while the API's bar had moved to 5, so it drew a 37.5% bar where the
+    // phone drew 60% for the same player at the same moment. It reads the
+    // shared constant now; the literal here follows it.
     const row = rowFor('Olga O.');
     const bar = within(row).getByTestId('tv-calibration-progress');
-    expect((bar as HTMLElement).style.width).toBe(`${(3 / 8) * 100}%`);
+    expect((bar as HTMLElement).style.width).toBe(`${(3 / 5) * 100}%`);
     // A rank number here would claim a position the API withheld.
     expect(within(row).queryByTestId('tv-row-rank')).not.toBeInTheDocument();
   });

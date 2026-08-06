@@ -22,24 +22,55 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
 /**
  * The ping-pong leaderboard.
  *
- * The top three sit in a carousel above the list; everyone else is one flat
- * list below it. `segmentPingpongLeaderboard` has returned `podium` and
- * `rest` since it was written and this page never read them — it flattened
- * every tier into a single array, so the podium half was dead code. It is
- * read now, including its `minPodiumSize` guard: below three ranked players
- * there is no podium at all, because a carousel of one is a pedestal with a
- * scroll hint that scrolls nowhere.
+ * ONE ranked list, numbered from 1, with everyone on it. This reverses the
+ * calibration gate the page was built around, and the reversal is the point
+ * of the screen rather than a detail of it.
  *
- * Below the podium, still one flat list. No platform surveyed renders three
- * separately-headed groups — they either exclude the uncertain entirely
- * (Lichess, UTR, FIDE) or keep everyone inline with a short marker (FICS).
- * Three headers on a 25-row phone list turns a third of the screen into
- * chrome, and visually establishes "the bottom group" as somewhere people
- * live.
+ * WHY. Measured in production after a full rating recompute, the API's gate —
+ * 5 weighted matches AND rd ≤ 200, itself already loosened from 8/150, which
+ * had admitted nobody at all — ranked 2 players out of 8 in an office of 8.
+ * Don Joran was one match short; Maxime was two rd points over. Six of the
+ * eight rows rendered an empty rank column. A leaderboard showing a quarter of
+ * its league is not a strict leaderboard, it is one that looks broken, and the
+ * six it declines to place are exactly the people who most need a reason to
+ * keep playing.
  *
- * Everyone the API returned appears. Someone who cannot find themselves
- * assumes the app forgot them, which is worse than seeing themselves
- * unranked — and the row itself says why they carry no rank.
+ * So uncertainty is stated instead of used to exclude, which is Glickman's own
+ * argument for RD and what Lichess ships: a provisional rating appears with a
+ * `?` next to it. The list is ordered on the conservative score (rating −
+ * 2×RD), so an unsettled rating is already penalised by its own deviation —
+ * a one-match player sinks on the arithmetic rather than on a rule.
+ *
+ * `board` comes from `buildPingpongBoard`. The hook still returns
+ * `segmentation` alongside it and this page no longer reads it: the TV board
+ * does, and it branches its whole layout on `ranked.length`, so collapsing the
+ * tiers there would have re-laid-out a screen this work was not scoped to
+ * touch. See the note on `segmentPingpongLeaderboard`.
+ *
+ * THE PODIUM IS GATED ON CONFIDENCE, NOT COUNT. It used to appear at three
+ * ranked players, which was sound while ranked and settled meant the same
+ * thing. Numbering everyone split them, and the old rule would now fire on any
+ * three rows — crowning Valentin, one match played, rd 287, in second place. A
+ * card is a photo and a gold badge, a far stronger claim than a numbered row.
+ * It waits for three settled ratings, and today that means no podium at all,
+ * which is the correct answer: one that appears in week one and reshuffles
+ * entirely in week two teaches everyone the ranking is noise.
+ *
+ * The podium no longer lifts anyone out of the list either. The crowned three
+ * need not be the list's top three, so removing them would punch a hole in the
+ * middle of a contiguous ranking.
+ *
+ * Still no group headings. No platform surveyed renders three separately-headed
+ * groups — they either exclude the uncertain entirely (Lichess, UTR, FIDE) or
+ * keep everyone inline with a short marker (FICS). Three headers on a phone
+ * list turns a third of the screen into chrome, and visually establishes "the
+ * bottom group" as somewhere people live.
+ *
+ * Inactive players stay in the ranking rather than being parked below it. A
+ * settled rating that is merely stale is still the best estimate we have of
+ * how someone plays, and that is what the list sorts on; what is unknown about
+ * them is whether they still play, which the dimmed row already says. They are
+ * excluded from the podium alone, because that is a claim about the present.
  *
  * A separate route from the Mario Kart board rather than a branch inside
  * it: that page runs a four-phase ranking animation over `Competitor`-typed
@@ -69,9 +100,11 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
  * its own route, `/pingpong/matches`, which nothing linked to — a fully-built
  * page reachable only by typing the URL. Merging it answers the question the
  * owner actually asked ("on aurait classement et match au meme endroit ?")
- * and fixes the cold start: a rank is withheld until eight weighted matches,
- * so early on this screen would otherwise be nothing but an empty ranking,
- * which reads as a broken feature rather than a new one. It sat under the
+ * and fixed the cold start: when a rank was withheld until calibration, early
+ * on this screen would otherwise be nothing but an empty ranking, which reads
+ * as a broken feature rather than a new one. That particular cold start no
+ * longer exists — everyone is ranked from their first match — but the history
+ * earns its place on the tab regardless. It sat under the
  * board before the tabs; on a phone that put the history below however many
  * rows the office had grown to, which is a scroll nobody performs.
  *
@@ -94,7 +127,7 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
  * of them behind a list nobody has tapped.
  */
 export default function PingpongPage() {
-  const { segmentation, loading, error } = usePingpongLeaderboard();
+  const { board, loading, error } = usePingpongLeaderboard();
   const {
     matches,
     loading: matchesLoading,
@@ -109,16 +142,13 @@ export default function PingpongPage() {
   const [view, setView] = useState<PingpongView>('ranking');
   const [selected, setSelected] = useState<PingpongPlayer | null>(null);
 
-  const { ranked, calibrating, inactive, podium, rest, isEmpty } = segmentation;
-  // Below the podium, in tier order: the ranked players the podium did not
-  // take, then those still calibrating, then the players nobody has seen for
-  // a fortnight. `rest` is every ranked player when there is no podium, so
-  // this is the whole board in that case.
-  const rows = [...rest, ...calibrating, ...inactive];
+  const { rows, podium, confidentCount, isEmpty } = board;
 
-  // The realistic first week: people have played, the API has ranked nobody,
-  // and a board of unnumbered rows with no explanation reads as broken.
-  const nobodyRanked = !isEmpty && ranked.length === 0;
+  // The cold-start note is gone with the gate. It said "Personne n'est encore
+  // classé, 8 matchs nécessaires", and all three of its claims are now wrong:
+  // everyone is ranked, so its premise is false; the bar was 5 rather than 8,
+  // so its figure was already stale; and the state it explained — a list of
+  // rows with no numbers — cannot occur any more.
 
   const showsBoard = !loading && !error && !isEmpty;
 
@@ -231,53 +261,52 @@ export default function PingpongPage() {
             aria-labelledby={tabId('ranking')}
             tabIndex={0}
           >
-            {/* The counts describe this list and only this list — ranked,
-                calibrating and inactive are its three tiers — so they travel
-                with its title into the panel.
+            {/* The subtitle counts the LIST, then says how much of it is
+                settled. It used to count the tiers — "2 joueurs classés + 6 en
+                calibrage" — which described a screen where six rows had no
+                number. Over eight numbered rows that line would contradict what
+                sits under it, so the first figure is everyone and the second is
+                the uncertainty, stated once at the top as well as per row.
 
-                The cold-start suppression is preserved but it can no longer
-                fire from here: this panel only renders when `showsBoard` is
-                true, which already excludes the empty board. The guard above
-                covers that case with a title and no counts. */}
+                The cold-start suppression is preserved: this panel only renders
+                when `showsBoard` is true, which already excludes the empty
+                board. The guard above covers that case with a title and no
+                counts. */}
             <BoardPanelHeading
               title="Classement ping-pong"
               className="mb-6"
               subtitle={
                 <>
-                  <span data-testid="pingpong-count">{ranked.length}</span> joueur
-                  {ranked.length > 1 ? 's' : ''} classé{ranked.length > 1 ? 's' : ''}
-                  {calibrating.length > 0 &&
-                    ` + ${calibrating.length} en calibrage`}
-                  {inactive.length > 0 &&
-                    ` + ${inactive.length} inactif${inactive.length > 1 ? 's' : ''}`}
+                  <span data-testid="pingpong-count">{rows.length}</span> joueur
+                  {rows.length > 1 ? 's' : ''}
+                  {' · '}
+                  <span data-testid="pingpong-confident-count">
+                    {confidentCount}
+                  </span>{' '}
+                  niveau{confidentCount > 1 ? 'x' : ''} confirmé
+                  {confidentCount > 1 ? 's' : ''}
                 </>
               }
             />
 
+            {/* Empty until three ratings are settled — the carousel renders
+                nothing when handed nothing, and `buildPingpongBoard` decides
+                when that is. A card is a photo and a gold badge, and putting
+                one under a player with a single match is a claim the list
+                itself never makes. */}
             <PingpongPodiumCarousel
               podium={podium}
               onSelect={setSelected}
               className="mb-4"
             />
 
-            {/* Not an error, and not silence. Everyone is calibrating during
-                the first week and a list of unnumbered rows with nothing
-                explaining it reads as a board that failed to load. */}
-            {nobodyRanked && (
-              <p
-                data-testid="pingpong-nobody-ranked"
-                className="mb-3 text-sm text-neutral-500"
-              >
-                Personne n&apos;est encore classé, 8 matchs nécessaires.
-              </p>
-            )}
-
             <div className="space-y-2.5">
-              {rows.map((player, index) => (
+              {rows.map((row, index) => (
                 <PingpongRow
-                  key={player.id}
-                  player={player}
-                  onClick={() => setSelected(player)}
+                  key={row.player.id}
+                  player={row.player}
+                  position={row.position}
+                  onClick={() => setSelected(row.player)}
                   animationDelay={Math.min(index * 30, 300)}
                 />
               ))}
