@@ -97,8 +97,23 @@ describe('PingpongPodiumCarousel', () => {
     player({ id: 'c', firstName: 'Sofia', rank: 3, conservativeScore: 1042 }),
   ];
 
+  /**
+   * The podium as the board hands it over: a player, a position and a
+   * confidence flag per card.
+   *
+   * The carousel takes rows rather than bare players now that the podium is
+   * gated on POSITION. A crowned player may be provisional, so `player.rank`
+   * is null for them and the card can no longer read it — the badge draws
+   * from `position`, and `uncertain` drives the `?`. See PingpongPodiumCard.
+   */
+  const rows = podium.map((p, i) => ({
+    player: p,
+    position: i + 1,
+    uncertain: false,
+  }));
+
   it('renders a card per podium player', () => {
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     expect(screen.getAllByTestId('pingpong-podium-card')).toHaveLength(3);
   });
@@ -115,7 +130,7 @@ describe('PingpongPodiumCarousel', () => {
   it('groups the cards under one label rather than a list', () => {
     // role="list" would announce "list, 3 items" over three buttons, which
     // is the wrong shape. A labelled group says what the cluster is.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     expect(screen.getByRole('group', { name: /podium/i })).toBeInTheDocument();
   });
@@ -123,7 +138,7 @@ describe('PingpongPodiumCarousel', () => {
   it('makes every card a button', () => {
     // Not a div with an onClick: the cards open a detail modal and must be
     // reachable by keyboard.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     expect(screen.getAllByRole('button')).toHaveLength(3);
   });
@@ -131,7 +146,7 @@ describe('PingpongPodiumCarousel', () => {
   it('names a card with everything the visuals convey', () => {
     // The rank is a coloured badge and the stats are icon glyphs. A screen
     // reader landing on "Matéo 1124 63" learns nothing.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     const name = screen.getAllByRole('button')[0].getAttribute('aria-label');
     expect(name).toMatch(/rang 1/i);
@@ -145,7 +160,7 @@ describe('PingpongPodiumCarousel', () => {
     // Card 2, not card 1: an index bug that always reported the first player
     // would pass against card 1.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     await userEvent.click(screen.getAllByRole('button')[1]);
 
@@ -156,7 +171,7 @@ describe('PingpongPodiumCarousel', () => {
     // The third card is clipped to ~45 px by design. Clipped is not
     // disabled.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     await userEvent.click(screen.getAllByRole('button')[2]);
 
@@ -165,7 +180,7 @@ describe('PingpongPodiumCarousel', () => {
 
   it('activates a card with Enter', async () => {
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     screen.getAllByRole('button')[1].focus();
     await userEvent.keyboard('{Enter}');
@@ -176,7 +191,7 @@ describe('PingpongPodiumCarousel', () => {
   it('activates a card with Space', async () => {
     // Free with a real <button>, and lost the moment it becomes a div.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     screen.getAllByRole('button')[2].focus();
     await userEvent.keyboard(' ');
@@ -188,7 +203,7 @@ describe('PingpongPodiumCarousel', () => {
     // The scroller itself must not be a tab stop — a stop that does nothing
     // is a stop nobody wants — but each card must be reachable, and the
     // browser scrolls a focused card into view for free.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     const cards = screen.getAllByRole('button');
     await userEvent.tab();
@@ -204,7 +219,7 @@ describe('PingpongPodiumCarousel', () => {
     // Without this the carousel opens a dialog every time someone flicks it,
     // which on a phone is every single interaction.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     const card = screen.getAllByRole('button')[0];
     await userEvent.pointer([
@@ -220,7 +235,7 @@ describe('PingpongPodiumCarousel', () => {
     // The other half of the rule: a finger is never perfectly still, so the
     // drag guard has to tolerate a few pixels or it eats real taps.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     const card = screen.getAllByRole('button')[0];
     await userEvent.pointer([
@@ -245,7 +260,7 @@ describe('PingpongPodiumCarousel', () => {
     // device: what this proves is that the handler honours a cancel it is
     // given, not that a real browser cancels where we assume it does.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     const card = screen.getAllByRole('button')[0];
     pointer(card, 'pointerdown', { x: 200, y: 50 });
@@ -260,7 +275,7 @@ describe('PingpongPodiumCarousel', () => {
     // returns to where it started. That is a scrub of the carousel, not a
     // tap, and only the running maximum sees it.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     const card = screen.getAllByRole('button')[0];
     pointer(card, 'pointerdown', { x: 200, y: 50 });
@@ -276,7 +291,7 @@ describe('PingpongPodiumCarousel', () => {
     // not a tap either — it is the gesture that precedes a long-press menu,
     // and treating it as a tap opens a modal the user did not ask for.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     const card = screen.getAllByRole('button')[0];
     pointer(card, 'pointerdown', { x: 200, y: 50 });
@@ -290,7 +305,7 @@ describe('PingpongPodiumCarousel', () => {
     // The guard against the guard: a normal tap takes on the order of 100 ms
     // and must not be caught by the duration rule.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     const card = screen.getAllByRole('button')[0];
     pointer(card, 'pointerdown', { x: 200, y: 50 });
@@ -306,7 +321,7 @@ describe('PingpongPodiumCarousel', () => {
     // a second must still open the modal — and a stale origin left behind by
     // an earlier aborted gesture must not leak into the next activation.
     const onSelect = jest.fn();
-    render(<PingpongPodiumCarousel podium={podium} onSelect={onSelect} />);
+    render(<PingpongPodiumCarousel podium={rows} onSelect={onSelect} />);
 
     const card = screen.getAllByRole('button')[1];
     pointer(card, 'pointerdown', { x: 200, y: 50 });
@@ -329,7 +344,7 @@ describe('PingpongPodiumCarousel', () => {
     // JSDOM CAVEAT: this asserts the class is present, nothing more. JSDOM
     // does not compute touch-action or act on it; only a device shows whether
     // the axis behaves.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     const track = screen.getByRole('group', { name: /podium/i });
     expect(track.className).toMatch(/touch-pan-x/);
@@ -337,16 +352,181 @@ describe('PingpongPodiumCarousel', () => {
 
   it('shows the rank digit, not a medal', () => {
     // The owner's actual complaint: 🥇🥈🥉 where a number was expected.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     const badges = screen.getAllByTestId('podium-rank-badge');
     expect(badges.map((b) => b.textContent)).toEqual(['1', '2', '3']);
   });
 
+  it('numbers the badge from the board position, not the API rank', () => {
+    // The podium is gated on POSITION now, so a crowned player may well be
+    // provisional — and the API sends rank: null for every one of those. A
+    // card reading `player.rank` would render the fallback badge, which is a
+    // grey 0 where a gold 1 belongs. Every rank here is null and disagrees
+    // with the position it is handed.
+    render(
+      <PingpongPodiumCarousel
+        podium={podium.map((p, i) => ({
+          player: { ...p, rank: null },
+          position: i + 1,
+          uncertain: true,
+        }))}
+      />,
+    );
+
+    expect(
+      screen.getAllByTestId('podium-rank-badge').map((b) => b.textContent),
+    ).toEqual(['1', '2', '3']);
+  });
+
+  /**
+   * THE UNCERTAINTY MARKER ON THE CARD.
+   *
+   * New, and it is what makes gating the podium on position defensible. The
+   * podium used to wait for three SETTLED ratings, so a crowned player was
+   * confident by construction and the card had nothing to qualify. Now the
+   * top three are crowned whatever their confidence — on the real production
+   * data that means Valentin, with ONE match played, is crowned second.
+   *
+   * So the card states it, using the convention the rows already use and
+   * Lichess ships: a `?` after the rating and a muted weight. The card crowns
+   * a position and says in the same breath how far to trust it. Without this
+   * the podium would make a confident claim the data does not support.
+   */
+  describe('an uncertain crowned player', () => {
+    function uncertainPodium() {
+      return [
+        { player: podium[0], position: 1, uncertain: false },
+        { player: podium[1], position: 2, uncertain: true },
+        { player: podium[2], position: 3, uncertain: false },
+      ];
+    }
+
+    it('marks their rating with a question mark', () => {
+      render(<PingpongPodiumCarousel podium={uncertainPodium()} />);
+
+      const cards = screen.getAllByTestId('pingpong-podium-card');
+      expect(cards[1]).toHaveTextContent('1090?');
+    });
+
+    it('leaves a settled crowned rating unmarked', () => {
+      // The other half. A blanket `?` would satisfy the test above and tell
+      // everyone their rating is a guess.
+      render(<PingpongPodiumCarousel podium={uncertainPodium()} />);
+
+      const cards = screen.getAllByTestId('pingpong-podium-card');
+      expect(cards[0]).toHaveTextContent('1124');
+      expect(cards[0]).not.toHaveTextContent('?');
+    });
+
+    it('says in words what the question mark means', () => {
+      // A `?` is a glyph: a screen reader reads it as punctuation or skips
+      // it, and someone who has not been told the convention gets nothing
+      // from it either.
+      //
+      // Asserted on the ACCESSIBLE NAME rather than on an sr-only span, which
+      // is where the row puts the same wording. This card conveys everything
+      // through `aria-label` already — the rank is a coloured badge and both
+      // stats are icon glyphs — so an sr-only span here would be a second
+      // channel saying the same thing twice into one announcement.
+      render(<PingpongPodiumCarousel podium={uncertainPodium()} />);
+
+      const names = screen
+        .getAllByRole('button')
+        .map((b) => b.getAttribute('aria-label') ?? '');
+      expect(names[1]).toMatch(/estimation/i);
+      expect(names[0]).not.toMatch(/estimation/i);
+    });
+  });
+
+  /**
+   * THE DESKTOP LAYOUT.
+   *
+   * The carousel is mobile-only now. NN/g is explicit that horizontal scroll
+   * on a wide viewport is poorly discovered — "users often have no idea that
+   * they can discover content by 'swiping' on large screens" — and acceptable
+   * only for secondary content. Three cards is not overload, so the
+   * carousel's justification simply does not exist on desktop, where it also
+   * sat left-aligned and read as broken ("sur pc, il faut centrer le podium
+   * sur la page").
+   *
+   * Above the breakpoint it becomes a static 3-up grid in a max-width box
+   * with `margin-inline: auto`, which is centred by construction — the
+   * reported misalignment is fixed as a side effect rather than by nudging a
+   * margin. The card design is identical across breakpoints; only the
+   * container changes.
+   *
+   * JSDOM CAVEAT, stated plainly: jsdom does not evaluate media queries,
+   * compute layout, or resolve Tailwind's `sm:` variants into anything. These
+   * assert that the container carries the classes that produce the two
+   * layouts and that the mobile scroll behaviour is confined behind a
+   * breakpoint prefix. Whether the result is actually centred, actually three
+   * across, or actually unscrollable on a wide screen can only be seen in a
+   * browser. Nothing below is evidence of the visual outcome.
+   */
+  describe('the desktop layout', () => {
+    function trackClasses() {
+      return screen.getByRole('group', { name: /podium/i }).className;
+    }
+
+    it('scrolls horizontally only below the breakpoint', () => {
+      // `overflow-x-auto` unprefixed would keep the scroller alive on
+      // desktop; it has to be switched off above the breakpoint.
+      render(<PingpongPodiumCarousel podium={rows} />);
+
+      expect(trackClasses()).toMatch(/(^|\s)overflow-x-auto/);
+      expect(trackClasses()).toMatch(/sm:overflow-visible/);
+    });
+
+    it('drops the snap and pan behaviour above the breakpoint', () => {
+      // Scroll-snap and touch-pan-x describe a scroller. Left on a static
+      // grid they are dead declarations that mislead the next reader.
+      render(<PingpongPodiumCarousel podium={rows} />);
+
+      expect(trackClasses()).toMatch(/sm:snap-none/);
+      expect(trackClasses()).toMatch(/sm:touch-auto/);
+    });
+
+    it('lays the cards out as a centred grid above the breakpoint', () => {
+      // The fix for the reported misalignment. A max-width box with
+      // margin-inline auto is centred by construction, so there is no
+      // separate "centre it" rule to fall out of sync.
+      render(<PingpongPodiumCarousel podium={rows} />);
+
+      const track = screen.getByRole('group', { name: /podium/i });
+      const cardTrack = track.firstElementChild as HTMLElement;
+      expect(cardTrack.className).toMatch(/sm:grid/);
+      expect(cardTrack.className).toMatch(/sm:grid-cols-3/);
+      expect(cardTrack.className).toMatch(/sm:mx-auto/);
+      expect(cardTrack.className).toMatch(/sm:max-w-/);
+    });
+
+    it('keeps the flex row for the mobile carousel', () => {
+      // The other half: the grid must be the desktop variant, not a
+      // replacement. On a phone the cards stay a flex row that overflows,
+      // which is what produces the honest clipped third card.
+      render(<PingpongPodiumCarousel podium={rows} />);
+
+      const track = screen.getByRole('group', { name: /podium/i });
+      const cardTrack = track.firstElementChild as HTMLElement;
+      expect(cardTrack.className).toMatch(/(^|\s)flex(\s|$)/);
+    });
+
+    it('lets a card fill its grid cell rather than staying 132 px', () => {
+      // A fixed-width card in a 3-column grid leaves the row visually
+      // left-packed inside a centred container, which is the reported bug
+      // wearing a different hat. The width is released above the breakpoint.
+      render(<PingpongPodiumCarousel podium={rows} />);
+
+      const card = screen.getAllByTestId('pingpong-podium-card')[0];
+      expect(card.className).toMatch(/sm:w-full/);
+    });
+  });
+
   it('shows the first name only', () => {
     // A 132 px card cannot hold "Matéo Durand" on one line, and the
     // reference shows first names.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     const card = screen.getAllByTestId('pingpong-podium-card')[0];
     expect(card).toHaveTextContent('Matéo');
@@ -354,7 +534,7 @@ describe('PingpongPodiumCarousel', () => {
   });
 
   it('shows the rating and the win rate', () => {
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     const card = screen.getAllByTestId('pingpong-podium-card')[0];
     expect(card).toHaveTextContent('1124');
@@ -368,9 +548,13 @@ describe('PingpongPodiumCarousel', () => {
     render(
       <PingpongPodiumCarousel
         podium={[
-          player({ id: 'z', rank: 1, wins: 0, losses: 0 }),
-          podium[1],
-          podium[2],
+          {
+            player: player({ id: 'z', rank: 1, wins: 0, losses: 0 }),
+            position: 1,
+            uncertain: false,
+          },
+          rows[1],
+          rows[2],
         ]}
       />,
     );
@@ -384,7 +568,7 @@ describe('PingpongPodiumCarousel', () => {
     // a pale sky — a real failure, not a hypothetical. A gradient cannot
     // guarantee a ratio because it does not know the photo; a flat scrim
     // under the text block can.
-    render(<PingpongPodiumCarousel podium={podium} />);
+    render(<PingpongPodiumCarousel podium={rows} />);
 
     const floor = screen.getAllByTestId('podium-text-floor')[0];
     expect(floor.className).toMatch(/bg-black\//);

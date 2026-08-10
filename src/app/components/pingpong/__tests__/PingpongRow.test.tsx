@@ -409,12 +409,57 @@ describe('PingpongRow', () => {
     });
 
     /**
-     * The rate used to be gated on being ranked, which needs 8 weighted
-     * matches. With nobody ranked yet that emptied the column for the whole
-     * board — the screen lost a real number to protect against a fake one.
-     * Three matches is where a percentage stops being noise: 2/3 is a
-     * reading, 1/1 is an accident.
+     * THE THREE-MATCH THRESHOLD IS GONE. Third position this file has held on
+     * the win rate, so the whole chain is here rather than spread across
+     * three comments.
+     *
+     * 1. ORIGINALLY gated on being RANKED, which needed 8 weighted matches.
+     *    With nobody ranked the column was empty for the entire board.
+     * 2. THEN gated on 3 played matches, on the reasoning that 2/3 is a
+     *    reading and 1/1 is an accident.
+     * 3. NOW ungated. The rate is always shown.
+     *
+     * The two tests directly below were written earlier in this same session
+     * to pin (2) in both directions. They are REWRITTEN rather than deleted,
+     * because the boundary they guarded is exactly what moved, and a silently
+     * removed test is how a reversal gets un-reversed by the next reader.
+     *
+     * WHY (2) WENT. The match count is displayed immediately beside the rate,
+     * so "100% · 1 match" is complete rather than misleading — hiding the
+     * numerator while showing the denominator is strictly less information
+     * for the same pixels. 3 is not a defensible statistical line either: the
+     * stabilisation literature puts a reliable win rate at 50-100+ games, so
+     * a bar at 3 is far too low to confer significance while still being high
+     * enough to blank real data. It blanked 3 of the 8 production players,
+     * including the newest — the exact moment the app should feel responsive
+     * to someone. And it contradicted the board's own convention, which shows
+     * a provisional RATING with a `?` rather than withholding it. Uncertainty
+     * is stated on this board, not used to hide things.
      */
+    it('shows a win rate at a single match', () => {
+      // The boundary that moved. Under the three-match rule this rendered
+      // nothing; 100% off one match is now shown, next to the count that
+      // says it was one match.
+      render(
+        <PingpongRow
+          player={player({ wins: 1, losses: 0, rank: null, provisional: true })}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent('100');
+    });
+
+    it('shows a win rate at two matches', () => {
+      // The other side of the old bar. 1 win of 2 is 50%, and it was hidden.
+      render(
+        <PingpongRow
+          player={player({ wins: 1, losses: 1, rank: null, provisional: true })}
+        />,
+      );
+
+      expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent('50');
+    });
+
     it('shows a win rate for a calibrating player past three matches', () => {
       render(
         <PingpongRow
@@ -425,21 +470,24 @@ describe('PingpongRow', () => {
       expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent('71');
     });
 
-    it('withholds it below three matches', () => {
-      // 100% off one match says nothing about anyone.
-      render(
-        <PingpongRow
-          player={player({ wins: 1, losses: 0, rank: null, provisional: true })}
-        />,
-      );
-
-      expect(screen.queryByTestId('pingpong-winrate')).not.toBeInTheDocument();
-    });
-
     it('shows a win rate once matches have been played', () => {
       render(<PingpongRow player={player({ wins: 3, losses: 1 })} />);
 
       expect(screen.getByTestId('pingpong-winrate')).toHaveTextContent('75');
+    });
+
+    it('still shows nothing when there is no rate to show', () => {
+      // The one case that survives, and it is not a threshold: someone with
+      // no matches has no win rate at all, and "0%" would read as having lost
+      // every game. `winRate` returns null there, which is a different fact
+      // from a rate we chose to hide.
+      render(
+        <PingpongRow
+          player={player({ wins: 0, losses: 0, rank: null, provisional: true })}
+        />,
+      );
+
+      expect(screen.queryByTestId('pingpong-winrate')).not.toBeInTheDocument();
     });
   });
 
@@ -695,15 +743,15 @@ describe('PingpongRow', () => {
 
   describe('an uncertain row', () => {
     /**
-     * Reversed deliberately. This used to assert the opposite: no rate for a
-     * calibrating player, whatever they had played. The reasoning was that a
-     * rate off a few matches is noise — true of one match, not of three — and
-     * the cost went unnoticed until the board filled with calibrating players
-     * and the column was empty for everyone. The gate is now three played
-     * matches rather than being ranked; 2W-1L is exactly the boundary and
-     * shows.
+     * Reversed twice, and there is no threshold left to sit at.
+     *
+     * This first asserted no rate at all for a calibrating player, whatever
+     * they had played. Then it asserted a rate from three matches, 2W-1L
+     * being exactly that boundary. The bar is gone entirely now — see the
+     * chain in the `record` block above — so what remains worth pinning is
+     * that being calibrating is not itself a reason to hide the rate.
      */
-    it('shows a win rate for a calibrating player at the threshold', () => {
+    it('shows a win rate for a calibrating player', () => {
       render(
         <PingpongRow
           player={player({

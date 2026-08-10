@@ -244,12 +244,18 @@ describe('buildPingpongBoard', () => {
   it('numbers every player in the real league', () => {
     // The failure this whole change exists for. The API ranked 2 of these 8;
     // all 8 are on the board and all 8 carry a position.
+    //
+    // Read across BOTH surfaces now that the podium takes ranks 1-3 out of
+    // the list. The property under test was never "rows holds everyone" — it
+    // was "everyone is placed and numbered contiguously" — so it is asserted
+    // that way rather than against `rows` alone, which would now pass with a
+    // player silently dropped between the two.
     const board = buildPingpongBoard(PRODUCTION_LEAGUE);
 
-    expect(board.rows).toHaveLength(8);
-    expect(board.rows.map((row) => row.position)).toEqual([
-      1, 2, 3, 4, 5, 6, 7, 8,
-    ]);
+    const positions = [...board.podiumRows, ...board.rows].map(
+      (row) => row.position,
+    );
+    expect(positions).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it('orders the real league by rating rather than by the API rank', () => {
@@ -258,7 +264,10 @@ describe('buildPingpongBoard', () => {
     // purely because they were gated out.
     const board = buildPingpongBoard(PRODUCTION_LEAGUE);
 
-    expect(board.rows.map((row) => row.player.id)).toEqual([
+    const everyone = [...board.podiumRows, ...board.rows].map(
+      (row) => row.player.id,
+    );
+    expect(everyone).toEqual([
       'charles',
       'valentin',
       'joran',
@@ -282,17 +291,19 @@ describe('buildPingpongBoard', () => {
   it('keeps every player on the board, inactive included', () => {
     // Nobody is dropped. Someone who cannot find themselves assumes the app
     // forgot them.
+    //
+    // Across both surfaces: with exactly three players the podium takes all
+    // of them, so asserting on `rows` alone would now be asserting on an
+    // empty list and passing for the wrong reason.
     const board = buildPingpongBoard([
       player({ id: 'settled', rank: 1, conservativeScore: 1500 }),
       player({ id: 'new', rank: null, provisional: true, conservativeScore: 1400 }),
       player({ id: 'away', rank: null, inactive: true, conservativeScore: 1300 }),
     ]);
 
-    expect(board.rows.map((row) => row.player.id)).toEqual([
-      'settled',
-      'new',
-      'away',
-    ]);
+    expect(
+      [...board.podiumRows, ...board.rows].map((row) => row.player.id),
+    ).toEqual(['settled', 'new', 'away']);
   });
 
   /**
@@ -364,113 +375,159 @@ describe('buildPingpongBoard', () => {
   });
 
   /**
-   * THE PODIUM IS GATED ON CONFIDENCE, NOT ON COUNT.
+   * THE PODIUM IS GATED ON POSITION, AND THE CROWNED THREE LEAVE THE LIST.
    *
-   * The old rule was `ranked.length >= 3`. Once everyone is ranked that rule
-   * is satisfied by any three players, and on today's data the top three
-   * would be Charles (8 matches), Valentin (ONE match, rd 287) and Don Joran
-   * (4 matches, rd 202). Putting a card with a photo and a gold badge under
-   * someone who has played a single game is a stronger claim than the flat
-   * list ever made — the list says "1st by rating so far", the podium says
-   * "champion".
+   * Third rule in this file's history, so the whole chain is written down
+   * once here rather than reconstructed from three half-comments.
    *
-   * So the podium needs three CONFIDENT players, not three players. It is
-   * ceremony, and ceremony has to be earned. Below that the list stands on
-   * its own: it still ranks everyone, it just does not crown anyone.
+   * 1. ORIGINALLY: podium = top three RANKED players, lifted out of the list
+   *    into `rest`. Sound while "ranked" and "settled" were the same fact,
+   *    because the API's gate decided both.
+   * 2. THEN: numbering everyone split those apart, so the podium was re-gated
+   *    on CONFIDENCE — three settled ratings — and stopped removing anyone,
+   *    on the reasoning that the crowned three need not be the list's top
+   *    three and pulling them out would leave gaps in a contiguous ranking.
+   * 3. NOW: back to position, and the removal comes back with it.
    *
-   * The cost is honest and worth naming: today's league gets no podium at
-   * all, and will not until three people have played five matches each. That
-   * is the correct answer. A podium that appears on week one and reshuffles
-   * completely on week two teaches people the ranking is noise.
+   * What killed (2) is what it did on screen. Gating on confidence while
+   * removing nobody means the same three faces render twice, six inches
+   * apart — as cards, then again as rows 1-2-3 shuffled among players the
+   * podium skipped. The owner reported exactly that: "on affiche les trois
+   * personnes qui sont confirmés en mode podium et en dessous on les re
+   * afficher dans la liste mélangés avec les gens non confirmés donc c'est
+   * ultra perturbant."
+   *
+   * Research found no precedent for a featured section selected on anything
+   * other than position. Lichess and FIDE use confidence as an entry
+   * condition for the WHOLE list, never to split one screen into two
+   * differently-sorted regions. Chess.com does repeat rows in a featured
+   * block, but a page away — co-located duplication reads as a bug, which is
+   * precisely how it was reported.
+   *
+   * Gating on position makes the removal trivial and the numbering correct by
+   * construction: the podium is rows 1-3, so the list resumes at 4 and stays
+   * contiguous with no renumbering anywhere.
+   *
+   * THE COST, STATED PLAINLY BECAUSE IT IS REAL AND THE BRIEF FOR THIS CHANGE
+   * GOT IT BACKWARDS. The reasoning handed down was that the conservative
+   * score damps the fluke risk on its own — that Valentin (1 match) and
+   * Florian (1 match) sink below the podium once RD is charged against them.
+   * They do not. `conservativeScore` IS rating − 2×RD; the penalty is already
+   * inside the number the board sorts on, and charging it again would be
+   * double-counting. On the measured production data the podium is Charles,
+   * VALENTIN and Don Joran — a one-match player is crowned second. That is
+   * the trade this rule accepts, and it is why the `?` marker on the podium
+   * card is load-bearing rather than decorative: the card crowns a position
+   * and says in the same breath how much to trust it.
    */
   describe('the podium', () => {
-    it('shows none when only one player is confident', () => {
+    it('crowns the top three by position, whatever their confidence', () => {
+      // The reversal itself. Two of these three are provisional, and the old
+      // confidence gate returned an empty podium for exactly this input.
       const board = buildPingpongBoard([
         player({ id: 'a', provisional: false, conservativeScore: 1500 }),
         player({ id: 'b', provisional: true, conservativeScore: 1400 }),
         player({ id: 'c', provisional: true, conservativeScore: 1300 }),
       ]);
 
-      expect(board.podium).toHaveLength(0);
-      // And nobody is lost: the list still holds all three.
-      expect(board.rows).toHaveLength(3);
+      expect(board.podium.map((p) => p.id)).toEqual(['a', 'b', 'c']);
     });
 
-    it('shows none when only two players are confident', () => {
-      // Exactly the production league's shape, and exactly why it gets no
-      // podium: Charles and Thibaud are the only settled ratings in the
-      // office.
-      const board = buildPingpongBoard([
-        player({ id: 'a', provisional: false, conservativeScore: 1500 }),
-        player({ id: 'b', provisional: false, conservativeScore: 1400 }),
-        player({ id: 'c', provisional: true, conservativeScore: 1300 }),
-      ]);
-
-      expect(board.podium).toHaveLength(0);
-    });
-
-    it('shows none for the production league', () => {
+    it('crowns the production league’s top three, one-match player included', () => {
+      // The honest consequence, pinned on the measured data rather than a
+      // tidy fixture. Valentin has ONE match and rd 287 and is crowned
+      // second, because 1617 is his conservative score — the deviation is
+      // already charged against it. The card says `?`; see PingpongPodiumCard.
       const board = buildPingpongBoard(PRODUCTION_LEAGUE);
 
+      expect(board.podium.map((p) => p.id)).toEqual([
+        'charles',
+        'valentin',
+        'joran',
+      ]);
+    });
+
+    it('removes the crowned three from the list', () => {
+      // The defect. They used to appear as cards AND as rows 1-2-3.
+      const board = buildPingpongBoard([
+        player({ id: 'a', provisional: false, conservativeScore: 1500 }),
+        player({ id: 'b', provisional: false, conservativeScore: 1400 }),
+        player({ id: 'c', provisional: false, conservativeScore: 1300 }),
+        player({ id: 'd', provisional: false, conservativeScore: 1200 }),
+      ]);
+
+      expect(board.podium.map((p) => p.id)).toEqual(['a', 'b', 'c']);
+      expect(board.rows.map((r) => r.player.id)).toEqual(['d']);
+    });
+
+    it('puts nobody in both the podium and the list', () => {
+      // Stated as the property rather than as two lists, so it holds however
+      // the sizes change.
+      const board = buildPingpongBoard(PRODUCTION_LEAGUE);
+
+      const crowned = board.podium.map((p) => p.id);
+      const listed = board.rows.map((r) => r.player.id);
+      expect(listed.filter((id) => crowned.includes(id))).toEqual([]);
+    });
+
+    it('starts the list at position 4 when a podium is drawn', () => {
+      // TRUE ranks, not a renumbering. The row under the podium is the 4th
+      // best player and says so — which is what makes removal safe here and
+      // unsafe under the confidence gate.
+      const board = buildPingpongBoard(PRODUCTION_LEAGUE);
+
+      expect(board.rows.map((r) => r.position)).toEqual([4, 5, 6, 7, 8]);
+      expect(board.rows[0].player.id).toBe('florian');
+    });
+
+    it('splits the production league three on the podium, five in the list', () => {
+      const board = buildPingpongBoard(PRODUCTION_LEAGUE);
+
+      expect(board.podium).toHaveLength(3);
+      expect(board.rows).toHaveLength(5);
+    });
+
+    it('still marks an uncertain crowned player as uncertain', () => {
+      // The podium no longer filters on confidence, so `uncertain` is the
+      // only thing left carrying that fact — and the card reads it.
+      const board = buildPingpongBoard(PRODUCTION_LEAGUE);
+
+      expect(board.podiumRows.map((r) => r.uncertain)).toEqual([
+        false,
+        true,
+        true,
+      ]);
+    });
+
+    it('numbers the podium rows 1, 2, 3', () => {
+      // The card badge draws from this, not from `player.rank`, which is null
+      // for every provisional player and would render a 0 medal.
+      const board = buildPingpongBoard(PRODUCTION_LEAGUE);
+
+      expect(board.podiumRows.map((r) => r.position)).toEqual([1, 2, 3]);
+    });
+
+    it('draws no podium below three players', () => {
+      // A podium of one or two is a pedestal, and removing them would leave a
+      // list of nothing at all.
+      const board = buildPingpongBoard([
+        player({ id: 'a', provisional: false, conservativeScore: 1500 }),
+        player({ id: 'b', provisional: false, conservativeScore: 1400 }),
+      ]);
+
       expect(board.podium).toHaveLength(0);
-      expect(board.rows).toHaveLength(8);
+      // And with no podium the list keeps everyone, numbered from 1.
+      expect(board.rows.map((r) => r.position)).toEqual([1, 2]);
+      expect(board.rows.map((r) => r.player.id)).toEqual(['a', 'b']);
     });
 
-    it('crowns the top three once three players are confident', () => {
-      const board = buildPingpongBoard([
-        player({ id: 'a', provisional: false, conservativeScore: 1500 }),
-        player({ id: 'b', provisional: false, conservativeScore: 1400 }),
-        player({ id: 'c', provisional: false, conservativeScore: 1300 }),
-        player({ id: 'd', provisional: false, conservativeScore: 1200 }),
-      ]);
-
-      expect(board.podium.map((p) => p.id)).toEqual(['a', 'b', 'c']);
-    });
-
-    /**
-     * The case the confidence gate exists for, and the one a count-based
-     * gate gets wrong.
-     *
-     * Three players are settled, so a podium is warranted — but the board's
-     * top three by rating are not those three. An uncertain player rated
-     * above them must not be crowned on the strength of one lucky match, and
-     * must not be quietly skipped over in the list either.
-     */
-    it('crowns confident players even when an uncertain one outrates them', () => {
-      const board = buildPingpongBoard([
-        player({ id: 'lucky', provisional: true, conservativeScore: 1900 }),
-        player({ id: 'a', provisional: false, conservativeScore: 1500 }),
-        player({ id: 'b', provisional: false, conservativeScore: 1400 }),
-        player({ id: 'c', provisional: false, conservativeScore: 1300 }),
-      ]);
-
-      expect(board.podium.map((p) => p.id)).toEqual(['a', 'b', 'c']);
-      // And the lucky player keeps position 1 in the list. The podium is a
-      // separate claim; it does not rewrite the ranking underneath it.
-      expect(board.rows[0].player.id).toBe('lucky');
-      expect(board.rows[0].position).toBe(1);
-    });
-
-    it('leaves every player in the list when a podium is drawn', () => {
-      // DELIBERATELY REVERSED from the old `podium`/`rest` split, where the
-      // top three were lifted OUT of the list. With the podium gated on
-      // confidence, the crowned three are not necessarily the list's top
-      // three — removing them would punch a hole in the middle of a numbered
-      // ranking. The list is the ranking; the podium is decoration above it.
-      const board = buildPingpongBoard([
-        player({ id: 'a', provisional: false, conservativeScore: 1500 }),
-        player({ id: 'b', provisional: false, conservativeScore: 1400 }),
-        player({ id: 'c', provisional: false, conservativeScore: 1300 }),
-        player({ id: 'd', provisional: false, conservativeScore: 1200 }),
-      ]);
-
-      expect(board.rows).toHaveLength(4);
-      expect(board.rows.map((r) => r.position)).toEqual([1, 2, 3, 4]);
-    });
-
-    it('does not crown an inactive player', () => {
-      // Settled enough to rank, not current enough to celebrate. A gold badge
-      // over someone nobody has seen for three weeks is a claim about now.
+    it('crowns an inactive player who is in the top three', () => {
+      // DELIBERATELY REVERSED. The confidence gate excluded them, reasoning
+      // that a podium is a claim about the present. Position does not admit
+      // that exception without reintroducing the exact hole this change
+      // closes: skip an inactive player and the podium is no longer ranks
+      // 1-2-3, so the list can no longer resume at 4. The row's dimming and
+      // the card's own stats still say they are away.
       const board = buildPingpongBoard([
         player({ id: 'away', provisional: false, inactive: true, conservativeScore: 1900 }),
         player({ id: 'a', provisional: false, conservativeScore: 1500 }),
@@ -478,7 +535,9 @@ describe('buildPingpongBoard', () => {
         player({ id: 'c', provisional: false, conservativeScore: 1300 }),
       ]);
 
-      expect(board.podium.map((p) => p.id)).toEqual(['a', 'b', 'c']);
+      expect(board.podium.map((p) => p.id)).toEqual(['away', 'a', 'b']);
+      expect(board.rows.map((r) => r.player.id)).toEqual(['c']);
+      expect(board.rows[0].position).toBe(4);
     });
   });
 
@@ -486,10 +545,15 @@ describe('buildPingpongBoard', () => {
     // What the page says instead of "N joueurs classés". The old count was
     // the size of the gated group; this is the size of the confident group,
     // and on the production league it is 2 of 8.
+    //
+    // Counted over every VISIBLE player, not over `rows` — the podium takes
+    // three of them out of `rows`, and Charles is one of the two settled
+    // ratings. Counting `rows` would report 1 and the subtitle would
+    // contradict the board above it.
     const board = buildPingpongBoard(PRODUCTION_LEAGUE);
 
     expect(board.confidentCount).toBe(2);
-    expect(board.rows).toHaveLength(8);
+    expect(board.podiumRows.length + board.rows.length).toBe(8);
   });
 });
 

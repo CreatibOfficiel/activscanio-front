@@ -53,7 +53,7 @@ export function usePingpongLeaderboard(
 
   // Options come from the caller as an object literal, so a new identity
   // arrives on every render — depend on the values, not the object.
-  const { minPodiumSize, podiumSize, includeArchived, minConfidentForPodium } =
+  const { minPodiumSize, podiumSize, includeArchived, minPlayersForPodium } =
     options;
   const segmentation = useMemo(
     () =>
@@ -79,10 +79,10 @@ export function usePingpongLeaderboard(
     () =>
       buildPingpongBoard(players, {
         podiumSize,
-        minConfidentForPodium,
+        minPlayersForPodium,
         includeArchived,
       }),
-    [players, podiumSize, minConfidentForPodium, includeArchived],
+    [players, podiumSize, minPlayersForPodium, includeArchived],
   );
 
   return { players, segmentation, board, loading, error, refresh: load };

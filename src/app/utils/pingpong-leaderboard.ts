@@ -116,18 +116,45 @@ export function isConfident(player: PingpongPlayer): boolean {
 /** One line of the board: a player, their position, and how sure we are. */
 export interface PingpongBoardRow {
   player: PingpongPlayer;
-  /** Contiguous from 1. Everyone gets one — see `buildPingpongBoard`. */
+  /**
+   * The player's true rank, from 1. Everyone on the board gets one.
+   *
+   * Contiguous across `podiumRows` and `rows` TAKEN TOGETHER, not within
+   * either: the podium holds 1-3 and the list picks up at 4. Nothing is
+   * renumbered when a player moves between the two.
+   */
   position: number;
   /** The rating is still calibrating and the position is a best guess. */
   uncertain: boolean;
 }
 
 export interface PingpongBoard {
-  /** Every visible player, strongest first, numbered from 1. */
+  /**
+   * The list under the podium: everyone NOT crowned, in rank order.
+   *
+   * Positions are true ranks, so this starts at 4 whenever a podium was
+   * drawn and at 1 when none was. Deliberately not "every visible player" —
+   * see the podium reasoning in `buildPingpongBoard`.
+   */
   rows: PingpongBoardRow[];
-  /** The top three, when three settled ratings exist to draw from. */
+  /** The top three by position, or empty below three players. */
   podium: PingpongPlayer[];
-  /** How many ratings are settled. Not how many are shown — that is `rows`. */
+  /**
+   * The same three as `podium`, carrying their position and confidence.
+   *
+   * The card needs both: it draws its rank badge from `position` rather than
+   * from `player.rank`, which the API leaves null for every provisional
+   * player and which would render a badge of 0 now that the podium admits
+   * them. `podium` is kept alongside for callers that only want the players.
+   */
+  podiumRows: PingpongBoardRow[];
+  /**
+   * How many ratings are settled, across the WHOLE board.
+   *
+   * Counted over every visible player, not over `rows` — the podium takes
+   * three of them out of `rows`, and the page's subtitle describes the board
+   * rather than the list under it.
+   */
   confidentCount: number;
   isEmpty: boolean;
 }
@@ -135,10 +162,13 @@ export interface PingpongBoard {
 export interface PingpongBoardOptions {
   podiumSize?: number;
   /**
-   * How many CONFIDENT players a podium needs. Not how many players — see the
-   * podium reasoning in `buildPingpongBoard`.
+   * How many players the board needs before a podium is worth drawing.
+   *
+   * Not how many CONFIDENT players — that gate is gone, and the option was
+   * renamed rather than repurposed so a stale call site fails to compile
+   * instead of silently meaning something new.
    */
-  minConfidentForPodium?: number;
+  minPlayersForPodium?: number;
   includeArchived?: boolean;
 }
 
@@ -172,6 +202,52 @@ export interface PingpongBoardOptions {
  * The conservative score already penalises a wide deviation, which is what
  * makes a single list across mixed confidence defensible at all: a player with
  * one match and a huge RD sinks on their own, without a rule saying so.
+ *
+ * THE PODIUM IS GATED ON POSITION, AND THE CROWNED THREE LEAVE THE LIST.
+ * Third rule in this function's history, so the chain is written down once
+ * rather than reconstructed from the three half-comments it replaces:
+ *
+ * 1. ORIGINALLY podium = top three RANKED players, lifted out into `rest`.
+ *    Sound while "ranked" and "settled" were one fact, decided by the API.
+ * 2. THEN numbering everyone split those apart, so the podium was re-gated on
+ *    CONFIDENCE and stopped removing anyone — the crowned three need not be
+ *    the list's top three, so lifting them out would have left gaps in a
+ *    contiguous ranking.
+ * 3. NOW back to position, with the removal restored.
+ *
+ * What killed (2) is what it did on screen: the same three faces rendered
+ * twice, six inches apart, as cards and then again as rows 1-2-3 shuffled
+ * among the players the podium had skipped. Reported as "on affiche les trois
+ * personnes qui sont confirmés en mode podium et en dessous on les re afficher
+ * dans la liste mélangés avec les gens non confirmés donc c'est ultra
+ * perturbant."
+ *
+ * No precedent was found for a featured section selected on anything other
+ * than position. Lichess and FIDE use confidence as an entry condition for the
+ * WHOLE list, never to split one screen into two differently-sorted regions.
+ * Chess.com does repeat rows in a featured block, but a page away; co-located
+ * duplication reads as a bug, which is exactly how it was reported.
+ *
+ * Gating on position makes removal trivial and the numbering correct by
+ * construction — the podium IS ranks 1-3, so `rows` resumes at 4 with no
+ * renumbering and no gaps.
+ *
+ * THE COST IS REAL AND IS NOT WHAT THE BRIEF FOR THIS CHANGE ASSUMED. The
+ * reasoning handed down was that the conservative score damps the fluke risk
+ * by itself, so a one-match player never reaches the podium. It does not:
+ * `conservativeScore` IS rating − 2×RD, so the deviation is already charged
+ * against the number this sorts on, and charging it again would be double
+ * counting. On the measured production data the podium is Charles, VALENTIN
+ * (one match, rd 287) and Don Joran. That is the trade accepted here, and it
+ * is why the card carries the `?` marker: the podium crowns a position and
+ * says in the same breath how far to trust it.
+ *
+ * Inactive players are crowned too, DELIBERATELY unlike (2), which excluded
+ * them on the grounds that a podium is a claim about the present. Position
+ * cannot admit that exception without reopening the hole this closes: skip
+ * one and the podium is no longer ranks 1-2-3, so the list can no longer
+ * resume at 4. Their row dimming and their stale stats still say they are
+ * away.
  */
 export function buildPingpongBoard(
   players: PingpongPlayer[],
@@ -179,7 +255,7 @@ export function buildPingpongBoard(
 ): PingpongBoard {
   const {
     podiumSize = 3,
-    minConfidentForPodium = 3,
+    minPlayersForPodium = 3,
     includeArchived = false,
   } = options;
 
@@ -187,7 +263,7 @@ export function buildPingpongBoard(
     ? players
     : players.filter((player) => !player.archived);
 
-  const rows = [...visible]
+  const ordered = [...visible]
     .sort((a, b) => b.conservativeScore - a.conservativeScore)
     .map((player, index) => ({
       player,
@@ -195,37 +271,17 @@ export function buildPingpongBoard(
       uncertain: !isConfident(player),
     }));
 
-  /**
-   * The podium is gated on CONFIDENCE, not on how many rows exist.
-   *
-   * The old rule was three ranked players, and once everyone is ranked that
-   * is satisfied by any three — which on today's data would crown Valentin,
-   * one match played, rd 287, on the strength of a single result. A card with
-   * a photo and a gold badge is a much stronger claim than a numbered row: the
-   * list says "first by rating so far", the podium says "champion". A podium
-   * celebrating someone with one game is worse than no podium.
-   *
-   * Inactive players are excluded from it as well. Their rating is settled
-   * enough to rank — that is decided above — but a podium is a claim about
-   * the present, and nobody has seen them for a fortnight.
-   *
-   * The consequence is deliberate and it bites today: the real league gets no
-   * podium until three people have played five matches each. A podium that
-   * appears in week one and reshuffles completely in week two teaches everyone
-   * the ranking is noise.
-   */
-  const crownable = rows
-    .filter((row) => isConfident(row.player) && !row.player.inactive)
-    .map((row) => row.player);
-
-  const podium =
-    crownable.length >= minConfidentForPodium
-      ? crownable.slice(0, podiumSize)
-      : [];
+  // Below three there is nothing to crown: a podium of one or two is a
+  // pedestal, and removing them would leave the list holding nothing at all.
+  const hasPodium = ordered.length >= minPlayersForPodium;
+  const podiumRows = hasPodium ? ordered.slice(0, podiumSize) : [];
 
   return {
-    rows,
-    podium,
+    // The complement, not a re-sort. Positions are carried over from
+    // `ordered`, so the first row under a podium says 4 and means it.
+    rows: hasPodium ? ordered.slice(podiumSize) : ordered,
+    podium: podiumRows.map((row) => row.player),
+    podiumRows,
     confidentCount: visible.filter(isConfident).length,
     isEmpty: visible.length === 0,
   };

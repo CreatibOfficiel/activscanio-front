@@ -47,18 +47,31 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
  * tiers there would have re-laid-out a screen this work was not scoped to
  * touch. See the note on `segmentPingpongLeaderboard`.
  *
- * THE PODIUM IS GATED ON CONFIDENCE, NOT COUNT. It used to appear at three
- * ranked players, which was sound while ranked and settled meant the same
- * thing. Numbering everyone split them, and the old rule would now fire on any
- * three rows — crowning Valentin, one match played, rd 287, in second place. A
- * card is a photo and a gold badge, a far stronger claim than a numbered row.
- * It waits for three settled ratings, and today that means no podium at all,
- * which is the correct answer: one that appears in week one and reshuffles
- * entirely in week two teaches everyone the ranking is noise.
+ * THE PODIUM IS GATED ON POSITION, AND IT LIFTS THE CROWNED THREE OUT OF THE
+ * LIST. Third rule this screen has had, so the chain is written down once:
  *
- * The podium no longer lifts anyone out of the list either. The crowned three
- * need not be the list's top three, so removing them would punch a hole in the
- * middle of a contiguous ranking.
+ * 1. ORIGINALLY three RANKED players, removed into `rest`. Sound while ranked
+ *    and settled were one fact, both decided by the API's gate.
+ * 2. THEN numbering everyone split those apart, so it was re-gated on
+ *    CONFIDENCE and stopped removing anyone — the crowned three need not be
+ *    the list's top three, so lifting them out would have left gaps.
+ * 3. NOW position, with the removal back.
+ *
+ * (2) is the bug the owner reported: "on affiche les trois personnes qui sont
+ * confirmés en mode podium et en dessous on les re afficher dans la liste
+ * mélangés avec les gens non confirmés donc c'est ultra perturbant." The same
+ * three faces rendered twice, six inches apart. No precedent was found for a
+ * featured section selected on anything but position — Lichess and FIDE use
+ * confidence as an entry condition for the whole list, never to split one
+ * screen into two differently-sorted regions; Chess.com repeats rows in a
+ * featured block but a page away, and co-located duplication reads as a bug.
+ *
+ * So the podium is ranks 1-3, the list runs 4-8 with true contiguous ranks,
+ * and nobody appears twice. The uncertainty moved onto the card: a crowned
+ * player may be provisional now, and the card carries the same `?` the rows
+ * do. See `buildPingpongBoard` for why the conservative score does NOT damp
+ * that risk on its own — the RD penalty is already inside the number the
+ * board sorts on.
  *
  * Still no group headings. No platform surveyed renders three separately-headed
  * groups — they either exclude the uncertain entirely (Lichess, UTR, FIDE) or
@@ -69,8 +82,11 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
  * Inactive players stay in the ranking rather than being parked below it. A
  * settled rating that is merely stale is still the best estimate we have of
  * how someone plays, and that is what the list sorts on; what is unknown about
- * them is whether they still play, which the dimmed row already says. They are
- * excluded from the podium alone, because that is a claim about the present.
+ * them is whether they still play, which the dimmed row already says.
+ *
+ * They are no longer excluded from the podium either. That exception went with
+ * the confidence gate: skipping anyone means the podium is not ranks 1-2-3, so
+ * the list could not resume at 4 and the gaps would be back.
  *
  * A separate route from the Mario Kart board rather than a branch inside
  * it: that page runs a four-phase ranking animation over `Competitor`-typed
@@ -142,7 +158,12 @@ export default function PingpongPage() {
   const [view, setView] = useState<PingpongView>('ranking');
   const [selected, setSelected] = useState<PingpongPlayer | null>(null);
 
-  const { rows, podium, confidentCount, isEmpty } = board;
+  const { rows, podiumRows, confidentCount, isEmpty } = board;
+
+  // Everyone on the board, podium included. `rows` is only the list under it
+  // now, so counting that alone would report 5 of 8 in the subtitle while
+  // eight people are on screen.
+  const totalPlayers = podiumRows.length + rows.length;
 
   // The cold-start note is gone with the gate. It said "Personne n'est encore
   // classé, 8 matchs nécessaires", and all three of its claims are now wrong:
@@ -277,8 +298,8 @@ export default function PingpongPage() {
               className="mb-6"
               subtitle={
                 <>
-                  <span data-testid="pingpong-count">{rows.length}</span> joueur
-                  {rows.length > 1 ? 's' : ''}
+                  <span data-testid="pingpong-count">{totalPlayers}</span> joueur
+                  {totalPlayers > 1 ? 's' : ''}
                   {' · '}
                   <span data-testid="pingpong-confident-count">
                     {confidentCount}
@@ -289,13 +310,12 @@ export default function PingpongPage() {
               }
             />
 
-            {/* Empty until three ratings are settled — the carousel renders
-                nothing when handed nothing, and `buildPingpongBoard` decides
-                when that is. A card is a photo and a gold badge, and putting
-                one under a player with a single match is a claim the list
-                itself never makes. */}
+            {/* Ranks 1-3, and they do NOT appear in the list below — see the
+                chain at the top of this file. Empty below three players; the
+                carousel renders nothing when handed nothing, and
+                `buildPingpongBoard` is the one place that decides when. */}
             <PingpongPodiumCarousel
-              podium={podium}
+              podium={podiumRows}
               onSelect={setSelected}
               className="mb-4"
             />

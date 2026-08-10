@@ -233,18 +233,32 @@ describe('PingpongPage', () => {
     fetchBestWin.mockResolvedValue(null);
   });
 
-  it('renders one row per player across every tier', async () => {
+  it('shows every player across every tier, on one surface or the other', async () => {
+    // Was "renders one row per player across every tier". With three players
+    // the podium now takes all three, so counting rows alone would assert on
+    // an empty list. The property was always "nobody is missing" — a player
+    // who cannot find themselves assumes the app forgot them — so it is
+    // asserted across both surfaces instead.
     givenBoard([
-      player({ id: 'a', firstName: 'Marc', rank: 1 }),
-      player({ id: 'b', firstName: 'Julie', rank: null, provisional: true }),
-      player({ id: 'c', firstName: 'Sam', rank: null, inactive: true }),
+      player({ id: 'a', firstName: 'Marc', rank: 1, conservativeScore: 1500 }),
+      player({ id: 'b', firstName: 'Julie', rank: null, provisional: true, conservativeScore: 1400 }),
+      player({ id: 'c', firstName: 'Sam', rank: null, inactive: true, conservativeScore: 1300 }),
     ]);
 
     render(<PingpongPage />);
 
     await waitFor(() =>
-      expect(screen.getAllByTestId('pingpong-row')).toHaveLength(3),
+      expect(screen.getAllByTestId('pingpong-podium-card')).toHaveLength(3),
     );
+    const shown = [
+      ...screen.getAllByTestId('pingpong-podium-card'),
+      ...screen.queryAllByTestId('pingpong-row'),
+    ]
+      .map((el) => el.textContent ?? '')
+      .join(' ');
+    for (const name of ['Marc', 'Julie', 'Sam']) {
+      expect(shown).toContain(name);
+    }
   });
 
   /**
@@ -257,89 +271,160 @@ describe('PingpongPage', () => {
    * ceiling — are what make the gate indefensible rather than merely strict.
    */
   describe('the production league', () => {
-    it('shows all eight players', async () => {
+    it('shows all eight players, three on cards and five in the list', async () => {
+      // The split, asserted as the split. Eight people are on the screen; the
+      // podium holds three of them and the list the other five. Asserting on
+      // rows alone would now pass with three players silently dropped.
       givenBoard(PRODUCTION_LEAGUE);
 
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(8),
+        expect(screen.getAllByTestId('pingpong-podium-card')).toHaveLength(3),
       );
+      expect(screen.getAllByTestId('pingpong-row')).toHaveLength(5);
     });
 
-    it('numbers every row contiguously from 1', async () => {
+    it('puts nobody in both the podium and the list', async () => {
+      // THE REPORTED DEFECT, pinned on the real data. Every name appears
+      // exactly once across the two surfaces.
       givenBoard(PRODUCTION_LEAGUE);
 
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(8),
+        expect(screen.getAllByTestId('pingpong-podium-card')).toHaveLength(3),
+      );
+
+      const NAMES = [
+        'Charles',
+        'Valentin',
+        'Don Joran',
+        'Florian',
+        'Maxime',
+        'Thibaud',
+        'Ness',
+        'Clotilde',
+      ];
+      const cardText = screen
+        .getAllByTestId('pingpong-podium-card')
+        .map((c) => c.textContent ?? '')
+        .join(' ');
+      const rowText = screen
+        .getAllByTestId('pingpong-row')
+        .map((r) => r.textContent ?? '')
+        .join(' ');
+
+      for (const name of NAMES) {
+        const onPodium = cardText.includes(name);
+        const inList = rowText.includes(name);
+        // Exactly one of the two, for every single player.
+        expect({ name, onPodium, inList }).toEqual({
+          name,
+          onPodium: !inList,
+          inList: !onPodium,
+        });
+      }
+    });
+
+    it('starts the list at rank 4, with true contiguous ranks', async () => {
+      // No renumbering. The first row under the podium is the 4th best player
+      // and says 4 — which is what gating the podium on POSITION buys, and
+      // what a confidence gate could not have offered.
+      givenBoard(PRODUCTION_LEAGUE);
+
+      render(<PingpongPage />);
+
+      await waitFor(() =>
+        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(5),
       );
       const positions = screen
         .getAllByTestId('pingpong-rank')
         .map((el) => el.textContent);
-      expect(positions).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+      expect(positions).toEqual(['4', '5', '6', '7', '8']);
     });
 
-    it('orders them by rating, not by the API rank', async () => {
+    it('crowns Charles, Valentin and Don Joran', async () => {
+      // The measured outcome, stated rather than implied — and it is NOT what
+      // the brief for this change predicted. The reasoning handed down was
+      // that the conservative score sinks a one-match player below the
+      // podium, giving Charles / Don Joran / Maxime. It does not:
+      // `conservativeScore` IS rating − 2×RD, so the deviation is already
+      // charged against these very numbers and charging it again would be
+      // double counting. Valentin is crowned second on ONE match.
+      //
+      // Pinned explicitly so nobody re-derives the wrong expectation from the
+      // rd column and "fixes" the sort to match it.
+      givenBoard(PRODUCTION_LEAGUE);
+
+      render(<PingpongPage />);
+
+      const cards = await screen.findAllByTestId('pingpong-podium-card');
+      expect(cards[0]).toHaveTextContent('Charles');
+      expect(cards[1]).toHaveTextContent('Valentin');
+      expect(cards[2]).toHaveTextContent('Don Joran');
+    });
+
+    it('marks the two uncertain crowned players and not Charles', async () => {
+      // What makes the above honest rather than merely defensible. Valentin
+      // (1 match) and Don Joran (4) carry the `?`; Charles's rating is
+      // settled and is stated plainly.
+      givenBoard(PRODUCTION_LEAGUE);
+
+      render(<PingpongPage />);
+
+      const cards = await screen.findAllByTestId('pingpong-podium-card');
+      expect(cards[0]).not.toHaveTextContent('?');
+      expect(cards[1]).toHaveTextContent('1617?');
+      expect(cards[2]).toHaveTextContent('1611?');
+    });
+
+    it('orders the list by rating, not by the API rank', async () => {
       // Thibaud is the API's rank 2 and sixth by rating. Sorting on the API
-      // rank would put him second, above four stronger players who were only
-      // below him because the gate excluded them.
+      // rank would put him at the top of the list, above two stronger players
+      // who were only below him because the gate excluded them.
       givenBoard(PRODUCTION_LEAGUE);
 
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(8),
+        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(5),
       );
       const names = screen
         .getAllByTestId('pingpong-row')
         .map((row) => row.textContent);
-      expect(names[0]).toMatch(/Charles/);
-      expect(names[1]).toMatch(/Valentin/);
-      expect(names[5]).toMatch(/Thibaud/);
-      expect(names[7]).toMatch(/Clotilde/);
+      expect(names[0]).toMatch(/Florian/);
+      expect(names[2]).toMatch(/Thibaud/);
+      expect(names[4]).toMatch(/Clotilde/);
     });
 
-    it('marks the six uncertain ratings and leaves the two settled ones alone', async () => {
+    it('marks the uncertain ratings in the list and leaves Thibaud alone', async () => {
       givenBoard(PRODUCTION_LEAGUE);
 
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(8),
+        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(5),
       );
       const marks = screen
         .getAllByTestId('pingpong-row')
         .map((row) => row.getAttribute('data-uncertain'));
-      // Charles (1st) and Thibaud (6th) are the settled pair.
-      expect(marks).toEqual([
-        'false',
-        'true',
-        'true',
-        'true',
-        'true',
-        'false',
-        'true',
-        'true',
-      ]);
+      // Florian, Maxime, Thibaud, Ness, Clotilde — Thibaud is the only
+      // settled rating left once Charles is on a card.
+      expect(marks).toEqual(['true', 'true', 'false', 'true', 'true']);
     });
 
-    it('draws no podium, because only two ratings are settled', async () => {
-      // The sharpest consequence of the change, and the one worth stating
-      // plainly: with everyone ranked, a count-based podium would crown
-      // Valentin — one match played, rd 287 — in second place. The podium is
-      // gated on confidence instead, so today there is none.
+    it('counts all eight in the subtitle, not just the list', async () => {
+      // The count describes the board, so it must not drop the three the
+      // podium took. "5 joueurs" over eight visible faces contradicts the
+      // screen.
       givenBoard(PRODUCTION_LEAGUE);
 
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(8),
+        expect(screen.getByTestId('pingpong-count')).toHaveTextContent('8'),
       );
-      expect(
-        screen.queryByTestId('pingpong-podium-card'),
-      ).not.toBeInTheDocument();
     });
 
     it('never says nobody is ranked', async () => {
@@ -350,7 +435,7 @@ describe('PingpongPage', () => {
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(8),
+        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(5),
       );
       expect(
         screen.queryByTestId('pingpong-nobody-ranked'),
@@ -808,21 +893,22 @@ describe('PingpongPage', () => {
   });
 
   /**
-   * The podium, RE-GATED ON CONFIDENCE.
+   * The podium, RE-GATED ON POSITION, AND IT REMOVES ITS PLAYERS AGAIN.
    *
-   * It used to appear at three RANKED players, which was a sound rule while
-   * the API's gate decided who counted as ranked — being ranked and being
-   * settled were the same fact. Numbering everyone split them apart, and the
-   * old rule would now fire on any three rows: on the production league the
-   * top three are Charles (8 matches), Valentin (ONE match, rd 287) and Don
-   * Joran (4 matches). A podium card is a photo and a gold badge, a much
-   * stronger claim than a numbered row, and crowning a single result teaches
-   * people the ranking is noise.
+   * Third rule this screen has had. 1: three RANKED players, removed from the
+   * list. 2: three CONFIDENT players, removed from nothing. 3: ranks 1-3,
+   * removed from the list.
    *
-   * So the podium waits for three SETTLED ratings. It also no longer removes
-   * anyone from the list: the crowned three are not necessarily the list's top
-   * three, so lifting them out would punch a hole in the middle of a numbered
-   * ranking.
+   * (2) was the reported defect — "on affiche les trois personnes qui sont
+   * confirmés en mode podium et en dessous on les re afficher dans la liste
+   * mélangés avec les gens non confirmés donc c'est ultra perturbant." The
+   * same three faces twice, six inches apart, the second time shuffled among
+   * players the podium had skipped.
+   *
+   * Gating on position is what makes removal safe: the podium IS ranks 1-3,
+   * so the list resumes at 4 and stays contiguous with no renumbering. The
+   * cost is that a provisional player can be crowned — on the production
+   * league Valentin is, with one match — and the card carries a `?` for it.
    */
   describe('the podium', () => {
     it('shows none with one player', async () => {
@@ -854,9 +940,10 @@ describe('PingpongPage', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('shows none with three players when only two are settled', async () => {
-      // REVERSED. Three rows used to be enough. The third player here has one
-      // match to their name, and the old rule would have crowned them.
+    it('appears at three players whatever their confidence', async () => {
+      // REVERSED from "shows none with three players when only two are
+      // settled". Confidence no longer decides who is crowned; position does.
+      // With three players the podium takes all three and the list is empty.
       givenBoard([
         player({ id: 'a', provisional: false, conservativeScore: 1500 }),
         player({ id: 'b', provisional: false, conservativeScore: 1400 }),
@@ -866,11 +953,9 @@ describe('PingpongPage', () => {
       render(<PingpongPage />);
 
       await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(3),
+        expect(screen.getAllByTestId('pingpong-podium-card')).toHaveLength(3),
       );
-      expect(
-        screen.queryByTestId('pingpong-podium-card'),
-      ).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId('pingpong-row')).toHaveLength(0);
     });
 
     it('appears once three ratings are settled', async () => {
@@ -887,10 +972,10 @@ describe('PingpongPage', () => {
       );
     });
 
-    it('keeps every player in the list when a podium is drawn', async () => {
-      // DELIBERATELY REVERSED from "lifts the top three out of the list". With
-      // the podium gated on confidence the crowned three need not be the list's
-      // top three, so removing them would leave gaps in a contiguous ranking.
+    it('takes the crowned three out of the list', async () => {
+      // DELIBERATELY REVERSED from "keeps every player in the list when a
+      // podium is drawn", which is the defect itself. Marc, Julie and Sam are
+      // on cards; only Léa is left in the list.
       givenBoard([
         player({ id: 'a', firstName: 'Marc', provisional: false, conservativeScore: 1500 }),
         player({ id: 'b', firstName: 'Julie', provisional: false, conservativeScore: 1400 }),
@@ -904,15 +989,18 @@ describe('PingpongPage', () => {
         expect(screen.getAllByTestId('pingpong-podium-card')).toHaveLength(3),
       );
       const rows = screen.getAllByTestId('pingpong-row');
-      expect(rows).toHaveLength(4);
-      expect(rows[0]).toHaveTextContent('Marc');
-      expect(rows[3]).toHaveTextContent('Léa');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toHaveTextContent('Léa');
     });
 
-    it('crowns the settled players even when an uncertain one outrates them', async () => {
-      // Eight players, mixed confidence, and the case a count-based gate gets
-      // wrong: the board's leader is a one-match player and the podium skips
-      // them without disturbing their position in the list.
+    it('crowns an uncertain player who is in the top three', async () => {
+      // DELIBERATELY REVERSED from "crowns the settled players even when an
+      // uncertain one outrates them". Nina leads the board on one match, and
+      // she is crowned first rather than skipped — skipping her would mean
+      // the podium is not ranks 1-2-3 and the list could not resume at 4.
+      //
+      // What stops that being a bare claim is the `?` on her card, asserted
+      // below.
       givenBoard([
         player({ id: 'lucky', firstName: 'Nina', provisional: true, rank: null, conservativeScore: 1900 }),
         player({ id: 'a', firstName: 'Marc', provisional: false, conservativeScore: 1500 }),
@@ -924,18 +1012,37 @@ describe('PingpongPage', () => {
 
       const cards = await screen.findAllByTestId('pingpong-podium-card');
       expect(cards).toHaveLength(3);
-      expect(cards[0]).toHaveTextContent('Marc');
-      expect(cards.map((c) => c.textContent).join()).not.toMatch(/Nina/);
-      // Nina still leads the list, at position 1.
+      expect(cards[0]).toHaveTextContent('Nina');
+      // And she is gone from the list, which now starts at Sam.
       const rows = screen.getAllByTestId('pingpong-row');
-      expect(rows[0]).toHaveTextContent('Nina');
-      expect(
-        within(rows[0]).getByTestId('pingpong-rank'),
-      ).toHaveTextContent('1');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toHaveTextContent('Sam');
     });
 
-    it('shows no podium when every rating is uncertain', async () => {
-      // The realistic first week. Everyone is numbered, nobody is crowned.
+    it('marks an uncertain crowned player with a question mark', async () => {
+      // The honesty that makes crowning on position defensible. Nina's rating
+      // is a guess off one match and the card says so, in the same convention
+      // the rows use.
+      givenBoard([
+        player({ id: 'lucky', firstName: 'Nina', provisional: true, rank: null, conservativeScore: 1900 }),
+        player({ id: 'a', firstName: 'Marc', provisional: false, conservativeScore: 1500 }),
+        player({ id: 'b', firstName: 'Julie', provisional: false, conservativeScore: 1400 }),
+      ]);
+
+      render(<PingpongPage />);
+
+      const cards = await screen.findAllByTestId('pingpong-podium-card');
+      expect(cards[0]).toHaveTextContent('1900?');
+      // And a settled crowned player is not marked, or the `?` would just be
+      // decoration on every card.
+      expect(cards[1]).toHaveTextContent('1500');
+      expect(cards[1]).not.toHaveTextContent('?');
+    });
+
+    it('crowns three even when every rating is uncertain', async () => {
+      // REVERSED from "shows no podium when every rating is uncertain". The
+      // realistic first week now gets a podium — three cards, each carrying a
+      // `?`, and an empty list under it.
       givenBoard([
         player({ id: 'a', rank: null, provisional: true, conservativeScore: 1300 }),
         player({ id: 'b', rank: null, provisional: true, conservativeScore: 1200 }),
@@ -944,15 +1051,30 @@ describe('PingpongPage', () => {
 
       render(<PingpongPage />);
 
-      await waitFor(() =>
-        expect(screen.getAllByTestId('pingpong-row')).toHaveLength(3),
-      );
+      const cards = await screen.findAllByTestId('pingpong-podium-card');
+      expect(cards).toHaveLength(3);
+      expect(cards.map((c) => c.textContent)).toEqual([
+        expect.stringContaining('1300?'),
+        expect.stringContaining('1200?'),
+        expect.stringContaining('1100?'),
+      ]);
+    });
+
+    it('badges the cards 1, 2, 3 even when the API ranked nobody', async () => {
+      // Every rank here is null, which is what the API sends for a
+      // provisional player. A card reading `player.rank` would render the
+      // fallback badge — a grey 0 where a gold 1 belongs.
+      givenBoard([
+        player({ id: 'a', rank: null, provisional: true, conservativeScore: 1300 }),
+        player({ id: 'b', rank: null, provisional: true, conservativeScore: 1200 }),
+        player({ id: 'c', rank: null, provisional: true, conservativeScore: 1100 }),
+      ]);
+
+      render(<PingpongPage />);
+
+      await screen.findAllByTestId('pingpong-podium-card');
       expect(
-        screen.queryByTestId('pingpong-podium-card'),
-      ).not.toBeInTheDocument();
-      // And they are still ranked 1-2-3, which is the whole point.
-      expect(
-        screen.getAllByTestId('pingpong-rank').map((el) => el.textContent),
+        screen.getAllByTestId('podium-rank-badge').map((b) => b.textContent),
       ).toEqual(['1', '2', '3']);
     });
 
@@ -1038,10 +1160,11 @@ describe('PingpongPage', () => {
       // The state lives on the page, so opening from a row and then from a
       // card swaps the sheet's subject rather than stacking a second dialog.
       //
-      // Row 3 rather than row 0: the podium no longer removes the crowned
-      // three from the list, so rows[0] is Marc, who is also podium card 0.
-      // Opening the same player from both surfaces would let a broken swap
-      // pass. Léa is on no card, so the second click genuinely changes subject.
+      // The row index went back to 0 with the podium's removal. It was 3
+      // because the crowned three were also rows 0-2, so rows[0] and card 0
+      // were the same player and a broken swap would have passed. They are
+      // disjoint again: rows[0] is Léa, who is on no card, so the second
+      // click genuinely changes subject.
       givenBoard([
         player({ id: 'a', firstName: 'Marc', provisional: false, conservativeScore: 1500 }),
         player({ id: 'b', firstName: 'Julie', provisional: false, conservativeScore: 1400 }),
@@ -1052,7 +1175,7 @@ describe('PingpongPage', () => {
       render(<PingpongPage />);
 
       const rows = await screen.findAllByTestId('pingpong-row');
-      await userEvent.click(rows[3]);
+      await userEvent.click(rows[0]);
       expect(await screen.findByRole('dialog')).toHaveTextContent('Léa');
 
       await userEvent.keyboard('{Escape}');

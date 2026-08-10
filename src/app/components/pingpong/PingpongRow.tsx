@@ -94,9 +94,6 @@ interface PingpongRowProps {
  * on the board that says anything changed today, and behind a tap nobody
  * would see it.
  */
-/** Below this, a win percentage is an artefact of a tiny sample. */
-const MIN_MATCHES_FOR_RATE = 3;
-
 const PingpongRow: FC<PingpongRowProps> = ({
   player,
   position,
@@ -173,17 +170,38 @@ const PingpongRow: FC<PingpongRowProps> = ({
       : null;
 
   /**
-   * Three played matches, not "is ranked".
+   * NO THRESHOLD. The rate shows whenever there is one to show.
    *
-   * Gating on rank meant waiting for 8 weighted matches, and with nobody
-   * ranked yet that left the column empty for every row on the board — the
-   * screen gave up a real number to avoid showing a fake one. Three is where
-   * a percentage starts carrying information: 2/3 is a reading, 1/1 is an
-   * accident. Below it the column stays empty rather than showing a figure
-   * nobody should act on.
+   * Third position on this question, so the chain is here rather than in
+   * three places:
+   *
+   * 1. ORIGINALLY gated on being RANKED — 8 weighted matches — which with
+   *    nobody ranked emptied the column for the whole board.
+   * 2. THEN gated on 3 played matches: "2/3 is a reading, 1/1 is an
+   *    accident."
+   * 3. NOW ungated.
+   *
+   * (2) went because 3 is not a defensible line and it cost real data. The
+   * status label two elements to the left already states the match count for
+   * exactly the players the threshold used to blank — anyone still
+   * calibrating reads "1 match sur 5 avant d'être confirmé" — so "100%" is
+   * qualified on screen rather than floating free, and hiding the numerator
+   * while showing the denominator is strictly less information for the same
+   * pixels. (A settled player carries no such label, but they are also past
+   * any sample-size worry by definition.) The
+   * stabilisation literature puts a reliable win rate at 50-100+ games, so a
+   * bar at 3 is nowhere near significance yet still high enough to blank 3 of
+   * the 8 production players, the newest among them, at exactly the moment
+   * the app should feel responsive to a new player. And it contradicted this
+   * row's own convention two elements to the left, where an unsettled RATING
+   * is shown with a `?` rather than withheld. Uncertainty is stated on this
+   * board; it is not a reason to hide a number.
+   *
+   * `rate !== null` is not a threshold in disguise. `winRate` returns null
+   * only when nobody has played at all, and there is genuinely no rate then —
+   * "0 %" would read as having lost every game.
    */
-  const played = player.wins + player.losses;
-  const showsRate = played >= MIN_MATCHES_FOR_RATE && rate !== null;
+  const showsRate = rate !== null;
 
   const content = (
     <>

@@ -10,6 +10,23 @@ import { EloGlyph, WinRateGlyph } from './StatGlyphs';
 
 interface PingpongPodiumCardProps {
   player: PingpongPlayer;
+  /**
+   * Where this player sits on the board, from 1. Drives the rank badge.
+   *
+   * NOT `player.rank`, which is what this used to read. The podium is gated
+   * on position now rather than on confidence, so a crowned player may be
+   * provisional — and the API sends `rank: null` for every one of those. The
+   * badge would have fallen back to a grey 0 where a gold 1 belongs.
+   */
+  position: number;
+  /**
+   * The rating is still calibrating and this crown is a best guess.
+   *
+   * Meaningful only since the podium stopped gating on confidence. Before,
+   * a crowned player was settled by construction and there was nothing to
+   * qualify.
+   */
+  uncertain?: boolean;
   onSelect?: (player: PingpongPlayer) => void;
 }
 
@@ -77,9 +94,20 @@ const CANCEL_GRACE_MS = 300;
  * failure in the source image, not a hypothetical. A gradient cannot promise
  * a contrast ratio because it does not know what is underneath it; a flat
  * floor can, and it is the only reason this passes on a bright photo.
+ *
+ * THE RATING CAN CARRY A `?`, WHICH IT COULD NOT BEFORE. The podium used to
+ * wait for three SETTLED ratings, so every crowned player was confident by
+ * construction. It is gated on position now — on the measured production data
+ * that crowns Valentin, one match played, in second — so the card has to say
+ * how far to trust the number it is celebrating. Same convention as the list
+ * rows and as Lichess: a `?` after the value, the value muted, nothing added
+ * to the layout. A podium that makes a confident claim the data cannot
+ * support is worse than one that qualifies itself.
  */
 const PingpongPodiumCard: FC<PingpongPodiumCardProps> = ({
   player,
+  position,
+  uncertain = false,
   onSelect,
 }) => {
   const rating = Math.round(player.conservativeScore);
@@ -100,10 +128,13 @@ const PingpongPodiumCard: FC<PingpongPodiumCardProps> = ({
   // CANCEL_GRACE_MS.
   const cancelledAt = useRef<number | null>(null);
 
+  // The board's position, not the API's rank — see the prop. The uncertainty
+  // is spelled out here too: the `?` on screen is a glyph a screen reader
+  // either skips or reads as punctuation.
   const label = [
-    `Rang ${player.rank}`,
+    `Rang ${position}`,
     player.firstName,
-    `${rating} ELO`,
+    uncertain ? `${rating} ELO, estimation en cours` : `${rating} ELO`,
     rate === null ? 'aucun match joué' : `${rate} % de victoires`,
   ].join(', ');
 
@@ -187,6 +218,7 @@ const PingpongPodiumCard: FC<PingpongPodiumCardProps> = ({
       aria-label={label}
       className="
         relative w-[8.25rem] flex-shrink-0 snap-start aspect-[13/20]
+        sm:w-full
         focus-visible:outline-2 focus-visible:outline-offset-2
         focus-visible:outline-primary-500
       "
@@ -218,7 +250,7 @@ const PingpongPodiumCard: FC<PingpongPodiumCardProps> = ({
       </span>
 
       <PodiumRankBadge
-        rank={player.rank ?? 0}
+        rank={position}
         className="absolute -top-0 -right-[3px]"
       />
 
@@ -236,8 +268,17 @@ const PingpongPodiumCard: FC<PingpongPodiumCardProps> = ({
               <EloGlyph className="h-3 w-3" />
               ÉLO
             </span>
-            <span className="text-base font-bold tabular-nums text-white">
+            {/* The `?` is decorative to a screen reader, which reads it as
+                punctuation or skips it; the accessible name above carries
+                the meaning in words. Muted with it, so the marker reads at a
+                glance without adding anything to the card's layout. */}
+            <span
+              className={`text-base font-bold tabular-nums ${
+                uncertain ? 'text-white/60' : 'text-white'
+              }`}
+            >
               {rating}
+              {uncertain && <span aria-hidden="true">?</span>}
             </span>
           </span>
 
