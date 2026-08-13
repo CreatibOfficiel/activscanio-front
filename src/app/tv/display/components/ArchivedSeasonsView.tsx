@@ -194,18 +194,13 @@ const SportsTable: FC<{
 
   return (
     <div className="space-y-1.5">
-      {/* Icons are centred in their cell, both here and on the rows below.
-          Left-aligned they sat off to one side of the values they head,
-          reading as attached to whatever was nearest rather than to the
-          column. */}
+      {/* The column headers sit left, over the names they head — those are
+          left-aligned too, so a centred emoji drifted away from its own
+          column and toward the next one. */}
       <div className="grid items-center gap-x-2" style={{ gridTemplateColumns: template }}>
         <span />
         {columns.map((column) => (
-          <span
-            key={column.key}
-            className="text-center text-[13px]"
-            title={column.label}
-          >
+          <span key={column.key} className="text-[13px]" title={column.label}>
             <span aria-hidden="true">{column.icon}</span>
             <span className="sr-only">{column.label}</span>
           </span>
@@ -223,8 +218,12 @@ const SportsTable: FC<{
         }`}
         style={{ gridTemplateColumns: template }}
       >
+        {/* `flex justify-center`, not `text-center`: an inline span shrinks
+            to its emoji, so text alignment inside it has nothing to move.
+            The flex box fills the 1.25rem column and centres the glyph in
+            it. */}
         <span
-          className="text-center text-[11px] leading-tight"
+          className="flex justify-center text-[11px] leading-tight"
           title={inProgress ? 'Leader actuel' : 'Vainqueur'}
         >
           <span aria-hidden="true">{inProgress ? '⏱' : '🏆'}</span>
@@ -267,7 +266,7 @@ const SportsTable: FC<{
           style={{ gridTemplateColumns: template }}
         >
           <span
-            className="text-center text-[11px] leading-tight"
+            className="flex justify-center text-[11px] leading-tight"
             title={row.label}
           >
             <span aria-hidden="true">{row.icon}</span>
