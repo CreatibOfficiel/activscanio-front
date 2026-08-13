@@ -194,10 +194,18 @@ const SportsTable: FC<{
 
   return (
     <div className="space-y-1.5">
+      {/* Icons are centred in their cell, both here and on the rows below.
+          Left-aligned they sat off to one side of the values they head,
+          reading as attached to whatever was nearest rather than to the
+          column. */}
       <div className="grid items-center gap-x-2" style={{ gridTemplateColumns: template }}>
         <span />
         {columns.map((column) => (
-          <span key={column.key} className="text-[13px]" title={column.label}>
+          <span
+            key={column.key}
+            className="text-center text-[13px]"
+            title={column.label}
+          >
             <span aria-hidden="true">{column.icon}</span>
             <span className="sr-only">{column.label}</span>
           </span>
@@ -216,7 +224,7 @@ const SportsTable: FC<{
         style={{ gridTemplateColumns: template }}
       >
         <span
-          className="text-[11px] leading-tight"
+          className="text-center text-[11px] leading-tight"
           title={inProgress ? 'Leader actuel' : 'Vainqueur'}
         >
           <span aria-hidden="true">{inProgress ? '⏱' : '🏆'}</span>
@@ -258,7 +266,10 @@ const SportsTable: FC<{
           className="grid items-start gap-x-2 px-1.5"
           style={{ gridTemplateColumns: template }}
         >
-          <span className="text-[11px] leading-tight" title={row.label}>
+          <span
+            className="text-center text-[11px] leading-tight"
+            title={row.label}
+          >
             <span aria-hidden="true">{row.icon}</span>
             <span className="sr-only">{row.label}</span>
           </span>
