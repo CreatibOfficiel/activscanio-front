@@ -126,6 +126,11 @@ export interface SeasonSuperlative {
 /** A season plus the four figures its card shows. */
 export interface SeasonWithHighlights {
   season: SeasonArchive;
+  /**
+   * Still being played, so every figure is provisional and there is no
+   * winner yet — only a current leader. Absent on archived seasons.
+   */
+  inProgress?: boolean;
   winner: { name: string; rating: number } | null;
   mostActive: SeasonSuperlative | null;
   /** Null on the first archived season — nothing earlier to measure against. */

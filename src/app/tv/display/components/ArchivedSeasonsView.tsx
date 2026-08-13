@@ -86,13 +86,16 @@ const StatLine: FC<{
   stat: SeasonSuperlative | null;
   format: (value: number) => string;
   tone?: string;
-}> = ({ icon, stat, format, tone = 'text-neutral-300' }) => (
+  /** Shown in place of the dash, when the reason the figure is absent is
+   *  worth stating — a season in flight has no ELO movement to report yet. */
+  emptyLabel?: string;
+}> = ({ icon, stat, format, tone = 'text-neutral-300', emptyLabel }) => (
   <div className="flex items-baseline gap-1.5 min-w-0">
     <span aria-hidden="true" className="shrink-0 text-[11px]">
       {icon}
     </span>
     {stat === null ? (
-      <span className="text-[11px] text-neutral-600">—</span>
+      <span className="text-[11px] text-neutral-600">{emptyLabel ?? '—'}</span>
     ) : (
       <>
         <span className="truncate text-[11px] text-neutral-400">
@@ -215,7 +218,7 @@ export const ArchivedSeasonsView: FC<Props> = ({
         className="min-h-0 flex-1 overflow-y-auto scrollbar-hide"
       >
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-          {seasons.map(({ season, winner, mostActive, biggestClimb, biggestDrop }) => {
+          {seasons.map(({ season, inProgress, winner, mostActive, biggestClimb, biggestDrop }) => {
             const seasonRange = formatSeasonRange(
               season.startDate,
               season.endDate,
@@ -224,7 +227,11 @@ export const ArchivedSeasonsView: FC<Props> = ({
             return (
             <Card
               key={season.id}
-              className="p-3 transition-colors hover:border-primary-500"
+              className={`p-3 transition-colors ${
+                inProgress
+                  ? 'border-primary-500/60 bg-primary-500/5'
+                  : 'hover:border-primary-500'
+              }`}
             >
               <div className="mb-2">
                 {/* Name and dates, in that order, because they answer
@@ -234,9 +241,20 @@ export const ArchivedSeasonsView: FC<Props> = ({
                     NUMBER for backward compatibility, so the old
                     `monthNames[month - 1]` printed "Juin" on season 6 — a
                     label with no relation to the four weeks it covers. */}
-                <h3 className="truncate text-base font-bold text-white">
-                  {season.seasonName ?? `Saison ${season.seasonNumber}`}
-                </h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="truncate text-base font-bold text-white">
+                    {season.seasonName ?? `Saison ${season.seasonNumber}`}
+                  </h3>
+                  {/* The badge is what separates a season being played from
+                      the finished ones around it. Without it the live card
+                      reads as just another archive whose numbers happen to
+                      be low — a part-played season looks like a quiet one. */}
+                  {inProgress && (
+                    <span className="shrink-0 rounded-full bg-primary-500/20 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-primary-300">
+                      En cours
+                    </span>
+                  )}
+                </div>
                 {seasonRange && (
                   <p className="mb-0.5 text-[10px] text-neutral-500">
                     {seasonRange}
@@ -249,21 +267,37 @@ export const ArchivedSeasonsView: FC<Props> = ({
                 </p>
               </div>
 
+              {/* A season in flight has a LEADER, not a winner. The trophy
+                  and the gold go with having won; using them on a standing
+                  that can still change would award a title four weeks early.
+                  Same slot, same layout, deliberately cooler colours. */}
               {winner ? (
-                <div className="mb-2 flex items-baseline gap-1.5 rounded-lg bg-amber-500/10 px-2 py-1.5">
+                <div
+                  className={`mb-2 flex items-baseline gap-1.5 rounded-lg px-2 py-1.5 ${
+                    inProgress ? 'bg-primary-500/10' : 'bg-amber-500/10'
+                  }`}
+                >
                   <span aria-hidden="true" className="shrink-0 text-sm">
-                    🏆
+                    {inProgress ? '⏱' : '🏆'}
                   </span>
-                  <span className="truncate text-xs font-bold text-amber-100">
+                  <span
+                    className={`truncate text-xs font-bold ${
+                      inProgress ? 'text-primary-100' : 'text-amber-100'
+                    }`}
+                  >
                     {winner.name}
                   </span>
-                  <span className="ml-auto shrink-0 text-xs font-bold tabular-nums text-amber-200/80">
+                  <span
+                    className={`ml-auto shrink-0 text-xs font-bold tabular-nums ${
+                      inProgress ? 'text-primary-200/80' : 'text-amber-200/80'
+                    }`}
+                  >
                     {winner.rating}
                   </span>
                 </div>
               ) : (
                 <div className="mb-2 rounded-lg bg-neutral-800/40 px-2 py-1.5 text-[11px] text-neutral-600">
-                  Pas de vainqueur classé
+                  {inProgress ? 'Pas encore de leader' : 'Pas de vainqueur classé'}
                 </div>
               )}
 
@@ -273,18 +307,26 @@ export const ArchivedSeasonsView: FC<Props> = ({
                   stat={mostActive}
                   format={(v) => `${v} course${v > 1 ? 's' : ''}`}
                 />
+                {/* On the live card the ELO movement is not missing, it is
+                    not measurable yet: the current rating already carries
+                    the soft reset applied when the season opened, so a delta
+                    against last season's final would report the reset as the
+                    player's own doing. Saying so beats a bare dash. */}
                 <StatLine
                   icon="📈"
                   stat={biggestClimb}
                   format={formatDelta}
                   tone="text-emerald-400"
+                  emptyLabel={inProgress ? 'En fin de saison' : undefined}
                 />
-                <StatLine
-                  icon="📉"
-                  stat={biggestDrop}
-                  format={formatDelta}
-                  tone="text-red-400"
-                />
+                {!inProgress && (
+                  <StatLine
+                    icon="📉"
+                    stat={biggestDrop}
+                    format={formatDelta}
+                    tone="text-red-400"
+                  />
+                )}
               </div>
             </Card>
             );

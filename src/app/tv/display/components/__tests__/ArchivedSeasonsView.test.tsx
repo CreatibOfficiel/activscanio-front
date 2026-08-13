@@ -187,6 +187,104 @@ describe('ArchivedSeasonsView — season cards', () => {
   });
 });
 
+describe('ArchivedSeasonsView — the season in progress', () => {
+  it('badges the live season', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({ season: season({ id: 'live' }), inProgress: true }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('En cours')).toBeInTheDocument();
+  });
+
+  it('leaves finished seasons unbadged', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[withHighlights({ season: season({ id: 'done' }) })]}
+        overview={overview()}
+      />,
+    );
+    expect(screen.queryByText('En cours')).not.toBeInTheDocument();
+  });
+
+  it('does not crown the leader of an unfinished season', () => {
+    // The trophy and the gold go with having won. A standing that can still
+    // change gets neither.
+    const { container } = render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({ season: season({ id: 'live' }), inProgress: true }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    expect(container.textContent).not.toContain('🏆');
+    expect(container.textContent).toContain('⏱');
+    // The leader is still named — it is the claim about them that changes.
+    // Scoped to the card: the overview bar names a champion too.
+    expect(within(cardFor('Saison 3')).getByText('Don Joran')).toBeInTheDocument();
+  });
+
+  it('says why the ELO movement is absent mid-season', () => {
+    // The live rating already carries the season's soft reset, so a delta
+    // against last season's final would be noise, not a climb.
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({
+            season: season({ id: 'live' }),
+            inProgress: true,
+            biggestClimb: null,
+            biggestDrop: null,
+          }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('En fin de saison')).toBeInTheDocument();
+  });
+
+  it('still reports the most active player mid-season', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({
+            season: season({ id: 'live' }),
+            inProgress: true,
+            mostActive: { names: ['Reb Lopez'], value: 50 },
+          }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('Reb Lopez')).toBeInTheDocument();
+    expect(within(card).getByText('50 courses')).toBeInTheDocument();
+  });
+
+  it('says nobody leads yet when no competitor is ranked', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({
+            season: season({ id: 'live' }),
+            inProgress: true,
+            winner: null,
+          }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('Pas encore de leader')).toBeInTheDocument();
+  });
+});
+
 describe('formatSeasonRange', () => {
   it('prints both months when the season crosses one', () => {
     // Season 6 in production: late June into late July. This is the case a
