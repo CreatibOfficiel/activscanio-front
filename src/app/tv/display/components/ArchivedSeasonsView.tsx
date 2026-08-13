@@ -6,6 +6,7 @@ import {
   SeasonSuperlative,
   SeasonWithHighlights,
   SeasonsOverview,
+  SportHighlights,
 } from '@/app/repositories/SeasonsRepository';
 
 interface Props {
@@ -73,41 +74,210 @@ export function formatSeasonRange(
 }
 
 /**
- * One line of a season card: an icon, who, and how much.
+ * One cell: who reached a superlative, and by how much.
  *
- * `value` is null when the figure cannot be computed — which is a real state,
- * not an empty one. The first archived season has no earlier season to
- * subtract, so its ELO movement is unknown rather than zero, and the row
- * prints an em dash. Dropping the row instead would make the cards different
- * heights and imply the season was somehow lesser.
+ * `stat` is null when the figure cannot be computed — a real state, not an
+ * empty one. The first archived season has nothing earlier to subtract, so
+ * its rating movement is unknown rather than zero, and the cell prints an em
+ * dash rather than a misleading "+0".
+ *
+ * The name sits above the value rather than beside it: in a column barely
+ * wider than a name, putting both on one line truncated whichever came
+ * second. Ties print every name — see `formatNames`.
  */
-const StatLine: FC<{
-  icon: string;
+const StatCell: FC<{
   stat: SeasonSuperlative | null;
   format: (value: number) => string;
   tone?: string;
-  /** Shown in place of the dash, when the reason the figure is absent is
-   *  worth stating — a season in flight has no ELO movement to report yet. */
+  /** Replaces the dash when the reason for the absence is worth stating. */
   emptyLabel?: string;
-}> = ({ icon, stat, format, tone = 'text-neutral-300', emptyLabel }) => (
-  <div className="flex items-baseline gap-1.5 min-w-0">
-    <span aria-hidden="true" className="shrink-0 text-[11px]">
-      {icon}
-    </span>
-    {stat === null ? (
-      <span className="text-[11px] text-neutral-600">{emptyLabel ?? '—'}</span>
-    ) : (
-      <>
-        <span className="truncate text-[11px] text-neutral-400">
-          {formatNames(stat.names)}
+}> = ({ stat, format, tone = 'text-neutral-300', emptyLabel }) => {
+  if (stat === null) {
+    return (
+      <div className="min-w-0 text-[11px] text-neutral-600">
+        {emptyLabel ?? '—'}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-[11px] leading-tight text-neutral-400">
+        {formatNames(stat.names)}
+      </p>
+      <p className={`text-[11px] font-bold leading-tight tabular-nums ${tone}`}>
+        {format(stat.value)}
+      </p>
+    </div>
+  );
+};
+
+/**
+ * The four superlatives, as a row per stat and a column per sport.
+ *
+ * The emoji in the header IS the column label — a wall screen is read from
+ * across a room, and "Mario Kart" / "Ping-pong" spelled out twice on every
+ * card costs more width than the figures underneath. Both carry a
+ * screen-reader name so the shorthand is not the only cue.
+ *
+ * THE PING-PONG COLUMN APPEARS ONLY WHEN THAT SPORT HAS DATA. Every closed
+ * season sits at zero today — ping-pong started in season 7, still being
+ * played — so a permanent second column would be four dashes tall on all six
+ * cards. The grid drops to a single sport instead, and picks the column back
+ * up on its own the moment a season archives with matches in it.
+ */
+const SportsTable: FC<{
+  mariokart: SportHighlights;
+  pingpong: SportHighlights | null;
+  inProgress?: boolean;
+}> = ({ mariokart, pingpong, inProgress }) => {
+  // Each sport counts a different thing, so the unit travels with the
+  // column: "51 courses" on one side, "12 matchs" on the other.
+  const columns = pingpong
+    ? [
+        {
+          key: 'mk',
+          icon: '🏎️',
+          label: 'Mario Kart',
+          stats: mariokart,
+          unit: (v: number) => `${v} course${v > 1 ? 's' : ''}`,
+        },
+        {
+          key: 'pp',
+          icon: '🏓',
+          label: 'Ping-pong',
+          stats: pingpong,
+          unit: (v: number) => `${v} match${v > 1 ? 's' : ''}`,
+        },
+      ]
+    : [
+        {
+          key: 'mk',
+          icon: '🏎️',
+          label: 'Mario Kart',
+          stats: mariokart,
+          unit: (v: number) => `${v} course${v > 1 ? 's' : ''}`,
+        },
+      ];
+
+  const rows = [
+    {
+      key: 'active',
+      icon: '⚡',
+      label: 'Le plus actif',
+      pick: (s: SportHighlights) => s.mostActive,
+      format: null,
+      tone: undefined,
+      emptyLabel: undefined,
+    },
+    {
+      key: 'climb',
+      icon: '📈',
+      label: 'Plus grosse progression',
+      pick: (s: SportHighlights) => s.biggestClimb,
+      format: formatDelta,
+      tone: 'text-emerald-400',
+      emptyLabel: inProgress ? 'En fin de saison' : undefined,
+    },
+    {
+      key: 'drop',
+      icon: '📉',
+      label: 'Plus grosse chute',
+      pick: (s: SportHighlights) => s.biggestDrop,
+      format: formatDelta,
+      tone: 'text-red-400',
+      emptyLabel: inProgress ? 'En fin de saison' : undefined,
+    },
+  ];
+
+  const template = `1.25rem repeat(${columns.length}, minmax(0, 1fr))`;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="grid items-center gap-x-2" style={{ gridTemplateColumns: template }}>
+        <span />
+        {columns.map((column) => (
+          <span key={column.key} className="text-[13px]" title={column.label}>
+            <span aria-hidden="true">{column.icon}</span>
+            <span className="sr-only">{column.label}</span>
+          </span>
+        ))}
+      </div>
+
+      {/* The winner keeps its emphasis — a tinted band across the row — but
+          lives in the table so ping-pong gets one too. A season in flight has
+          a LEADER, not a winner: the trophy and the gold go with having won,
+          so a standing that can still change gets a clock and cooler colours
+          rather than a title awarded four weeks early. */}
+      <div
+        className={`grid items-start gap-x-2 rounded-lg px-1.5 py-1 ${
+          inProgress ? 'bg-primary-500/10' : 'bg-amber-500/10'
+        }`}
+        style={{ gridTemplateColumns: template }}
+      >
+        <span
+          className="text-[11px] leading-tight"
+          title={inProgress ? 'Leader actuel' : 'Vainqueur'}
+        >
+          <span aria-hidden="true">{inProgress ? '⏱' : '🏆'}</span>
+          <span className="sr-only">
+            {inProgress ? 'Leader actuel' : 'Vainqueur'}
+          </span>
         </span>
-        <span className={`ml-auto shrink-0 text-[11px] font-bold tabular-nums ${tone}`}>
-          {format(stat.value)}
-        </span>
-      </>
-    )}
-  </div>
-);
+        {columns.map((column) => (
+          <div key={column.key} className="min-w-0">
+            {column.stats.winner ? (
+              <>
+                <p
+                  className={`truncate text-[11px] font-bold leading-tight ${
+                    inProgress ? 'text-primary-100' : 'text-amber-100'
+                  }`}
+                >
+                  {column.stats.winner.name}
+                </p>
+                <p
+                  className={`text-[11px] font-bold leading-tight tabular-nums ${
+                    inProgress ? 'text-primary-200/80' : 'text-amber-200/80'
+                  }`}
+                >
+                  {column.stats.winner.rating}
+                </p>
+              </>
+            ) : (
+              <p className="text-[11px] leading-tight text-neutral-600">
+                {inProgress ? 'Pas de leader' : 'Non classé'}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {rows.map((row) => (
+        <div
+          key={row.key}
+          className="grid items-start gap-x-2 px-1.5"
+          style={{ gridTemplateColumns: template }}
+        >
+          <span className="text-[11px] leading-tight" title={row.label}>
+            <span aria-hidden="true">{row.icon}</span>
+            <span className="sr-only">{row.label}</span>
+          </span>
+          {columns.map((column) => (
+            <StatCell
+              key={column.key}
+              stat={row.pick(column.stats)}
+              // A null `format` means the row counts events, which each
+              // sport names differently.
+              format={row.format ?? column.unit}
+              tone={row.tone}
+              emptyLabel={row.emptyLabel}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 /** One headline figure in the bar above the list. */
 const Kpi: FC<{ label: string; value: ReactNode; sub?: string }> = ({
@@ -156,30 +326,51 @@ export const ArchivedSeasonsView: FC<Props> = ({
       {overview && (
         <div className="mb-3 shrink-0 rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-3">
           <div className="grid grid-cols-3 gap-x-6 gap-y-3 lg:grid-cols-6">
+            {/* Both sports on the totals line. Naming only the races made
+                the archive look like a Mario-Kart-only record on a board
+                that holds two sports. The ping-pong half is omitted rather
+                than shown as 0 while no closed season has any — the sport
+                started in season 7, which is still being played. */}
             <Kpi
               label="Saisons"
               value={overview.seasonCount}
-              sub={`${overview.totalRaces} courses`}
+              sub={
+                overview.totalPingpongMatches > 0
+                  ? `${overview.totalRaces} courses · ${overview.totalPingpongMatches} matchs`
+                  : `${overview.totalRaces} courses`
+              }
             />
+            {/* Every value carries its unit. A bare "111" or "+415" on a
+                wall screen is a number without a noun — the reader has to
+                infer whether it counts races, matches or ELO points, and
+                the labels above them do not say. */}
             <Kpi
               label="Courses / saison"
-              value={overview.avgRacesPerSeason}
+              value={`${overview.avgRacesPerSeason} courses`}
               sub="en moyenne"
             />
             {/* Ping-pong arrived mid-life, so its average is over the seasons
                 that HAD it — dividing by every season would fold in a run
                 where the sport did not exist and understate it. */}
             <Kpi
-              label="Matchs ping-pong"
-              value={overview.totalPingpongMatches}
+              label="Matchs / saison"
+              value={
+                overview.pingpongSeasonCount > 0
+                  ? `${overview.avgPingpongMatchesPerSeason} matchs`
+                  : '—'
+              }
               sub={
                 overview.pingpongSeasonCount > 0
-                  ? `${overview.avgPingpongMatchesPerSeason} / saison`
-                  : 'pas encore joué'
+                  ? 'ping-pong, en moyenne'
+                  : 'ping-pong pas encore joué'
               }
             />
+            {/* "Pilote", not just "Plus titré": the title is won on the
+                Mario Kart board and nowhere else. The archive holds two
+                sports, so an unqualified superlative leaves the reader to
+                guess which one it belongs to. */}
             <Kpi
-              label="Plus titré"
+              label="Pilote le plus titré"
               value={
                 overview.mostTitles
                   ? formatNames(overview.mostTitles.names)
@@ -187,20 +378,37 @@ export const ArchivedSeasonsView: FC<Props> = ({
               }
               sub={
                 overview.mostTitles
-                  ? `${overview.mostTitles.value} saison${overview.mostTitles.value > 1 ? 's' : ''}`
+                  ? `${overview.mostTitles.value} saison${overview.mostTitles.value > 1 ? 's' : ''} gagnée${overview.mostTitles.value > 1 ? 's' : ''}`
                   : undefined
               }
             />
             <Kpi
               label="Saison la plus dense"
-              value={overview.busiestSeason?.totalRaces ?? '—'}
+              value={
+                overview.busiestSeason
+                  ? `${overview.busiestSeason.totalRaces} courses`
+                  : '—'
+              }
               sub={overview.busiestSeason?.seasonName}
             />
+            {/* Only once a CLOSED season recorded matches. Every archived
+                season sits at 0 today, and a tile reading "0 matchs" would
+                describe a sport that simply had not started yet. */}
+            {overview.busiestPingpongSeason && (
+              <Kpi
+                label="Saison ping-pong la plus dense"
+                value={`${overview.busiestPingpongSeason.totalMatches} matchs`}
+                sub={overview.busiestPingpongSeason.seasonName}
+              />
+            )}
+            {/* Also Mario Kart: the climb is measured on the competitor
+                ratings, which is the only sport the archive stores rankings
+                for today. */}
             <Kpi
-              label="Plus grosse progression"
+              label="Plus grosse progression pilote"
               value={
                 overview.bestClimbEver
-                  ? formatDelta(overview.bestClimbEver.value)
+                  ? `${formatDelta(overview.bestClimbEver.value)} ELO`
                   : '—'
               }
               sub={
@@ -217,8 +425,11 @@ export const ArchivedSeasonsView: FC<Props> = ({
         ref={scrollRef}
         className="min-h-0 flex-1 overflow-y-auto scrollbar-hide"
       >
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-          {seasons.map(({ season, inProgress, winner, mostActive, biggestClimb, biggestDrop }) => {
+        {/* Three across, not four. The cards carry a two-column table now,
+            and at a quarter of the width a name and its figure could not
+            share a line without truncating. */}
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
+          {seasons.map(({ season, inProgress, sports }) => {
             const seasonRange = formatSeasonRange(
               season.startDate,
               season.endDate,
@@ -267,67 +478,11 @@ export const ArchivedSeasonsView: FC<Props> = ({
                 </p>
               </div>
 
-              {/* A season in flight has a LEADER, not a winner. The trophy
-                  and the gold go with having won; using them on a standing
-                  that can still change would award a title four weeks early.
-                  Same slot, same layout, deliberately cooler colours. */}
-              {winner ? (
-                <div
-                  className={`mb-2 flex items-baseline gap-1.5 rounded-lg px-2 py-1.5 ${
-                    inProgress ? 'bg-primary-500/10' : 'bg-amber-500/10'
-                  }`}
-                >
-                  <span aria-hidden="true" className="shrink-0 text-sm">
-                    {inProgress ? '⏱' : '🏆'}
-                  </span>
-                  <span
-                    className={`truncate text-xs font-bold ${
-                      inProgress ? 'text-primary-100' : 'text-amber-100'
-                    }`}
-                  >
-                    {winner.name}
-                  </span>
-                  <span
-                    className={`ml-auto shrink-0 text-xs font-bold tabular-nums ${
-                      inProgress ? 'text-primary-200/80' : 'text-amber-200/80'
-                    }`}
-                  >
-                    {winner.rating}
-                  </span>
-                </div>
-              ) : (
-                <div className="mb-2 rounded-lg bg-neutral-800/40 px-2 py-1.5 text-[11px] text-neutral-600">
-                  {inProgress ? 'Pas encore de leader' : 'Pas de vainqueur classé'}
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <StatLine
-                  icon="⚡"
-                  stat={mostActive}
-                  format={(v) => `${v} course${v > 1 ? 's' : ''}`}
-                />
-                {/* On the live card the ELO movement is not missing, it is
-                    not measurable yet: the current rating already carries
-                    the soft reset applied when the season opened, so a delta
-                    against last season's final would report the reset as the
-                    player's own doing. Saying so beats a bare dash. */}
-                <StatLine
-                  icon="📈"
-                  stat={biggestClimb}
-                  format={formatDelta}
-                  tone="text-emerald-400"
-                  emptyLabel={inProgress ? 'En fin de saison' : undefined}
-                />
-                {!inProgress && (
-                  <StatLine
-                    icon="📉"
-                    stat={biggestDrop}
-                    format={formatDelta}
-                    tone="text-red-400"
-                  />
-                )}
-              </div>
+              <SportsTable
+                mariokart={sports.mariokart}
+                pingpong={sports.pingpong}
+                inProgress={inProgress}
+              />
             </Card>
             );
           })}

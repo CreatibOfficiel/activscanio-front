@@ -123,7 +123,16 @@ export interface SeasonSuperlative {
   value: number;
 }
 
-/** A season plus the four figures its card shows. */
+/** One sport's four figures for a season. */
+export interface SportHighlights {
+  winner: { name: string; rating: number } | null;
+  mostActive: SeasonSuperlative | null;
+  /** Null on the first archived season — nothing earlier to measure against. */
+  biggestClimb: SeasonSuperlative | null;
+  biggestDrop: SeasonSuperlative | null;
+}
+
+/** A season plus the four figures its card shows, per sport. */
 export interface SeasonWithHighlights {
   season: SeasonArchive;
   /**
@@ -131,11 +140,21 @@ export interface SeasonWithHighlights {
    * winner yet — only a current leader. Absent on archived seasons.
    */
   inProgress?: boolean;
+  /** Mario Kart, duplicated at the top level for older readers. */
   winner: { name: string; rating: number } | null;
   mostActive: SeasonSuperlative | null;
-  /** Null on the first archived season — nothing earlier to measure against. */
   biggestClimb: SeasonSuperlative | null;
   biggestDrop: SeasonSuperlative | null;
+  /**
+   * `pingpong` is null on seasons that archived no ping-pong standing —
+   * every closed season today, the sport having started in season 7. The
+   * card drops the column instead of printing dashes for a sport that did
+   * not exist yet.
+   */
+  sports: {
+    mariokart: SportHighlights;
+    pingpong: SportHighlights | null;
+  };
 }
 
 /** Headline figures across every archived season. */
@@ -148,6 +167,13 @@ export interface SeasonsOverview {
   pingpongSeasonCount: number;
   mostTitles: SeasonSuperlative | null;
   busiestSeason: { seasonName: string; totalRaces: number } | null;
+  /**
+   * Null while no CLOSED season has recorded a match — ping-pong started in
+   * season 7, still being played, so every archive sits at 0 today. The
+   * board omits the tile rather than showing "0 matchs", which would
+   * describe a sport that had not started rather than a quiet season.
+   */
+  busiestPingpongSeason: { seasonName: string; totalMatches: number } | null;
   mostRacesInOneSeason: SeasonSuperlative | null;
   bestClimbEver: (SeasonSuperlative & { seasonName: string }) | null;
 }

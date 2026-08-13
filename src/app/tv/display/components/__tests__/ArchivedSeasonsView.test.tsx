@@ -37,11 +37,19 @@ function season(overrides: Partial<SeasonArchive> & { id: string }): SeasonArchi
 function withHighlights(
   overrides: Partial<SeasonWithHighlights> & { season: SeasonArchive },
 ): SeasonWithHighlights {
-  return {
+  const mariokart = {
     winner: { name: 'Don Joran', rating: 1729 },
     mostActive: { names: ['Reb Lopez'], value: 51 },
     biggestClimb: { names: ['Charles Bourgeois'], value: 415 },
     biggestDrop: { names: ['Marie Filleau'], value: -565 },
+    ...overrides,
+  };
+
+  return {
+    ...mariokart,
+    // Mario Kart only unless a test asks for ping-pong, which mirrors
+    // production: no closed season has ping-pong standings yet.
+    sports: { mariokart, pingpong: null },
     ...overrides,
   };
 }
@@ -56,6 +64,8 @@ function overview(overrides: Partial<SeasonsOverview> = {}): SeasonsOverview {
     pingpongSeasonCount: 1,
     mostTitles: { names: ['Don Joran'], value: 5 },
     busiestSeason: { seasonName: 'Saison 1', totalRaces: 111 },
+    // Null by default: production has no closed season with matches yet.
+    busiestPingpongSeason: null,
     mostRacesInOneSeason: { names: ['Don Joran'], value: 62 },
     bestClimbEver: {
       names: ['Charles Bourgeois'],
@@ -183,7 +193,7 @@ describe('ArchivedSeasonsView — season cards', () => {
       />,
     );
     const card = cardFor('Saison 3');
-    expect(within(card).getByText('Pas de vainqueur classé')).toBeInTheDocument();
+    expect(within(card).getByText('Non classé')).toBeInTheDocument();
   });
 });
 
@@ -246,7 +256,9 @@ describe('ArchivedSeasonsView — the season in progress', () => {
       />,
     );
     const card = cardFor('Saison 3');
-    expect(within(card).getByText('En fin de saison')).toBeInTheDocument();
+    // Both ELO rows say it — climb and drop are equally unmeasurable
+    // mid-season.
+    expect(within(card).getAllByText('En fin de saison')).toHaveLength(2);
   });
 
   it('still reports the most active player mid-season', () => {
@@ -281,7 +293,113 @@ describe('ArchivedSeasonsView — the season in progress', () => {
       />,
     );
     const card = cardFor('Saison 3');
-    expect(within(card).getByText('Pas encore de leader')).toBeInTheDocument();
+    expect(within(card).getByText('Pas de leader')).toBeInTheDocument();
+  });
+});
+
+describe('ArchivedSeasonsView — the two-sport table', () => {
+  const pingpongStats = {
+    winner: { name: 'Théo Maitrot', rating: 1480 },
+    mostActive: { names: ['Lisa Santoro'], value: 12 },
+    biggestClimb: { names: ['Karen Garet'], value: 80 },
+    biggestDrop: { names: ['Yann Ó hAnnaidh'], value: -45 },
+  };
+
+  it('omits the ping-pong column on seasons that have none', () => {
+    // Every closed season today: the sport started in season 7. A permanent
+    // second column would be four dashes tall on all six cards.
+    render(
+      <ArchivedSeasonsView
+        seasons={[withHighlights({ season: season({ id: 's1' }) })]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('Mario Kart')).toBeInTheDocument();
+    expect(within(card).queryByText('Ping-pong')).not.toBeInTheDocument();
+  });
+
+  it('adds the column once a season carries ping-pong standings', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({
+            season: season({ id: 's7' }),
+            sports: {
+              mariokart: {
+                winner: { name: 'Don Joran', rating: 1628 },
+                mostActive: { names: ['Reb Lopez'], value: 51 },
+                biggestClimb: { names: ['Charles Bourgeois'], value: 415 },
+                biggestDrop: { names: ['Marie Filleau'], value: -565 },
+              },
+              pingpong: pingpongStats,
+            },
+          }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('Ping-pong')).toBeInTheDocument();
+    // Both sports report their own winner, not one shared figure.
+    expect(within(card).getByText('Don Joran')).toBeInTheDocument();
+    expect(within(card).getByText('Théo Maitrot')).toBeInTheDocument();
+  });
+
+  it('counts races on one side and matches on the other', () => {
+    // The unit travels with the column: each sport counts a different thing.
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({
+            season: season({ id: 's7' }),
+            sports: {
+              mariokart: {
+                winner: null,
+                mostActive: { names: ['Reb Lopez'], value: 51 },
+                biggestClimb: null,
+                biggestDrop: null,
+              },
+              pingpong: pingpongStats,
+            },
+          }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('51 courses')).toBeInTheDocument();
+    expect(within(card).getByText('12 matchs')).toBeInTheDocument();
+  });
+
+  it('names everyone tied in either column', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({
+            season: season({ id: 's7' }),
+            sports: {
+              mariokart: {
+                winner: null,
+                mostActive: { names: ['Don Joran', 'Léo Mibord'], value: 34 },
+                biggestClimb: null,
+                biggestDrop: null,
+              },
+              pingpong: {
+                ...pingpongStats,
+                mostActive: { names: ['Lisa Santoro', 'Karen Garet'], value: 12 },
+              },
+            },
+          }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('Don Joran & Léo Mibord')).toBeInTheDocument();
+    expect(
+      within(card).getByText('Lisa Santoro & Karen Garet'),
+    ).toBeInTheDocument();
   });
 });
 
@@ -366,11 +484,38 @@ describe('ArchivedSeasonsView — overview bar', () => {
       />,
     );
     expect(screen.getByText('Saisons')).toBeInTheDocument();
-    expect(screen.getByText('449 courses')).toBeInTheDocument();
     expect(screen.getByText('Courses / saison')).toBeInTheDocument();
-    expect(screen.getByText('75')).toBeInTheDocument();
-    expect(screen.getByText('Plus titré')).toBeInTheDocument();
-    expect(screen.getByText('5 saisons')).toBeInTheDocument();
+    // Every figure carries its unit — a bare "75" on a wall screen is a
+    // number without a noun.
+    expect(screen.getByText('75 courses')).toBeInTheDocument();
+    expect(screen.getByText('111 courses')).toBeInTheDocument();
+    expect(screen.getByText('+415 ELO')).toBeInTheDocument();
+  });
+
+  it('names the sport on the superlatives that belong to one', () => {
+    // The archive holds two sports. Titles and ELO climbs are Mario Kart
+    // only, and an unqualified label leaves the reader to guess which.
+    render(
+      <ArchivedSeasonsView
+        seasons={[withHighlights({ season: season({ id: 's1' }) })]}
+        overview={overview()}
+      />,
+    );
+    expect(screen.getByText('Pilote le plus titré')).toBeInTheDocument();
+    expect(screen.getByText('5 saisons gagnées')).toBeInTheDocument();
+    expect(
+      screen.getByText('Plus grosse progression pilote'),
+    ).toBeInTheDocument();
+  });
+
+  it('totals both sports once ping-pong has been played', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[withHighlights({ season: season({ id: 's1' }) })]}
+        overview={overview({ totalRaces: 449, totalPingpongMatches: 26 })}
+      />,
+    );
+    expect(screen.getByText('449 courses · 26 matchs')).toBeInTheDocument();
   });
 
   it('averages ping-pong over the seasons that had it', () => {
@@ -386,7 +531,9 @@ describe('ArchivedSeasonsView — overview bar', () => {
         })}
       />,
     );
-    expect(screen.getByText('26 / saison')).toBeInTheDocument();
+    expect(screen.getByText('Matchs / saison')).toBeInTheDocument();
+    expect(screen.getByText('26 matchs')).toBeInTheDocument();
+    expect(screen.getByText('ping-pong, en moyenne')).toBeInTheDocument();
   });
 
   it('says ping-pong has not been played when no season recorded it', () => {
@@ -400,7 +547,42 @@ describe('ArchivedSeasonsView — overview bar', () => {
         })}
       />,
     );
-    expect(screen.getByText('pas encore joué')).toBeInTheDocument();
+    expect(screen.getByText('ping-pong pas encore joué')).toBeInTheDocument();
+    // The totals line drops its ping-pong half too, rather than saying 0.
+    expect(screen.getByText('449 courses')).toBeInTheDocument();
+  });
+
+  it('shows the busiest ping-pong season only once one has matches', () => {
+    const { rerender } = render(
+      <ArchivedSeasonsView
+        seasons={[withHighlights({ season: season({ id: 's1' }) })]}
+        overview={overview({ busiestPingpongSeason: null })}
+      />,
+    );
+    expect(
+      screen.queryByText('Saison ping-pong la plus dense'),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <ArchivedSeasonsView
+        seasons={[withHighlights({ season: season({ id: 's1' }) })]}
+        overview={overview({
+          busiestPingpongSeason: {
+            seasonName: 'Saison 7 - 2026',
+            totalMatches: 26,
+          },
+        })}
+      />,
+    );
+    const tile = screen
+      .getByText('Saison ping-pong la plus dense')
+      .closest('div');
+    expect(tile).not.toBeNull();
+    // Scoped to the tile: "26 matchs" also appears on the average above.
+    expect(within(tile as HTMLElement).getByText('26 matchs')).toBeInTheDocument();
+    expect(
+      within(tile as HTMLElement).getByText('Saison 7 - 2026'),
+    ).toBeInTheDocument();
   });
 
   it('renders the cards even when the overview is unavailable', () => {
