@@ -97,7 +97,73 @@ export interface SeasonRecapData {
   highlights: SeasonHighlights;
 }
 
+/**
+ * One superlative, with every name that reached it.
+ *
+ * A LIST because ties happen: two players ended season 2 on 34 races each,
+ * and naming one of them would report a result the season did not have.
+ */
+export interface SeasonSuperlative {
+  names: string[];
+  value: number;
+}
+
+/** A season plus the four figures its card shows. */
+export interface SeasonWithHighlights {
+  season: SeasonArchive;
+  winner: { name: string; rating: number } | null;
+  mostActive: SeasonSuperlative | null;
+  /** Null on the first archived season — nothing earlier to measure against. */
+  biggestClimb: SeasonSuperlative | null;
+  biggestDrop: SeasonSuperlative | null;
+}
+
+/** Headline figures across every archived season. */
+export interface SeasonsOverview {
+  seasonCount: number;
+  totalRaces: number;
+  avgRacesPerSeason: number;
+  totalPingpongMatches: number;
+  avgPingpongMatchesPerSeason: number;
+  pingpongSeasonCount: number;
+  mostTitles: SeasonSuperlative | null;
+  busiestSeason: { seasonName: string; totalRaces: number } | null;
+  mostRacesInOneSeason: SeasonSuperlative | null;
+  bestClimbEver: (SeasonSuperlative & { seasonName: string }) | null;
+}
+
+export interface SeasonsOverviewResponse {
+  seasons: SeasonWithHighlights[];
+  overview: SeasonsOverview;
+}
+
 export class SeasonsRepository {
+  /**
+   * Every season with its card highlights and the aggregate figures.
+   *
+   * One request rather than one per season: the TV rotates on a timer and
+   * will hold ~40 cards, so a call per card would be 40 round trips each
+   * time the view comes back around.
+   */
+  static async getSeasonsOverview(): Promise<SeasonsOverviewResponse> {
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/seasons/overview`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch overview: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching seasons overview:', error);
+      throw error;
+    }
+  }
+
   /**
    * Get all archived seasons
    */

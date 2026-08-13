@@ -2,7 +2,10 @@
 
 import { FC, useEffect, useState, useCallback, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { SeasonsRepository } from "@/app/repositories/SeasonsRepository";
+import {
+  SeasonsRepository,
+  SeasonsOverviewResponse,
+} from "@/app/repositories/SeasonsRepository";
 import { CompetitorsRepository } from "@/app/repositories/CompetitorsRepository";
 import { pingpongRepository } from "@/app/repositories/PingpongRepository";
 import { CompetitorRankingsView } from "./components/CompetitorRankingsView";
@@ -50,6 +53,12 @@ const TVDisplayContent: FC = () => {
     pingpongPlayers: [],
     archivedSeasons: [],
   });
+  // The archive's card figures and headline totals. Held apart from `data`
+  // because `computeActiveViews` decides the rotation from `archivedSeasons`
+  // alone, and folding a richer shape into that would give the rotation rule
+  // more to know about than whether there is anything to show.
+  const [seasonsOverview, setSeasonsOverview] =
+    useState<SeasonsOverviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -126,16 +135,22 @@ const TVDisplayContent: FC = () => {
 
         // Each call swallows its own failure, so one board being down
         // leaves the others on screen instead of blanking the whole wall.
-        const [competitors, pingpong, seasons] = await Promise.all([
+        // One call for the archive, not one per season — it carries the
+        // seasons AND their card figures, so a 40-season board is still a
+        // single request every refresh.
+        const [competitors, pingpong, overview] = await Promise.all([
           competitorsRepo.fetchCompetitors().catch(() => []),
           pingpongRepository.fetchLeaderboard().catch(() => []),
-          SeasonsRepository.getAllSeasons().catch(() => []),
+          SeasonsRepository.getSeasonsOverview().catch(() => null),
         ]);
 
+        setSeasonsOverview(overview);
         setData({
           competitorRankings: competitors,
           pingpongPlayers: pingpong,
-          archivedSeasons: seasons,
+          // The rotation only asks whether there is anything archived, so it
+          // reads the bare seasons out of the same response.
+          archivedSeasons: overview?.seasons.map((s) => s.season) ?? [],
         });
         setLastUpdate(new Date());
         setIsLoading(false);
@@ -289,7 +304,11 @@ const TVDisplayContent: FC = () => {
             />
           )}
           {currentView === DisplayView.ARCHIVED_SEASONS && (
-            <ArchivedSeasonsView seasons={data.archivedSeasons} scrollRef={scrollRef} />
+            <ArchivedSeasonsView
+              seasons={seasonsOverview?.seasons ?? []}
+              overview={seasonsOverview?.overview ?? null}
+              scrollRef={scrollRef}
+            />
           )}
         </div>
       </main>
