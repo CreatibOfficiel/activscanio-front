@@ -5,7 +5,7 @@ import {
   SeasonWithHighlights,
   SeasonsOverview,
 } from '@/app/repositories/SeasonsRepository';
-import { ArchivedSeasonsView } from '../ArchivedSeasonsView';
+import { ArchivedSeasonsView, formatSeasonRange } from '../ArchivedSeasonsView';
 
 /**
  * The archived-seasons board.
@@ -22,6 +22,8 @@ function season(overrides: Partial<SeasonArchive> & { id: string }): SeasonArchi
     seasonNumber: 3,
     year: 2026,
     seasonName: 'Saison 3',
+    startDate: '2026-04-06T00:00:00.000Z',
+    endDate: '2026-05-03T23:59:59.999Z',
     totalCompetitors: 12,
     totalRaces: 40,
     totalBettors: 0,
@@ -182,6 +184,78 @@ describe('ArchivedSeasonsView — season cards', () => {
     );
     const card = cardFor('Saison 3');
     expect(within(card).getByText('Pas de vainqueur classé')).toBeInTheDocument();
+  });
+});
+
+describe('formatSeasonRange', () => {
+  it('prints both months when the season crosses one', () => {
+    // Season 6 in production: late June into late July. This is the case a
+    // single month label could never state.
+    expect(
+      formatSeasonRange('2026-06-29T00:00:00.000Z', '2026-07-26T23:59:59.999Z'),
+    ).toBe('29 juin → 26 juil.');
+  });
+
+  it('prints the month once when both ends share it', () => {
+    // Repeating "mai" twice is noise on a card this dense.
+    expect(
+      formatSeasonRange('2026-05-04T00:00:00.000Z', '2026-05-31T23:59:59.999Z'),
+    ).toBe('4 → 31 mai');
+  });
+
+  it('reads the dates in UTC', () => {
+    // The stored start is midnight UTC. Parsed locally, a negative-offset
+    // timezone would render the day before — season 5 would open on the
+    // 31st of May instead of the 1st of June.
+    expect(
+      formatSeasonRange('2026-06-01T00:00:00.000Z', '2026-06-28T23:59:59.999Z'),
+    ).toBe('1 → 28 juin');
+  });
+
+  it('returns null rather than a partial range when a date is missing', () => {
+    expect(formatSeasonRange(undefined, '2026-05-03T00:00:00.000Z')).toBeNull();
+    expect(formatSeasonRange('2026-04-06T00:00:00.000Z', undefined)).toBeNull();
+  });
+
+  it('returns null on an unparseable date', () => {
+    // `toLocaleDateString` on an invalid Date yields "Invalid Date", which
+    // would otherwise be printed verbatim on the wall screen.
+    expect(formatSeasonRange('not-a-date', 'not-a-date')).toBeNull();
+  });
+});
+
+describe('ArchivedSeasonsView — season dates', () => {
+  it('shows the date range under the season name', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[withHighlights({ season: season({ id: 's1' }) })]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    // The name stays the heading — it is the identifier people say — and the
+    // dates answer the separate question of when.
+    expect(within(card).getByText('6 avr. → 3 mai')).toBeInTheDocument();
+  });
+
+  it('renders the card without dates on an archive that has none', () => {
+    render(
+      <ArchivedSeasonsView
+        seasons={[
+          withHighlights({
+            season: season({
+              id: 's1',
+              startDate: undefined,
+              endDate: undefined,
+            }),
+          }),
+        ]}
+        overview={overview()}
+      />,
+    );
+    const card = cardFor('Saison 3');
+    expect(within(card).getByText('40 courses')).toBeInTheDocument();
+    expect(within(card).queryByText(/→/)).not.toBeInTheDocument();
   });
 });
 

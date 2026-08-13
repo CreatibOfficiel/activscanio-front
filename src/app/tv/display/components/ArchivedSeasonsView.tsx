@@ -33,6 +33,46 @@ function formatDelta(value: number): string {
 }
 
 /**
+ * The four weeks a season covered, as "29 juin → 26 juil.".
+ *
+ * WHY THIS EXISTS AT ALL: nothing else on the card says when the season
+ * happened. `seasonNumber` counts from the app's launch week and `month`
+ * is the same number under a legacy name, so "Saison 6" is an identifier,
+ * not a date. Seasons are 4-week blocks that drift across month boundaries
+ * — season 6 ran from late June into late July — which is exactly why a
+ * single month label was wrong here before.
+ *
+ * The month is printed once when both ends share it ("6 → 26 juil."), twice
+ * when they do not. Repeating an identical month is noise on a card this
+ * dense; dropping it when the season crosses into a new one would be a lie.
+ *
+ * Returns null rather than a partial range if either end is unparseable —
+ * `toLocaleDateString` on an invalid Date yields "Invalid Date", which would
+ * be printed verbatim on a screen nobody is standing at.
+ */
+export function formatSeasonRange(
+  startDate: string | undefined,
+  endDate: string | undefined,
+): string | null {
+  if (!startDate || !endDate) return null;
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+
+  const day = (d: Date) => d.getUTCDate();
+  const month = (d: Date) =>
+    d.toLocaleDateString('fr-FR', { month: 'short', timeZone: 'UTC' });
+
+  const left =
+    month(start) === month(end)
+      ? String(day(start))
+      : `${day(start)} ${month(start)}`;
+
+  return `${left} → ${day(end)} ${month(end)}`;
+}
+
+/**
  * One line of a season card: an icon, who, and how much.
  *
  * `value` is null when the figure cannot be computed — which is a real state,
@@ -175,19 +215,33 @@ export const ArchivedSeasonsView: FC<Props> = ({
         className="min-h-0 flex-1 overflow-y-auto scrollbar-hide"
       >
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-          {seasons.map(({ season, winner, mostActive, biggestClimb, biggestDrop }) => (
+          {seasons.map(({ season, winner, mostActive, biggestClimb, biggestDrop }) => {
+            const seasonRange = formatSeasonRange(
+              season.startDate,
+              season.endDate,
+            );
+
+            return (
             <Card
               key={season.id}
               className="p-3 transition-colors hover:border-primary-500"
             >
               <div className="mb-2">
-                {/* The season's own name, not a month. `season.month` holds
-                    the SEASON NUMBER for backward compatibility, so the old
+                {/* Name and dates, in that order, because they answer
+                    different questions. The name is the identifier people
+                    actually say ("la S6"); the dates are the only thing on
+                    the card that says WHEN. `season.month` holds the SEASON
+                    NUMBER for backward compatibility, so the old
                     `monthNames[month - 1]` printed "Juin" on season 6 — a
                     label with no relation to the four weeks it covers. */}
-                <h3 className="mb-0.5 truncate text-base font-bold text-white">
+                <h3 className="truncate text-base font-bold text-white">
                   {season.seasonName ?? `Saison ${season.seasonNumber}`}
                 </h3>
+                {seasonRange && (
+                  <p className="mb-0.5 text-[10px] text-neutral-500">
+                    {seasonRange}
+                  </p>
+                )}
                 <p className="text-[10px] text-neutral-400">
                   {season.totalRaces} course{season.totalRaces > 1 ? 's' : ''}
                   {season.totalPingpongMatches !== undefined &&
@@ -233,7 +287,8 @@ export const ArchivedSeasonsView: FC<Props> = ({
                 />
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

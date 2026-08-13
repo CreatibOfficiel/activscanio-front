@@ -8,6 +8,21 @@ export interface SeasonArchive {
   seasonNumber: number;
   year: number;
   seasonName: string | null;
+  /**
+   * The four weeks this season covered, ISO strings.
+   *
+   * The only fields that say WHEN a season happened. `seasonNumber` counts
+   * from the app's launch week and `month` is that same number under an old
+   * name, so neither maps to a calendar date — a card reading them can say
+   * "Saison 6" but not that it ran from late June to late July.
+   *
+   * Optional because a caller must not assume every archive carries them.
+   * Formatting an absent date yields "Invalid Date", which on the wall
+   * screen would be printed verbatim; `formatSeasonRange` returns null
+   * instead and the range is simply omitted.
+   */
+  startDate?: string;
+  endDate?: string;
   totalCompetitors: number;
   totalRaces: number;
   /** Betting leftovers. Always 0 on new archives, kept so old ones load. */
