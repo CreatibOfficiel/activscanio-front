@@ -17,13 +17,19 @@ export interface TVDisplayData {
 /**
  * Every view the wall screen knows how to render.
  *
- * `ARCHIVED_SEASONS` is deliberately absent: it has a component and a title
- * but has never been in the rotation, and turning it on is a product
- * decision rather than a side effect of adding ping-pong.
+ * `ARCHIVED_SEASONS` sat out of this list for a long time — it had a
+ * component, a title and a data guard, and none of it ever ran, because the
+ * filter below only ever walks `ALL_VIEWS`. That was a deliberate hold: the
+ * view arrived alongside ping-pong and turning it on was a product call, not
+ * a side effect. The call has since been made, so it rotates now.
+ *
+ * It still only takes a slot when there is something archived to show. That
+ * rule lives in `computeActiveViews`, where it has always been written.
  */
 export const ALL_VIEWS = [
   DisplayView.COMPETITOR_RANKINGS,
   DisplayView.PINGPONG_RANKINGS,
+  DisplayView.ARCHIVED_SEASONS,
 ];
 
 /**
@@ -73,7 +79,7 @@ export function computeActiveViews(data: TVDisplayData): DisplayView[] {
 }
 
 export const viewLabels: Record<DisplayView, string> = {
-  [DisplayView.COMPETITOR_RANKINGS]: "Pilotes",
+  [DisplayView.COMPETITOR_RANKINGS]: "MK8",
   [DisplayView.PINGPONG_RANKINGS]: "Ping-pong",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons",
 };

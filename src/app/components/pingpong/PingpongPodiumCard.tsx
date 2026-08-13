@@ -249,9 +249,15 @@ const PingpongPodiumCard: FC<PingpongPodiumCardProps> = ({
         <span className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 via-33% to-transparent to-43%" />
       </span>
 
+      {/* `-top-1.5`, not `-top-0`. Tailwind has no negative zero, so `-top-0`
+          was dropped as an unknown utility and the badge — absolute with
+          neither `top` nor `bottom` — fell back to its STATIC position: down
+          the middle of the card, right where the stats scrim starts, which is
+          what put it under the black gradient. A real value anchors it to the
+          top corner and lets it overhang on both axes. */}
       <PodiumRankBadge
         rank={position}
-        className="absolute -top-0 -right-[3px]"
+        className="absolute -top-1.5 -right-1.5 z-10"
       />
 
       <span

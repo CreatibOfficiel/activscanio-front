@@ -56,6 +56,16 @@ interface PingpongPodiumCarouselProps {
  * into view natively, so the clipped card is reachable without adding a stop
  * that does nothing when you land on it.
  *
+ * `pt-1.5` WITH A MATCHING `-mt-1.5` IS NOT SPACING — it is headroom for the
+ * rank badge, which overhangs the top of each card by the same 6 px. Setting
+ * `overflow-x` to anything but `visible` forces the computed `overflow-y` to a
+ * clipping value, so a scroller crops vertical overhang whether or not it ever
+ * scrolls vertically. The padding gives the badge somewhere inside the box to
+ * live and the negative margin cancels it, so the strip occupies exactly what
+ * it did before. Drop either half and the medals get sheared flat on mobile
+ * while staying intact above the breakpoint, where `sm:overflow-visible` makes
+ * the whole question moot.
+ *
  * `touch-pan-x` pins the gesture to the axis this strip actually scrolls.
  * Left to itself the browser arbitrates between panning the strip and
  * scrolling the page, and it resolves ambiguous, mostly-vertical drags in
@@ -77,6 +87,7 @@ const PingpongPodiumCarousel: FC<PingpongPodiumCarouselProps> = ({
       tabIndex={-1}
       className={`
         -mr-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory touch-pan-x
+        -mt-1.5 pt-1.5
         sm:mr-0 sm:overflow-visible sm:snap-none sm:touch-auto
         ${className}
       `}

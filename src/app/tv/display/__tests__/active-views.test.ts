@@ -146,14 +146,39 @@ describe('computeActiveViews — ping-pong', () => {
 });
 
 describe('computeActiveViews — archived seasons', () => {
-  it('never rotates to archived seasons, even with archives to show', () => {
-    // ARCHIVED_SEASONS has never been in the rotation. Turning it on is a
-    // separate decision, so the predicate must not be what enables it.
+  it('rotates to archived seasons once there are archives to show', () => {
+    // The view spent a long time built but unreachable, held out of
+    // ALL_VIEWS on purpose. That hold has been lifted, so the only thing
+    // gating it now is whether there is anything archived.
     const views = computeActiveViews({
       competitorRankings: RACED,
       pingpongPlayers: [],
       archivedSeasons: [{ id: 's1' } as SeasonArchive],
     });
+    expect(views).toContain(DisplayView.ARCHIVED_SEASONS);
+  });
+
+  it('drops archived seasons when there is nothing archived', () => {
+    // The screen is unattended, so an empty board would hold a rotation slot
+    // with nobody there to skip it.
+    const views = computeActiveViews({
+      competitorRankings: RACED,
+      pingpongPlayers: [],
+      archivedSeasons: [],
+    });
     expect(views).not.toContain(DisplayView.ARCHIVED_SEASONS);
+  });
+
+  it('rotates through all three boards when every one has data', () => {
+    const views = computeActiveViews({
+      competitorRankings: RACED,
+      pingpongPlayers: [player({ id: 'p1' })],
+      archivedSeasons: [{ id: 's1' } as SeasonArchive],
+    });
+    expect(views).toEqual([
+      DisplayView.COMPETITOR_RANKINGS,
+      DisplayView.PINGPONG_RANKINGS,
+      DisplayView.ARCHIVED_SEASONS,
+    ]);
   });
 });
