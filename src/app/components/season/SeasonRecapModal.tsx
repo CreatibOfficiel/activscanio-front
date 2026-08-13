@@ -1035,7 +1035,7 @@ export default function SeasonRecapModal({
         return <PodiumSlide title="Podium Ping-Pong" items={pingpongPodiumItems} type="pingpong" reducedMotion={reducedMotion} />;
       case "pingpong-ranking":
         return (
-          <RankingListSlide title="Classement Ping-Pong">
+          <RankingListSlide title="Classement des pongistes">
             {pingpong.map((p, i) => (
               <PingpongRow key={p.id} item={p} index={i} reducedMotion={reducedMotion} />
             ))}

@@ -112,7 +112,7 @@ const SeasonDetailView: FC<SeasonDetailViewProps> = ({
             onClick={() => setActiveTab(TabType.PINGPONG)}
           >
             <MdPerson className="mr-2" />
-            Classement Ping-Pong ({pingpongRankings.length})
+            Classement des pongistes ({pingpongRankings.length})
           </Button>
         </div>
 
@@ -156,7 +156,7 @@ const SeasonDetailView: FC<SeasonDetailViewProps> = ({
 
         {activeTab === TabType.PINGPONG && (
           <Card className="p-6">
-            <h2 className="text-heading text-white mb-4">Classement ping-pong</h2>
+            <h2 className="text-heading text-white mb-4">Classement des pongistes</h2>
             {pingpongRankings.length === 0 ? (
               <p className="text-regular text-neutral-400 text-center py-8">
                 Personne n&apos;a joué au ping-pong cette saison

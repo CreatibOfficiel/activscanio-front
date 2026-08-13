@@ -193,7 +193,7 @@ export default function PingpongPage() {
             state, and on the cold start "0 joueur classé" was already
             suppressed for making a new feature read as a dead one. */}
         {!showsBoard && (
-          <BoardPanelHeading title="Classement ping-pong" className="mt-8 mb-6" />
+          <BoardPanelHeading title="Classement des pongistes" className="mt-8 mb-6" />
         )}
 
         {loading && (
@@ -294,7 +294,7 @@ export default function PingpongPage() {
                 board. The guard above covers that case with a title and no
                 counts. */}
             <BoardPanelHeading
-              title="Classement ping-pong"
+              title="Classement des pongistes"
               className="mb-6"
               subtitle={
                 <>

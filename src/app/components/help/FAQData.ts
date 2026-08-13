@@ -52,7 +52,7 @@ l'inscription et se modifie à tout moment depuis votre compte.`,
       'Vos saisons passées restent consultables depuis votre profil',
     ],
     technicalDetails: `Archivage de fin de saison :
-• Classement Mario Kart et classement ping-pong archivés ensemble
+• Classement des pilotes et classement des pongistes archivés ensemble
 • Les joueurs non classés sont archivés aussi, sans rang
 • Rien n'est perdu : l'historique complet reste consultable
 
@@ -92,7 +92,7 @@ serait trop long pour une pause déjeuner.`,
   {
     id: 'pingpong-elo',
     icon: '📊',
-    title: 'Classement ping-pong',
+    title: 'Classement des pongistes',
     summary:
       'Le niveau est calculé avec Glicko-2 après chaque match. Battre plus fort que soi rapporte plus, et le classement tient compte de l’incertitude.',
     points: [

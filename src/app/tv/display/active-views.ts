@@ -86,6 +86,6 @@ export const viewLabels: Record<DisplayView, string> = {
 
 export const viewTitles: Record<DisplayView, string> = {
   [DisplayView.COMPETITOR_RANKINGS]: "Classement des pilotes",
-  [DisplayView.PINGPONG_RANKINGS]: "Classement ping-pong",
+  [DisplayView.PINGPONG_RANKINGS]: "Classement des pongistes",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons archivées",
 };

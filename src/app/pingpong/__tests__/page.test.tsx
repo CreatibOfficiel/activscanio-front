@@ -466,7 +466,7 @@ describe('PingpongPage', () => {
     // is the rule this file has always pinned, and the tiers must still not
     // grow headers of their own.
     const headings = screen.getAllByRole('heading').map((h) => h.textContent);
-    expect(headings).toEqual(['Classement ping-pong']);
+    expect(headings).toEqual(['Classement des pongistes']);
   });
 
   /**
@@ -504,7 +504,7 @@ describe('PingpongPage', () => {
    * The heading follows the selected panel.
    *
    * Same defect as the Mario Kart board and fixed the same way. The page used
-   * to title itself "Classement ping-pong" above the tab selector, with the
+   * to title itself "Classement des pongistes" above the tab selector, with the
    * "N joueurs classés + M en calibrage" line under it. Pick Matchs and both
    * stayed: a ranking's title and a ranking's tier counts sitting over a match
    * history that has neither.
@@ -514,7 +514,7 @@ describe('PingpongPage', () => {
    * asymmetry the tab work removed.
    */
   describe('the heading follows the selected panel', () => {
-    const rankingTitle = /classement ping-pong/i;
+    const rankingTitle = /classement des pongistes/i;
 
     async function openMatchesTab() {
       await userEvent.click(screen.getByRole('tab', { name: /matchs/i }));

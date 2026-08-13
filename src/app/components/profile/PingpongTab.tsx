@@ -219,7 +219,7 @@ const PingpongTab: FC<PingpongTabProps> = ({
               </span>
             </p>
             <p className="mt-0.5 text-xs text-neutral-500">
-              Classement ping-pong
+              Classement des pongistes
             </p>
           </div>
 
