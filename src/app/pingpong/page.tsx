@@ -79,14 +79,36 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
  * list turns a third of the screen into chrome, and visually establishes "the
  * bottom group" as somewhere people live.
  *
- * Inactive players stay in the ranking rather than being parked below it. A
- * settled rating that is merely stale is still the best estimate we have of
- * how someone plays, and that is what the list sorts on; what is unknown about
- * them is whether they still play, which the dimmed row already says.
+ * INACTIVE PLAYERS ARE PARKED BELOW THE RANKING, in their own section, with
+ * no rank. This reverses the previous rule on this screen, which kept them
+ * numbered inline and let them onto the podium, and it was asked for directly:
+ * "un systeme similaire qu'il y a sur mario kart qui enleve les joueurs
+ * inactifs du classement au bout de x jours". The Mario Kart board has always
+ * worked this way; this one now matches it.
  *
- * They are no longer excluded from the podium either. That exception went with
- * the confidence gate: skipping anyone means the podium is not ranks 1-2-3, so
- * the list could not resume at 4 and the gaps would be back.
+ * The old argument was that a stale rating is still the best estimate of how
+ * someone plays. It is, and it is not what a leaderboard claims: the claim is
+ * about who is playing well now, and someone gone two weeks is not in it.
+ * Left inline they hold a position against people who turned up, and hold it
+ * forever, since nothing decays the rating out from under them.
+ *
+ * This does NOT reopen the gap problem that killed the earlier attempt at
+ * excluding people from the podium. Inactive players are removed before
+ * anything is numbered rather than skipped during, so ranks 1..N stay
+ * contiguous and the section below carries no numbers to contradict them.
+ *
+ * The section keeps the group heading the ranking still refuses, and that is
+ * not a contradiction: a heading is only chrome when it labels a group people
+ * cannot tell apart. "Inactifs" states the one fact that explains why those
+ * rows have no rank, which is a question a reader would otherwise be left
+ * with. The uncertainty marker needs no such heading — it is per-row and it is
+ * already on the row.
+ *
+ * Calibrating players stay in the main list, which is where this board still
+ * departs from Mario Kart on purpose. Splitting them out too would leave 2 of
+ * 8 rows in the ranking on production data — the exact failure the one-list
+ * board was built to fix. "Not sure how good you are" and "you are not here"
+ * are different claims and only the second justifies withholding a rank.
  *
  * A separate route from the Mario Kart board rather than a branch inside
  * it: that page runs a four-phase ranking animation over `Competitor`-typed
@@ -158,12 +180,12 @@ export default function PingpongPage() {
   const [view, setView] = useState<PingpongView>('ranking');
   const [selected, setSelected] = useState<PingpongPlayer | null>(null);
 
-  const { rows, podiumRows, confidentCount, isEmpty } = board;
+  const { rows, podiumRows, inactive, confidentCount, isEmpty } = board;
 
-  // Everyone on the board, podium included. `rows` is only the list under it
-  // now, so counting that alone would report 5 of 8 in the subtitle while
-  // eight people are on screen.
-  const totalPlayers = podiumRows.length + rows.length;
+  // Everyone on the board: podium, list and the inactive section. `rows` is
+  // only the list under the podium, so counting that alone would report 5 of 8
+  // in the subtitle while eight people are on screen.
+  const totalPlayers = podiumRows.length + rows.length + inactive.length;
 
   // The cold-start note is gone with the gate. It said "Personne n'est encore
   // classé, 8 matchs nécessaires", and all three of its claims are now wrong:
@@ -331,6 +353,45 @@ export default function PingpongPage() {
                 />
               ))}
             </div>
+
+            {/* Players who have not played inside the inactivity window,
+                below the ranking rather than inside it. Same shape as the
+                Mario Kart board's own inactive section, down to the rules
+                either side of the label.
+
+                The heading is the exception to this screen's no-group-headings
+                rule, and a narrow one. That rule is about not carving a list
+                people cannot tell apart into named tiers; here the rows have
+                visibly no rank, and without a word saying why, the reader is
+                left to guess whether the board failed to load. One heading
+                that answers a question the layout raises is not the chrome the
+                rule was written against.
+
+                No `position` passed, deliberately. The row falls back to
+                `player.rank`, which the API leaves null for anyone inactive,
+                so the badge slot renders empty — the ranking's numbers are not
+                repeated or re-derived down here, which is what keeps 1..N the
+                only numbering on the screen. */}
+            {inactive.length > 0 && (
+              <div className="mt-8 space-y-2.5" data-testid="pingpong-inactive">
+                <div className="flex items-center gap-3 mb-3 px-1">
+                  <div className="h-px flex-1 bg-neutral-700" />
+                  <h2 className="text-sm text-neutral-500 uppercase tracking-wider">
+                    Inactifs
+                  </h2>
+                  <div className="h-px flex-1 bg-neutral-700" />
+                </div>
+
+                {inactive.map((player, index) => (
+                  <PingpongRow
+                    key={player.id}
+                    player={player}
+                    onClick={() => setSelected(player)}
+                    animationDelay={Math.min(index * 30, 300)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 

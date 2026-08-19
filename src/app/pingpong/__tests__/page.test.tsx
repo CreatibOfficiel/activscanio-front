@@ -234,11 +234,15 @@ describe('PingpongPage', () => {
   });
 
   it('shows every player across every tier, on one surface or the other', async () => {
-    // Was "renders one row per player across every tier". With three players
-    // the podium now takes all three, so counting rows alone would assert on
-    // an empty list. The property was always "nobody is missing" — a player
-    // who cannot find themselves assumes the app forgot them — so it is
-    // asserted across both surfaces instead.
+    // The property is "nobody is missing" — a player who cannot find
+    // themselves assumes the app forgot them — so it is asserted across every
+    // surface rather than against any one of them. Which surface a player
+    // lands on has moved twice now (podium taking all three, then the
+    // inactive section taking Sam out of the ranking), and each time only the
+    // arrangement changed, never this.
+    //
+    // Sam being inactive leaves two active players, which is below the podium
+    // minimum, so this input draws no podium at all.
     givenBoard([
       player({ id: 'a', firstName: 'Marc', rank: 1, conservativeScore: 1500 }),
       player({ id: 'b', firstName: 'Julie', rank: null, provisional: true, conservativeScore: 1400 }),
@@ -248,10 +252,10 @@ describe('PingpongPage', () => {
     render(<PingpongPage />);
 
     await waitFor(() =>
-      expect(screen.getAllByTestId('pingpong-podium-card')).toHaveLength(3),
+      expect(screen.getAllByTestId('pingpong-row')).toHaveLength(3),
     );
     const shown = [
-      ...screen.getAllByTestId('pingpong-podium-card'),
+      ...screen.queryAllByTestId('pingpong-podium-card'),
       ...screen.queryAllByTestId('pingpong-row'),
     ]
       .map((el) => el.textContent ?? '')
@@ -259,6 +263,78 @@ describe('PingpongPage', () => {
     for (const name of ['Marc', 'Julie', 'Sam']) {
       expect(shown).toContain(name);
     }
+  });
+
+  /**
+   * Inactive players below the ranking rather than inside it.
+   *
+   * Asked for directly ("un systeme similaire qu'il y a sur mario kart qui
+   * enleve les joueurs inactifs du classement au bout de x jours"), and the
+   * screen-level half of the rule `buildPingpongBoard` implements. The unit
+   * tests pin who ends up in which list; these pin that the page actually
+   * renders the second list, headed, with no ranks in it.
+   */
+  describe('the inactive section', () => {
+    function givenOneInactive() {
+      givenBoard([
+        player({ id: 'a', firstName: 'Marc', conservativeScore: 1500 }),
+        player({ id: 'b', firstName: 'Julie', conservativeScore: 1400 }),
+        player({ id: 'c', firstName: 'Sam', conservativeScore: 1300 }),
+        player({
+          id: 'away',
+          firstName: 'Bruno',
+          rank: null,
+          inactive: true,
+          conservativeScore: 1900,
+        }),
+      ]);
+    }
+
+    it('parks an inactive player under the ranking, not in it', async () => {
+      givenOneInactive();
+      render(<PingpongPage />);
+
+      const section = await screen.findByTestId('pingpong-inactive');
+      expect(section).toHaveTextContent('Inactifs');
+      expect(section).toHaveTextContent('Bruno');
+    });
+
+    it('gives the inactive player no rank', async () => {
+      // 1900 is the strongest rating on the board. Withholding the number is
+      // the point: the ranking is a claim about the present, and the section
+      // carries no positions to disagree with the ones above it.
+      givenOneInactive();
+      render(<PingpongPage />);
+
+      const section = await screen.findByTestId('pingpong-inactive');
+      expect(
+        within(section).queryByTestId('pingpong-rank'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('counts the inactive player in the total', async () => {
+      // The subtitle describes the screen, and the section is on it. Counting
+      // only the ranking would say 3 while four people are visible.
+      givenOneInactive();
+      render(<PingpongPage />);
+
+      expect(await screen.findByTestId('pingpong-count')).toHaveTextContent('4');
+    });
+
+    it('renders no section when everyone is active', async () => {
+      // An empty "Inactifs" heading reads as a group that exists and happens
+      // to be empty, which is worse than no heading at all.
+      givenBoard([
+        player({ id: 'a', firstName: 'Marc', conservativeScore: 1500 }),
+        player({ id: 'b', firstName: 'Julie', conservativeScore: 1400 }),
+      ]);
+      render(<PingpongPage />);
+
+      await screen.findAllByTestId('pingpong-row');
+      expect(
+        screen.queryByTestId('pingpong-inactive'),
+      ).not.toBeInTheDocument();
+    });
   });
 
   /**

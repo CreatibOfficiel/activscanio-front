@@ -117,11 +117,15 @@ export function isConfident(player: PingpongPlayer): boolean {
 export interface PingpongBoardRow {
   player: PingpongPlayer;
   /**
-   * The player's true rank, from 1. Everyone on the board gets one.
+   * The player's true rank, from 1. Every ACTIVE player gets one.
    *
    * Contiguous across `podiumRows` and `rows` TAKEN TOGETHER, not within
    * either: the podium holds 1-3 and the list picks up at 4. Nothing is
    * renumbered when a player moves between the two.
+   *
+   * Inactive players have no position at all — they are not in either list.
+   * The numbering therefore closes over an absent player rather than leaving
+   * their rank empty, which is the same thing the Mario Kart board does.
    */
   position: number;
   /** The rating is still calibrating and the position is a best guess. */
@@ -130,11 +134,12 @@ export interface PingpongBoardRow {
 
 export interface PingpongBoard {
   /**
-   * The list under the podium: everyone NOT crowned, in rank order.
+   * The list under the podium: every active player NOT crowned, in rank order.
    *
    * Positions are true ranks, so this starts at 4 whenever a podium was
-   * drawn and at 1 when none was. Deliberately not "every visible player" —
-   * see the podium reasoning in `buildPingpongBoard`.
+   * drawn and at 1 when none was. Deliberately not "every visible player":
+   * the crowned three are in `podiumRows` and the absent are in `inactive` —
+   * see the reasoning in `buildPingpongBoard`.
    */
   rows: PingpongBoardRow[];
   /** The top three by position, or empty below three players. */
@@ -149,11 +154,21 @@ export interface PingpongBoard {
    */
   podiumRows: PingpongBoardRow[];
   /**
+   * Players who have not played inside the inactivity window.
+   *
+   * Held OUT of `rows` and `podiumRows` and carrying no position: a ranking
+   * is a claim about who is playing well now, and someone absent for two
+   * weeks cannot make it. Ordered by conservative score so the section still
+   * reads best-first, the same convention the Mario Kart board uses for its
+   * own inactive section.
+   */
+  inactive: PingpongPlayer[];
+  /**
    * How many ratings are settled, across the WHOLE board.
    *
-   * Counted over every visible player, not over `rows` — the podium takes
-   * three of them out of `rows`, and the page's subtitle describes the board
-   * rather than the list under it.
+   * Counted over every visible player — not just `rows`, which is missing
+   * both the crowned three and the inactive. The page's subtitle describes
+   * the whole screen, and all three groups are on it.
    */
   confidentCount: number;
   isEmpty: boolean;
@@ -242,12 +257,41 @@ export interface PingpongBoardOptions {
  * is why the card carries the `?` marker: the podium crowns a position and
  * says in the same breath how far to trust it.
  *
- * Inactive players are crowned too, DELIBERATELY unlike (2), which excluded
- * them on the grounds that a podium is a claim about the present. Position
- * cannot admit that exception without reopening the hole this closes: skip
- * one and the podium is no longer ranks 1-2-3, so the list can no longer
- * resume at 4. Their row dimming and their stale stats still say they are
- * away.
+ * INACTIVE PLAYERS LEAVE THE RANKING ENTIRELY, into `inactive`. This reverses
+ * the previous rule here, which kept them numbered inline and even let them
+ * onto the podium; the reversal was asked for directly ("un systeme similaire
+ * qu'il y a sur mario kart qui enleve les joueurs inactifs du classement au
+ * bout de x jours") and brings this board in line with the Mario Kart one,
+ * which has always parked its inactive competitors in their own section under
+ * the ranking.
+ *
+ * The old rule's argument was that a stale rating is still the best estimate
+ * of how someone plays. True, and beside the point: a leaderboard answers who
+ * is playing well NOW, and someone who has not touched a bat in two weeks is
+ * not answering it. Leaving them in means an absent player holds a position
+ * against people who showed up, and holds it indefinitely — the rating never
+ * decays on its own, so nothing displaces them.
+ *
+ * The objection this rule had to clear is the one that killed the previous
+ * attempt at excluding people from the podium: skip a player mid-list and the
+ * podium is no longer ranks 1-2-3, so `rows` cannot resume at 4 without gaps.
+ * It does not apply here, because inactive players are removed BEFORE anything
+ * is numbered rather than skipped during. What remains is renumbered 1..N with
+ * no holes, and the section below carries no positions at all — so there is no
+ * second numbering to disagree with the first.
+ *
+ * DELIBERATELY NOT ALSO SPLITTING OUT CALIBRATING PLAYERS, which is where this
+ * board still departs from Mario Kart. On the measured production league the
+ * confidence gate admits 2 of 8 players; pulling those six out as well would
+ * leave a two-row "ranking", which is the exact failure the one-list board was
+ * built to fix. A calibrating player is still playing and their `?` marker
+ * already says how far to trust the number. Inactivity is a different claim —
+ * not "we are unsure how good you are" but "you are not here" — and only the
+ * second one justifies withholding a position.
+ *
+ * Archived players (six months idle) remain hidden altogether unless
+ * `includeArchived` is set; they are not folded into `inactive`, which would
+ * put a name nobody recognises at the bottom of every board.
  */
 export function buildPingpongBoard(
   players: PingpongPlayer[],
@@ -263,16 +307,25 @@ export function buildPingpongBoard(
     ? players
     : players.filter((player) => !player.archived);
 
-  const ordered = [...visible]
-    .sort((a, b) => b.conservativeScore - a.conservativeScore)
-    .map((player, index) => ({
-      player,
-      position: index + 1,
-      uncertain: !isConfident(player),
-    }));
+  const byScore = (a: PingpongPlayer, b: PingpongPlayer) =>
+    b.conservativeScore - a.conservativeScore;
+
+  // Split before numbering, not during. Skipping inactive players inside the
+  // loop would leave holes in the positions; taking them out first means what
+  // remains is 1..N by construction.
+  const active = visible.filter((player) => !player.inactive);
+  const inactive = visible.filter((player) => player.inactive).sort(byScore);
+
+  const ordered = [...active].sort(byScore).map((player, index) => ({
+    player,
+    position: index + 1,
+    uncertain: !isConfident(player),
+  }));
 
   // Below three there is nothing to crown: a podium of one or two is a
   // pedestal, and removing them would leave the list holding nothing at all.
+  // Counted over the ACTIVE players, since they are the only candidates —
+  // three players of whom two are away is a one-man podium.
   const hasPodium = ordered.length >= minPlayersForPodium;
   const podiumRows = hasPodium ? ordered.slice(0, podiumSize) : [];
 
@@ -282,6 +335,9 @@ export function buildPingpongBoard(
     rows: hasPodium ? ordered.slice(podiumSize) : ordered,
     podium: podiumRows.map((row) => row.player),
     podiumRows,
+    inactive,
+    // Still counted over every visible player, inactive included: the
+    // subtitle describes the screen, and the inactive section is on it.
     confidentCount: visible.filter(isConfident).length,
     isEmpty: visible.length === 0,
   };

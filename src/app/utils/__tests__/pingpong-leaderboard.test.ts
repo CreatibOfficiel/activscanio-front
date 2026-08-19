@@ -290,56 +290,108 @@ describe('buildPingpongBoard', () => {
 
   it('keeps every player on the board, inactive included', () => {
     // Nobody is dropped. Someone who cannot find themselves assumes the app
-    // forgot them.
-    //
-    // Across both surfaces: with exactly three players the podium takes all
-    // of them, so asserting on `rows` alone would now be asserting on an
-    // empty list and passing for the wrong reason.
+    // forgot them — and being parked in the inactive section is being on the
+    // board, which is why this reads across all three surfaces rather than
+    // only the two that carry ranks.
     const board = buildPingpongBoard([
       player({ id: 'settled', rank: 1, conservativeScore: 1500 }),
       player({ id: 'new', rank: null, provisional: true, conservativeScore: 1400 }),
       player({ id: 'away', rank: null, inactive: true, conservativeScore: 1300 }),
     ]);
 
-    expect(
-      [...board.podiumRows, ...board.rows].map((row) => row.player.id),
-    ).toEqual(['settled', 'new', 'away']);
+    expect([
+      ...board.podiumRows.map((row) => row.player.id),
+      ...board.rows.map((row) => row.player.id),
+      ...board.inactive.map((p) => p.id),
+    ]).toEqual(['settled', 'new', 'away']);
   });
 
   /**
-   * Inactive players stay in the ranking, DELIBERATELY unlike the calibrating
-   * ones this change is about.
+   * INACTIVE PLAYERS LEAVE THE RANKING. This reverses what this block used to
+   * assert, and the reversal is the change these tests exist to pin.
    *
-   * They are two different states and the old code collapsed them into one
-   * bucket of "no number". An inactive player has a SETTLED rating that is
-   * merely stale: 1592 measured three weeks ago is still the best estimate of
-   * how they play, and a rating is what this list sorts on. Withholding their
-   * position would be claiming not to know something we do know.
+   * The old argument was that a settled-but-stale rating is still the best
+   * estimate of how someone plays, so withholding their position claimed not
+   * to know something we do know. What that misses is what a leaderboard
+   * claims: not "how good is everyone" but "who is playing well now". An
+   * absent player cannot answer it, yet left inline they hold a position
+   * against people who turned up — permanently, since nothing decays the
+   * rating out from under them.
    *
-   * What is uncertain about them is whether they still play, not how well —
-   * so they keep their number and are dimmed, which is the signal the row
-   * already carried.
+   * So they are lifted into `inactive` with no position at all, which is what
+   * the Mario Kart board has always done with its own. What stays true from
+   * before is the distinction from calibration: they are NOT marked uncertain,
+   * because the rating is trusted. It is the attendance that is stale.
    */
-  it('ranks an inactive player on their settled rating', () => {
+  it('lifts an inactive player out of the ranking however good their rating', () => {
     const board = buildPingpongBoard([
       player({ id: 'active', rank: 1, conservativeScore: 1400 }),
       player({ id: 'away', rank: null, inactive: true, conservativeScore: 1600 }),
     ]);
 
-    // Ahead, not parked at the bottom: their rating is higher and it is a
-    // rating we trust.
-    expect(board.rows[0].player.id).toBe('away');
+    // The higher rating does not buy a position any more. The active player
+    // is rank 1 despite being the weaker of the two.
+    expect(board.rows.map((row) => row.player.id)).toEqual(['active']);
     expect(board.rows[0].position).toBe(1);
+    expect(board.inactive.map((p) => p.id)).toEqual(['away']);
+  });
+
+  it('numbers the remaining players contiguously when someone goes inactive', () => {
+    // The property that made removal safe at all: taking players out BEFORE
+    // numbering closes the gap, where skipping them mid-list would have left
+    // a hole. This is the assertion that would fail if the split ever moved
+    // back inside the loop.
+    const board = buildPingpongBoard(
+      [
+        player({ id: 'a', conservativeScore: 1600 }),
+        player({ id: 'away', inactive: true, conservativeScore: 1550 }),
+        player({ id: 'b', conservativeScore: 1500 }),
+        player({ id: 'c', conservativeScore: 1400 }),
+      ],
+      { minPlayersForPodium: 99 },
+    );
+
+    expect(board.rows.map((row) => row.player.id)).toEqual(['a', 'b', 'c']);
+    expect(board.rows.map((row) => row.position)).toEqual([1, 2, 3]);
+  });
+
+  it('orders the inactive section best-first', () => {
+    // No positions down here, but the order still has to mean something —
+    // same convention as the ranking above it.
+    const board = buildPingpongBoard([
+      player({ id: 'weaker', inactive: true, conservativeScore: 1200 }),
+      player({ id: 'stronger', inactive: true, conservativeScore: 1500 }),
+    ]);
+
+    expect(board.inactive.map((p) => p.id)).toEqual(['stronger', 'weaker']);
+  });
+
+  it('keeps calibrating players in the ranking', () => {
+    // Where this board departs from Mario Kart on purpose. Splitting these
+    // out too would leave 2 of 8 rows in the ranking on production data,
+    // which is the failure the one-list board was built to fix.
+    const board = buildPingpongBoard(
+      [
+        player({ id: 'settled', conservativeScore: 1500 }),
+        player({ id: 'new', provisional: true, conservativeScore: 1400 }),
+      ],
+      { minPlayersForPodium: 99 },
+    );
+
+    expect(board.rows.map((row) => row.player.id)).toEqual(['settled', 'new']);
+    expect(board.inactive).toHaveLength(0);
   });
 
   it('does not call an inactive player uncertain', () => {
-    // The distinction the tiers used to make and the row must keep making:
-    // "settled, then drifted" is not "we do not know yet".
+    // The distinction the tiers make and the row must keep making: "settled,
+    // then drifted" is not "we do not know yet". Read off the section rather
+    // than a row, since inactive players no longer have one.
     const board = buildPingpongBoard([
       player({ id: 'away', rank: null, inactive: true, provisional: false }),
     ]);
 
-    expect(board.rows[0].uncertain).toBe(false);
+    expect(board.rows).toHaveLength(0);
+    expect(isConfident(board.inactive[0])).toBe(true);
   });
 
   it('marks a provisional player uncertain and a settled one not', () => {
@@ -353,17 +405,22 @@ describe('buildPingpongBoard', () => {
   });
 
   it('hides archived players by default and includes them when asked', () => {
+    // An archived player is inactive too, so when they ARE included they land
+    // in the inactive section rather than the ranking. They are not folded
+    // into it silently — the default still drops them entirely, which is the
+    // point of having two thresholds.
     const players = [
       player({ id: 'here', rank: 1 }),
       player({ id: 'gone', rank: null, archived: true, inactive: true }),
     ];
 
-    expect(buildPingpongBoard(players).rows.map((r) => r.player.id)).toEqual([
-      'here',
-    ]);
-    expect(
-      buildPingpongBoard(players, { includeArchived: true }).rows,
-    ).toHaveLength(2);
+    const hidden = buildPingpongBoard(players);
+    expect(hidden.rows.map((r) => r.player.id)).toEqual(['here']);
+    expect(hidden.inactive).toHaveLength(0);
+
+    const shown = buildPingpongBoard(players, { includeArchived: true });
+    expect(shown.rows.map((r) => r.player.id)).toEqual(['here']);
+    expect(shown.inactive.map((p) => p.id)).toEqual(['gone']);
   });
 
   it('reports an empty board', () => {
@@ -521,13 +578,16 @@ describe('buildPingpongBoard', () => {
       expect(board.rows.map((r) => r.player.id)).toEqual(['a', 'b']);
     });
 
-    it('crowns an inactive player who is in the top three', () => {
-      // DELIBERATELY REVERSED. The confidence gate excluded them, reasoning
-      // that a podium is a claim about the present. Position does not admit
-      // that exception without reintroducing the exact hole this change
-      // closes: skip an inactive player and the podium is no longer ranks
-      // 1-2-3, so the list can no longer resume at 4. The row's dimming and
-      // the card's own stats still say they are away.
+    it('does not crown an inactive player, however strong', () => {
+      // REVERSED AGAIN, and the reason the earlier reversal gave no longer
+      // applies. That one crowned them because skipping a player mid-list
+      // would leave the podium holding something other than ranks 1-2-3, so
+      // the list could not resume at 4. Inactive players are now removed
+      // BEFORE anything is numbered, so nothing is skipped and nothing gaps:
+      // the crowned three are still exactly positions 1-2-3 of what remains.
+      //
+      // 1900 is the strongest rating on this board and it wins nothing. That
+      // is the trade: a podium is a claim about the present.
       const board = buildPingpongBoard([
         player({ id: 'away', provisional: false, inactive: true, conservativeScore: 1900 }),
         player({ id: 'a', provisional: false, conservativeScore: 1500 }),
@@ -535,9 +595,24 @@ describe('buildPingpongBoard', () => {
         player({ id: 'c', provisional: false, conservativeScore: 1300 }),
       ]);
 
-      expect(board.podium.map((p) => p.id)).toEqual(['away', 'a', 'b']);
-      expect(board.rows.map((r) => r.player.id)).toEqual(['c']);
-      expect(board.rows[0].position).toBe(4);
+      expect(board.podium.map((p) => p.id)).toEqual(['a', 'b', 'c']);
+      expect(board.rows).toHaveLength(0);
+      expect(board.inactive.map((p) => p.id)).toEqual(['away']);
+    });
+
+    it('does not draw a podium once inactive players take the board under three', () => {
+      // The podium threshold counts who is actually in the ranking. Four
+      // players of whom two are away is a two-man podium, which is the
+      // pedestal the minimum exists to prevent.
+      const board = buildPingpongBoard([
+        player({ id: 'a', conservativeScore: 1500 }),
+        player({ id: 'b', conservativeScore: 1400 }),
+        player({ id: 'x', inactive: true, conservativeScore: 1300 }),
+        player({ id: 'y', inactive: true, conservativeScore: 1200 }),
+      ]);
+
+      expect(board.podium).toHaveLength(0);
+      expect(board.rows.map((r) => r.player.id)).toEqual(['a', 'b']);
     });
   });
 
