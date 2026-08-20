@@ -119,7 +119,21 @@ export const formatWeekDateRange = (startDate: string | Date, endDate: string | 
 };
 
 /**
- * Get a date label for grouping races (Aujourd'hui, Hier, Cette semaine, or date)
+ * Monday (00:00) of the calendar week containing a date.
+ */
+const getMondayOf = (date: Date): Date => {
+  const dayNr = (date.getDay() + 6) % 7; // Monday = 0
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - dayNr);
+};
+
+/**
+ * Get a date label for grouping races (Aujourd'hui, Hier, Cette semaine,
+ * Semaine derniere, or date)
+ *
+ * Week labels mean whole Monday->Sunday calendar weeks, not rolling windows,
+ * so they stay consistent with the app's weekly cycle. Rolling over into a new
+ * week therefore collapses the week that just ended into "Semaine derniere"
+ * rather than scattering it across one dated group per day.
  */
 export const getDateLabel = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -133,6 +147,15 @@ export const getDateLabel = (dateStr: string): string => {
 
   if (diffDays === 0) return "Aujourd'hui";
   if (diffDays === 1) return "Hier";
-  if (diffDays < 7) return "Cette semaine";
+
+  // "Hier" above wins on a Monday, where yesterday is last week's Sunday:
+  // the more precise label is the more useful one.
+  const thisMonday = getMondayOf(nowOnly);
+  if (dateOnly >= thisMonday) return "Cette semaine";
+
+  const lastMonday = new Date(thisMonday);
+  lastMonday.setDate(lastMonday.getDate() - 7);
+  if (dateOnly >= lastMonday) return "Semaine dernière";
+
   return formatDate(dateStr);
 };

@@ -136,7 +136,12 @@ export default function RaceHistory({
 
   // Get ordered date labels
   const orderedDateLabels = useMemo(() => {
-    const labelOrder = ["Aujourd'hui", "Hier", "Cette semaine"];
+    const labelOrder = [
+      "Aujourd'hui",
+      "Hier",
+      "Cette semaine",
+      "Semaine dernière",
+    ];
     const labels = Object.keys(racesByDate);
 
     return labels.sort((a, b) => {
