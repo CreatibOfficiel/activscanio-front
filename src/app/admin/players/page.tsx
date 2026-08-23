@@ -45,7 +45,11 @@ export default function AdminPlayersPage() {
               <tr key={player.id} className="border-t border-neutral-800 align-top">
                 <td className="p-4 font-medium">{player.firstName} {player.lastName}</td>
                 <td className="py-4"><span className={`rounded-full px-2 py-1 text-xs ${player.status === 'alumni' ? 'bg-amber-400/20 text-amber-300' : 'bg-emerald-400/20 text-emerald-300'}`}>{player.status === 'alumni' ? 'Ancien' : 'Actif'}</span></td>
-                <td className="py-4">{player.characterVariant?.baseCharacter.name ?? '—'}</td>
+                <td className="py-4">
+                  {player.characterVariant
+                    ? `${player.characterVariant.baseCharacter.name} · ${player.characterVariant.label}`
+                    : '—'}
+                </td>
                 <td className="py-3 pr-4"><input aria-label={`Départ de ${player.firstName}`} type="date" defaultValue={player.leftAt ?? ''} onBlur={(event) => update(player.id, { leftAt: event.target.value || null }).catch((e) => setError(e.message))} className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2" />{player.leftAt ? <button className="ml-2 text-sm text-amber-300" onClick={() => update(player.id, { leftAt: null })}>Annuler</button> : null}</td>
                 <td className="py-4"><input type="checkbox" aria-label={`Rappel pour ${player.firstName}`} checked={player.keepAnniversaryReminder ?? false} onChange={(event) => update(player.id, { keepAnniversaryReminder: event.target.checked })} /></td>
                 <td className="py-3 pr-4"><input type="url" aria-label={`Contact de ${player.firstName}`} placeholder="https://linkedin.com/…" defaultValue={player.contactUrl ?? ''} onBlur={(event) => update(player.id, { contactUrl: event.target.value || null }).catch((e) => setError(e.message))} className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2" /></td>
