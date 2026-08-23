@@ -1,18 +1,26 @@
 import { Competitor } from "@/app/models/Competitor";
 import { PingpongPlayer } from "@/app/models/Pingpong";
 import { SeasonArchive } from "@/app/repositories/SeasonsRepository";
+import { RaceEvent } from "@/app/models/RaceEvent";
 
 export enum DisplayView {
+  ALUMNI_ANNIVERSARY = "alumni-anniversary",
+  LATEST_RACES = "latest-races",
+  MOVEMENTS = "movements",
   COMPETITOR_RANKINGS = "competitors",
   PINGPONG_RANKINGS = "pingpong",
   ARCHIVED_SEASONS = "seasons",
 }
 
 export interface TVDisplayData {
+  alumniAnniversaries?: AlumniAnniversary[];
   competitorRankings: Competitor[];
   pingpongPlayers: PingpongPlayer[];
   archivedSeasons: SeasonArchive[];
+  latestRaces?: RaceEvent[];
 }
+
+export interface AlumniAnniversary { id: string; firstName: string; years: number; profilePictureUrl: string; totalGames: number; characterName: string | null; characterImageUrl: string | null; contactUrl: string | null; }
 
 /**
  * Every view the wall screen knows how to render.
@@ -27,7 +35,10 @@ export interface TVDisplayData {
  * rule lives in `computeActiveViews`, where it has always been written.
  */
 export const ALL_VIEWS = [
+  DisplayView.ALUMNI_ANNIVERSARY,
   DisplayView.COMPETITOR_RANKINGS,
+  DisplayView.LATEST_RACES,
+  DisplayView.MOVEMENTS,
   DisplayView.PINGPONG_RANKINGS,
   DisplayView.ARCHIVED_SEASONS,
 ];
@@ -46,6 +57,12 @@ export const ALL_VIEWS = [
 export function computeActiveViews(data: TVDisplayData): DisplayView[] {
   return ALL_VIEWS.filter((view) => {
     switch (view) {
+      case DisplayView.ALUMNI_ANNIVERSARY:
+        return (data.alumniAnniversaries?.length ?? 0) > 0;
+      case DisplayView.LATEST_RACES:
+        return (data.latestRaces?.length ?? 0) > 0;
+      case DisplayView.MOVEMENTS:
+        return data.competitorRankings.some((player) => player.previousDayRank != null);
       case DisplayView.COMPETITOR_RANKINGS:
         return (
           data.competitorRankings.length > 0 &&
@@ -79,12 +96,18 @@ export function computeActiveViews(data: TVDisplayData): DisplayView[] {
 }
 
 export const viewLabels: Record<DisplayView, string> = {
+  [DisplayView.ALUMNI_ANNIVERSARY]: "Aujourd’hui",
+  [DisplayView.LATEST_RACES]: "Résultats",
+  [DisplayView.MOVEMENTS]: "Mouvements",
   [DisplayView.COMPETITOR_RANKINGS]: "MK8",
   [DisplayView.PINGPONG_RANKINGS]: "Ping-pong",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons",
 };
 
 export const viewTitles: Record<DisplayView, string> = {
+  [DisplayView.ALUMNI_ANNIVERSARY]: "Ça se fête aujourd’hui !",
+  [DisplayView.LATEST_RACES]: "Les 5 dernières courses",
+  [DisplayView.MOVEMENTS]: "Ça bouge au classement",
   [DisplayView.COMPETITOR_RANKINGS]: "Classement des pilotes",
   [DisplayView.PINGPONG_RANKINGS]: "Classement des pongistes",
   [DisplayView.ARCHIVED_SEASONS]: "Saisons archivées",

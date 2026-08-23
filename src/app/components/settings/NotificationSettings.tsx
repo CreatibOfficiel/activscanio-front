@@ -93,22 +93,17 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
     );
   }
 
-  if (!isSupported) {
-    return (
-      <div className="rounded-xl bg-warning-500/10 border border-warning-500 p-4">
-        <p className="text-warning-500 text-regular">
-          Les notifications ne sont pas supportées sur cet appareil
-        </p>
-      </div>
-    );
-  }
-
   // Spacing based on compact mode
   const sectionSpacing = compact ? 'space-y-3' : 'space-y-4 sm:space-y-6';
   const cardPadding = compact ? 'p-3 sm:p-4' : 'p-4 sm:p-6';
 
   return (
     <div className={sectionSpacing}>
+      {!isSupported ? (
+        <div className="rounded-xl bg-warning-500/10 border border-warning-500 p-4">
+          <p className="text-warning-500 text-regular">Les notifications push ne sont pas supportées sur cet appareil. Les rappels dans l’application restent configurables.</p>
+        </div>
+      ) : null}
       {/* Avertissement iOS */}
       {isIOS && iOSVersion !== null && iOSVersion < 16.4 && (
         <div className="rounded-xl bg-error-500/10 border border-error-500 p-3 sm:p-4">
@@ -176,6 +171,17 @@ export const NotificationSettings: FC<NotificationSettingsProps> = ({
             <div className="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
           </label>
         </div>
+      </div>
+
+      {/* Catégories de Notifications */}
+      <div className={`rounded-xl bg-neutral-800 border border-neutral-700 ${cardPadding}`}>
+        <NotificationToggle
+          icon="🤝"
+          title="Nouvelles des anciens"
+          description="Un rappel annuel pour garder le contact"
+          enabled={preferences?.showAlumniReminders ?? true}
+          onChange={(enabled) => updatePreferences({ showAlumniReminders: enabled })}
+        />
       </div>
 
       {/* Catégories de Notifications */}

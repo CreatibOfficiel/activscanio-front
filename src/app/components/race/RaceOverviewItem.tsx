@@ -6,6 +6,7 @@ import { AppContext } from "../../context/AppContext";
 import { Competitor } from "../../models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import RaceDetailsModal from "./RaceDetailsModal";
+import { historicalCompetitor } from "@/app/utils/race-participant";
 
 interface Props {
   race: RaceEvent;
@@ -27,7 +28,7 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
     /// Construction of the list of participants
     const comps: Competitor[] = [];
     race.results.forEach((res) => {
-      const found = allCompetitors.find((c) => c.id === res.competitorId);
+      const found = historicalCompetitor(res) ?? allCompetitors.find((c) => c.id === res.competitorId);
       if (found) comps.push(found);
     });
     setParticipants(comps);

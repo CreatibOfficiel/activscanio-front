@@ -9,6 +9,7 @@ export type NotificationPermission = 'default' | 'granted' | 'denied';
 interface NotificationPreferences {
   enablePush: boolean;
   enableInApp: boolean;
+  showAlumniReminders: boolean;
   categories: {
     betting: boolean;
     achievements: boolean;

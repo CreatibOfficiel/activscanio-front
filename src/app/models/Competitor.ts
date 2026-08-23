@@ -7,6 +7,10 @@ export interface Competitor {
   firstName: string;
   lastName: string;
   profilePictureUrl: string;
+  leftAt?: string | null;
+  status?: 'active' | 'alumni';
+  keepAnniversaryReminder?: boolean;
+  contactUrl?: string | null;
   characterVariant?: CharacterVariant | null;
   rating: number;
   rd: number;

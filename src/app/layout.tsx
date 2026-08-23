@@ -22,6 +22,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { AuthLayout, PublicLayout } from "./components/layout/AuthLayoutSwitch";
 import { Toaster } from "sonner";
 import type { Metadata, Viewport } from "next";
+import AlumniReminderBanner from "./components/alumni/AlumniReminderBanner";
 
 export const metadata: Metadata = {
   title: "MushroomBet",
@@ -73,6 +74,7 @@ export default function RootLayout({
             <OnboardingGuard>
               {/* Offline Indicator */}
               <OfflineIndicator />
+              <AlumniReminderBanner />
 
               {/* PWA Install Prompt */}
               <PWAInstallPrompt />

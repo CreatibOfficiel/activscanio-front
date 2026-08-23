@@ -9,6 +9,7 @@ import { formatRelativeDate } from "@/app/utils/formatters";
 import WinnerHighlight from "./WinnerHighlight";
 import ParticipantAvatarStack from "./ParticipantAvatarStack";
 import RaceDetailsModal from "./RaceDetailsModal";
+import { historicalCompetitor } from "@/app/utils/race-participant";
 
 interface Props {
   race: RaceEvent;
@@ -38,7 +39,9 @@ const RaceCard: FC<Props> = ({ race }) => {
     const bestRank = sortedResults.length > 0 ? sortedResults[0].rank12 : undefined;
 
     sortedResults.forEach((res) => {
-      const competitor = allCompetitors.find((c) => c.id === res.competitorId);
+      // The race snapshot wins over the mutable profile: reassigning a
+      // character after someone leaves must never rewrite this card.
+      const competitor = historicalCompetitor(res) ?? allCompetitors.find((c) => c.id === res.competitorId);
       if (competitor) {
         results.push({
           competitor,

@@ -5,6 +5,7 @@ import UserAvatar from "@/app/components/ui/UserAvatar";
 import { AppContext } from "@/app/context/AppContext";
 import { RaceEvent } from "@/app/models/RaceEvent";
 import { Competitor } from "@/app/models/Competitor";
+import { historicalCompetitor } from "@/app/utils/race-participant";
 import {
   formatCompetitorName,
   formatRelativeDate,
@@ -73,7 +74,7 @@ function getSimilarRaceSummary(
   const sorted = [...race.results].sort((a, b) => a.rank12 - b.rank12);
   return sorted
     .map((r) => {
-      const comp = competitors.find((c) => c.id === r.competitorId);
+      const comp = historicalCompetitor(r) ?? competitors.find((c) => c.id === r.competitorId);
       const name = comp
         ? formatCompetitorName(comp.firstName, comp.lastName)
         : "?";
@@ -195,7 +196,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
               <span className="text-2xl animate-crown-bounce">👑</span>
               <div className="flex items-center justify-center gap-4">
                 {winners.map((w) => {
-                  const comp = allCompetitors.find((c) => c.id === w.competitorId);
+                  const comp = historicalCompetitor(w) ?? allCompetitors.find((c) => c.id === w.competitorId);
                   if (!comp) return null;
                   return (
                     <div key={comp.id} className="flex flex-col items-center gap-1">
@@ -235,7 +236,7 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
           {others.length > 0 && (
             <div className="divide-y divide-neutral-700/30">
               {others.map((res) => {
-                const comp = allCompetitors.find(
+                const comp = historicalCompetitor(res) ?? allCompetitors.find(
                   (c) => c.id === res.competitorId
                 );
                 if (!comp) return null;

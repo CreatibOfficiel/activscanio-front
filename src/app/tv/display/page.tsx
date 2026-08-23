@@ -20,6 +20,9 @@ import {
   viewLabels,
   viewTitles,
 } from "./active-views";
+import { AlumniAnniversaryView } from "./components/AlumniAnniversaryView";
+import { LatestRacesView } from "./components/LatestRacesView";
+import { MovementsView } from "./components/MovementsView";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -34,7 +37,7 @@ const API_BASE_URL =
  * than the long one being yanked away mid-scroll.
  */
 const DEFAULT_ROTATION_INTERVAL = 15000; // 15 seconds default
-const REFRESH_INTERVAL = 300000; // 5 minutes
+const REFRESH_INTERVAL = 30000; // new results appear in under a minute
 
 // Inner component that uses useSearchParams
 const TVDisplayContent: FC = () => {
@@ -49,9 +52,11 @@ const TVDisplayContent: FC = () => {
   const [currentView, setCurrentView] = useState(DisplayView.COMPETITOR_RANKINGS);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [data, setData] = useState<TVDisplayData>({
+    alumniAnniversaries: [],
     competitorRankings: [],
     pingpongPlayers: [],
     archivedSeasons: [],
+    latestRaces: [],
   });
   // The archive's card figures and headline totals. Held apart from `data`
   // because `computeActiveViews` decides the rotation from `archivedSeasons`
@@ -73,7 +78,7 @@ const TVDisplayContent: FC = () => {
   useAutoScroll(scrollRef, rotationKey, {
     delay: 5000,
     budget: rotationInterval,
-    enabled: !isTransitioning,
+    enabled: false,
   });
 
   // Skip views with no data. The rule itself lives in ./active-views as a
@@ -105,20 +110,6 @@ const TVDisplayContent: FC = () => {
     }, 300);
   }, [activeViews]);
 
-  // Handle manual view selection (click on step indicator)
-  const goToView = useCallback((view: DisplayView) => {
-    if (view === currentView) return;
-    setIsTransitioning(true);
-
-    setTimeout(() => {
-      setCurrentView(view);
-      setTimeout(() => {
-        setIsTransitioning(false);
-        setRotationKey((k) => k + 1);
-      }, 50);
-    }, 300);
-  }, [currentView]);
-
   // Automatic rotation (resets when rotationKey changes, e.g. manual navigation)
   useEffect(() => {
     const interval = setInterval(transitionToNextView, rotationInterval);
@@ -138,14 +129,18 @@ const TVDisplayContent: FC = () => {
         // One call for the archive, not one per season — it carries the
         // seasons AND their card figures, so a 40-season board is still a
         // single request every refresh.
-        const [competitors, pingpong, overview] = await Promise.all([
+        const [competitors, pingpong, overview, alumniAnniversaries, latestRaces] = await Promise.all([
           competitorsRepo.fetchCompetitors().catch(() => []),
           pingpongRepository.fetchLeaderboard().catch(() => []),
           SeasonsRepository.getSeasonsOverview().catch(() => null),
+          fetch(`${API_BASE_URL}/alumni/tv-today`).then((response) => response.ok ? response.json() : []).catch(() => []),
+          fetch(`${API_BASE_URL}/races?recent=true&limit=5`).then((response) => response.ok ? response.json() : []).catch(() => []),
         ]);
 
         setSeasonsOverview(overview);
         setData({
+          alumniAnniversaries,
+          latestRaces,
           competitorRankings: competitors,
           pingpongPlayers: pingpong,
           // The rotation only asks whether there is anything archived, so it
@@ -165,6 +160,17 @@ const TVDisplayContent: FC = () => {
 
     const refreshInterval = setInterval(loadData, REFRESH_INTERVAL);
     return () => clearInterval(refreshInterval);
+  }, []);
+
+  // A clean reload at 04:00 avoids accumulating browser state on a kiosk
+  // that otherwise stays open for months.
+  useEffect(() => {
+    const now = new Date();
+    const next = new Date(now);
+    next.setDate(now.getDate() + (now.getHours() >= 4 ? 1 : 0));
+    next.setHours(4, 0, 0, 0);
+    const timer = window.setTimeout(() => window.location.reload(), next.getTime() - now.getTime());
+    return () => window.clearTimeout(timer);
   }, []);
 
   if (isLoading) {
@@ -229,6 +235,7 @@ const TVDisplayContent: FC = () => {
       style={{
         paddingInline: "max(0.75rem, 5vw)",
         paddingBlock: "max(0.5rem, 5vh)",
+        transform: `translate(${currentIndex % 2 ? '3px' : '-3px'}, ${currentIndex % 3 ? '2px' : '-2px'})`,
       }}
     >
       {/* Header */}
@@ -251,10 +258,9 @@ const TVDisplayContent: FC = () => {
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
             {activeViews.map((view) => (
-              <button
+              <div
                 key={view}
-                onClick={() => goToView(view)}
-                className="flex flex-col items-center gap-0.5 cursor-pointer"
+                className="flex flex-col items-center gap-0.5"
               >
                 <div
                   className={`h-2 w-10 rounded-full transition-all duration-300 ${currentView === view
@@ -271,7 +277,7 @@ const TVDisplayContent: FC = () => {
                 >
                   {viewLabels[view]}
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         </div>
@@ -296,6 +302,11 @@ const TVDisplayContent: FC = () => {
               viewEntryKey={rotationKey}
             />
           )}
+          {currentView === DisplayView.ALUMNI_ANNIVERSARY && (
+            <AlumniAnniversaryView items={data.alumniAnniversaries ?? []} />
+          )}
+          {currentView === DisplayView.LATEST_RACES && <LatestRacesView races={data.latestRaces ?? []} />}
+          {currentView === DisplayView.MOVEMENTS && <MovementsView players={data.competitorRankings} />}
           {currentView === DisplayView.PINGPONG_RANKINGS && (
             <PingpongRankingsView
               players={data.pingpongPlayers}
