@@ -71,6 +71,11 @@ export interface ArchivedPingpongRanking {
   setsWon: number;
   setsLost: number;
   bestStreak: number;
+  /**
+   * Hydrated at read time from the live player, not stored on the archive.
+   * Null when the player has no photo, or has since been deleted.
+   */
+  profilePictureUrl: string | null;
 }
 
 export interface SeasonBettingWeek {
@@ -103,6 +108,31 @@ export interface SeasonHighlights {
   bestRaceScorers:
     | { competitorName: string; maxScore: number; perfectCount: number }[]
     | null;
+  pingpong: PingpongSeasonHighlights | null;
+}
+
+/**
+ * The ping-pong half of the recap.
+ *
+ * Mirrors the API interface of the same name field for field — the contract
+ * test reads both off disk and compares them, so adding a field on one side
+ * only will fail the build rather than crash the recap at render.
+ *
+ * Null for seasons played before the sport existed.
+ */
+export interface PingpongSeasonHighlights {
+  longestWinStreak: { playerName: string; streak: number } | null;
+  mostMatches: { playerName: string; count: number } | null;
+  biggestUpset: { winnerName: string; loserName: string; gap: number } | null;
+  rivalry: {
+    playerAName: string;
+    playerBName: string;
+    matches: number;
+    winsA: number;
+    winsB: number;
+  } | null;
+  feats: { shutoutSets: number; comebacks: number; heists: number };
+  totalMatches: number;
 }
 
 export interface SeasonRecapData {

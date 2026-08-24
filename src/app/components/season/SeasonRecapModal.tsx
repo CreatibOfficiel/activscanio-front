@@ -396,7 +396,7 @@ function PingpongRow({
       )}
 
       {/* Avatar */}
-      <UserAvatar src={null} name={item.playerName} size="sm" />
+      <UserAvatar src={item.profilePictureUrl} name={item.playerName} size="sm" />
 
       {/* Name + win/loss record */}
       <div className="min-w-0 flex-1">
@@ -523,11 +523,13 @@ function SlideHighlights({
   season: SeasonArchive;
   reducedMotion: boolean;
 }) {
+  const pp = highlights.pingpong;
   const hasContent =
     highlights.longestWinStreak ||
     highlights.mostRaces ||
     (highlights.bestRaceScorers && highlights.bestRaceScorers.length > 0) ||
-    season.totalRaces > 0;
+    season.totalRaces > 0 ||
+    pp !== null;
 
   if (!hasContent) {
     return (
@@ -634,6 +636,121 @@ function SlideHighlights({
                   </span>
                   <span className="text-[12px] text-emerald-400 font-bold tabular-nums">
                     {formatEstimatedTime(season.totalRaces)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </HighlightCard>
+        )}
+
+        {/* Ping-pong: the duel, when someone actually overturned a gap */}
+        {pp?.biggestUpset && (
+          <HighlightCard
+            icon={<span className="text-base">🏓</span>}
+            title="Le Gros Coup"
+            subtitle={`${pp.biggestUpset.gap} pts d'écart renversés`}
+            accent="emerald"
+            delay={(delayIdx++) * 0.08 + 0.1}
+            reducedMotion={reducedMotion}
+          >
+            <div className="flex items-center justify-between gap-2 bg-emerald-500/[0.07] rounded-md px-2.5 py-2">
+              <span className="text-[13px] font-semibold text-emerald-200 truncate">
+                {pp.biggestUpset.winnerName}
+              </span>
+              <span className="text-[10px] text-neutral-500 shrink-0 uppercase tracking-wide">
+                bat
+              </span>
+              <span className="text-[13px] text-neutral-300 truncate text-right">
+                {pp.biggestUpset.loserName}
+              </span>
+            </div>
+          </HighlightCard>
+        )}
+
+        {/* Ping-pong: the pair that kept meeting */}
+        {pp?.rivalry && (
+          <HighlightCard
+            icon={<span className="text-base">⚔️</span>}
+            title="Rivalité de la Saison"
+            subtitle={`${pp.rivalry.matches} matchs`}
+            accent="orange"
+            delay={(delayIdx++) * 0.08 + 0.1}
+            reducedMotion={reducedMotion}
+          >
+            <div className="flex items-center justify-between gap-2 bg-orange-500/[0.07] rounded-md px-2.5 py-2">
+              <span className="text-[13px] font-semibold text-orange-200 truncate flex-1">
+                {pp.rivalry.playerAName}
+              </span>
+              <span className="text-[13px] font-bold text-neutral-200 tabular-nums shrink-0">
+                {pp.rivalry.winsA}&nbsp;–&nbsp;{pp.rivalry.winsB}
+              </span>
+              <span className="text-[13px] font-semibold text-orange-200 truncate flex-1 text-right">
+                {pp.rivalry.playerBName}
+              </span>
+            </div>
+          </HighlightCard>
+        )}
+
+        {/* Ping-pong: season records and the feats that only live in one match */}
+        {pp && (pp.longestWinStreak || pp.mostMatches || pp.totalMatches > 0) && (
+          <HighlightCard
+            icon={<span className="text-base">🏓</span>}
+            title="Ping-Pong"
+            subtitle={`${pp.totalMatches} matchs joués`}
+            accent="blue"
+            delay={(delayIdx++) * 0.08 + 0.1}
+            reducedMotion={reducedMotion}
+          >
+            <div className="divide-y divide-neutral-700/40">
+              {pp.longestWinStreak && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                    Victoires d&apos;affilée
+                  </span>
+                  <span className="text-[12px] text-neutral-200 truncate text-right">
+                    {pp.longestWinStreak.playerName}{" "}
+                    <span className="text-amber-400 font-bold tabular-nums">
+                      {pp.longestWinStreak.streak}🔥
+                    </span>
+                  </span>
+                </div>
+              )}
+              {pp.mostMatches && (
+                <div className="flex items-center justify-between gap-3 py-1.5">
+                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                    Plus de matchs
+                  </span>
+                  <span className="text-[12px] text-neutral-200 truncate text-right">
+                    {pp.mostMatches.playerName}{" "}
+                    <span className="text-blue-400 font-bold tabular-nums">
+                      {pp.mostMatches.count}
+                    </span>
+                  </span>
+                </div>
+              )}
+              {(pp.feats.shutoutSets > 0 ||
+                pp.feats.comebacks > 0 ||
+                pp.feats.heists > 0) && (
+                <div className="flex items-center justify-between gap-2 py-1.5">
+                  <span className="text-[11px] text-neutral-500 uppercase tracking-wide">
+                    Faits d&apos;armes
+                  </span>
+                  <span className="flex items-center gap-2.5 text-[12px] tabular-nums shrink-0">
+                    {pp.feats.shutoutSets > 0 && (
+                      <span className="text-neutral-300" title="Sets gagnés 11-0">
+                        {pp.feats.shutoutSets}× 11-0
+                      </span>
+                    )}
+                    {pp.feats.comebacks > 0 && (
+                      <span className="text-emerald-400" title="Remontées après un set perdu">
+                        {pp.feats.comebacks}× 🔄
+                      </span>
+                    )}
+                    {pp.feats.heists > 0 && (
+                      <span className="text-yellow-300" title="Remontée + deux sets en deuce">
+                        {pp.feats.heists}× 💎
+                      </span>
+                    )}
                   </span>
                 </div>
               )}
@@ -919,7 +1036,7 @@ export default function SeasonRecapModal({
           score: p.finalRating,
           scoreLabel: "elo",
           races: p.totalMatches,
-          imageUrl: null,
+          imageUrl: p.profilePictureUrl,
         })),
     [pingpong]
   );
@@ -1008,7 +1125,7 @@ export default function SeasonRecapModal({
       case "title":
         return <SlideTitleStats season={season} reducedMotion={reducedMotion} />;
       case "competitor-podium":
-        return <PodiumSlide title="Ligue des Champions" items={competitorPodiumItems} type="competitor" reducedMotion={reducedMotion} />;
+        return <PodiumSlide title="Podium Mario-Kart" items={competitorPodiumItems} type="competitor" reducedMotion={reducedMotion} />;
       case "competitor-ranking": {
         const activeCompetitors = competitors.filter((c) => c.totalRaces > 0);
         const confirmed = activeCompetitors.filter((c) => !c.provisional);
