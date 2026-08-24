@@ -21,8 +21,6 @@ import {
   viewTitles,
 } from "./active-views";
 import { AlumniAnniversaryView } from "./components/AlumniAnniversaryView";
-import { LatestRacesView } from "./components/LatestRacesView";
-import { MovementsView } from "./components/MovementsView";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -56,7 +54,6 @@ const TVDisplayContent: FC = () => {
     competitorRankings: [],
     pingpongPlayers: [],
     archivedSeasons: [],
-    latestRaces: [],
   });
   // The archive's card figures and headline totals. Held apart from `data`
   // because `computeActiveViews` decides the rotation from `archivedSeasons`
@@ -129,18 +126,16 @@ const TVDisplayContent: FC = () => {
         // One call for the archive, not one per season — it carries the
         // seasons AND their card figures, so a 40-season board is still a
         // single request every refresh.
-        const [competitors, pingpong, overview, alumniAnniversaries, latestRaces] = await Promise.all([
+        const [competitors, pingpong, overview, alumniAnniversaries] = await Promise.all([
           competitorsRepo.fetchCompetitors().catch(() => []),
           pingpongRepository.fetchLeaderboard().catch(() => []),
           SeasonsRepository.getSeasonsOverview().catch(() => null),
           fetch(`${API_BASE_URL}/alumni/tv-today`).then((response) => response.ok ? response.json() : []).catch(() => []),
-          fetch(`${API_BASE_URL}/races?recent=true&limit=5`).then((response) => response.ok ? response.json() : []).catch(() => []),
         ]);
 
         setSeasonsOverview(overview);
         setData({
           alumniAnniversaries,
-          latestRaces,
           competitorRankings: competitors,
           pingpongPlayers: pingpong,
           // The rotation only asks whether there is anything archived, so it
@@ -305,8 +300,6 @@ const TVDisplayContent: FC = () => {
           {currentView === DisplayView.ALUMNI_ANNIVERSARY && (
             <AlumniAnniversaryView items={data.alumniAnniversaries ?? []} />
           )}
-          {currentView === DisplayView.LATEST_RACES && <LatestRacesView races={data.latestRaces ?? []} />}
-          {currentView === DisplayView.MOVEMENTS && <MovementsView players={data.competitorRankings} />}
           {currentView === DisplayView.PINGPONG_RANKINGS && (
             <PingpongRankingsView
               players={data.pingpongPlayers}
