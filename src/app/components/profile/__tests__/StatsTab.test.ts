@@ -56,12 +56,18 @@ describe('StatsTab', () => {
     expect(source).not.toMatch(new RegExp(`label="${label}"`));
   });
 
-  it.each(['betsPlaced', 'boostsUsed', 'highOddsWins'])(
-    'no longer reads %s',
-    (field) => {
-      expect(source).not.toMatch(new RegExp(`\\b${field}\\b`));
-    },
-  );
+  it.each([
+    'betsPlaced',
+    'boostsUsed',
+    'highOddsWins',
+    // Outlived the original clean-up. `/achievements/stats/:userId` does not
+    // send it — verified against the live API, which returns 24 fields and
+    // none of them this one — so the "Saisons Consécutives" card read
+    // `undefined` and rendered its label above an empty space.
+    'consecutiveMonthlyWins',
+  ])('no longer reads %s', (field) => {
+    expect(source).not.toMatch(new RegExp(`\\b${field}\\b`));
+  });
 
   it('shows race data in their place', () => {
     // The tab is labelled "Statistiques"; it should hold statistics that
@@ -70,10 +76,19 @@ describe('StatsTab', () => {
   });
 
   it('keeps the stats that still have data behind them', () => {
-    // XP, level and consecutive seasons are all still computed.
-    for (const label of ['XP Total', 'Niveau', 'Saisons Consécutives']) {
+    // XP and level are still computed by the API and still land on this tab.
+    for (const label of ['XP Total', 'Niveau']) {
       expect(source).toMatch(new RegExp(`label="${label}"`));
     }
+  });
+
+  it('no longer shows the blank "Saisons Consécutives" card', () => {
+    // Not deleted outright: the figure people wanted was seasons PLAYED in a
+    // row, which is derivable from the season archives. It moved to
+    // ConsecutiveSeasonsSection, split per sport — Mario Kart has run since
+    // season 1 and ping-pong only since season 7, so one combined number
+    // would mean "seasons of whichever sport existed at the time".
+    expect(source).not.toMatch(/label="Saisons Consécutives"/);
   });
 
   it('still renders the stats it can actually compute', () => {

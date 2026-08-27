@@ -62,6 +62,15 @@ interface ProfileHeaderProps {
   character?: CharacterInfo | null;
   competitorStats?: CompetitorStats | null;
   competitorRank?: number;
+  /**
+   * Ping-pong rank, when this user plays it and has finished calibrating.
+   *
+   * Undefined covers three different situations on purpose — the user does
+   * not follow ping-pong, has never played, or is still calibrating (the API
+   * withholds a rank until then, exactly as `PingpongTab` reads it). All
+   * three should show no pill rather than a placeholder rank.
+   */
+  pingpongRank?: number;
   streakWarnings?: StreakWarningStatus;
   className?: string;
   onEditCharacter?: () => void;
@@ -86,6 +95,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
   character,
   competitorStats,
   competitorRank,
+  pingpongRank,
   streakWarnings,
   className = '',
   onEditCharacter,
@@ -233,7 +243,23 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
               </div>
             )}
 
-            {/* 2. Play Streak (players only) */}
+            {/* 2. Ping-pong rank.
+
+                Not gated on `isPlayer`, unlike the pill above: `isPlayer` is
+                true only when a Mario Kart character is set, and someone can
+                play ping-pong without ever having raced. The rank is resolved
+                by the page and simply absent when it does not apply. */}
+            {pingpongRank && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm">
+                <span className="text-sm">🏓</span>
+                <span className="text-sm font-semibold text-white">
+                  #{pingpongRank}
+                </span>
+                <span className="text-xs text-white/70">pongiste</span>
+              </div>
+            )}
+
+            {/* 3. Play Streak (players only) */}
             {isPlayer && (competitorStats?.playStreak ?? 0) > 0 && (
               <div
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm ${
@@ -252,7 +278,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
               </div>
             )}
 
-            {/* 3. Bettor Monthly Rank */}
+            {/* 4. Bettor Monthly Rank */}
             {stats.monthlyRank && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/30 backdrop-blur-sm">
                 <span className="text-sm">🏆</span>
@@ -263,7 +289,7 @@ const ProfileHeader: FC<ProfileHeaderProps> = ({
               </div>
             )}
 
-            {/* 4. Bet Streak */}
+            {/* 5. Bet Streak */}
             {stats.currentMonthlyStreak > 0 && (
               <div
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/30 backdrop-blur-sm ${

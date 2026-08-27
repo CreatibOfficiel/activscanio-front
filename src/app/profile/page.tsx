@@ -10,7 +10,7 @@ import { AchievementsRepository } from '../repositories/AchievementsRepository';
 import { UsersRepository } from '../repositories/UsersRepository';
 import { CompetitorsRepository } from '../repositories/CompetitorsRepository';
 import type { Competitor } from '../models/Competitor';
-import { PersonalBestsSection } from '../components/profile';
+import { PersonalBestsSection, ConsecutiveSeasonsSection } from '../components/profile';
 import {
   ProfileHeader,
   ProfileTabs,
@@ -27,6 +27,7 @@ import { formatCompetitorName } from '../utils/formatters';
 import { AppContext } from '../context/AppContext';
 import { computeRanksWithTies } from '../utils/rankings';
 import { useSportPreference } from '../hooks/useSportPreference';
+import { usePingpongLeaderboard } from '../hooks/usePingpongLeaderboard';
 import { useCurrentUserData, useSetCachedUserData } from '../hooks/useCurrentUserData';
 
 // Type for competitor stats used in profile
@@ -51,6 +52,9 @@ const ProfilePage: FC = () => {
   const searchParams = useSearchParams();
   const { allCompetitors } = useContext(AppContext);
   const { showsPingpong } = useSportPreference();
+  // The board is public and already cached by the ping-pong screens; the tab
+  // below fetches this player's own record separately for its detailed stats.
+  const { players: pingpongPlayers } = usePingpongLeaderboard();
 
   // Get initial tab from URL query param
   const getInitialTab = (): ProfileTab => {
@@ -96,6 +100,24 @@ const ProfilePage: FC = () => {
     );
     return ranks.get(userData.competitorId);
   }, [userData?.competitorId, allCompetitors]);
+
+  // Ping-pong rank, read straight off the board rather than recomputed.
+  //
+  // The API decides who is ranked and hands back a `rank`, withholding it
+  // (null) while a player calibrates — `PingpongTab` reads it the same way.
+  // Deriving a rank here from `conservativeScore` would give two sources of
+  // truth for one number, and they would disagree the first time a threshold
+  // moved on the API side.
+  //
+  // Gated on `showsPingpong` so the pill follows the sport preference, like
+  // the ping-pong tab does.
+  const pingpongRank = useMemo(() => {
+    if (!showsPingpong || !userData?.competitorId) return undefined;
+    const me = pingpongPlayers.find(
+      (p) => p.competitorId === userData.competitorId,
+    );
+    return me?.rank ?? undefined;
+  }, [showsPingpong, userData?.competitorId, pingpongPlayers]);
 
   // Fetch user stats, achievements, and user data
   useEffect(() => {
@@ -298,6 +320,7 @@ const ProfilePage: FC = () => {
           character={getCharacterInfo()}
           competitorStats={competitorStats}
           competitorRank={competitorRank}
+          pingpongRank={pingpongRank}
           streakWarnings={streakWarnings ?? undefined}
           onEditCharacter={userData?.role === 'player' ? () => setIsCharacterModalOpen(true) : undefined}
           onEditName={
@@ -363,13 +386,22 @@ const ProfilePage: FC = () => {
             />
           )}
           {activeTab === 'stats' && (
-            <>
+            // `space-y-6` rather than a bare fragment: the two children are
+            // siblings with no margins of their own, so a fragment butted
+            // "Mes records" straight up against the cards below it. The gap
+            // matches the rhythm StatsTab already uses between its own
+            // sections, so the whole tab scrolls at one spacing.
+            <div className="space-y-6">
               <PersonalBestsSection
                 competitor={competitor}
                 stats={competitorStats}
               />
               <StatsTab stats={stats} competitorStats={competitorStats} />
-            </>
+              <ConsecutiveSeasonsSection
+                competitorId={userData?.competitorId}
+                showsPingpong={showsPingpong}
+              />
+            </div>
           )}
           {activeTab === 'achievements' && (
             <AchievementsTab

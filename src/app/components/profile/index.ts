@@ -8,6 +8,7 @@ export { default as RacesTab } from './RacesTab';
 export { default as PingpongTab } from './PingpongTab';
 export { default as AchievementsTab } from './AchievementsTab';
 export { default as PersonalBestsSection } from './PersonalBestsSection';
+export { default as ConsecutiveSeasonsSection } from './ConsecutiveSeasonsSection';
 export { default as AchievementShowcase } from './AchievementShowcase';
 export { default as LevelRewardsPanel } from './LevelRewardsPanel';
 export { default as ExportDataButtons } from './ExportDataButtons';

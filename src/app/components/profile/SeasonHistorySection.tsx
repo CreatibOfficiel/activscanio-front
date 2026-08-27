@@ -312,9 +312,18 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
         </div>
       </div>
 
-      {/* Season Cards */}
+      {/* Season Cards.
+
+          Capped and scrolled: a season is archived every month and every one
+          of them stays in this list forever, so the section grew without
+          bound and pushed everything below it off the screen. ~24rem shows
+          three cards whole and clips the fourth, which is what tells the
+          reader there is more to scroll — a cap landing exactly on a card
+          boundary reads as the end of the list.
+
+          `pr-1` keeps the scrollbar off the cards' right border. */}
       <motion.div
-        className="space-y-3"
+        className="max-h-96 space-y-3 overflow-y-auto pr-1"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

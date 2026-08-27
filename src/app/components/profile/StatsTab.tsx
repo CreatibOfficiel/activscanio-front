@@ -2,7 +2,7 @@
 
 import { FC, useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { MdStar, MdEmojiEvents, MdTrendingUp, MdRocketLaunch, MdCalendarMonth, MdCheckCircle, MdPercent, MdDiamond, MdMilitaryTech } from 'react-icons/md';
+import { MdStar, MdEmojiEvents, MdRocketLaunch, MdCalendarMonth, MdCheckCircle, MdPercent, MdDiamond, MdMilitaryTech } from 'react-icons/md';
 import { UserStats } from '../../models/Achievement';
 import TimePeriodToggle, { TimePeriod } from '../stats/TimePeriodToggle';
 import { AnimatedNumber } from '../ui/AnimatedNumber';
@@ -45,13 +45,18 @@ const StatsTab: FC<StatsTabProps> = ({
    * The betting fields it used to carry — bets placed, boosts, high-odds
    * wins — are permanent zeroes since betting was removed, and a card
    * reading 0 is worse than no card: it tells someone they did nothing.
-   * XP, level and consecutive seasons are still computed by the API.
+   *
+   * The old "Saisons Consécutives" card went the same way but outlived the
+   * clean-up: it read a betting-era streak field that
+   * `/achievements/stats/:userId` no longer sends, so it rendered its label
+   * above an empty space. Seasons played in a row is a real figure though,
+   * and derivable from the season archives — see ConsecutiveSeasonsSection,
+   * which shows it per sport. XP and level are still computed by the API.
    */
   const periodStats = useMemo(
     () => ({
       xp: stats.xp,
       level: stats.level,
-      consecutiveMonths: stats.consecutiveMonthlyWins,
     }),
     [stats],
   );
@@ -235,13 +240,6 @@ const StatsTab: FC<StatsTabProps> = ({
           value={periodStats.level}
           icon={<MdStar className="text-primary-400" />}
           colorClass="text-primary-400"
-          animated
-        />
-        <StatCard
-          label="Saisons Consécutives"
-          value={periodStats.consecutiveMonths}
-          icon={<MdTrendingUp className="text-emerald-400" />}
-          colorClass="text-emerald-400"
           animated
         />
       </motion.div>
