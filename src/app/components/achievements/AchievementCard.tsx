@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Achievement, AchievementRarity } from '@/app/models/Achievement';
+import { Achievement, AchievementDomain, AchievementRarity } from '@/app/models/Achievement';
 
 interface AchievementCardProps {
   achievement: Achievement;
@@ -33,7 +33,27 @@ const AchievementCard: FC<AchievementCardProps> = ({
     progress = 0,
     isTemporary = false,
     canBeLost = false,
+    domain,
   } = achievement;
+
+  /**
+   * Which sport this achievement belongs to.
+   *
+   * The page has a Courses/Ping-Pong filter, but a card carried no mark of
+   * its own — so with the filter on "Tous", which is the default, there was
+   * nothing on a card to say which sport it was about. Two achievements can
+   * read almost identically across the two sports ("10 victoires"), and the
+   * icon alone does not separate them.
+   *
+   * Undefined on achievements written before the column existed; those get
+   * no badge rather than a guessed one.
+   */
+  const domainBadge =
+    domain === AchievementDomain.PINGPONG
+      ? { icon: '🏓', label: 'Ping-pong' }
+      : domain === AchievementDomain.RACING
+        ? { icon: '🏁', label: 'Courses' }
+        : null;
 
   // Get rarity-based colors
   // Get rarity-based colors with animated glow for Epic/Legendary when unlocked
@@ -109,6 +129,15 @@ const AchievementCard: FC<AchievementCardProps> = ({
             <h3 className={`font-bold text-sm ${colors.text} truncate`}>
               {name}
             </h3>
+            {domainBadge && (
+              <span
+                className="flex-shrink-0 text-[10px]"
+                title={domainBadge.label}
+                aria-label={domainBadge.label}
+              >
+                {domainBadge.icon}
+              </span>
+            )}
             {isTemporary && (
               <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-warning-500/20 text-warning-400 border border-warning-500/50">
                 ⏱️ TEMP
@@ -169,6 +198,12 @@ const AchievementCard: FC<AchievementCardProps> = ({
           >
             {rarity}
           </span>
+          {domainBadge && (
+            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-neutral-800 border border-neutral-700 text-xs text-neutral-300">
+              <span aria-hidden="true">{domainBadge.icon}</span>
+              {domainBadge.label}
+            </span>
+          )}
           {unlocksTitle && (
             <span className="text-xs text-neutral-500">
               🏆 Titre: &quot;{unlocksTitle}&quot;

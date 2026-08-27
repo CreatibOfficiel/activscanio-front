@@ -4,7 +4,6 @@ import { FC, useState } from "react";
 import Image from "next/image";
 import UserAvatar, { getColorFromName } from "@/app/components/ui/UserAvatar";
 import { MdClose, MdFilterList, MdKeyboardArrowDown } from "react-icons/md";
-import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 
 export type PeriodFilter = "all" | "today" | "week" | "season";
@@ -14,8 +13,27 @@ export interface FilterState {
   competitorId: string | null;
 }
 
+/**
+ * The four fields this strip actually reads off a person.
+ *
+ * Typed structurally rather than as `Competitor` so the ping-pong history can
+ * reuse the strip as-is. A `PingpongPlayer` carries all four under the same
+ * names, and widening the parameter was the alternative to a second copy of
+ * this file that would drift from it. Nothing here depends on ELO, rank or
+ * anything else the two models disagree about.
+ *
+ * The id is whatever the caller filters BY — a competitor id for races, a
+ * ping-pong player id for matches. The strip never interprets it.
+ */
+export interface FilterablePerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profilePictureUrl?: string | null;
+}
+
 interface Props {
-  competitors: Competitor[];
+  competitors: FilterablePerson[];
   /**
    * True while `competitors` is still empty because the app context has not
    * answered yet, as opposed to genuinely empty.

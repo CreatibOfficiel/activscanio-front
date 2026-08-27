@@ -70,7 +70,12 @@ describe('usePingpongMatches', () => {
       const { result } = renderHook(() => usePingpongMatches());
 
       await waitFor(() => expect(result.current.loading).toBe(false));
-      expect(fetchMatchesPage).toHaveBeenCalledWith(undefined, MATCH_PAGE_SIZE);
+      expect(fetchMatchesPage).toHaveBeenCalledWith(
+        undefined,
+        MATCH_PAGE_SIZE,
+        // No filters set on this hook; what matters here is the cursor.
+        { playerId: undefined, period: undefined },
+      );
     });
 
     it('reports more to come when the server sent a cursor', async () => {
@@ -143,6 +148,7 @@ describe('usePingpongMatches', () => {
       expect(fetchMatchesPage).toHaveBeenLastCalledWith(
         'cur-1',
         MATCH_PAGE_SIZE,
+        { playerId: undefined, period: undefined },
       );
     });
 
@@ -292,6 +298,7 @@ describe('usePingpongMatches', () => {
       expect(fetchMatchesPage).toHaveBeenLastCalledWith(
         'cur-1',
         MATCH_PAGE_SIZE,
+        { playerId: undefined, period: undefined },
       );
       expect(result.current.matches.map((m) => m.id)).toEqual(['m1', 'm2']);
       expect(result.current.loadMoreError).toBeNull();
@@ -346,6 +353,7 @@ describe('usePingpongMatches', () => {
       expect(fetchMatchesPage).toHaveBeenLastCalledWith(
         undefined,
         MATCH_PAGE_SIZE,
+        { playerId: undefined, period: undefined },
       );
     });
   });

@@ -84,17 +84,30 @@ describe('season highlights contract', () => {
   });
 
   it('declares no betting highlight', () => {
-    // The specific five that crashed it. Pinned by name so reintroducing
-    // one has to be deliberate.
+    // The specific ones that crashed it. Pinned by name so reintroducing one
+    // has to be deliberate.
+    //
+    // `biggestUpset` was on this list and no longer is. The betting field of
+    // that name is gone, but ping-pong later took the same word for a real
+    // and unrelated highlight — the win across the widest rating gap, which
+    // the API computes and sends. Banning the NAME rather than the field
+    // failed the moment a second feature reused it, which is what this list
+    // has to guard against: it matches identifiers anywhere in the file,
+    // comments included.
     for (const field of [
       'perfectScores',
       'perfectPodiums',
       'highestBetScore',
-      'biggestUpset',
       'longestParticipationStreak',
     ]) {
       expect(clientSource).not.toMatch(new RegExp(`\\b${field}\\b`));
     }
+  });
+
+  it('keeps the ping-pong upset, which is not a betting field', () => {
+    // The regression the edit above could cause: dropping a name from the
+    // ban list without checking the field it now refers to still exists.
+    expect(clientSource).toMatch(/biggestUpset/);
   });
 
   it('does not read a removed field in the recap', () => {

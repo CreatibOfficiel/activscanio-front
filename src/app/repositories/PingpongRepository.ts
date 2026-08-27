@@ -15,6 +15,23 @@ import { apiFetch } from '../utils/api-fetch';
  *
  * Reads are public, writes need a token — the same split as the races API.
  */
+/**
+ * What the history can be narrowed by.
+ *
+ * `playerId` is a `PingpongPlayer.id`, NOT a competitor id — the ping-pong
+ * API is keyed on its own player ids and the two are different strings that
+ * both type-check, so passing the wrong one silently returns nothing.
+ */
+export interface PingpongMatchFilters {
+  playerId?: string;
+  /**
+   * Same vocabulary as the race history — 'today' | 'week' | 'season' —
+   * resolved server-side by the shared `resolvePeriodRange`, so "cette
+   * semaine" means the same Monday on both screens. 'all' filters nothing.
+   */
+  period?: string;
+}
+
 export class PingpongRepository {
   constructor(private baseUrl: string) {}
 
@@ -136,11 +153,22 @@ export class PingpongRepository {
   async fetchMatchesPage(
     cursor?: string,
     limit = 20,
+    filters: PingpongMatchFilters = {},
   ): Promise<PingpongMatchesPage> {
     const params = new URLSearchParams({ limit: String(limit) });
     // Only on later pages. An empty `cursor=` would be a falsy string the
     // server still has to reason about.
     if (cursor) params.set('cursor', cursor);
+
+    // Filtering is the SERVER's job here, not a `.filter()` on what came
+    // back. A page holds twenty rows; narrowing those locally would show an
+    // empty list beside a "load more" button whenever the matching games sit
+    // further down, which reads as "this player never played".
+    if (filters.playerId) params.set('playerId', filters.playerId);
+    // 'all' is the server's default; sending it is noise on every request.
+    if (filters.period && filters.period !== 'all') {
+      params.set('period', filters.period);
+    }
 
     const res = await apiFetch(
       `${this.baseUrl}/pingpong/matches/paginated?${params.toString()}`,

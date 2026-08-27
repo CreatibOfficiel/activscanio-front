@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PingpongMatch } from '../models/Pingpong';
-import { pingpongRepository } from '../repositories/PingpongRepository';
+import {
+  PingpongMatchFilters,
+  pingpongRepository,
+} from '../repositories/PingpongRepository';
 
 /**
  * How many matches arrive per page.
@@ -48,7 +51,7 @@ export const MATCH_PAGE_SIZE = 20;
  * as a list that quietly stopped and tells the reader the history ended when
  * it did not.
  */
-export function usePingpongMatches() {
+export function usePingpongMatches(filters: PingpongMatchFilters = {}) {
   const [matches, setMatches] = useState<PingpongMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -71,6 +74,11 @@ export function usePingpongMatches() {
   /** Discards a page that resolves after a refresh already replaced the list. */
   const generationRef = useRef(0);
 
+  // Callers pass an object literal, so a new identity arrives on every
+  // render — depend on the values, or `load` changes every render and the
+  // effect below refetches forever.
+  const { playerId, period } = filters;
+
   const load = useCallback(async () => {
     const generation = ++generationRef.current;
 
@@ -85,6 +93,7 @@ export function usePingpongMatches() {
       const page = await pingpongRepository.fetchMatchesPage(
         undefined,
         MATCH_PAGE_SIZE,
+        { playerId, period },
       );
       if (generationRef.current !== generation) return;
 
@@ -106,7 +115,10 @@ export function usePingpongMatches() {
       // gives nobody anything to act on.
       if (generationRef.current === generation) setLoading(false);
     }
-  }, []);
+    // A filter change starts the history over from page one. The generation
+    // counter already guards the in-flight page, so a request from the
+    // previous filter cannot land on top of the new list.
+  }, [playerId, period]);
 
   const loadMore = useCallback(() => {
     // Three ways this gets asked for something it must not do: past the end,
@@ -125,7 +137,7 @@ export function usePingpongMatches() {
     setLoadMoreError(null);
 
     void pingpongRepository
-      .fetchMatchesPage(requested, MATCH_PAGE_SIZE)
+      .fetchMatchesPage(requested, MATCH_PAGE_SIZE, { playerId, period })
       .then((page) => {
         if (generationRef.current !== generation) return;
 
@@ -146,7 +158,9 @@ export function usePingpongMatches() {
         loadingMoreRef.current = false;
         if (generationRef.current === generation) setLoadingMore(false);
       });
-  }, []);
+    // The cursor belongs to the current filter set, so the next page has to
+    // be requested under the same one.
+  }, [playerId, period]);
 
   useEffect(() => {
     void load();

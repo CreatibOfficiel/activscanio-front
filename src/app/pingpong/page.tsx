@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Modal, Skeleton } from '../components/ui';
 import PingpongRow from '../components/pingpong/PingpongRow';
 import PingpongMatchesSection from '../components/pingpong/PingpongMatchesSection';
+import RaceFilters, { type FilterState } from '../components/race/RaceFilters';
 import PingpongPodiumCarousel from '../components/pingpong/PingpongPodiumCarousel';
 import PingpongViewTabs, {
   PingpongView,
@@ -165,7 +166,23 @@ import { usePingpongMatches } from '../hooks/usePingpongMatches';
  * of them behind a list nobody has tapped.
  */
 export default function PingpongPage() {
-  const { board, loading, error } = usePingpongLeaderboard();
+  const { board, players, loading, error } = usePingpongLeaderboard();
+
+  /**
+   * The match filters, held here rather than inside the section because the
+   * hook that fetches the history lives here too.
+   *
+   * `competitorId` is the field name `RaceFilters` uses; the value it holds
+   * on this screen is a `PingpongPlayer.id`, which is what the ping-pong API
+   * filters by. The two id spaces are different strings that both type-check,
+   * so the players handed to the picker below must come from the ping-pong
+   * board and never from `allCompetitors`.
+   */
+  const [matchFilters, setMatchFilters] = useState<FilterState>({
+    period: 'all',
+    competitorId: null,
+  });
+
   const {
     matches,
     loading: matchesLoading,
@@ -175,7 +192,10 @@ export default function PingpongPage() {
     loadMoreError: matchesLoadMoreError,
     hasMore: matchesHasMore,
     loadMore: loadMoreMatches,
-  } = usePingpongMatches();
+  } = usePingpongMatches({
+    playerId: matchFilters.competitorId ?? undefined,
+    period: matchFilters.period,
+  });
 
   const [view, setView] = useState<PingpongView>('ranking');
   const [selected, setSelected] = useState<PingpongPlayer | null>(null);
@@ -413,6 +433,21 @@ export default function PingpongPage() {
                 document with no h1 at all, which is the worse trade: the tab
                 is a control, the heading is a landmark. */}
             <BoardPanelHeading title="Matchs" className="mb-4" />
+
+            {/* The same strip the race history uses, not a copy of it. It
+                reads only id/name/photo off a person, so the ping-pong board
+                feeds it directly — see `FilterablePerson`.
+
+                Filtering happens on the SERVER: the history is keyset-paged
+                twenty rows at a time, so narrowing the page in hand would
+                show an empty list beside a "load more" button whenever the
+                matching games sit further down. */}
+            <RaceFilters
+              competitors={players}
+              competitorsLoading={loading && players.length === 0}
+              filters={matchFilters}
+              onFilterChange={setMatchFilters}
+            />
 
             <PingpongMatchesSection
               matches={matches}
