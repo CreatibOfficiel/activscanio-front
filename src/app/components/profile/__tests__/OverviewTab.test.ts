@@ -40,6 +40,26 @@ describe('OverviewTab', () => {
     expect(source).toMatch(/bestPlayStreak/);
   });
 
+  it('gives ping-pong a block of its own', () => {
+    // The tab held two Mario Kart panels and nothing else, so someone who
+    // plays both sports saw half their profile.
+    expect(source).toMatch(/Mon ping-pong/);
+  });
+
+  it.each(['wins', 'matchCount', 'conservativeScore', 'bestStreak'])(
+    'reads %s off the ping-pong player',
+    (field) => {
+      expect(source).toMatch(new RegExp(`pingpongPlayer\\.${field}`));
+    },
+  );
+
+  it('does not invent a rank while the player is calibrating', () => {
+    // The API withholds the rank until calibration ends (`rank: null`).
+    // Deriving one from the rating here would contradict every other
+    // ping-pong surface, which all show the absence instead.
+    expect(source).toMatch(/pingpongPlayer\.rank === null/);
+  });
+
   it('imports the shared CompetitorStats rather than redeclaring it', () => {
     // Two interfaces of the same name, one file apart, silently disagreeing
     // about which fields exist. The narrower copy is why the streaks were

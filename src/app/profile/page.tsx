@@ -111,13 +111,18 @@ const ProfilePage: FC = () => {
   //
   // Gated on `showsPingpong` so the pill follows the sport preference, like
   // the ping-pong tab does.
-  const pingpongRank = useMemo(() => {
-    if (!showsPingpong || !userData?.competitorId) return undefined;
-    const me = pingpongPlayers.find(
-      (p) => p.competitorId === userData.competitorId,
+  const myPingpongPlayer = useMemo(() => {
+    if (!showsPingpong || !userData?.competitorId) return null;
+    return (
+      pingpongPlayers.find((p) => p.competitorId === userData.competitorId) ??
+      null
     );
-    return me?.rank ?? undefined;
   }, [showsPingpong, userData?.competitorId, pingpongPlayers]);
+
+  // The API withholds a rank while a player calibrates, and the header pill
+  // hides itself on undefined — so null and "still calibrating" collapse to
+  // the same absent badge here, which is what both mean to a reader.
+  const pingpongRank = myPingpongPlayer?.rank ?? undefined;
 
   // Fetch user stats, achievements, and user data
   useEffect(() => {
@@ -381,6 +386,7 @@ const ProfilePage: FC = () => {
           {activeTab === 'overview' && (
             <OverviewTab
               stats={stats}
+              pingpongPlayer={myPingpongPlayer}
               recentAchievements={recentAchievements}
               competitorStats={competitorStats}
             />

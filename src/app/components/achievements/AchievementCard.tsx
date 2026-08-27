@@ -192,7 +192,11 @@ const AchievementCard: FC<AchievementCardProps> = ({
       {/* Name and rarity */}
       <div className="text-center mb-2">
         <h3 className={`text-lg font-bold ${colors.text} mb-1`}>{name}</h3>
-        <div className="flex items-center justify-center gap-2">
+        {/* Pills only, and they wrap. Two fixed-width badges fit side by
+            side at every card width the grid produces; `flex-wrap` is the
+            guard for a future third one rather than something today's two
+            need. */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <span
             className={`text-xs font-semibold px-2 py-1 rounded-full bg-linear-to-r ${colors.gradient} text-white`}
           >
@@ -204,12 +208,22 @@ const AchievementCard: FC<AchievementCardProps> = ({
               {domainBadge.label}
             </span>
           )}
-          {unlocksTitle && (
-            <span className="text-xs text-neutral-500">
-              🏆 Titre: &quot;{unlocksTitle}&quot;
-            </span>
-          )}
         </div>
+
+        {/* The unlocked title gets its own line.
+
+            It sat on the row above, where three items shared one flex line
+            with no wrap: the two pills hold their width, so the title — the
+            only one that can be arbitrarily long — absorbed the whole
+            shortfall and wrapped one word per line into a sliver. It is also
+            a different kind of fact from the pills, which are single-word
+            labels; giving it the full card width lets it read as a sentence
+            instead of competing for the same row. */}
+        {unlocksTitle && (
+          <p className="mt-1.5 text-xs text-neutral-500">
+            🏆 Titre&nbsp;: &quot;{unlocksTitle}&quot;
+          </p>
+        )}
       </div>
 
       {/* Description */}
