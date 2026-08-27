@@ -74,7 +74,8 @@ function getSimilarRaceSummary(
   const sorted = [...race.results].sort((a, b) => a.rank12 - b.rank12);
   return sorted
     .map((r) => {
-      const comp = historicalCompetitor(r) ?? competitors.find((c) => c.id === r.competitorId);
+      const live = competitors.find((c) => c.id === r.competitorId);
+      const comp = historicalCompetitor(r, live) ?? live;
       const name = comp
         ? formatCompetitorName(comp.firstName, comp.lastName)
         : "?";
@@ -196,7 +197,8 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
               <span className="text-2xl animate-crown-bounce">👑</span>
               <div className="flex items-center justify-center gap-4">
                 {winners.map((w) => {
-                  const comp = historicalCompetitor(w) ?? allCompetitors.find((c) => c.id === w.competitorId);
+                  const live = allCompetitors.find((c) => c.id === w.competitorId);
+                  const comp = historicalCompetitor(w, live) ?? live;
                   if (!comp) return null;
                   return (
                     <div key={comp.id} className="flex flex-col items-center gap-1">
@@ -236,9 +238,10 @@ const RaceDetailsModal: FC<Props> = ({ raceId, isOpen, onClose }) => {
           {others.length > 0 && (
             <div className="divide-y divide-neutral-700/30">
               {others.map((res) => {
-                const comp = historicalCompetitor(res) ?? allCompetitors.find(
+                const live = allCompetitors.find(
                   (c) => c.id === res.competitorId
                 );
+                const comp = historicalCompetitor(res, live) ?? live;
                 if (!comp) return null;
                 const variant = getRankBadgeVariant(res.rank12);
                 const scorePercent = Math.round(

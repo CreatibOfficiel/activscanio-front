@@ -28,7 +28,8 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
     /// Construction of the list of participants
     const comps: Competitor[] = [];
     race.results.forEach((res) => {
-      const found = historicalCompetitor(res) ?? allCompetitors.find((c) => c.id === res.competitorId);
+      const live = allCompetitors.find((c) => c.id === res.competitorId);
+      const found = historicalCompetitor(res, live) ?? live;
       if (found) comps.push(found);
     });
     setParticipants(comps);

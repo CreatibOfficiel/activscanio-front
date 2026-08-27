@@ -41,7 +41,8 @@ const RaceCard: FC<Props> = ({ race }) => {
     sortedResults.forEach((res) => {
       // The race snapshot wins over the mutable profile: reassigning a
       // character after someone leaves must never rewrite this card.
-      const competitor = historicalCompetitor(res) ?? allCompetitors.find((c) => c.id === res.competitorId);
+      const live = allCompetitors.find((c) => c.id === res.competitorId);
+      const competitor = historicalCompetitor(res, live) ?? live;
       if (competitor) {
         results.push({
           competitor,
