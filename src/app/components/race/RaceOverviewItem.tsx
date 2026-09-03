@@ -7,6 +7,7 @@ import { Competitor } from "../../models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import RaceDetailsModal from "./RaceDetailsModal";
 import { historicalCompetitor } from "@/app/utils/race-participant";
+import { MAX_RANK } from "@/app/config/race-format";
 
 interface Props {
   race: RaceEvent;
@@ -100,7 +101,7 @@ const RaceOverviewItem: FC<Props> = ({ race }) => {
                       : "text-regular text-neutral-600"
                   }
                 >
-                  {res.rank12}/12
+                  {res.rank12}/{MAX_RANK}
                 </span>
               </div>
             </div>

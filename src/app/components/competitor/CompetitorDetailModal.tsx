@@ -14,6 +14,7 @@ import { formatCompetitorName, formatRelativeDate } from "@/app/utils/formatters
 import { TrendDirection } from "../leaderboard/TrendIndicator";
 import { getCurrentSeasonNumber, getSeasonDateRange } from "@/app/utils/season-utils";
 import { MdClose, MdChevronRight } from "react-icons/md";
+import { MAX_SCORE } from "@/app/config/race-format";
 
 // Lazy: keeps recharts out of the leaderboard bundle (same pattern as RacesTab).
 const EloProgressChart = lazy(() => import("../stats/EloProgressChart"));
@@ -274,7 +275,7 @@ const CompetitorDetailModal: FC<Props> = ({ competitor, isOpen, onClose, rank: r
 
 
   // Max score for progress bar
-  const maxScore = 60;
+  const maxScore = MAX_SCORE;
 
   return (
     <Modal

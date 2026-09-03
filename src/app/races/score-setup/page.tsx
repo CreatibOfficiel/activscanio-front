@@ -12,6 +12,7 @@ import { get as idbGet } from "idb-keyval";
 import { toast } from "sonner";
 import { scoreSetupSchema, ScoreSetupFormData } from "@/app/schemas";
 import { Button } from "@/app/components/ui";
+import { MAX_RANK, MAX_SCORE, MIN_SCORE } from "@/app/config/race-format";
 
 const ScoreSetupPage: NextPage = () => {
   const router = useRouter();
@@ -158,8 +159,8 @@ const ScoreSetupPage: NextPage = () => {
 
       {/* Explication */}
       <p className="text-sm text-neutral-300 mb-8">
-        Indique le rang (1 à 12) et le score (0 à 60) pour chacun des joueurs
-        sélectionnés.
+        Indique le rang (1 à {MAX_RANK}) et le score ({MIN_SCORE} à {MAX_SCORE})
+        pour chacun des joueurs sélectionnés.
       </p>
 
       {/* Form */}
@@ -205,7 +206,7 @@ const ScoreSetupPage: NextPage = () => {
                     <input
                       type="number"
                       min={1}
-                      max={12}
+                      max={MAX_RANK}
                       className={`w-14 h-10 bg-neutral-900 border rounded text-center
                                  text-neutral-100 focus:outline-none transition-colors
                                  ${errors.scores?.[index]?.rank
@@ -229,8 +230,8 @@ const ScoreSetupPage: NextPage = () => {
                   <div className="text-center">
                     <input
                       type="number"
-                      min={0}
-                      max={60}
+                      min={MIN_SCORE}
+                      max={MAX_SCORE}
                       className={`w-14 h-10 bg-neutral-900 border rounded text-center
                                  text-neutral-100 focus:outline-none transition-colors
                                  ${errors.scores?.[index]?.score

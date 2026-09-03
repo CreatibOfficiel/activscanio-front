@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+  MAX_RANK,
+  MAX_SCORE,
+  MIN_HUMAN_PLAYERS,
+  MIN_SCORE,
+} from '@/app/config/race-format';
 
 /**
  * Schema for a single competitor's score entry
@@ -9,12 +15,12 @@ export const competitorScoreSchema = z.object({
     .number()
     .int('Le rang doit être un nombre entier')
     .min(1, 'Le rang minimum est 1')
-    .max(12, 'Le rang maximum est 12'),
+    .max(MAX_RANK, `Le rang maximum est ${MAX_RANK}`),
   score: z
     .number()
     .int('Le score doit être un nombre entier')
-    .min(0, 'Le score minimum est 0')
-    .max(60, 'Le score maximum est 60')
+    .min(MIN_SCORE, `Le score minimum est ${MIN_SCORE}`)
+    .max(MAX_SCORE, `Le score maximum est ${MAX_SCORE}`)
     .nullable(),
 });
 
@@ -26,7 +32,9 @@ export const competitorScoreSchema = z.object({
  */
 export const scoreSetupSchema = z
   .object({
-    scores: z.array(competitorScoreSchema).min(2, 'Au moins 2 pilotes requis'),
+    scores: z
+      .array(competitorScoreSchema)
+      .min(MIN_HUMAN_PLAYERS, `Au moins ${MIN_HUMAN_PLAYERS} pilotes requis`),
   })
   .superRefine((data, ctx) => {
     // Track which indices already have an error to avoid duplicates

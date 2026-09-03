@@ -6,6 +6,7 @@ import { getInitials, getColorFromName } from "@/app/components/ui/UserAvatar";
 import { FaCrown } from "react-icons/fa";
 import { Competitor } from "@/app/models/Competitor";
 import { formatCompetitorName } from "@/app/utils/formatters";
+import { MAX_RANK } from "@/app/config/race-format";
 
 interface Props {
   competitor: Competitor;
@@ -57,7 +58,7 @@ const WinnerHighlight: FC<Props> = ({ competitor, score, rank12 }) => {
             </span>
           </div>
           <div className="flex items-center gap-3 text-sub text-neutral-400">
-            <span>#{rank12}/12</span>
+            <span>#{rank12}/{MAX_RANK}</span>
           </div>
         </div>
 

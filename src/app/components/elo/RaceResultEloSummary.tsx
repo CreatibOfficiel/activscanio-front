@@ -7,6 +7,7 @@ import { RaceResult } from "@/app/models/RaceResult";
 import { EloCalculator } from "@/app/utils/EloCalculator";
 import { formatCompetitorName } from "@/app/utils/formatters";
 import React from "react";
+import { MAX_RANK } from "@/app/config/race-format";
 
 /**
  * Props:
@@ -91,7 +92,7 @@ const RaceResultEloSummary: FC<Props> = ({ results, selectedCompetitors }) => {
                             -
                           </span>
                           <span className="text-xs text-neutral-400">
-                            Rang {r.rank12}/12
+                            Rang {r.rank12}/{MAX_RANK}
                           </span>
                         </div>
                       </div>

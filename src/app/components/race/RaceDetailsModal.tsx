@@ -14,14 +14,13 @@ import Modal from "@/app/components/ui/Modal";
 import Badge from "@/app/components/ui/Badge";
 import Skeleton from "@/app/components/ui/Skeleton";
 import EloDeltaBadge from "@/app/components/race/EloDeltaBadge";
+import { MAX_SCORE } from "@/app/config/race-format";
 
 interface Props {
   raceId: string;
   isOpen: boolean;
   onClose: () => void;
 }
-
-const MAX_SCORE = 60;
 
 function getRankLabel(rank: number): string {
   if (rank === 1) return "1er";

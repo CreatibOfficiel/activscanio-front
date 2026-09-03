@@ -23,9 +23,10 @@ import imageCompression from "browser-image-compression";
 import exifr from "exifr";
 import { set as idbSet, del as idbDel } from "idb-keyval";
 import { toast } from "sonner";
-
-const MIN_PLAYERS = 2;
-const MAX_PLAYERS = 4;
+import {
+  MAX_HUMAN_PLAYERS as MAX_PLAYERS,
+  MIN_HUMAN_PLAYERS as MIN_PLAYERS,
+} from "@/app/config/race-format";
 
 type Step = "CAPTURE_PROMPT" | "ANALYZING" | "PLAYER_SELECTION";
 
@@ -145,6 +146,8 @@ const AddRaceContent = () => {
     } else if (selectedCompetitorIds.length < MAX_PLAYERS) {
       newSelection = [...selectedCompetitorIds, competitor.id];
     } else {
+      // Dropping the click without a word looks like a broken checkbox.
+      toast.error(`${MAX_PLAYERS} joueurs maximum par course`);
       newSelection = selectedCompetitorIds;
     }
 
@@ -537,7 +540,7 @@ const AddRaceContent = () => {
           <p className="text-sm text-neutral-400 mb-3 text-center">
             {selectedCompetitors.length} joueur
             {selectedCompetitors.length > 1 ? "s" : ""} sélectionné
-            {selectedCompetitors.length > 1 ? "s" : ""}
+            {selectedCompetitors.length > 1 ? "s" : ""} sur {MAX_PLAYERS} max
           </p>
 
           <Button

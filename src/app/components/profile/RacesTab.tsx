@@ -13,6 +13,7 @@ import {
 import { Competitor, getFullName } from '../../models/Competitor';
 import { CompetitorsRepository } from '../../repositories/CompetitorsRepository';
 import { Skeleton } from '../ui';
+import { MAX_RANK } from '@/app/config/race-format';
 
 // Lazy load chart component for performance
 const EloProgressChart = lazy(() => import('../stats/EloProgressChart'));
@@ -231,7 +232,7 @@ const RacesTab: FC<RacesTabProps> = ({
           <RaceStatCard
             label="Rang Moyen"
             value={competitor.avgRank12 ? competitor.avgRank12.toFixed(1) : '-'}
-            subValue="sur 12 joueurs"
+            subValue={`sur ${MAX_RANK} joueurs`}
             icon={<MdEmojiEvents className="text-gold-500" />}
             colorClass="text-gold-500"
           />

@@ -11,6 +11,7 @@ import {
 } from '../../repositories/SeasonsRepository';
 import { Skeleton } from '../ui';
 import { getLeagueForRank } from '../../utils/leagues';
+import { MAX_RANK } from '@/app/config/race-format';
 
 interface SeasonHistorySectionProps {
   competitorId: string;
@@ -395,7 +396,7 @@ const SeasonHistorySection: FC<SeasonHistorySectionProps> = ({
                 <div>
                   <div className="text-neutral-400 text-xs">Rang moyen</div>
                   <div className="text-white font-medium">
-                    {ranking.avgRank12.toFixed(1)}/12
+                    {ranking.avgRank12.toFixed(1)}/{MAX_RANK}
                   </div>
                 </div>
               </div>

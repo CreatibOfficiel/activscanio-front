@@ -7,6 +7,7 @@ import { MdEmojiEvents, MdTrendingUp, MdTrendingDown, MdTrendingFlat } from 'rea
 import { RecentRaceInfo } from '../../models/RecentRaceInfo';
 import { RacesRepository } from '../../repositories/RacesRepository';
 import { Skeleton } from '../ui';
+import { MAX_SCORE } from '@/app/config/race-format';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -295,7 +296,7 @@ const RecentRacesSection: FC<RecentRacesSectionProps> = ({
                     />
                   </div>
                   <span className={`text-sm font-medium w-12 text-right ${rankStyle.text}`}>
-                    {race.score}/60
+                    {race.score}/{MAX_SCORE}
                   </span>
                 </div>
               </div>
